@@ -54,29 +54,11 @@ class AuthService:
     @staticmethod
     def generate_tokens(user: User) -> TokenResponse:
         access_token = security.create_access_token(subject=user.id)
-        # We can implement refresh token logic later if needed, but for now lets return access token
-        # The prompt asked for create_refresh_token in security.py, so we should probably use it here or at least allow it.
-        # But TokenResponse schema only has access_token and token_type.
-        # Let's check TokenResponse in schemas/user.py.
-        # It has access_token and token_type.
-        
-        # Checking prompt: "create_refresh_token" was requested in security.py.
-        # "generate_tokens(user)" requested in AuthService. 
-        # TokenResponse schema I created earlier:
-        # class TokenResponse(BaseModel):
-        #     access_token: str
-        #     token_type: str
-        
-        # It seems I did not include refresh_token in TokenResponse. 
-        # I should probably update TokenResponse OR just return access_token for now.
-        # However, usually generate_tokens implies returning what's needed.
-        # Since I cannot easily change TokenResponse without another tool call and it wasn't explicitly asked to include refresh token in the response *schema* (though implies),
-        # I will just return the access token in the TokenResponse for now.
-        # Wait, if `create_refresh_token` was a requirement for security.py, `generate_tokens` likely should use it.
-        # But `TokenResponse` doesn't have it. I'll stick to `TokenResponse` structure.
+        refresh_token = security.create_refresh_token(subject=user.id)
         
         return TokenResponse(
             access_token=access_token,
+            refresh_token=refresh_token,
             token_type="bearer"
         )
 
