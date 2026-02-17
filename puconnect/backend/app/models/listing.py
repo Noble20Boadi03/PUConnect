@@ -1,16 +1,12 @@
 import uuid
 from datetime import datetime
-import enum
 
 from sqlalchemy import Column, String, Float, Boolean, DateTime, Enum, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.db.session import Base
-
-class ListingType(enum.Enum):
-    service = "service"
-    product = "product"
+from app.models.enums import ListingType
 
 class Listing(Base):
     __tablename__ = "listings"
@@ -24,8 +20,10 @@ class Listing(Base):
     owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     # Relationships
     owner = relationship("User", back_populates="listings")
     reviews = relationship("Review", back_populates="listing")
+    payments = relationship("Payment", back_populates="listing")
     messages = relationship("Chat", back_populates="listing")

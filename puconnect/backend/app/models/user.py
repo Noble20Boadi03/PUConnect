@@ -4,12 +4,7 @@ from sqlalchemy import Column, String, Boolean, DateTime, Enum, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.db.session import Base
-import enum
-
-
-class UserRole(enum.Enum):
-	student = "student"
-	admin = "admin"
+from app.models.enums import UserRole
 
 
 class User(Base):
@@ -28,5 +23,13 @@ class User(Base):
 	# Relationships
 	listings = relationship("Listing", back_populates="owner")
 	reviews = relationship("Review", back_populates="user")
+	payments = relationship("Payment", back_populates="user")
 	sent_messages = relationship("Chat", back_populates="sender", foreign_keys='Chat.sender_id')
 	received_messages = relationship("Chat", back_populates="receiver", foreign_keys='Chat.receiver_id')
+
+	# Properties
+	@property
+	def is_admin(self) -> bool:
+		"""Check if user has admin role."""
+		return self.role == UserRole.admin
+

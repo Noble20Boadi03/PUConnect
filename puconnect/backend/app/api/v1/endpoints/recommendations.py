@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 from app.schemas.listing import ListingResponse
 from app.services.recommendation_service import RecommendationService
+from app.api import deps
 from app.api.deps import get_current_user
 from typing import List
 
@@ -21,7 +23,12 @@ def get_personal_recommendations(
     current_user=Depends(get_current_user),
     db: Session = Depends(deps.get_db)
 ):
-    return RecommendationService.get_recommendations_for_user(current_user.id, skip=skip, limit=limit)
+    return RecommendationService.get_recommendations_for_user(
+        user_id=current_user.id, 
+        db=db,
+        skip=skip, 
+        limit=limit
+    )
 
 @router.get("/{user_id}", response_model=List[ListingResponse])
 def get_user_recommendations(
@@ -31,4 +38,9 @@ def get_user_recommendations(
     admin=Depends(is_admin),
     db: Session = Depends(deps.get_db)
 ):
-    return RecommendationService.get_recommendations_for_user(user_id, skip=skip, limit=limit)
+    return RecommendationService.get_recommendations_for_user(
+        user_id=user_id,
+        db=db, 
+        skip=skip, 
+        limit=limit
+    )

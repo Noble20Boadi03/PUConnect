@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
+from sqlalchemy.orm import Session
 from app.schemas.payment import PaymentInitiate
 from app.services.payment_service import PaymentService
+from app.api import deps
 from app.api.deps import get_current_user
 from typing import Dict
 import logging
@@ -43,9 +45,9 @@ def verify_payment(reference: str, current_user=Depends(get_current_user)):
         )
 
 @router.post("/webhook", status_code=status.HTTP_200_OK)
-def payment_webhook(request: Request):
+async def payment_webhook(request: Request):
     try:
-        payload = request.json()
+        payload = await request.json()
         reference = payload.get("reference")
         if not reference:
             raise HTTPException(

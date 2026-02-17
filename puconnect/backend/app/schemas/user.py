@@ -1,37 +1,58 @@
+"""
+User schemas for API request/response validation.
+All schemas match the User model exactly.
+"""
+
 from typing import Optional
 from uuid import UUID
 from datetime import datetime
-from enum import Enum
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
+from app.models.enums import UserRole
 
-class UserRole(str, Enum):
-    student = "student"
-    admin = "admin"
 
 class UserBase(BaseModel):
+    """Base user schema with common fields."""
     email: EmailStr
     full_name: str
     university_id: str
     role: UserRole = UserRole.student
     is_active: bool = True
 
+
 class UserCreate(UserBase):
+    """Schema for creating a new user."""
     password: str
 
+
+class UserUpdate(BaseModel):
+    """Schema for updating user information."""
+    email: Optional[EmailStr] = None
+    full_name: Optional[str] = None
+    university_id: Optional[str] = None
+    role: Optional[UserRole] = None
+    is_active: Optional[bool] = None
+
+
 class UserLogin(BaseModel):
+    """Schema for user login."""
     email: EmailStr
     password: str
 
+
 class UserResponse(UserBase):
+    """
+    Schema for user responses.
+    Matches User model exactly (excluding hashed_password).
+    """
     id: UUID
     created_at: datetime
-    # is_active and role are already in UserBase, so they are included.
-    # hashed_password is NOT in UserBase, so it is excluded by default.
+    updated_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        orm_mode = True
 
 class TokenResponse(BaseModel):
+    """Schema for authentication token response."""
     access_token: str
     refresh_token: str
     token_type: str

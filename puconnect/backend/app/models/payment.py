@@ -1,17 +1,12 @@
 import uuid
 from datetime import datetime
-import enum
 
 from sqlalchemy import Column, String, Float, DateTime, Enum, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.db.session import Base
-
-class PaymentStatus(enum.Enum):
-    pending = "pending"
-    successful = "successful"
-    failed = "failed"
+from app.models.enums import PaymentStatus
 
 class Payment(Base):
     __tablename__ = "payments"
@@ -23,7 +18,8 @@ class Payment(Base):
     status = Column(Enum(PaymentStatus), default=PaymentStatus.pending, nullable=False)
     transaction_reference = Column(String, unique=True, index=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     # Relationships
-    user = relationship("User", backref="payments")
-    listing = relationship("Listing", backref="payments")
+    user = relationship("User", back_populates="payments")
+    listing = relationship("Listing", back_populates="payments")

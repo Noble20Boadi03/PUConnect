@@ -16,6 +16,7 @@ class Review(Base):
     reviewer_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     listing_id = Column(UUID(as_uuid=True), ForeignKey("listings.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     # Relationships
     user = relationship("User", back_populates="reviews")
