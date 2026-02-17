@@ -1,37 +1,50 @@
-const BASE_API = "/api/v1";
+/**
+ * Central source of truth for backend routes.
+ * Grouped by domain to prevent hardcoded strings.
+ */
 
-const API_ENDPOINTS = {
+const API_PREFIX = "/api/v1";
+
+export const API_ENDPOINTS = {
   AUTH: {
-    register: `${BASE_API}/auth/register`,
-    login: `${BASE_API}/auth/login`,
-    refresh: `${BASE_API}/auth/refresh`,
-    me: `${BASE_API}/auth/me`,
+    register: `${API_PREFIX}/auth/register`,
+    login: `${API_PREFIX}/auth/login`,
+    refresh: `${API_PREFIX}/auth/refresh`,
+    me: `${API_PREFIX}/auth/me`,
   },
   USERS: {
-    getProfile: `${BASE_API}/users/me`,
-    updateProfile: `${BASE_API}/users/me`,
+    getProfile: `${API_PREFIX}/users/profile`,
+    updateProfile: `${API_PREFIX}/users/profile`,
   },
   LISTINGS: {
-    create: `${BASE_API}/listings`,
-    listAll: `${BASE_API}/listings`,
-    getById: (id: string) => `${BASE_API}/listings/${id}`,
-    update: (id: string) => `${BASE_API}/listings/${id}`,
-    delete: (id: string) => `${BASE_API}/listings/${id}`,
+    create: `${API_PREFIX}/listings`,
+    listAll: `${API_PREFIX}/listings`,
+    getById: (id: string) => `${API_PREFIX}/listings/${id}`,
+    update: (id: string) => `${API_PREFIX}/listings/${id}`,
+    delete: (id: string) => `${API_PREFIX}/listings/${id}`,
   },
   REVIEWS: {
-    create: `${BASE_API}/reviews`,
-    getByListing: (listingId: string) => `${BASE_API}/reviews/listing/${listingId}`,
+    create: `${API_PREFIX}/reviews`,
+    getByListing: (listingId: string) => `${API_PREFIX}/reviews/listing/${listingId}`,
   },
   PAYMENTS: {
-    initiate: `${BASE_API}/payments/initiate`,
-    verify: `${BASE_API}/payments/verify`,
+    initiate: `${API_PREFIX}/payments/initiate`,
+    verify: (reference: string) => `${API_PREFIX}/payments/verify/${reference}`,
   },
   RECOMMENDATIONS: {
-    getForUser: `${BASE_API}/recommendations`,
+    getForUser: `${API_PREFIX}/recommendations`,
   },
   CHAT: {
-    websocketUrl: (userId: string) => `${BASE_API}/chat/${userId}`,
+    websocketUrl: (userId: string) => {
+      // Construct WebSocket URL dynamically based on current location
+      // This assumes the API is served from the same host or proxy
+      if (typeof window !== "undefined") {
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const host = window.location.host;
+        return `${protocol}//${host}/ws/chat/${userId}`;
+      }
+      // Fallback or server-side stub (standard localhost for dev if needed)
+      return `ws://localhost:8000/ws/chat/${userId}`;
+    },
   },
-};
-
-export default API_ENDPOINTS;
+} as const;

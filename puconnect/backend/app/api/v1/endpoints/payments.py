@@ -20,7 +20,7 @@ def read_payments(
     # return PaymentService.get_multi(db, skip=skip, limit=limit)
     return [{"amount": 100.0, "status": "pending"}]
 
-@router.post("/payments/initiate", status_code=status.HTTP_201_CREATED)
+@router.post("/initiate", status_code=status.HTTP_201_CREATED)
 def initiate_payment(payment: PaymentInitiate, current_user=Depends(get_current_user)):
     try:
         return PaymentService.initiate_payment(current_user.id, payment)
@@ -31,7 +31,7 @@ def initiate_payment(payment: PaymentInitiate, current_user=Depends(get_current_
             detail="Failed to initiate payment"
         )
 
-@router.get("/payments/verify/{reference}", status_code=status.HTTP_200_OK)
+@router.get("/verify/{reference}", status_code=status.HTTP_200_OK)
 def verify_payment(reference: str, current_user=Depends(get_current_user)):
     try:
         return PaymentService.verify_payment(reference)
@@ -42,7 +42,7 @@ def verify_payment(reference: str, current_user=Depends(get_current_user)):
             detail="Failed to verify payment"
         )
 
-@router.post("/payments/webhook", status_code=status.HTTP_200_OK)
+@router.post("/webhook", status_code=status.HTTP_200_OK)
 def payment_webhook(request: Request):
     try:
         payload = request.json()
