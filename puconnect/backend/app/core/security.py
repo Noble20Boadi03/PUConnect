@@ -14,7 +14,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password: str) -> str:
+    if len(password.encode("utf-8")) > 72:
+        raise ValueError("Password too long (max 72 bytes for bcrypt)")
     return pwd_context.hash(password)
+
 
 def create_access_token(subject: Union[str, Any], expires_delta: Optional[timedelta] = None) -> str:
     if expires_delta:

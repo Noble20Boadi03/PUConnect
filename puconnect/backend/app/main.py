@@ -1,3 +1,4 @@
+import app.db.base
 from fastapi import FastAPI
 from app.api.v1.router import api_router
 from app.core import config

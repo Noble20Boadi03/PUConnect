@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
 from jose import JWTError
 from uuid import UUID
@@ -10,29 +11,43 @@ from app.core import security
 class AuthService:
     @staticmethod
     def register_user(db: Session, user_create: UserCreate) -> User:
-        # Check if user already exists
-        existing_user = db.query(User).filter(User.email == user_create.email).first()
-        if existing_user:
+        try:
+            # Check if user already exists
+            existing_user = db.query(User).filter(User.email == user_create.email).first()
+            if existing_user:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Email already registered"
+                )
+
+            # Create new user
+            hashed_password = security.get_password_hash(user_create.password)
+            db_user = User(
+                email=user_create.email,
+                full_name=user_create.full_name,
+                hashed_password=hashed_password,
+                university_id=user_create.university_id,
+                role=user_create.role,
+                is_active=user_create.is_active
+            )
+
+            db.add(db_user)
+            db.commit()
+            db.refresh(db_user)
+            return db_user
+
+        except IntegrityError:
+            db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email already registered"
             )
-        
-        # Create new user
-        hashed_password = security.get_password_hash(user_create.password)
-        db_user = User(
-            email=user_create.email,
-            full_name=user_create.full_name,
-            hashed_password=hashed_password,
-            university_id=user_create.university_id,
-            role=user_create.role,
-            is_active=user_create.is_active
-        )
-        
-        db.add(db_user)
-        db.commit()
-        db.refresh(db_user)
-        return db_user
+
+        except Exception as e:
+            db.rollback()
+            print("REGISTER ERROR:", repr(e))
+            raise
+
 
     @staticmethod
     def authenticate_user(db: Session, email: str, password: str) -> User:

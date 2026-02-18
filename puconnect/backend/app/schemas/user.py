@@ -6,7 +6,7 @@ All schemas match the User model exactly.
 from typing import Optional
 from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict, Field
 from app.models.enums import UserRole
 
 
@@ -21,7 +21,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     """Schema for creating a new user."""
-    password: str
+    password: str = Field(..., min_length=8, max_length=72)
 
 
 class UserUpdate(BaseModel):
