@@ -17,8 +17,8 @@ export const API_ENDPOINTS = {
     updateProfile: `${API_PREFIX}/users/profile`,
   },
   LISTINGS: {
-    create: `${API_PREFIX}/listings`,
-    listAll: `${API_PREFIX}/listings`,
+    create: `${API_PREFIX}/listings/`,
+    listAll: `${API_PREFIX}/listings/`,
     getById: (id: string) => `${API_PREFIX}/listings/${id}`,
     update: (id: string) => `${API_PREFIX}/listings/${id}`,
     delete: (id: string) => `${API_PREFIX}/listings/${id}`,
@@ -30,11 +30,14 @@ export const API_ENDPOINTS = {
   PAYMENTS: {
     initiate: `${API_PREFIX}/payments/initiate`,
     verify: (reference: string) => `${API_PREFIX}/payments/verify/${reference}`,
+    list: `${API_PREFIX}/payments/`,
   },
   RECOMMENDATIONS: {
     getForUser: `${API_PREFIX}/recommendations`,
   },
   CHAT: {
+    myChats: `${API_PREFIX}/chat/my-chats`,
+    unreadCount: `${API_PREFIX}/chat/unread/count`,
     websocketUrl: (userId: string) => {
       // Construct WebSocket URL dynamically based on current location
       // This assumes the API is served from the same host or proxy
