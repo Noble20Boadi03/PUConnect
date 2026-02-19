@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { API_ENDPOINTS } from '../api/endpoints';
-import { AuthContextType, LoginCredentials, RegisterCredentials, User, AuthResponse } from '../types/auth';
+import { AuthContextType, LoginCredentials, RegisterCredentials, User } from '../types/auth';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -42,27 +42,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const login = async (credentials: LoginCredentials) => {
         try {
-            const response = await api.post<AuthResponse>(API_ENDPOINTS.AUTH.login, credentials);
+            const formData = new URLSearchParams();
+            formData.append("username", credentials.email); // backend expects username
+            formData.append("password", credentials.password);
+
+            const response = await api.post(
+                API_ENDPOINTS.AUTH.login,
+                formData,
+                {
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                }
+            );
 
             // Expected response structure based on AuthResponse interface
-            const { accessToken: newAccessToken, refreshToken, user: userData } = response.data;
+            const { access_token, refresh_token } = response.data;
 
             // Save tokens
-            localStorage.setItem('accessToken', newAccessToken);
-            localStorage.setItem('refreshToken', refreshToken);
+            localStorage.setItem('accessToken', access_token);
+            localStorage.setItem('refreshToken', refresh_token);
 
             // Update state
-            setAccessToken(newAccessToken);
+            setAccessToken(access_token);
 
             // If the login response includes the user, set it. 
             // Otherwise, fetch it as per "Fetch user profile" requirement.
-            if (userData) {
-                setUser(userData);
-            } else {
+            // if (userData) {
+            //     setUser(userData);
+            // } else {
                 const userResponse = await api.get<User>(API_ENDPOINTS.AUTH.me);
                 setUser(userResponse.data);
-            }
-
+            
             // Navigate to dashboard or home
             navigate('/');
 
@@ -74,7 +85,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const register = async (credentials: RegisterCredentials) => {
         try {
-            await api.post(API_ENDPOINTS.AUTH.register, credentials);
+            await api.post(API_ENDPOINTS.AUTH.register, {
+                email: credentials.email,
+                password: credentials.password,
+                full_name: credentials.full_name,
+                university_id: credentials.university_id
+        });
 
             // Auto login after successful registration
             await login({

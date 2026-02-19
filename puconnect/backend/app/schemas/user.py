@@ -11,12 +11,13 @@ from app.models.enums import UserRole
 
 
 class UserBase(BaseModel):
-    """Base user schema with common fields."""
     email: EmailStr
-    full_name: str
-    university_id: str
+    full_name: str = Field(..., alias="fullName")
+    university_id: str = Field(..., alias="universityId")
     role: UserRole = UserRole.student
     is_active: bool = True
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class UserCreate(UserBase):
