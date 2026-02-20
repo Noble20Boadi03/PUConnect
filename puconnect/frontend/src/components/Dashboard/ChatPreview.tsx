@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Conversation, formatMessageTime } from '../../types/chat';
 
 interface ChatPreviewProps {
@@ -6,8 +7,13 @@ interface ChatPreviewProps {
 }
 
 const ChatPreview: React.FC<ChatPreviewProps> = ({ conversation }) => {
+    const navigate = useNavigate();
+
     return (
-        <div className="flex items-center p-4 hover:bg-gray-50 rounded-lg transition-colors duration-150 cursor-pointer">
+        <div
+            onClick={() => navigate(`/chat?userId=${conversation.user_id}&listingId=${conversation.listing_id}`)}
+            className="flex items-center p-4 hover:bg-gray-50 rounded-lg transition-colors duration-150 cursor-pointer"
+        >
             <div className="relative flex-shrink-0">
                 <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-lg">
                     {conversation.user_name.charAt(0)}

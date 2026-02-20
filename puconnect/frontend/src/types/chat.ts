@@ -24,6 +24,8 @@ export interface ChatMessage {
     updated_at: string;            // Added - new field in backend
 }
 
+export type Message = ChatMessage;
+
 /**
  * Chat creation data - MATCHES backend ChatCreate
  * Backend: app/schemas/chat.py - ChatCreate

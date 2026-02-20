@@ -66,7 +66,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     </div>
                 ) : (
                     messages.map((msg) => {
-                        const isOwn = msg.senderId === currentUserId;
+                        const isOwn = msg.sender_id === currentUserId;
                         return (
                             <div
                                 key={msg.id || Math.random().toString()} // Fallback key if id missing temporarily
@@ -74,19 +74,19 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                             >
                                 <div
                                     className={`max-w-[75%] rounded-2xl px-4 py-2 shadow-sm text-sm ${isOwn
-                                            ? 'bg-indigo-600 text-white rounded-br-sm'
-                                            : 'bg-white text-gray-800 border border-gray-100 rounded-bl-sm'
+                                        ? 'bg-indigo-600 text-white rounded-br-sm'
+                                        : 'bg-white text-gray-800 border border-gray-100 rounded-bl-sm'
                                         }`}
                                 >
-                                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                                    <p className="whitespace-pre-wrap break-words">{msg.message}</p>
                                     <div
                                         className={`mt-1 text-[10px] flex items-center justify-end space-x-1 ${isOwn ? 'text-indigo-200' : 'text-gray-400'
                                             }`}
                                     >
-                                        <span>{formatTime(msg.createdAt)}</span>
+                                        <span>{formatTime(msg.created_at)}</span>
                                         {isOwn && (
                                             <span>
-                                                {msg.isRead ? (
+                                                {msg.is_read ? (
                                                     <span title="Read">✓✓</span>
                                                 ) : (
                                                     <span title="Sent">✓</span>

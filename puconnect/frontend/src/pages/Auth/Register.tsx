@@ -72,7 +72,12 @@ const Register = () => {
     setErrors({}); // Clear previous errors
 
     try {
-      await register({ fullName, universityId, email, password });
+      await register({
+        full_name: fullName,
+        university_id: universityId,
+        email,
+        password
+      });
       // Navigation handled by register() (which calls login and redirects)
     } catch (err: any) {
       if (err.response?.data?.detail) {

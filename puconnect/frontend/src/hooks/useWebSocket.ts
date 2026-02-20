@@ -5,7 +5,7 @@ import { Message, ConnectionStatus } from '../types/chat';
 
 interface UseWebSocketReturn {
     messages: Message[];
-    sendMessage: (content: string, receiverId: string) => void;
+    sendMessage: (content: string, receiverId: string, listingId?: string) => void;
     status: ConnectionStatus;
     markAsRead: (messageId: string) => void;
 }
@@ -18,33 +18,13 @@ export const useWebSocket = (chatPartnerId: string | null): UseWebSocketReturn =
     const reconnectTimeout = useRef<number | undefined>(undefined);
     const isMounted = useRef(true);
 
-    // Mock initial messages for demo purposes if backend not ready
-    // Remove this in production
-    /*
-    useEffect(() => {
-        if(chatPartnerId) {
-             setMessages([
-                 { id: '1', senderId: 'other', receiverId: user?.id || '', content: 'Hello there!', createdAt: new Date(Date.now() - 100000).toISOString(), isRead: true },
-                 { id: '2', senderId: user?.id || '', receiverId: 'other', content: 'Hi! Is the item still available?', createdAt: new Date(Date.now() - 90000).toISOString(), isRead: true },
-             ]);
-        }
-    }, [chatPartnerId, user?.id]);
-    */
-
     const connect = useCallback(() => {
         if (!user || !chatPartnerId || !accessToken) return;
 
         setStatus('connecting');
 
-        // Construct WS URL
-        // We typically connect to a main endpoint and then subscribe to topics, 
-        // OR connect to a specific user channel. 
-        // The API_ENDPOINTS.CHAT.websocketUrl takes userId. Assuming it connects "as" the user or "to" chat?
-        // Usually it's: ws://host/ws/chat?token=...
-        // Let's assume the endpoint provided is the connection endpoint for the CURRENT USER to receive messages.
-
-        const url = new URL(API_ENDPOINTS.CHAT.websocketUrl(user.id));
-        // Append auth token as query param since standard WS API doesn't support headers easily
+        const websocketUrl = API_ENDPOINTS.CHAT.websocketUrl(user.id);
+        const url = new URL(websocketUrl);
         url.searchParams.append('token', accessToken);
 
         const socket = new WebSocket(url.toString());
@@ -57,15 +37,22 @@ export const useWebSocket = (chatPartnerId: string | null): UseWebSocketReturn =
         socket.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
-                // Handle different message types
-                if (data.type === 'message') {
-                    // Only add if it belongs to current chat conversation
-                    const msg = data.payload as Message;
-                    if (msg.senderId === chatPartnerId || msg.receiverId === chatPartnerId) {
-                        setMessages(prev => [...prev, msg]);
-                    }
+
+                // Construct a Message object from raw data
+                const msg = {
+                    id: data.id || Math.random().toString(36).substr(2, 9),
+                    sender_id: data.sender_id || data.senderId,
+                    receiver_id: data.receiver_id || data.receiverId,
+                    listing_id: data.listing_id || data.listingId,
+                    message: data.message || data.content,
+                    created_at: data.created_at || data.timestamp || new Date().toISOString(),
+                    is_read: data.is_read || data.isRead || false,
+                    updated_at: data.updated_at || new Date().toISOString()
+                } as Message;
+
+                if (msg.sender_id === chatPartnerId || msg.receiver_id === chatPartnerId) {
+                    setMessages(prev => [...prev, msg]);
                 }
-                // Handle read receipts, etc.
             } catch (e) {
                 console.error('Failed to parse WS message', e);
             }
@@ -74,7 +61,6 @@ export const useWebSocket = (chatPartnerId: string | null): UseWebSocketReturn =
         socket.onclose = () => {
             if (isMounted.current) {
                 setStatus('disconnected');
-                // Attempt reconnect
                 reconnectTimeout.current = window.setTimeout(connect, 3000);
             }
         };
@@ -103,25 +89,24 @@ export const useWebSocket = (chatPartnerId: string | null): UseWebSocketReturn =
         };
     }, [connect]);
 
-    const sendMessage = useCallback((content: string, receiverId: string) => {
+    const sendMessage = useCallback((content: string, receiverId: string, listingId?: string) => {
         if (ws.current && ws.current.readyState === WebSocket.OPEN && user) {
             const messagePayload = {
-                type: 'send_message',
-                payload: {
-                    content,
-                    receiverId,
-                    // temporary ID until confirmed by server
-                    id: Math.random().toString(36).substr(2, 9),
-                    senderId: user.id,
-                    createdAt: new Date().toISOString(),
-                    isRead: false
-                }
+                message: content,
+                receiver_id: receiverId,
+                listing_id: listingId || '00000000-0000-0000-0000-000000000000',
             };
             ws.current.send(JSON.stringify(messagePayload));
 
             // Optimistically add to UI
-            // Cast to Message type. In real world, wait for ack or bounce back.
-            setMessages(prev => [...prev, messagePayload.payload as Message]);
+            setMessages(prev => [...prev, {
+                ...messagePayload,
+                id: Math.random().toString(36).substr(2, 9),
+                sender_id: user.id,
+                created_at: new Date().toISOString(),
+                is_read: false,
+                updated_at: new Date().toISOString()
+            } as Message]);
         } else {
             console.warn("WebSocket not connected");
         }
@@ -134,9 +119,8 @@ export const useWebSocket = (chatPartnerId: string | null): UseWebSocketReturn =
                 payload: { messageId }
             }));
 
-            // Update local state
             setMessages(prev => prev.map(m =>
-                m.id === messageId ? { ...m, isRead: true } : m
+                m.id === messageId ? { ...m, is_read: true } : m
             ));
         }
     }, []);
