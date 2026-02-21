@@ -29,8 +29,8 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing }) => {
                     <h3 className="text-sm font-semibold text-gray-900 line-clamp-1 flex-1 mr-2" title={listing.title}>
                         {listing.title}
                     </h3>
-                    <p className="text-sm font-bold text-indigo-600 shrink-0">
-                        ${listing.price.toFixed(2)}
+                    <p className="text-sm font-bold text-blue-600 shrink-0">
+                        {new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(listing.price)}
                     </p>
                 </div>
 
@@ -38,11 +38,9 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing }) => {
                     <span className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-gray-50 text-gray-600 capitalize">
                         {listing.type}
                     </span>
-                    {listing.owner_id && (
-                        <span className="text-xs text-gray-500 truncate max-w-[50%]">
-                            by {listing.owner_id}
-                        </span>
-                    )}
+                    <span className="text-xs text-blue-600 font-medium group-hover:underline">
+                        View Details &rarr;
+                    </span>
                 </div>
             </div>
         </Link>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../components/Dashboard/Sidebar';
 import StatsCard from '../../components/Dashboard/StatsCard';
 import ListingCard from '../../components/Dashboard/ListingCard';
@@ -13,6 +14,7 @@ import { Payment, PaymentStatus } from '../../types/payment';
 
 const DashboardPage: React.FC = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
         totalListings: 0,
@@ -174,7 +176,12 @@ const DashboardPage: React.FC = () => {
                             <section>
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="text-xl font-bold text-gray-900">Recent Payments</h2>
-                                    <button className="text-sm font-medium text-blue-600 hover:text-blue-700">History</button>
+                                    <button
+                                        onClick={() => navigate('/payments')}
+                                        className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                                    >
+                                        History
+                                    </button>
                                 </div>
                                 <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
                                     {recentPayments.length > 0 ? (

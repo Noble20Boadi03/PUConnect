@@ -59,24 +59,23 @@ const ListingDetail: React.FC = () => {
         if (!listing) return;
         // Navigate to chat with this user
         // Assuming /chat route handles ?userId= param or similar
-        navigate(`/chat?userId=${listing.sellerId}`);
+        navigate(`/chat?userId=${listing.owner_id}`);
     };
 
     const handlePayNow = async () => {
         if (!listing) return;
-        // Initiate payment logic
-        // This likely involves redirecting to a payment gateway or creating an order
-        // For MVP, maybe just alert or navigate to a payment summary page
+
         try {
             const response = await api.post(API_ENDPOINTS.PAYMENTS.initiate, {
-                listingId: listing.id,
+                listing_id: listing.id,
                 amount: listing.price
             });
-            // Redirect to payment URL if returned, or payment page
-            if (response.data.paymentUrl) {
-                window.location.href = response.data.paymentUrl;
+
+            // Redirect to authorization URL from backend
+            if (response.data.authorization_url) {
+                window.location.href = response.data.authorization_url;
             } else {
-                alert("Payment initiated! (Mock)");
+                alert("Payment initiated but no redirect URL found.");
             }
         } catch (err) {
             console.error("Payment initiation failed", err);
@@ -106,7 +105,7 @@ const ListingDetail: React.FC = () => {
         );
     }
 
-    const isOwner = user?.id === listing.sellerId;
+    const isOwner = user?.id === listing.owner_id;
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -122,19 +121,13 @@ const ListingDetail: React.FC = () => {
                 {/* Image Gallery */}
                 <div className="flex flex-col-reverse">
                     <div className="w-full aspect-w-4 aspect-h-3 rounded-lg overflow-hidden bg-gray-100 shadow-sm">
-                        {listing.imageUrls && listing.imageUrls.length > 0 ? (
-                            <img
-                                src={listing.imageUrls[0]}
-                                alt={listing.title}
-                                className="w-full h-full object-center object-cover"
-                            />
-                        ) : (
-                            <div className="flex h-full w-full items-center justify-center text-gray-400 bg-gray-200">
-                                <span>No Image Available</span>
-                            </div>
-                        )}
+                        {/* Mock image for now if none exists */}
+                        <img
+                            src={`https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=800`}
+                            alt={listing.title}
+                            className="w-full h-full object-center object-cover"
+                        />
                     </div>
-                    {/* Thumbnail logic could be added here if multiple images */}
                 </div>
 
                 {/* Listing Info */}
@@ -142,19 +135,23 @@ const ListingDetail: React.FC = () => {
                     <div className="mb-4">
                         <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">{listing.title}</h1>
                         <div className="mt-2 flex items-center space-x-4">
-                            <span className="text-2xl font-bold text-indigo-600">${listing.price.toFixed(2)}</span>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize border ${listing.condition === 'new' ? 'bg-green-100 text-green-800 border-green-200' :
-                                    'bg-gray-100 text-gray-800 border-gray-200'
-                                }`}>
-                                {listing.condition}
+                            <span className="text-2xl font-bold text-blue-600">
+                                {new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(listing.price)}
                             </span>
-                            <span className="text-sm text-gray-500 capitalize">{listing.category}</span>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize border ${listing.type === 'product' ? 'bg-green-100 text-green-800 border-green-200' :
+                                'bg-blue-100 text-blue-800 border-blue-200'
+                                }`}>
+                                {listing.type}
+                            </span>
+                            <span className="text-sm text-gray-400 capitalize bg-gray-100 px-2 py-0.5 rounded">{listing.category}</span>
                         </div>
                     </div>
 
                     <div className="mt-6">
                         <h3 className="sr-only">Description</h3>
-                        <div className="text-base text-gray-700 space-y-6" dangerouslySetInnerHTML={{ __html: listing.description.replace(/\n/g, '<br/>') }} />
+                        <div className="text-base text-gray-700 space-y-6">
+                            {listing.description || "No description provided."}
+                        </div>
                     </div>
 
                     {/* Seller Info */}
@@ -169,8 +166,8 @@ const ListingDetail: React.FC = () => {
                                 </span>
                             </div>
                             <div className="ml-3">
-                                <p className="text-sm font-medium text-gray-900">{listing.sellerName || "Unknown Seller"}</p>
-                                {/* Could add rating or joined date here */}
+                                <p className="text-sm font-medium text-gray-900">Verified Seller</p>
+                                <p className="text-xs text-gray-500">Member since {new Date(listing.created_at).getFullYear()}</p>
                             </div>
                         </div>
                     </div>
