@@ -11,7 +11,7 @@ import DashboardPage from '../pages/Dashboard/DashboardPage';
 
 // Placeholder components - these will be replaced with real page imports later
 import ChatPage from '../pages/Chat/ChatPage';
-const Profile = () => <div className="p-4"><h1>Profile</h1></div>;
+import ProfilePage from '../pages/Profile/ProfilePage';
 const Payments = () => <div className="p-4"><h1>Payments</h1></div>;
 const NotFound = () => <div className="p-4"><h1>404 Not Found</h1></div>;
 
@@ -37,7 +37,7 @@ export const AppRoutes = () => {
                 { path: 'listings', element: <ListingsPage /> },
                 { path: 'listings/:id', element: <ListingDetail /> },
                 { path: 'chat', element: <ChatPage /> },
-                { path: 'profile', element: <Profile /> },
+                { path: 'profile', element: <ProfilePage /> },
                 { path: 'payments', element: <Payments /> },
                 { path: '', element: <Navigate to="dashboard" replace /> }
             ]

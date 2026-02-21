@@ -48,6 +48,7 @@ export interface ChatUpdate {
  * Conversation summary (for chat list)
  */
 export interface Conversation {
+    conversation_id: string;
     user_id: string;               // The other user in the conversation
     user_name: string;             // Display name
     listing_id: string;

@@ -1,26 +1,24 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
-from app.schemas.payment import PaymentInitiate
+from app.schemas.payment import PaymentInitiate, TransactionHistoryItem
 from app.services.payment_service import PaymentService
 from app.api import deps
 from app.api.deps import get_current_user
-from typing import Dict
+from typing import Dict, List
 import logging
 
 router = APIRouter()
 logger = logging.getLogger("payments")
 
-@router.get("/")
-def read_payments(
+@router.get("/history", response_model=List[TransactionHistoryItem])
+def read_payment_history(
     db: Session = Depends(deps.get_db),
-    skip: int = 0,
-    limit: int = 100,
+    current_user=Depends(get_current_user)
 ):
     """
-    Retrieve payments.
+    Retrieve payment history for the current user.
     """
-    # return PaymentService.get_multi(db, skip=skip, limit=limit)
-    return [{"amount": 100.0, "status": "pending"}]
+    return PaymentService.get_user_transactions(db, current_user.id)
 
 @router.post("/initiate", status_code=status.HTTP_201_CREATED)
 def initiate_payment(payment: PaymentInitiate, current_user=Depends(get_current_user)):

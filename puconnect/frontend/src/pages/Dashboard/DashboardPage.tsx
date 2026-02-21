@@ -46,6 +46,7 @@ const DashboardPage: React.FC = () => {
 
                     if (!conversationsMap.has(conversationKey)) {
                         conversationsMap.set(conversationKey, {
+                            conversation_id: conversationKey,
                             user_id: otherUserId,
                             user_name: msg.sender_id === user?.id ? 'System User' : 'You', // In a real app, fetch user names
                             listing_id: msg.listing_id,
@@ -198,8 +199,8 @@ const DashboardPage: React.FC = () => {
                                 </div>
                                 <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm divide-y divide-gray-100">
                                     {recentChats.length > 0 ? (
-                                        recentChats.map((chat, idx) => (
-                                            <ChatPreview key={idx} conversation={chat} />
+                                        recentChats.map((chat) => (
+                                            <ChatPreview key={chat.conversation_id} conversation={chat} />
                                         ))
                                     ) : (
                                         <div className="p-8 text-center">

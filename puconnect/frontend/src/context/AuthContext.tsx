@@ -75,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setUser(userResponse.data);
             
             // Navigate to dashboard or home
-            navigate('/');
+            navigate('/dashboard');
 
         } catch (error) {
             console.error("Login failed:", error);
@@ -119,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         navigate('/auth/login');
     };
 
-    const isAuthenticated = !!user;
+    const isAuthenticated = !!accessToken;
 
     return (
         <AuthContext.Provider value={{
@@ -143,3 +143,4 @@ export const useAuth = (): AuthContextType => {
     }
     return context;
 };
+

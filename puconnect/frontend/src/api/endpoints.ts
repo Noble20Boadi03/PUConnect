@@ -31,6 +31,7 @@ export const API_ENDPOINTS = {
     initiate: `${API_PREFIX}/payments/initiate`,
     verify: (reference: string) => `${API_PREFIX}/payments/verify/${reference}`,
     list: `${API_PREFIX}/payments/`,
+    history: `${API_PREFIX}/payments/history`,
   },
   RECOMMENDATIONS: {
     getForUser: `${API_PREFIX}/recommendations`,

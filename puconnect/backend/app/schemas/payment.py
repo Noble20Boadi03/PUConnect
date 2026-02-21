@@ -49,3 +49,18 @@ class PaymentResponse(PaymentBase):
     updated_at: datetime
     
     model_config = ConfigDict(from_attributes=True)
+
+
+class TransactionHistoryItem(BaseModel):
+    """Schema for individual transaction history items."""
+    id: str
+    amount: float
+    status: PaymentStatus
+    transaction_reference: str
+    created_at: datetime
+    listing_title: str
+    listing_type: str
+    transaction_type: str # 'buy', 'sell', or 'service'
+    other_party_name: str
+
+    model_config = ConfigDict(from_attributes=True)
