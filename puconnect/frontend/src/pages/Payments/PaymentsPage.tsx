@@ -3,7 +3,7 @@ import Sidebar from '../../components/Dashboard/Sidebar';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
 import { API_ENDPOINTS } from '../../api/endpoints';
-import { Payment, PaymentStatus, formatAmount, getStatusColor, getStatusLabel } from '../../types/payment';
+import { Payment, PaymentStatus, formatAmount,getStatusLabel } from '../../types/payment';
 
 const PaymentsPage: React.FC = () => {
     const { user } = useAuth();

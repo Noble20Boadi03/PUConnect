@@ -58,8 +58,7 @@ const ListingsPage: React.FC = () => {
         if (debouncedSearchTerm) {
             const lowerTerm = debouncedSearchTerm.toLowerCase();
             result = result.filter(listing =>
-                listing.title.toLowerCase().includes(lowerTerm) ||
-                listing.description.toLowerCase().includes(lowerTerm)
+                listing.title.toLowerCase().includes(lowerTerm)
             );
         }
 
