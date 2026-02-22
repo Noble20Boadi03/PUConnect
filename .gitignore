@@ -1,15 +1,20 @@
 # Ignore node_modules and dependencies
 node_modules/
 
-# Ignore build outputs
-dist/
-build/
+# Ignore virtual environment
+.venv/
+venv/
 
-# Ignore environment files
-.env
-.env.local
+# Ignore Python cache files
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
 
-# Ignore log files
+# Ignore Alembic migration versions
+puconnect/backend/alembic/versions/
+
+# Ignore logs
 *.log
 logs/
 
@@ -28,10 +33,17 @@ logs/
 .DS_Store
 Thumbs.db
 
-# Ignore large files with no commit significance
+# Ignore frontend build outputs
+puconnect/frontend/dist/
+puconnect/frontend/build/
+
+# Ignore environment files
+.env
+.env.local
+
+# Ignore public assets
 puconnect/frontend/public/
-puconnect/frontend/src/assets/
-puconnect/backend/alembic/versions/
+
+# Ignore ML service data and models
 puconnect/ml-service/models/
 puconnect/ml-service/data/
-puconnect/nginx/logs/
