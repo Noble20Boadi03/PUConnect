@@ -9,6 +9,8 @@ import ListingsPage from '../pages/Listings/ListingsPage';
 import ListingDetail from '../pages/Listings/ListingDetail';
 import DashboardPage from '../pages/Dashboard/DashboardPage';
 
+import CreateListingPage from '../pages/Listings/CreateListingPage';
+
 // Placeholder components - these will be replaced with real page imports later
 import ChatPage from '../pages/Chat/ChatPage';
 import ProfilePage from '../pages/Profile/ProfilePage';
@@ -35,6 +37,7 @@ export const AppRoutes = () => {
             children: [
                 { path: 'dashboard', element: <DashboardPage /> },
                 { path: 'listings', element: <ListingsPage /> },
+                { path: 'listings/new', element: <CreateListingPage /> },
                 { path: 'listings/:id', element: <ListingDetail /> },
                 { path: 'chat', element: <ChatPage /> },
                 { path: 'profile', element: <ProfilePage /> },
