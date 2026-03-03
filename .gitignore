@@ -47,3 +47,6 @@ ios/
 *.db
 *.iml
 *.lock
+
+# Python virtual environment
+venv/
