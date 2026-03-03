@@ -1,10 +1,10 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, Enum, Index
+from sqlalchemy import Column, String, Boolean, DateTime, Enum, Index, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.db.session import Base
-from app.models.enums import UserRole
+from app.models.enums import UserRole, ExperienceLevel
 
 
 class User(Base):
@@ -17,6 +17,15 @@ class User(Base):
 	university_id = Column(String, index=True, nullable=False)
 	role = Column(Enum(UserRole), nullable=False, default=UserRole.student)
 	is_active = Column(Boolean, default=True, nullable=False)
+	
+	# Profile Setup Fields
+	bio = Column(String, nullable=True)
+	skill_tags = Column(JSON, nullable=True) # List of strings
+	experience_level = Column(Enum(ExperienceLevel), nullable=True)
+	portfolio_links = Column(JSON, nullable=True) # List of strings/URLs
+	is_available = Column(Boolean, default=True, nullable=False)
+	profile_picture_url = Column(String, nullable=True)
+
 	created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 	updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 

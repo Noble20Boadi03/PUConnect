@@ -34,6 +34,20 @@ class ListingType(str, enum.Enum):
     product = "product"
 
 
+class ExperienceLevel(str, enum.Enum):
+    """
+    Experience level enumeration for user profiles.
+    
+    Values:
+        beginner: Just starting out
+        intermediate: Some experience
+        expert: Highly skilled
+    """
+    beginner = "beginner"
+    intermediate = "intermediate"
+    expert = "expert"
+
+
 class PaymentStatus(str, enum.Enum):
     """
     Payment transaction status enumeration.

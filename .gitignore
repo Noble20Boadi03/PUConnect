@@ -1,0 +1,49 @@
+# Node.js dependencies
+node_modules/
+
+# Expo generated files
+.expo/
+.expo-shared/
+
+# Build outputs
+build/
+dist/
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+
+# IDE settings
+.vscode/
+.idea/
+
+# React Native specific
+android/
+ios/
+
+# Large files
+*.apk
+*.aab
+*.ipa
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# Miscellaneous
+*.tmp
+*.cache
+*.bak
+*.swp
+*.swo
+*.sqlite3
+*.db
+*.iml
+*.lock
