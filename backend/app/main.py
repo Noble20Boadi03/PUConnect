@@ -10,7 +10,7 @@ app = FastAPI(title="PU Connect API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://10.234.34.10"],  # Added phone IP
+    allow_origins=["http://localhost:5173", "http://10.234.34.10:5173"],  # Added phone IP
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
