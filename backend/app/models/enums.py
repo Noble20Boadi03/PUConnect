@@ -25,13 +25,36 @@ class UserRole(str, enum.Enum):
 class ListingType(str, enum.Enum):
     """
     Listing type enumeration.
-    
+
     Values:
-        service: Service offering (e.g., tutoring, delivery)
-        product: Physical product for sale
+        service_offer: Offering a service
+        service_request: Requesting a service
+        project_team: Recruiting for a project/team
     """
-    service = "service"
-    product = "product"
+    service_offer = "service_offer"
+    service_request = "service_request"
+    project_team = "project_team"
+
+
+class CategoryType(str, enum.Enum):
+    """
+    Marketplace category enumeration.
+    Synced with mobile/constants/categories.ts
+    """
+    programming  = "programming"
+    design       = "design"
+    writing      = "writing"
+    tutoring     = "tutoring"
+    marketing    = "marketing"
+    media        = "media"
+    audio        = "audio"
+    data_ai      = "data_ai"
+    business     = "business"
+    engineering  = "engineering"
+    tech_support = "tech_support"
+    events       = "events"
+    translation  = "translation"
+    research     = "research"
 
 
 class ExperienceLevel(str, enum.Enum):
