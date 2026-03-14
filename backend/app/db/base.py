@@ -6,4 +6,5 @@ from app.models.payment import Payment
 from app.models.chat import Chat
 from app.models.listing import Listing
 from app.models.review import Review
+from app.models.analytics import SearchQuery
 from app.models.enums import *

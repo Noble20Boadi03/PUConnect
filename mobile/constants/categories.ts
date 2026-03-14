@@ -14,20 +14,16 @@ export interface Category {
 
 export const CATEGORIES: Category[] = [
     { label: 'All', value: 'all', icon: 'apps-outline' },
-    { label: 'Programming', value: 'programming', icon: 'code-slash-outline' },
-    { label: 'Design', value: 'design', icon: 'color-palette-outline' },
-    { label: 'Writing', value: 'writing', icon: 'document-text-outline' },
-    { label: 'Tutoring', value: 'tutoring', icon: 'school-outline' },
-    { label: 'Marketing', value: 'marketing', icon: 'megaphone-outline' },
-    { label: 'Video & Media', value: 'media', icon: 'videocam-outline' },
-    { label: 'Music & Audio', value: 'audio', icon: 'musical-notes-outline' },
-    { label: 'Data & AI', value: 'data_ai', icon: 'analytics-outline' },
-    { label: 'Business', value: 'business', icon: 'briefcase-outline' },
-    { label: 'Engineering', value: 'engineering', icon: 'construct-outline' },
-    { label: 'Tech Support', value: 'tech_support', icon: 'hardware-chip-outline' },
-    { label: 'Event Services', value: 'events', icon: 'calendar-outline' },
-    { label: 'Translation', value: 'translation', icon: 'language-outline' },
-    { label: 'Research', value: 'research', icon: 'library-outline' },
+    { label: 'Academic tutoring', value: 'tutoring', icon: 'school-outline' },
+    { label: 'Programming / software development', value: 'software_dev', icon: 'code-slash-outline' },
+    { label: 'Graphic design', value: 'graphic_design', icon: 'color-palette-outline' },
+    { label: 'Website development', value: 'web_dev', icon: 'globe-outline' },
+    { label: 'Assignment/project guidance', value: 'assignment_guidance', icon: 'book-outline' },
+    { label: 'Social media management', value: 'social_media', icon: 'share-social-outline' },
+    { label: 'Video editing', value: 'video_editing', icon: 'videocam-outline' },
+    { label: 'Photography', value: 'photography', icon: 'camera-outline' },
+    { label: 'Resume/CV design', value: 'resume_design', icon: 'document-text-outline' },
+    { label: 'Data analysis / Excel help', value: 'data_analysis', icon: 'bar-chart-outline' },
 ];
 
 /** For create.tsx - excludes 'All' filter */

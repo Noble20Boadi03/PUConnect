@@ -83,6 +83,28 @@ export const api = {
         return response.json();
     },
 
+    getTalent: async (search: string = '', skip: number = 0, limit: number = 10): Promise<User[]> => {
+        let url = `${API_URL}/users/talent?skip=${skip}&limit=${limit}`;
+        if (search) {
+            url += `&search=${encodeURIComponent(search)}`;
+        }
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: getHeaders(),
+        });
+        if (!response.ok) throw new Error('Failed to fetch talent');
+        return response.json();
+    },
+
+    getSkillGaps: async (): Promise<any> => {
+        const response = await fetch(`${API_URL}/analytics/skill-gaps`, {
+            method: 'GET',
+            headers: getHeaders(),
+        });
+        if (!response.ok) throw new Error('Failed to fetch skill gap analysis');
+        return response.json();
+    },
+
     // Listings
     getListings: async (skip = 0, limit = 100): Promise<Listing[]> => {
         const response = await fetch(`${API_URL}/listings/?skip=${skip}&limit=${limit}`, {
