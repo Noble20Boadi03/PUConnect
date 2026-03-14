@@ -116,7 +116,13 @@ export default function CreateScreen() {
                                         { backgroundColor: category === cat.value ? theme.primary + '11' : 'transparent', borderColor: category === cat.value ? theme.primary : theme.border }
                                     ]}
                                 >
-                                    <Text style={[styles.catText, { color: category === cat.value ? theme.primary : theme.textSecondary }]}>{cat.emoji} {cat.label}</Text>
+                                    <Ionicons
+                                        name={cat.icon as any}
+                                        size={18}
+                                        color={category === cat.value ? theme.primary : theme.textSecondary}
+                                        style={{ marginRight: 6 }}
+                                    />
+                                    <Text style={[styles.catText, { color: category === cat.value ? theme.primary : theme.textSecondary }]}>{cat.label}</Text>
                                 </Pressable>
                             ))}
                         </View>
@@ -242,8 +248,10 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.md,
     },
     catChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
         paddingHorizontal: 12,
-        paddingVertical: 6,
+        paddingVertical: 8,
         borderRadius: BorderRadius.full,
         borderWidth: 1,
     },

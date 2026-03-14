@@ -2,7 +2,7 @@ import { AuthTokens, Listing, User, ChatMessage } from '../types';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
-const getApiUrl = () => {
+export const getApiUrl = () => {
     if (__DEV__) {
         const debuggerHost = Constants.expoConfig?.hostUri;
         if (debuggerHost) {
@@ -143,4 +143,30 @@ export const api = {
         if (!response.ok) throw new Error('Failed to send message');
         return response.json();
     },
+
+    uploadImage: async (uri: string, token: string): Promise<{ url: string }> => {
+        const formData = new FormData();
+        const filename = uri.split('/').pop() || 'profile.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : `image`;
+
+        formData.append('file', {
+            uri,
+            name: filename,
+            type,
+        } as any);
+
+        const response = await fetch(`${API_URL}/media/upload`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                // FormData sets its own content-type with boundary
+            },
+            body: formData,
+        });
+
+        if (!response.ok) throw new Error('Failed to upload image');
+        return response.json();
+    },
+    getApiUrl,
 };

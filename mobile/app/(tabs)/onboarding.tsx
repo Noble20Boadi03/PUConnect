@@ -21,6 +21,7 @@ import { useAuth } from "@/context/auth-context";
 import { api } from "@/services/api";
 import { ExperienceLevel } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from 'expo-image-picker';
 
 const POPULAR_SKILLS = [
   "Tutoring",
@@ -94,19 +95,44 @@ export default function OnboardingScreen() {
     setPortfolioLinks(portfolioLinks.filter((l) => l !== link));
   };
 
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setProfilePictureUrl(result.assets[0].uri);
+    }
+  };
+
   const handleSave = async () => {
     if (!token) return;
 
     setIsSubmitting(true);
     try {
+      let finalImageUrl = profilePictureUrl;
+      const finalPortfolioLinks = newLink
+        ? [...portfolioLinks, newLink]
+        : portfolioLinks;
+
+      // Upload if it's a local file
+      if (profilePictureUrl && profilePictureUrl.startsWith("file://")) {
+        const uploadResult = await api.uploadImage(profilePictureUrl, token);
+        const baseUrl = api.getApiUrl().replace('/api/v1', '');
+        finalImageUrl = `${baseUrl}${uploadResult.url}`;
+      }
+
       await api.updateProfile(
         {
           bio,
           skillTags,
           experienceLevel,
-          portfolioLinks,
+          portfolioLinks: finalPortfolioLinks,
           isAvailable,
-          profilePictureUrl,
+          profilePictureUrl: finalImageUrl,
           department,
           graduationYear: parseInt(graduationYear),
           verifiedStudent: true, // Mocking verification for demo
@@ -164,12 +190,7 @@ export default function OnboardingScreen() {
                     backgroundColor: theme.surface,
                   },
                 ]}
-                onPress={() =>
-                  Alert.alert(
-                    "Pick Image",
-                    "Image picker integration coming soon.",
-                  )
-                }
+                onPress={pickImage}
               >
                 {profilePictureUrl ? (
                   <Image
@@ -301,6 +322,8 @@ export default function OnboardingScreen() {
                 placeholderTextColor={theme.textMuted}
                 value={newLink}
                 onChangeText={setNewLink}
+                onSubmitEditing={addPortfolioLink}
+                returnKeyType="done"
               />
               <Pressable
                 style={[styles.addBtn, { backgroundColor: theme.primary }]}
@@ -441,6 +464,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     paddingHorizontal: 15,
     fontSize: 16,
+    borderWidth: 1,
   },
   textArea: {
     height: 120,

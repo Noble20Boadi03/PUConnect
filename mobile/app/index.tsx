@@ -61,18 +61,18 @@ export default function LandingScreen() {
   useEffect(() => {
     float1.value = withRepeat(
       withSequence(
-        withTiming(15, { duration: 3000 }),
-        withTiming(0, { duration: 3000 }),
+        withTiming(8, { duration: 5000 }),
+        withTiming(0, { duration: 5000 }),
       ),
       -1,
       true,
     );
     float2.value = withRepeat(
       withDelay(
-        500,
+        800,
         withSequence(
-          withTiming(-20, { duration: 4000 }),
-          withTiming(0, { duration: 4000 }),
+          withTiming(-10, { duration: 6000 }),
+          withTiming(0, { duration: 6000 }),
         ),
       ),
       -1,
@@ -118,9 +118,9 @@ export default function LandingScreen() {
         style={[
           styles.orb,
           {
-            top: height * 0.1,
-            left: -50,
-            backgroundColor: theme.primary + "33",
+            top: height * 0.05,
+            left: -100,
+            backgroundColor: theme.primary + "15",
           },
           float1Style,
         ]}
@@ -129,11 +129,11 @@ export default function LandingScreen() {
         style={[
           styles.orb,
           {
-            bottom: height * 0.2,
-            right: -100,
-            width: 400,
-            height: 400,
-            backgroundColor: theme.accent + "22",
+            bottom: height * 0.15,
+            right: -150,
+            width: 500,
+            height: 500,
+            backgroundColor: theme.primary + "10",
           },
           float2Style,
         ]}
@@ -160,19 +160,16 @@ export default function LandingScreen() {
         {/* Hero Section */}
         <View style={styles.hero}>
           <Animated.Text
-            entering={FadeInDown.duration(1000).delay(400)}
+            entering={FadeInDown.duration(800).delay(400)}
             style={styles.heroTitle}
           >
-            Where <Text style={{ color: theme.accent }}>Talent</Text>
-            {"\n"}
-            Meets <Text style={{ color: theme.primary }}>Campus</Text>
+            Where talent meets campus
           </Animated.Text>
           <Animated.Text
-            entering={FadeInDown.duration(1000).delay(600)}
+            entering={FadeInDown.duration(800).delay(500)}
             style={styles.heroSubtitle}
           >
-            The exclusive digital marketplace for verified university students
-            to collaborate, earn, and build their professional legacy.
+            The digital marketplace for university students to collaborate, earn, and build their legacy.
           </Animated.Text>
         </View>
 
@@ -250,19 +247,19 @@ export default function LandingScreen() {
         {/* Key Pillars */}
         <View style={styles.pillarsGrid}>
           {[
-            { icon: "shield-checkmark", title: "Verified", color: "#10b981" },
-            { icon: "lock-closed", title: "Secure", color: "#3b82f6" },
-            { icon: "rocket", title: "Campus-Fast", color: "#f59e0b" },
+            { icon: "shield-checkmark", title: "Verified", color: theme.primary },
+            { icon: "lock-closed", title: "Secure", color: theme.primary },
+            { icon: "rocket", title: "Campus-Fast", color: theme.primary },
           ].map((p, i) => (
             <Animated.View
               key={i}
-              entering={FadeInUp.duration(600).delay(1800 + i * 100)}
+              entering={FadeInUp.duration(600).delay(1500 + i * 100)}
               style={styles.pillarItem}
             >
               <View
-                style={[styles.pillarIcon, { backgroundColor: p.color + "22" }]}
+                style={[styles.pillarIcon, { backgroundColor: "rgba(255,255,255,0.05)" }]}
               >
-                <Ionicons name={p.icon as any} size={24} color={p.color} />
+                <Ionicons name={p.icon as any} size={22} color={p.color} />
               </View>
               <Text style={styles.pillarTitle}>{p.title}</Text>
             </Animated.View>
@@ -348,136 +345,136 @@ const styles = StyleSheet.create({
     letterSpacing: -1,
   },
   badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-    backgroundColor: "rgba(245, 158, 11, 0.2)",
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 4,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
     borderWidth: 1,
-    borderColor: "rgba(245, 158, 11, 0.4)",
+    borderColor: "rgba(255, 255, 255, 0.1)",
   },
   badgeText: {
-    color: "#f59e0b",
-    fontSize: 10,
-    fontWeight: "900",
+    color: "rgba(255, 255, 255, 0.4)",
+    fontSize: 9,
+    fontWeight: "700",
   },
   hero: {
     paddingHorizontal: 30,
     marginBottom: 40,
   },
   heroTitle: {
-    fontSize: 54,
-    fontWeight: "900",
+    fontSize: 48,
+    fontWeight: "800",
     color: "#fff",
-    lineHeight: 60,
-    letterSpacing: -2,
+    lineHeight: 54,
+    letterSpacing: -1.5,
   },
   heroSubtitle: {
-    fontSize: 18,
-    color: "rgba(255,255,255,0.6)",
-    marginTop: 20,
-    lineHeight: 28,
-    fontWeight: "500",
+    fontSize: 17,
+    color: "rgba(255,255,255,0.5)",
+    marginTop: 15,
+    lineHeight: 26,
+    fontWeight: "400",
   },
   statsContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 30,
-    marginBottom: 50,
+    marginBottom: 40,
   },
   statBox: {
     alignItems: "center",
   },
   statNumber: {
-    fontSize: 24,
-    fontWeight: "900",
+    fontSize: 22,
+    fontWeight: "800",
     color: "#fff",
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: "rgba(255,255,255,0.4)",
-    fontWeight: "700",
+    fontWeight: "600",
     textTransform: "uppercase",
     letterSpacing: 1,
     marginTop: 4,
   },
   statDivider: {
     width: 1,
-    height: 30,
+    height: 25,
     backgroundColor: "rgba(255,255,255,0.1)",
   },
   testimonialsSection: {
-    marginBottom: 50,
+    marginBottom: 40,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "rgba(255,255,255,0.4)",
+    fontSize: 12,
+    fontWeight: "700",
+    color: "rgba(255,255,255,0.3)",
     textTransform: "uppercase",
-    letterSpacing: 2,
+    letterSpacing: 1.5,
     marginLeft: 30,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   testimonialScroll: {
     paddingHorizontal: 30,
     gap: 15,
   },
   testimonialCard: {
-    width: width * 0.8,
-    padding: 24,
-    borderRadius: 24,
+    width: width * 0.75,
+    padding: 20,
+    borderRadius: 20,
     borderWidth: 1,
   },
   testimonialText: {
-    color: "#fff",
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: "500",
+    color: "rgba(255,255,255,0.9)",
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: "400",
     marginBottom: 20,
   },
   testimonialFooter: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
   },
   miniAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.15)",
     justifyContent: "center",
     alignItems: "center",
   },
   testimonialName: {
     color: "#fff",
-    fontSize: 14,
-    fontWeight: "700",
+    fontSize: 13,
+    fontWeight: "600",
   },
   testimonialRole: {
     color: "rgba(255,255,255,0.4)",
-    fontSize: 12,
+    fontSize: 11,
   },
   pillarsGrid: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: 30,
-    marginBottom: 60,
+    marginBottom: 50,
   },
   pillarItem: {
     alignItems: "center",
-    gap: 10,
+    gap: 8,
   },
   pillarIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 20,
+    width: 50,
+    height: 50,
+    borderRadius: 15,
     justifyContent: "center",
     alignItems: "center",
   },
   pillarTitle: {
-    color: "rgba(255,255,255,0.6)",
-    fontSize: 13,
-    fontWeight: "700",
+    color: "rgba(255,255,255,0.5)",
+    fontSize: 12,
+    fontWeight: "600",
   },
   footer: {
     paddingHorizontal: 30,
@@ -485,17 +482,17 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     width: width - 60,
-    height: 74,
-    borderRadius: 24,
+    height: 60,
+    borderRadius: 16,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
     ...Shadows.medium,
   },
   ctaText: {
-    fontSize: 20,
-    fontWeight: "900",
+    fontSize: 18,
+    fontWeight: "700",
     color: "#0f172a",
   },
   footerNote: {

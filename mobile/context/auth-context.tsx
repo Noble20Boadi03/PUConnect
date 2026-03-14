@@ -24,13 +24,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loadStorageData();
     }, []);
 
+    const normalizeUser = (response: any): User => {
+        let profilePictureUrl = response.profilePictureUrl ?? response.profile_picture_url;
+
+        // Make URL absolute if it's relative
+        if (profilePictureUrl && profilePictureUrl.startsWith('/')) {
+            const baseUrl = api.getApiUrl().replace('/api/v1', '');
+            profilePictureUrl = `${baseUrl}${profilePictureUrl}`;
+        }
+
+        return {
+            ...response,
+            fullName: response.fullName ?? response.full_name,
+            universityId: response.universityId ?? response.university_id,
+            skillTags: response.skillTags ?? response.skill_tags,
+            experienceLevel: response.experienceLevel ?? response.experience_level,
+            portfolioLinks: response.portfolioLinks ?? response.portfolio_links,
+            isAvailable: response.isAvailable ?? response.is_available,
+            profilePictureUrl,
+            reputationScore: response.reputationScore ?? response.reputation_score,
+            completedProjects: response.completedProjects ?? response.completed_projects,
+            verifiedStudent: response.verifiedStudent ?? response.verified_student,
+        };
+    };
+
     async function loadStorageData() {
         try {
             const storedToken = await SecureStore.getItemAsync('userToken');
             if (storedToken) {
                 setToken(storedToken);
-                const userData = await api.getMe(storedToken);
-                setUser(userData);
+                const response = await api.getMe(storedToken) as any;
+
+                setUser(normalizeUser(response));
             }
         } catch (e) {
             console.error('Failed to load auth data', e);
@@ -44,8 +69,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await SecureStore.setItemAsync('userToken', tokens.access_token);
         setToken(tokens.access_token);
 
-        const userData = await api.getMe(tokens.access_token);
-        setUser(userData);
+        const userDataResponse = await api.getMe(tokens.access_token) as any;
+        setUser(normalizeUser(userDataResponse));
     }
 
     async function register(userData: any) {
@@ -61,8 +86,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async function refreshUser() {
         if (token) {
             try {
-                const refreshedUserData = await api.getMe(token);
-                setUser(refreshedUserData);
+                const response = await api.getMe(token) as any;
+                setUser(normalizeUser(response));
             } catch (error) {
                 console.error('Failed to refresh user', error);
             }

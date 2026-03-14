@@ -3,6 +3,7 @@ import { FlatList, StyleSheet, View, Text, ActivityIndicator, RefreshControl, Sc
 import { api } from '@/services/api';
 import { Listing, ListingType } from '@/types';
 import { ListingCard } from '@/components/listing-card';
+import { router } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -109,7 +110,11 @@ export default function HomeScreen() {
               selectedCategory === cat.value && { borderBottomWidth: 2, borderBottomColor: theme.primary }
             ]}
           >
-            <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
+            <Ionicons
+              name={cat.icon as any}
+              size={16}
+              color={selectedCategory === cat.value ? theme.primary : theme.textMuted}
+            />
             <Text style={[
               styles.categoryText,
               { color: selectedCategory === cat.value ? theme.primary : theme.textSecondary, fontWeight: selectedCategory === cat.value ? '700' : '500' }
@@ -138,7 +143,7 @@ export default function HomeScreen() {
         renderItem={({ item }) => (
           <ListingCard
             listing={item}
-            onPress={() => console.log('Listing pressed:', item.id)}
+            onPress={() => router.push(`/listing/${item.id}`)}
           />
         )}
         keyExtractor={(item) => item.id}
@@ -238,10 +243,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     marginRight: Spacing.sm,
-    gap: 4,
-  },
-  categoryEmoji: {
-    fontSize: 14,
+    gap: 6,
   },
   categoryText: {
     fontSize: 14,

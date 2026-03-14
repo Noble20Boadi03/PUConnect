@@ -99,20 +99,25 @@ export default function ProfileScreen() {
                 {/* Profile Header Card */}
                 <View style={[styles.profileCard, { backgroundColor: theme.surface }]}>
                     <View style={styles.headerInfo}>
-                        <View style={[styles.avatarContainer, { borderColor: theme.primary }]}>
-                            {user?.profilePictureUrl ? (
-                                <Image source={{ uri: user.profilePictureUrl }} style={styles.avatarImage} />
-                            ) : (
-                                <ThemedText style={styles.avatarPlaceholder}>
-                                    {user?.fullName?.charAt(0)}
-                                </ThemedText>
-                            )}
-                            {user?.verifiedStudent && (
-                                <View style={[styles.verifiedBadge, { backgroundColor: theme.secondary }]}>
-                                    <Ionicons name="checkmark" size={12} color="#fff" />
+                        <Link href="/(tabs)/onboarding" asChild>
+                            <Pressable style={[styles.avatarContainer, { borderColor: theme.primary }]}>
+                                {user?.profilePictureUrl ? (
+                                    <Image source={{ uri: user.profilePictureUrl }} style={styles.avatarImage} />
+                                ) : (
+                                    <ThemedText style={styles.avatarPlaceholder}>
+                                        {user?.fullName?.charAt(0)}
+                                    </ThemedText>
+                                )}
+                                {user?.verifiedStudent && (
+                                    <View style={[styles.verifiedBadge, { backgroundColor: theme.secondary }]}>
+                                        <Ionicons name="checkmark" size={12} color="#fff" />
+                                    </View>
+                                )}
+                                <View style={[styles.editBadge, { backgroundColor: theme.primary }]}>
+                                    <Ionicons name="camera" size={10} color="#fff" />
                                 </View>
-                            )}
-                        </View>
+                            </Pressable>
+                        </Link>
 
                         <View style={styles.userNameContainer}>
                             <ThemedText style={styles.userName}>{user?.fullName || 'Campus Pro'}</ThemedText>
@@ -335,6 +340,20 @@ const styles = StyleSheet.create({
         borderColor: '#fff',
         justifyContent: 'center',
         alignItems: 'center',
+        zIndex: 2,
+    },
+    editBadge: {
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        borderWidth: 2,
+        borderColor: '#fff',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 2,
     },
     userNameContainer: {
         marginLeft: Spacing.md,

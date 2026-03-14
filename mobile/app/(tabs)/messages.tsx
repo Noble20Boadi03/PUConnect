@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, FlatList, View, ActivityIndicator, Pressable, Text, Image } from 'react-native';
+import { router } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { api } from '@/services/api';
 import { useAuth } from '@/context/auth-context';
@@ -98,7 +99,10 @@ export default function MessagesScreen() {
                     <View style={styles.emptyContainer}>
                         <Ionicons name="chatbubbles-outline" size={64} color={theme.textMuted} />
                         <Text style={[styles.emptyText, { color: theme.textMuted }]}>No active collaborations yet.</Text>
-                        <Pressable style={[styles.browseBtn, { backgroundColor: theme.primary }]}>
+                        <Pressable
+                            style={[styles.browseBtn, { backgroundColor: theme.primary }]}
+                            onPress={() => router.push('/(tabs)/home')}
+                        >
                             <Text style={styles.browseBtnText}>Explore Market</Text>
                         </Pressable>
                     </View>

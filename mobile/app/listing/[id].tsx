@@ -26,7 +26,16 @@ export default function ListingDetailsScreen() {
 
     const fetchData = async () => {
         try {
-            const listingData = await api.getListing(id);
+            const response = await api.getListing(id) as any;
+
+            // Normalize API response to handle potential snake_case from backend
+            const listingData: Listing = {
+                ...response,
+                ownerId: response.ownerId ?? response.owner_id,
+                createdAt: response.createdAt ?? response.created_at,
+                requiredSkills: response.requiredSkills ?? response.required_skills,
+            };
+
             setListing(listingData);
 
             // Fetch owner profile if we can, this assumes an endpoint like users/{id} exists, 
@@ -84,7 +93,6 @@ export default function ListingDetailsScreen() {
             <Stack.Screen
                 options={{
                     title: 'Details',
-                    headerBackTitleVisible: false,
                     headerTintColor: theme.text,
                     headerStyle: { backgroundColor: theme.background }
                 }}
@@ -144,7 +152,7 @@ export default function ListingDetailsScreen() {
                         </View>
                         <View style={styles.ownerInfo}>
                             <Text style={[styles.ownerName, { color: theme.text }]}>
-                                Student {listing.ownerId.slice(0, 4)}
+                                Student {listing.ownerId?.slice(0, 4) ?? 'Unknown'}
                             </Text>
                             <Text style={[styles.ownerSubtitle, { color: theme.textMuted }]}>
                                 View Profile
