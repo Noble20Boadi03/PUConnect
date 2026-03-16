@@ -44,6 +44,19 @@ class UserService:
             if hasattr(db_obj, field):
                 setattr(db_obj, field, update_data[field])
 
+        # Regenerate semantic embedding if bio or skills changed
+        try:
+            from app.api.v1.endpoints.search import model
+            if model and (("bio" in update_data) or ("skill_tags" in update_data)):
+                skills = db_obj.skill_tags or []
+                bio = db_obj.bio or ""
+                skills_text = ", ".join(skills) if skills else ""
+                combined_text = f"Skills: {skills_text}. Experience: {bio}"
+                embedding = model.encode(combined_text).tolist()
+                db_obj.embedding = embedding
+        except Exception as e:
+            print(f"Warning: Failed to update semantic embedding: {e}")
+
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)

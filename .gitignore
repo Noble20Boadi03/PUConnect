@@ -17,7 +17,6 @@ dist/
 Thumbs.db
 
 # Environment variables
-.env
 
 # IDE settings
 .vscode/
@@ -50,3 +49,4 @@ ios/
 
 # Python virtual environment
 venv/
+.env
