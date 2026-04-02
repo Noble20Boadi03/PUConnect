@@ -11,7 +11,6 @@ class Settings(BaseSettings):
 	REDIS_URL: str
 	MTN_MOMO_API_KEY: str
 	ENVIRONMENT: str = "development"
-	HF_TOKEN: str | None = None
 
 	model_config = SettingsConfigDict(
 		env_file=".env",

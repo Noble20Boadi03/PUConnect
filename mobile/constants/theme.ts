@@ -10,7 +10,7 @@ const palette = {
     dark: '#0f172a',
   },
   surface: {
-    light: '#fffff',
+    light: '#ffffff',
     dark: '#1e293b',
   },
   text: {

@@ -25,7 +25,6 @@ class User(Base):
 	portfolio_links = Column(JSON, nullable=True) # List of strings/URLs
 	is_available = Column(Boolean, default=True, nullable=False)
 	profile_picture_url = Column(String, nullable=True)
-	embedding = Column(ARRAY(Float), nullable=True) # AI Semantic Search Vector
 
 	created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 	updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
