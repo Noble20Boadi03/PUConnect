@@ -48,7 +48,7 @@ export default function ProfileScreen() {
             <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
                 <View style={styles.loginContainer}>
                     <View style={[styles.loginCard, { backgroundColor: theme.surface }]}>
-                        <ThemedText style={styles.loginHeader}>PuConnect</ThemedText>
+                        <ThemedText style={styles.loginHeader}>Zevoa</ThemedText>
                         <ThemedText style={styles.loginSub}>The Campus Talent Marketplace</ThemedText>
 
                         <View style={styles.form}>

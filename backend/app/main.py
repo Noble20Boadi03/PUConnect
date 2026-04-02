@@ -7,7 +7,7 @@ from app.core import config
 
 settings = config.get_settings()
 
-app = FastAPI(title="PU Connect API")
+app = FastAPI(title="PuConnect API")
 
 app.add_middleware(
     CORSMiddleware,

@@ -1,12 +1,12 @@
 import { Platform } from 'react-native';
 
 const palette = {
-  primary: '#4f46e5', // Indigo - Trust, Professionalism
+  primary: '#4f46e5', // Indigo - PuConnect signature
   primaryLight: '#818cf8',
-  secondary: '#10b981', // Emerald - Completion, Success
-  accent: '#f59e0b', // Amber - Projects, Attention
+  secondary: '#1a1a1a', 
+  accent: '#1a1a1a', 
   background: {
-    light: '#f8fafc',
+    light: '#ffffff',
     dark: '#0f172a',
   },
   surface: {
@@ -14,12 +14,12 @@ const palette = {
     dark: '#1e293b',
   },
   text: {
-    primary: '#1e293b',
-    secondary: '#64748b',
-    muted: '#94a3b8',
+    primary: '#1a1a1a',
+    secondary: '#555555',
+    muted: '#999999',
     onPrimary: '#ffffff',
   },
-  border: '#e2e8f0',
+  border: '#eeeeee',
   error: '#ef4444',
 };
 

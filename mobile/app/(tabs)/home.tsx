@@ -62,7 +62,7 @@ export default function HomeScreen() {
       <View style={styles.topRow}>
         <View>
           <Text style={[styles.greeting, { color: theme.textSecondary }]}>Welcome to</Text>
-          <Text style={[styles.brand, { color: theme.primary }]}>PuConnect</Text>
+          <Text style={[styles.brand, { color: theme.primary }]}>Zevoa</Text>
         </View>
         <Pressable style={[styles.notificationBtn, { backgroundColor: theme.surface }]}>
           <Ionicons name="notifications-outline" size={24} color={theme.text} />

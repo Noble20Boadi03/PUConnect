@@ -12,28 +12,24 @@ import {
     Keyboard,
     ActivityIndicator,
     Alert,
+    Image,
 } from "react-native";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, {
     FadeInDown,
-    FadeInUp,
     useSharedValue,
     useAnimatedStyle,
-    withSpring,
     withTiming,
 } from "react-native-reanimated";
-import { Colors, Shadows } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { LinearGradient } from "expo-linear-gradient";
+import { Colors } from "@/constants/theme";
 import { useAuth } from "@/context/auth-context";
 
 const { width } = Dimensions.get("window");
 
 export default function LoginScreen() {
-    const colorScheme = useColorScheme();
-    const theme = Colors[colorScheme ?? "light"];
+    const theme = Colors.light;
     const { signIn } = useAuth();
 
     const [email, setEmail] = useState("");
@@ -41,18 +37,17 @@ export default function LoginScreen() {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
-    // Animation values for input focus
     const emailFocus = useSharedValue(0);
     const passwordFocus = useSharedValue(0);
 
     const emailStyle = useAnimatedStyle(() => ({
-        borderColor: withTiming(emailFocus.value ? theme.accent : "rgba(255,255,255,0.1)"),
-        backgroundColor: withTiming(emailFocus.value ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.05)"),
+        borderColor: withTiming(emailFocus.value ? "#1a1a1a" : "#f0f0f0"),
+        backgroundColor: withTiming(emailFocus.value ? "#ffffff" : "#f9f9f9"),
     }));
 
     const passwordStyle = useAnimatedStyle(() => ({
-        borderColor: withTiming(passwordFocus.value ? theme.accent : "rgba(255,255,255,0.1)"),
-        backgroundColor: withTiming(passwordFocus.value ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.05)"),
+        borderColor: withTiming(passwordFocus.value ? "#1a1a1a" : "#f0f0f0"),
+        backgroundColor: withTiming(passwordFocus.value ? "#ffffff" : "#f9f9f9"),
     }));
 
     const handleLogin = async () => {
@@ -76,87 +71,42 @@ export default function LoginScreen() {
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={styles.container}>
-                <StatusBar style="light" />
-                <LinearGradient
-                    colors={["#0f172a", "#1e293b", "#0f172a"]}
-                    style={StyleSheet.absoluteFill}
-                />
-
-                {/* Decorative Orbs */}
-                <View
-                    style={[
-                        styles.orb,
-                        {
-                            top: -150,
-                            right: -100,
-                            backgroundColor: theme.primary + "12",
-                            width: 350,
-                            height: 350,
-                            borderRadius: 175,
-                        },
-                    ]}
-                />
-                <View
-                    style={[
-                        styles.orb,
-                        {
-                            bottom: -100,
-                            left: -150,
-                            backgroundColor: theme.primary + "08",
-                            width: 450,
-                            height: 450,
-                            borderRadius: 225,
-                        },
-                    ]}
-                />
-
+                <StatusBar style="dark" />
+                
                 <KeyboardAvoidingView
                     behavior={Platform.OS === "ios" ? "padding" : "height"}
                     style={styles.keyboardView}
                 >
                     <View style={styles.content}>
                         {/* Back Button */}
-                        <Animated.View entering={FadeInDown.delay(200).duration(600)}>
-                            <Pressable
-                                onPress={() => router.back()}
-                                style={styles.backButton}
-                            >
-                                <Ionicons name="arrow-back" size={24} color="#fff" />
-                            </Pressable>
-                        </Animated.View>
+                        <Pressable onPress={() => router.back()} style={styles.backButton}>
+                            <Ionicons name="chevron-back" size={24} color="#1a1a1a" />
+                        </Pressable>
 
-                        {/* Header */}
                         <View style={styles.header}>
-                            <Animated.View
-                                entering={FadeInDown.delay(400).duration(800)}
-                                style={styles.logoBadge}
-                            >
-                                <Ionicons name="flash-sharp" size={32} color={theme.accent} />
-                            </Animated.View>
-                            <Animated.Text
-                                entering={FadeInDown.delay(500).duration(800)}
-                                style={styles.title}
-                            >
+                            <Image 
+                                source={require("../assets/images/puconnect_logo.png")}
+                                style={styles.logo}
+                                resizeMode="contain"
+                            />
+                            <Animated.Text entering={FadeInDown.delay(200).duration(800)} style={styles.title}>
                                 Welcome Back
                             </Animated.Text>
-                            <Animated.Text
-                                entering={FadeInDown.delay(600).duration(800)}
-                                style={styles.subtitle}
-                            >
-                                Sign in to continue your journey on PuConnect
+                            <Animated.Text entering={FadeInDown.delay(300).duration(800)} style={styles.subtitle}>
+                                Please enter your details to sign in
                             </Animated.Text>
                         </View>
 
                         {/* Form */}
                         <View style={styles.form}>
-                            <Animated.View entering={FadeInUp.delay(800).duration(800)}>
-                                <Text style={styles.inputLabel}>University Email</Text>
+                            <Animated.View entering={FadeInDown.delay(400).duration(800)}>
+                                <Text style={styles.inputLabel}>EmailAddress</Text>
                                 <Animated.View style={[styles.inputContainer, emailStyle]}>
-                                    <Ionicons name="mail-outline" size={20} color="rgba(255,255,255,0.4)" style={styles.inputIcon} />
+                                    <Ionicons name="mail-outline" size={20} color="#888" style={styles.inputIcon} />
                                     <TextInput
                                         style={styles.input}
-                                        placeholder="name@university.edu"
-                                        placeholderTextColor="rgba(255,255,255,0.3)"
+                                        placeholder="email@example.com"
+                                        placeholderTextColor="#bbb"
                                         value={email}
                                         onChangeText={setEmail}
                                         onFocus={() => (emailFocus.value = 1)}
@@ -167,14 +117,14 @@ export default function LoginScreen() {
                                 </Animated.View>
                             </Animated.View>
 
-                            <Animated.View entering={FadeInUp.delay(900).duration(800)} style={{ marginTop: 20 }}>
+                            <Animated.View entering={FadeInDown.delay(500).duration(800)} style={{ marginTop: 24 }}>
                                 <Text style={styles.inputLabel}>Password</Text>
                                 <Animated.View style={[styles.inputContainer, passwordStyle]}>
-                                    <Ionicons name="lock-closed-outline" size={20} color="rgba(255,255,255,0.4)" style={styles.inputIcon} />
+                                    <Ionicons name="lock-closed-outline" size={20} color="#888" style={styles.inputIcon} />
                                     <TextInput
                                         style={styles.input}
                                         placeholder="••••••••"
-                                        placeholderTextColor="rgba(255,255,255,0.3)"
+                                        placeholderTextColor="#bbb"
                                         value={password}
                                         onChangeText={setPassword}
                                         onFocus={() => (passwordFocus.value = 1)}
@@ -185,22 +135,21 @@ export default function LoginScreen() {
                                         <Ionicons
                                             name={showPassword ? "eye-off-outline" : "eye-outline"}
                                             size={20}
-                                            color="rgba(255,255,255,0.4)"
+                                            color="#888"
                                         />
                                     </Pressable>
                                 </Animated.View>
                                 <Pressable style={styles.forgotPassword}>
-                                    <Text style={[styles.forgotPasswordText, { color: theme.accent }]}>Forgot Password?</Text>
+                                    <Text style={styles.forgotPasswordText}>Forgot password?</Text>
                                 </Pressable>
                             </Animated.View>
 
-                            <Animated.View entering={FadeInUp.delay(1100).duration(800)} style={{ marginTop: 40 }}>
+                            <Animated.View entering={FadeInDown.delay(700).duration(800)} style={{ marginTop: 40 }}>
                                 <Pressable
                                     style={({ pressed }) => [
                                         styles.loginButton,
                                         {
-                                            backgroundColor: theme.accent,
-                                            opacity: isLoading ? 0.7 : pressed ? 0.9 : 1,
+                                            opacity: isLoading || pressed ? 0.8 : 1,
                                             transform: [{ scale: pressed ? 0.98 : 1 }],
                                         },
                                     ]}
@@ -208,25 +157,19 @@ export default function LoginScreen() {
                                     disabled={isLoading}
                                 >
                                     {isLoading ? (
-                                        <ActivityIndicator color="#0f172a" />
+                                        <ActivityIndicator color="#ffffff" />
                                     ) : (
-                                        <>
-                                            <Text style={styles.loginButtonText}>Sign In</Text>
-                                            <Ionicons name="arrow-forward" size={20} color="#0f172a" />
-                                        </>
+                                        <Text style={styles.loginButtonText}>Sign In</Text>
                                     )}
                                 </Pressable>
                             </Animated.View>
                         </View>
 
                         {/* Footer */}
-                        <Animated.View
-                            entering={FadeInUp.delay(1300).duration(800)}
-                            style={styles.footer}
-                        >
-                            <Text style={styles.footerText}>New to PuConnect? </Text>
+                        <Animated.View entering={FadeInDown.delay(900).duration(800)} style={styles.footer}>
+                            <Text style={styles.footerText}>New here? </Text>
                             <Pressable onPress={() => router.push("/register")}>
-                                <Text style={[styles.footerLink, { color: theme.accent }]}>Create Account</Text>
+                                <Text style={styles.footerLink}>Create Account</Text>
                             </Pressable>
                         </Animated.View>
                     </View>
@@ -239,86 +182,70 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#0f172a",
-    },
-    orb: {
-        position: "absolute",
+        backgroundColor: "#ffffff",
     },
     keyboardView: {
         flex: 1,
     },
     content: {
         flex: 1,
-        paddingHorizontal: 30,
+        paddingHorizontal: 24,
         paddingTop: Platform.OS === "ios" ? 60 : 40,
     },
     backButton: {
-        width: 44,
-        height: 44,
-        borderRadius: 14,
-        backgroundColor: "rgba(255,255,255,0.05)",
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: "#f9f9f9",
         justifyContent: "center",
         alignItems: "center",
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.1)",
-        marginBottom: 30,
+        marginBottom: 20,
     },
     header: {
         marginBottom: 40,
     },
-    logoBadge: {
-        width: 64,
-        height: 64,
-        borderRadius: 20,
-        backgroundColor: "rgba(255,255,255,0.05)",
-        justifyContent: "center",
-        alignItems: "center",
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.1)",
-        marginBottom: 20,
+    logo: {
+        width: 120,
+        height: 40,
+        marginBottom: 24,
     },
     title: {
-        fontSize: 28,
+        fontSize: 32,
         fontWeight: "800",
-        color: "#fff",
-        letterSpacing: -0.8,
+        color: "#1a1a1a",
         marginBottom: 8,
     },
     subtitle: {
-        fontSize: 15,
-        color: "rgba(255,255,255,0.45)",
-        lineHeight: 22,
+        fontSize: 16,
+        color: "#888",
         fontWeight: "400",
     },
     form: {
         flex: 1,
     },
     inputLabel: {
-        fontSize: 13,
+        fontSize: 14,
         fontWeight: "600",
-        color: "rgba(255,255,255,0.35)",
-        marginBottom: 8,
-        marginLeft: 4,
-        textTransform: "uppercase",
-        letterSpacing: 0.8,
+        color: "#1a1a1a",
+        marginBottom: 10,
     },
     inputContainer: {
-        height: 56,
-        borderRadius: 14,
-        borderWidth: 1,
+        height: 60,
+        borderRadius: 30,
+        borderWidth: 1.5,
         flexDirection: "row",
         alignItems: "center",
-        paddingHorizontal: 16,
-        gap: 10,
+        paddingHorizontal: 20,
+        gap: 12,
     },
     inputIcon: {
         width: 24,
     },
     input: {
         flex: 1,
-        color: "#fff",
+        color: "#1a1a1a",
         fontSize: 16,
-        fontWeight: "600",
+        fontWeight: "500",
     },
     showPassword: {
         padding: 10,
@@ -329,21 +256,20 @@ const styles = StyleSheet.create({
     },
     forgotPasswordText: {
         fontSize: 14,
-        fontWeight: "700",
+        fontWeight: "600",
+        color: "#1a1a1a",
     },
     loginButton: {
-        height: 58,
-        borderRadius: 14,
-        flexDirection: "row",
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: "#1a1a1a",
         justifyContent: "center",
         alignItems: "center",
-        gap: 8,
-        ...Shadows.medium,
     },
     loginButtonText: {
-        fontSize: 17,
+        fontSize: 16,
         fontWeight: "700",
-        color: "#0f172a",
+        color: "#ffffff",
     },
     footer: {
         flexDirection: "row",
@@ -354,11 +280,12 @@ const styles = StyleSheet.create({
     },
     footerText: {
         fontSize: 15,
-        color: "rgba(255,255,255,0.5)",
+        color: "#888",
         fontWeight: "500",
     },
     footerLink: {
         fontSize: 15,
         fontWeight: "700",
+        color: "#1a1a1a",
     },
 });
