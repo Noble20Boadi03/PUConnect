@@ -4,18 +4,16 @@ import { Link } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/context/auth-context';
-import { Colors, Spacing, BorderRadius, Shadows } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
+import { useTheme } from '@/context/theme-context';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function ProfileScreen() {
     const { user, token, signIn, signOut, isLoading } = useAuth();
+    const { theme, setMode, isDark } = useTheme();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoggingIn, setIsLoggingIn] = useState(false);
-
-    const colorScheme = useColorScheme();
-    const theme = Colors[colorScheme ?? 'light'];
 
     const isProfileIncomplete = !user?.bio || !user?.skillTags || user.skillTags.length === 0;
 
@@ -209,6 +207,17 @@ export default function ProfileScreen() {
                         </View>
                         <ThemedText style={styles.menuText}>Trust & Verification</ThemedText>
                         <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
+                    </Pressable>
+
+                    <Pressable 
+                        style={[styles.menuItem, { backgroundColor: theme.surface }]}
+                        onPress={() => setMode(isDark ? 'light' : 'dark')}
+                    >
+                        <View style={[styles.menuIcon, { backgroundColor: isDark ? '#334155' : '#fef3c7' }]}>
+                            <Ionicons name={isDark ? "moon" : "sunny"} size={20} color={isDark ? "#94a3b8" : theme.accent} />
+                        </View>
+                        <ThemedText style={styles.menuText}>{isDark ? 'Dark Mode' : 'Light Mode'}</ThemedText>
+                        <Ionicons name={isDark ? "toggle" : "toggle-outline"} size={28} color={isDark ? theme.primary : "#cbd5e1"} />
                     </Pressable>
 
                     <Pressable style={[styles.menuItem, { backgroundColor: theme.surface }]}>

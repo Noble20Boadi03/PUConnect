@@ -18,6 +18,7 @@ class ListingBase(BaseModel):
     category: str
     type: ListingType
     is_active: bool = True
+    media_url: Optional[str] = None
 
 
 class ListingCreate(ListingBase):

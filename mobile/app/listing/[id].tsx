@@ -6,8 +6,8 @@ import { api } from '@/services/api';
 import { Listing, User } from '@/types';
 import { useAuth } from '@/context/auth-context';
 import { ThemedView } from '@/components/themed-view';
-import { Colors, Spacing, BorderRadius, Shadows } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
+import { useTheme } from '@/context/theme-context';
 
 export default function ListingDetailsScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -17,8 +17,7 @@ export default function ListingDetailsScreen() {
 
     const { token, user } = useAuth();
     const router = useRouter();
-    const colorScheme = useColorScheme();
-    const theme = Colors[colorScheme ?? 'light'];
+    const { theme } = useTheme();
 
     useEffect(() => {
         fetchData();
@@ -63,10 +62,8 @@ export default function ListingDetailsScreen() {
             return;
         }
 
-        // Ideally navigate to a chat screen, passing the ownerId and listingId
-        // something like router.push(`/chat/${listing?.ownerId}?listingId=${listing?.id}`);
-        // But since we just have a general messages screen for now:
-        Alert.alert('Coming Soon', 'Chat interface is being wired up.');
+        // Navigate to chat with owner, passing listingId as a context
+        router.push(`/chat/${listing?.ownerId}?listingId=${listing?.id}`);
     };
 
     if (loading) {

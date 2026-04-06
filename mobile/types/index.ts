@@ -44,6 +44,7 @@ export interface Listing {
   deadline?: string;
   requiredSkills?: string[];
   teamSize?: number; // For project teams
+  media_url?: string;
 
   createdAt: string;
   updatedAt: string;

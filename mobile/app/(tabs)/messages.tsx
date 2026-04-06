@@ -5,16 +5,15 @@ import { ThemedView } from '@/components/themed-view';
 import { api } from '@/services/api';
 import { useAuth } from '@/context/auth-context';
 import { ChatMessage } from '@/types';
-import { Colors, Spacing, BorderRadius, Shadows } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Spacing, BorderRadius } from '@/constants/theme';
+import { useTheme } from '@/context/theme-context';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function MessagesScreen() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [loading, setLoading] = useState(true);
     const { token, user } = useAuth();
-    const colorScheme = useColorScheme();
-    const theme = Colors[colorScheme ?? 'light'];
+    const { theme } = useTheme();
 
     useEffect(() => {
         if (token) {
