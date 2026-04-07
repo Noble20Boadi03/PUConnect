@@ -7,10 +7,12 @@ import { useAuth } from '@/context/auth-context';
 import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ProfileScreen() {
     const { user, token, signIn, signOut, isLoading } = useAuth();
     const { theme, setMode, isDark } = useTheme();
+    const insets = useSafeAreaInsets();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -46,7 +48,7 @@ export default function ProfileScreen() {
             <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
                 <View style={styles.loginContainer}>
                     <View style={[styles.loginCard, { backgroundColor: theme.surface }]}>
-                        <ThemedText style={styles.loginHeader}>Zevoa</ThemedText>
+                        <ThemedText style={styles.loginHeader}>PuConnect</ThemedText>
                         <ThemedText style={styles.loginSub}>The Campus Talent Marketplace</ThemedText>
 
                         <View style={styles.form}>
@@ -93,25 +95,25 @@ export default function ProfileScreen() {
 
     return (
         <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 60 }}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 60, paddingTop: insets.top }}>
                 {/* Profile Header Card */}
                 <View style={[styles.profileCard, { backgroundColor: theme.surface }]}>
                     <View style={styles.headerInfo}>
                         <Link href="/(tabs)/onboarding" asChild>
-                            <Pressable style={[styles.avatarContainer, { borderColor: theme.primary }]}>
+                            <Pressable style={[styles.avatarContainer, { borderColor: theme.primary, backgroundColor: theme.background }]}>
                                 {user?.profilePictureUrl ? (
                                     <Image source={{ uri: user.profilePictureUrl }} style={styles.avatarImage} />
                                 ) : (
-                                    <ThemedText style={styles.avatarPlaceholder}>
+                                    <ThemedText style={[styles.avatarPlaceholder, { color: theme.textMuted }]}>
                                         {user?.fullName?.charAt(0)}
                                     </ThemedText>
                                 )}
                                 {user?.verifiedStudent && (
-                                    <View style={[styles.verifiedBadge, { backgroundColor: theme.secondary }]}>
+                                    <View style={[styles.verifiedBadge, { backgroundColor: theme.secondary, borderColor: theme.surface }]}>
                                         <Ionicons name="checkmark" size={12} color="#fff" />
                                     </View>
                                 )}
-                                <View style={[styles.editBadge, { backgroundColor: theme.primary }]}>
+                                <View style={[styles.editBadge, { backgroundColor: theme.primary, borderColor: theme.surface }]}>
                                     <Ionicons name="camera" size={10} color="#fff" />
                                 </View>
                             </Pressable>
@@ -124,12 +126,12 @@ export default function ProfileScreen() {
                             </ThemedText>
                             <View style={styles.ratingRow}>
                                 <Ionicons name="star" size={16} color={theme.accent} />
-                                <ThemedText style={styles.ratingText}>{user?.reputationScore || '0.0'} Reputation</ThemedText>
+                                <ThemedText style={[styles.ratingText, { color: theme.text }]}>{user?.reputationScore || '0.0'} Reputation</ThemedText>
                             </View>
                         </View>
                     </View>
 
-                    <View style={styles.statsOverview}>
+                    <View style={[styles.statsOverview, { borderColor: theme.border }]}>
                         <View style={styles.statBox}>
                             <ThemedText style={[styles.statNum, { color: theme.primary }]}>{user?.completedProjects || 0}</ThemedText>
                             <ThemedText style={[styles.statLab, { color: theme.textMuted }]}>Projects</ThemedText>
@@ -182,7 +184,7 @@ export default function ProfileScreen() {
                         {user?.skillTags && user.skillTags.length > 0 ? (
                             user.skillTags.map(tag => (
                                 <View key={tag} style={[styles.skillTag, { backgroundColor: theme.background, borderColor: theme.border }]}>
-                                    <ThemedText style={styles.skillTagText}>{tag}</ThemedText>
+                                    <ThemedText style={[styles.skillTagText, { color: theme.text }]}>{tag}</ThemedText>
                                 </View>
                             ))
                         ) : (
@@ -214,14 +216,14 @@ export default function ProfileScreen() {
                         onPress={() => setMode(isDark ? 'light' : 'dark')}
                     >
                         <View style={[styles.menuIcon, { backgroundColor: isDark ? '#334155' : '#fef3c7' }]}>
-                            <Ionicons name={isDark ? "moon" : "sunny"} size={20} color={isDark ? "#94a3b8" : theme.accent} />
+                            <Ionicons name={isDark ? "moon" : "sunny"} size={20} color={isDark ? "#94a3b8" : "#f59e0b"} />
                         </View>
                         <ThemedText style={styles.menuText}>{isDark ? 'Dark Mode' : 'Light Mode'}</ThemedText>
                         <Ionicons name={isDark ? "toggle" : "toggle-outline"} size={28} color={isDark ? theme.primary : "#cbd5e1"} />
                     </Pressable>
 
                     <Pressable style={[styles.menuItem, { backgroundColor: theme.surface }]}>
-                        <View style={[styles.menuIcon, { backgroundColor: '#fef3c7' }]}>
+                        <View style={[styles.menuIcon, { backgroundColor: isDark ? '#1e293b' : '#fef3c7' }]}>
                             <Ionicons name="settings-outline" size={20} color={theme.accent} />
                         </View>
                         <ThemedText style={styles.menuText}>Account Settings</ThemedText>
@@ -229,7 +231,7 @@ export default function ProfileScreen() {
                     </Pressable>
 
                     <Pressable style={[styles.menuItem, { backgroundColor: theme.surface }]} onPress={signOut}>
-                        <View style={[styles.menuIcon, { backgroundColor: '#fee2e2' }]}>
+                        <View style={[styles.menuIcon, { backgroundColor: isDark ? '#1e293b' : '#fee2e2' }]}>
                             <Ionicons name="log-out-outline" size={20} color={theme.error} />
                         </View>
                         <ThemedText style={[styles.menuText, { color: theme.error }]}>Log Out</ThemedText>
@@ -307,7 +309,7 @@ const styles = StyleSheet.create({
         opacity: 0.6,
     },
     profileCard: {
-        marginTop: 60,
+        marginTop: Spacing.md,
         marginHorizontal: Spacing.md,
         padding: Spacing.lg,
         borderRadius: BorderRadius.xl,
@@ -326,7 +328,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         position: 'relative',
-        backgroundColor: '#f1f5f9',
     },
     avatarImage: {
         width: 76,
@@ -336,7 +337,6 @@ const styles = StyleSheet.create({
     avatarPlaceholder: {
         fontSize: 32,
         fontWeight: '700',
-        color: '#94a3b8',
     },
     verifiedBadge: {
         position: 'absolute',
@@ -346,7 +346,6 @@ const styles = StyleSheet.create({
         height: 24,
         borderRadius: 12,
         borderWidth: 2,
-        borderColor: '#fff',
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 2,
@@ -359,7 +358,6 @@ const styles = StyleSheet.create({
         height: 20,
         borderRadius: 10,
         borderWidth: 2,
-        borderColor: '#fff',
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 2,
@@ -394,7 +392,6 @@ const styles = StyleSheet.create({
         paddingVertical: Spacing.md,
         borderTopWidth: 1,
         borderBottomWidth: 1,
-        borderColor: '#f1f5f9',
         marginBottom: Spacing.md,
     },
     statBox: {

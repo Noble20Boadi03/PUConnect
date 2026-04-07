@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 const palette = {
   primary: '#4f46e5', // Indigo - PuConnect signature
   primaryLight: '#818cf8',
+  fiverrGreen: '#1dbf73',
   secondary: '#1a1a1a', 
   accent: '#1a1a1a', 
   background: {
@@ -32,6 +33,7 @@ export const Colors = {
     surface: palette.surface.light,
     tint: palette.primary,
     primary: palette.primary,
+    discoveryPrimary: palette.fiverrGreen,
     secondary: palette.secondary,
     accent: palette.accent,
     icon: palette.text.secondary,
@@ -48,6 +50,7 @@ export const Colors = {
     surface: palette.surface.dark,
     tint: palette.primaryLight,
     primary: palette.primaryLight,
+    discoveryPrimary: palette.fiverrGreen,
     secondary: palette.secondary,
     accent: palette.accent,
     icon: '#cbd5e1',

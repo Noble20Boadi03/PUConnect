@@ -12,18 +12,52 @@ class ListingService:
         return db.query(Listing).filter(Listing.id == id).first()
 
     @staticmethod
-    def get_multi(db: Session, skip: int = 0, limit: int = 100) -> List[Listing]:
-        return db.query(Listing).offset(skip).limit(limit).all()
+    def get_multi(
+        db: Session, 
+        *, 
+        skip: int = 0, 
+        limit: int = 100,
+        category: Optional[str] = None,
+        subcategory: Optional[str] = None,
+        tag: Optional[str] = None,
+        level: Optional[str] = None,
+        department: Optional[str] = None,
+        min_price: Optional[float] = None,
+        max_price: Optional[float] = None,
+        sort_by: str = "rating"
+    ) -> List[Listing]:
+        query = db.query(Listing).filter(Listing.is_active == True)
+        
+        if category:
+            query = query.filter(Listing.category == category)
+        if subcategory:
+            query = query.filter(Listing.subcategory == subcategory)
+        if level:
+            query = query.filter(Listing.level == level)
+        if department:
+            query = query.filter(Listing.department == department)
+        if min_price:
+            query = query.filter(Listing.price >= min_price)
+        if max_price:
+            query = query.filter(Listing.price <= max_price)
+        if tag:
+            # PostgreSQL specific JSON containment check
+            from sqlalchemy import text
+            query = query.filter(text("tags @> :tag")).params(tag=f'["{tag}"]')
+
+        if sort_by == "rating":
+            query = query.order_by(Listing.average_rating.desc())
+        elif sort_by == "price":
+            query = query.order_by(Listing.price.asc())
+        else:
+            query = query.order_by(Listing.created_at.desc())
+
+        return query.offset(skip).limit(limit).all()
 
     @staticmethod
     def create(db: Session, obj_in: ListingCreate, owner_id: UUID) -> Listing:
         db_obj = Listing(
-            title=obj_in.title,
-            description=obj_in.description,
-            price=obj_in.price,
-            category=obj_in.category,
-            type=obj_in.type,
-            is_active=obj_in.is_active,
+            **obj_in.model_dump(),
             owner_id=owner_id
         )
         db.add(db_obj)

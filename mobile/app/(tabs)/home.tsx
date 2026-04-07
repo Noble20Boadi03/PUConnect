@@ -11,6 +11,8 @@ import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 const { width } = Dimensions.get('window');
 
 interface SectionHeaderProps {
@@ -55,6 +57,9 @@ const PromotionBanner = () => {
 };
 
 export default function HomeScreen() {
+  const { theme, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
+  
   const [popular, setPopular] = useState<Listing[]>([]);
   const [recommended, setRecommended] = useState<Listing[]>([]);
   const [recent, setRecent] = useState<Listing[]>([]);
@@ -63,8 +68,6 @@ export default function HomeScreen() {
   
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-
-  const { theme, isDark } = useTheme();
 
   const fetchDashboardData = async () => {
     try {
@@ -104,7 +107,10 @@ export default function HomeScreen() {
     <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent, 
+          { paddingTop: insets.top + Spacing.md }
+        ]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
         }

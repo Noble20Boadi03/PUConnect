@@ -3,7 +3,7 @@ Listing schemas for API request/response validation.
 All schemas match the Listing model exactly.
 """
 
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict
@@ -16,9 +16,13 @@ class ListingBase(BaseModel):
     description: Optional[str] = None
     price: float
     category: str
+    subcategory: Optional[str] = None
     type: ListingType
     is_active: bool = True
     media_url: Optional[str] = None
+    level: Optional[str] = None
+    department: Optional[str] = None
+    tags: Optional[List[str]] = None
 
 
 class ListingCreate(ListingBase):
@@ -43,6 +47,8 @@ class ListingResponse(ListingBase):
     """
     id: UUID
     owner_id: UUID
+    average_rating: float = 0.0
+    review_count: int = 0
     created_at: datetime
     updated_at: datetime
     

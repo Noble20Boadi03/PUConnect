@@ -1,76 +1,22 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, Pressable, TextInput, SafeAreaView } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, Pressable, SafeAreaView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/context/theme-context';
-import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
+import { Spacing, BorderRadius } from '@/constants/theme';
 import { router } from 'expo-router';
+import { CAMPUS_CATEGORIES } from '@/constants/categories';
 
-interface CategoryItem {
-  id: string;
-  title: string;
-  subtitle: string;
-  icon: keyof typeof Ionicons.glyphMap;
-}
-
-const CATEGORIES: CategoryItem[] = [
-  {
-    id: '1',
-    title: 'Market to local audiences',
-    subtitle: 'Local SEO, Create authentic UGC videos',
-    icon: 'storefront-outline',
-  },
-  {
-    id: '2',
-    title: 'Research a business landscape',
-    subtitle: 'Virtual Assistant, Domain Name Research',
-    icon: 'analytics-outline',
-  },
-  {
-    id: '3',
-    title: 'Create memorable brand assets',
-    subtitle: 'Logo Design, Branding, Visual Identity',
-    icon: 'diamond-outline',
-  },
-  {
-    id: '4',
-    title: 'Design a new product',
-    subtitle: 'Industrial & Product Design, 3D Product Animation',
-    icon: 'cube-outline',
-  },
-  {
-    id: '5',
-    title: 'Manage data',
-    subtitle: 'Data Entry, Data Processing',
-    icon: 'settings-outline',
-  },
-  {
-    id: '6',
-    title: 'Focus on personal growth',
-    subtitle: 'Life Coaching, Career Consulting',
-    icon: 'accessibility-outline',
-  },
-  {
-    id: '7',
-    title: 'Get creative with arts and crafts',
-    subtitle: 'Digital Illustration, Art & Fashion',
-    icon: 'brush-outline',
-  },
-  {
-    id: '8',
-    title: 'Analyze business data',
-    subtitle: 'Web Analytics, Data Visualization',
-    icon: 'stats-chart-outline',
-  },
-];
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function SearchScreen() {
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<'categories' | 'interests'>('categories');
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <Text style={[styles.headerTitle, { color: theme.text }]}>Categories</Text>
         <Pressable style={styles.iconBtn}>
           <Ionicons name="search-outline" size={24} color={theme.text} />
@@ -81,7 +27,7 @@ export default function SearchScreen() {
       <View style={[styles.tabBar, { borderBottomColor: theme.border }]}>
         <Pressable 
           onPress={() => setActiveTab('categories')}
-          style={[styles.tab, activeTab === 'categories' && { borderBottomWidth: 2, borderBottomColor: theme.text }]}
+          style={[styles.tab, activeTab === 'categories' && { borderBottomWidth: 3, borderBottomColor: (theme as any).discoveryPrimary }]}
         >
           <Text style={[
             styles.tabText, 
@@ -93,7 +39,7 @@ export default function SearchScreen() {
         </Pressable>
         <Pressable 
           onPress={() => setActiveTab('interests')}
-          style={[styles.tab, activeTab === 'interests' && { borderBottomWidth: 2, borderBottomColor: theme.text }]}
+          style={[styles.tab, activeTab === 'interests' && { borderBottomWidth: 3, borderBottomColor: (theme as any).discoveryPrimary }]}
         >
           <Text style={[
             styles.tabText, 
@@ -107,19 +53,31 @@ export default function SearchScreen() {
 
       {/* List */}
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
-        {CATEGORIES.map((cat) => (
-          <Pressable key={cat.id} style={styles.categoryItem} onPress={() => {}}>
-            <View style={[styles.iconContainer, { backgroundColor: isDark ? '#1e293b' : '#f8fafc' }]}>
-              <Ionicons name={cat.icon} size={24} color={theme.textSecondary} />
-            </View>
-            <View style={styles.textContainer}>
-              <Text style={[styles.categoryTitle, { color: theme.text }]}>{cat.title}</Text>
-              <Text style={[styles.categorySubtitle, { color: theme.textMuted }]}>{cat.subtitle}</Text>
-            </View>
-          </Pressable>
-        ))}
+        {activeTab === 'categories' ? (
+          CAMPUS_CATEGORIES.map((cat) => (
+            <Pressable 
+              key={cat.id} 
+              style={[styles.categoryItem, { borderBottomColor: theme.border }]} 
+              onPress={() => router.push(`/search/${cat.id}`)}
+              android_ripple={{ color: theme.border }}
+            >
+              <View style={styles.iconContainer}>
+                <Ionicons name={cat.icon as any} size={32} color={theme.textSecondary} />
+              </View>
+              <View style={styles.textContainer}>
+                <Text style={[styles.categoryTitle, { color: theme.text }]}>{cat.title}</Text>
+                <Text style={[styles.categorySubtitle, { color: theme.textMuted }]}>{cat.subtitle}</Text>
+              </View>
+            </Pressable>
+          ))
+        ) : (
+          <View style={styles.emptyContainer}>
+             <Ionicons name="sparkles-outline" size={48} color={theme.textMuted} />
+             <Text style={[styles.emptyText, { color: theme.textSecondary }]}>Your personalized interests will appear here.</Text>
+          </View>
+        )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -132,7 +90,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    paddingTop: 20,
     paddingBottom: 10,
   },
   headerTitle: {
@@ -168,27 +125,38 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    paddingVertical: 18,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 8,
+    width: 50,
+    height: 50,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
   },
   textContainer: {
     flex: 1,
-    gap: 4,
+    gap: 2,
   },
   categoryTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '700',
-    color: '#111827',
   },
   categorySubtitle: {
     fontSize: 13,
     fontWeight: '500',
   },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 100,
+  },
+  emptyText: {
+    marginTop: 16,
+    fontSize: 15,
+    textAlign: 'center',
+    paddingHorizontal: 40,
+  }
 });

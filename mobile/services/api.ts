@@ -106,8 +106,34 @@ export const api = {
     },
 
     // Listings
-    getListings: async (skip = 0, limit = 100): Promise<Listing[]> => {
-        const response = await fetch(`${API_URL}/listings/?skip=${skip}&limit=${limit}`, {
+    getListings: async (
+        skip = 0, 
+        limit = 10,
+        filters?: {
+            category?: string;
+            subcategory?: string;
+            tag?: string;
+            level?: string;
+            department?: string;
+            minPrice?: number;
+            maxPrice?: number;
+            sortBy?: string;
+        }
+    ): Promise<Listing[]> => {
+        let url = `${API_URL}/listings/?skip=${skip}&limit=${limit}`;
+        
+        if (filters) {
+            if (filters.category) url += `&category=${encodeURIComponent(filters.category)}`;
+            if (filters.subcategory) url += `&subcategory=${encodeURIComponent(filters.subcategory)}`;
+            if (filters.tag) url += `&tag=${encodeURIComponent(filters.tag)}`;
+            if (filters.level) url += `&level=${encodeURIComponent(filters.level)}`;
+            if (filters.department) url += `&department=${encodeURIComponent(filters.department)}`;
+            if (filters.minPrice) url += `&min_price=${filters.minPrice}`;
+            if (filters.maxPrice) url += `&max_price=${filters.maxPrice}`;
+            if (filters.sortBy) url += `&sort_by=${filters.sortBy}`;
+        }
+
+        const response = await fetch(url, {
             method: 'GET',
             headers: getHeaders(),
         });
@@ -182,7 +208,6 @@ export const api = {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
-                // FormData sets its own content-type with boundary
             },
             body: formData,
         });
@@ -190,5 +215,15 @@ export const api = {
         if (!response.ok) throw new Error('Failed to upload image');
         return response.json();
     },
+
+    getSubcategoryFilters: async (subcategory: string): Promise<any[]> => {
+        const response = await fetch(`${API_URL}/filters/${encodeURIComponent(subcategory)}`, {
+            method: 'GET',
+            headers: getHeaders(),
+        });
+        if (!response.ok) return [];
+        return response.json();
+    },
+
     getApiUrl,
 };

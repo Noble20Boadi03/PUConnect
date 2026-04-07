@@ -1,8 +1,8 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, String, Float, Boolean, DateTime, Enum, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, Float, Integer, Boolean, DateTime, Enum, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID, JSON
 from sqlalchemy.orm import relationship
 
 from app.db.session import Base
@@ -16,10 +16,16 @@ class Listing(Base):
     description = Column(String, nullable=True)
     price = Column(Float, nullable=False)
     category = Column(String, index=True, nullable=False)
+    subcategory = Column(String, index=True, nullable=True)
     type = Column(Enum(ListingType), nullable=False)
     owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     media_url = Column(String, nullable=True)
+    level = Column(String, nullable=True)
+    department = Column(String, nullable=True)
+    tags = Column(JSON, nullable=True)
+    average_rating = Column(Float, default=0.0)
+    review_count = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 

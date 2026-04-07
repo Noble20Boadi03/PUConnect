@@ -5,6 +5,7 @@ import 'react-native-reanimated';
 
 import { AuthProvider } from '@/context/auth-context';
 import { ThemeProvider, useTheme } from '@/context/theme-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -29,10 +30,12 @@ function RootLayoutContent() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <RootLayoutContent />
-      </ThemeProvider>
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <RootLayoutContent />
+        </ThemeProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }

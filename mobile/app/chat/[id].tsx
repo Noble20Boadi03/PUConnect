@@ -15,11 +15,14 @@ interface Message {
     cardData?: any;
 }
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 export default function ChatScreen() {
     const { id, listingId } = useLocalSearchParams<{ id: string, listingId?: string }>();
     const { theme, isDark } = useTheme();
     const { user } = useAuth();
     const router = useRouter();
+    const insets = useSafeAreaInsets();
     const [inputText, setInputText] = useState('');
     
     // Mocking messages to match the requested image UI
@@ -79,9 +82,9 @@ export default function ChatScreen() {
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
             {/* Header */}
-            <View style={[styles.header, { borderBottomColor: theme.border }]}>
+            <View style={[styles.header, { borderBottomColor: theme.border, paddingTop: insets.top + 10 }]}>
                 <Pressable onPress={() => router.back()} style={styles.backBtn}>
                     <Ionicons name="chevron-back" size={28} color={theme.text} />
                 </Pressable>
@@ -116,7 +119,14 @@ export default function ChatScreen() {
                     if (item.type === 'card') {
                         return (
                             <View key={item.id} style={styles.cardWrapper}>
-                                <View style={[styles.jobCard, { backgroundColor: theme.surface, borderLeftColor: theme.primary }]}>
+                                <View style={[
+                                    styles.jobCard, 
+                                    { 
+                                        backgroundColor: theme.surface, 
+                                        borderLeftColor: theme.primary,
+                                        borderColor: theme.border 
+                                    }
+                                ]}>
                                     <View style={styles.cardHeader}>
                                         <View style={[styles.companyLogo, { backgroundColor: '#f97316' }]}>
                                             <Ionicons name="grid" size={20} color="#fff" />
@@ -166,12 +176,15 @@ export default function ChatScreen() {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
             >
-                <View style={[styles.inputContainer, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
+                <View style={[
+                        styles.inputContainer, 
+                        { backgroundColor: theme.surface, borderTopColor: theme.border, paddingBottom: insets.bottom + 12 }
+                    ]}>
                     <Pressable style={styles.attachBtn}>
                         <Ionicons name="add" size={24} color={theme.textMuted} />
                     </Pressable>
                     <TextInput
-                        style={[styles.input, { color: theme.text, backgroundColor: isDark ? theme.background : '#f9fafb' }]}
+                        style={[styles.input, { color: theme.text, backgroundColor: isDark ? theme.background : '#f9fafb', borderColor: theme.border, borderWidth: 1 }]}
                         placeholder="Type a message..."
                         placeholderTextColor={theme.textMuted}
                         value={inputText}
@@ -186,7 +199,7 @@ export default function ChatScreen() {
                     </Pressable>
                 </View>
             </KeyboardAvoidingView>
-        </SafeAreaView>
+        </View>
     );
 }
 
@@ -199,7 +212,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: Spacing.md,
         paddingBottom: 12,
-        paddingTop: Platform.OS === 'android' ? 40 : 10,
         borderBottomWidth: 1,
     },
     backBtn: {
@@ -278,7 +290,6 @@ const styles = StyleSheet.create({
         padding: Spacing.md,
         borderWidth: 1,
         borderLeftWidth: 4,
-        borderColor: '#f1f5f9',
         ...Shadows.small,
     },
     cardHeader: {

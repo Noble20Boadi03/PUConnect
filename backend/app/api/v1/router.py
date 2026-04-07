@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, listings, reviews, payments, recommendations, chat, users, media, analytics, search
+from app.api.v1.endpoints import auth, listings, reviews, payments, recommendations, chat, users, media, analytics, search, subcategory_filters
 
 api_router = APIRouter()
 
@@ -14,3 +14,4 @@ api_router.include_router(reviews.router, prefix="/reviews", tags=["reviews"])
 api_router.include_router(payments.router, prefix="/payments", tags=["payments"])
 api_router.include_router(recommendations.router, prefix="/recommendations", tags=["recommendations"])
 api_router.include_router(chat.router, prefix="/chat", tags=["chat"])
+api_router.include_router(subcategory_filters.router, prefix="/filters", tags=["filters"])

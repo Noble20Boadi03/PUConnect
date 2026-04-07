@@ -8,3 +8,4 @@ from app.models.listing import Listing
 from app.models.review import Review
 from app.models.analytics import SearchQuery
 from app.models.enums import *
+from app.models.subcategory_filter import SubcategoryFilter

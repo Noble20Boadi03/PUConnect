@@ -1,4 +1,4 @@
-from typing import List, Any
+from typing import List, Any, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -27,12 +27,33 @@ def create_listing(
 def read_listings(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
-    limit: int = 100,
+    limit: int = 10,
+    category: Optional[str] = None,
+    subcategory: Optional[str] = None,
+    tag: Optional[str] = None,
+    level: Optional[str] = None,
+    department: Optional[str] = None,
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None,
+    sort_by: str = "rating"
 ) -> Any:
     """
-    Retrieve listings.
+    Retrieve listings with comprehensive filtering and sorting.
+    Defaults to 10 items for mobile performance.
     """
-    listings = ListingService.get_multi(db, skip=skip, limit=limit)
+    listings = ListingService.get_multi(
+        db, 
+        skip=skip, 
+        limit=limit,
+        category=category,
+        subcategory=subcategory,
+        tag=tag,
+        level=level,
+        department=department,
+        min_price=min_price,
+        max_price=max_price,
+        sort_by=sort_by
+    )
     return listings
 
 @router.get("/{id}", response_model=ListingResponse)

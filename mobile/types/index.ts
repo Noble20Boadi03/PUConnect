@@ -45,6 +45,12 @@ export interface Listing {
   requiredSkills?: string[];
   teamSize?: number; // For project teams
   media_url?: string;
+  subcategory?: string;
+  level?: string;
+  department?: string;
+  tags?: string[];
+  average_rating?: number;
+  review_count?: number;
 
   createdAt: string;
   updatedAt: string;
@@ -70,3 +76,15 @@ export interface AuthTokens {
 export interface LoginResponse extends AuthTokens { }
 
 export interface UserResponse extends User { }
+
+export interface SubcategoryFilter {
+  id: string;
+  subcategory: string;
+  filter_label: string;
+  filter_type: 'dropdown' | 'multi_select' | 'range' | 'radio' | string;
+  filter_options: any;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
