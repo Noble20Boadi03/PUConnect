@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, View, ActivityIndicator, RefreshControl, ScrollView, Pressable, TextInput } from 'react-native';
+import { FlatList, StyleSheet, View, ActivityIndicator, RefreshControl, ScrollView, Pressable, TextInput, BackHandler, ToastAndroid, Platform } from 'react-native';
 import { api } from '@/services/api';
 import { Listing } from '@/types';
 import { ServiceCard } from '@/components/service-card';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedIcon } from '@/components/ui/themed-icon';
@@ -74,9 +74,33 @@ export default function HomeScreen() {
   const [recent, setRecent] = useState<Listing[]>([]);
   const [trending, setTrending] = useState<Listing[]>([]);
   const [lastOrderRecs, setLastOrderRecs] = useState<Listing[]>([]);
+  const [lastBackPress, setLastBackPress] = useState(0);
   
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Implement Double Back to Exit for Android
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        const currentTime = Date.now();
+        if (currentTime - lastBackPress < 2000) {
+          BackHandler.exitApp();
+          return true;
+        }
+
+        setLastBackPress(currentTime);
+        if (Platform.OS === 'android') {
+          ToastAndroid.show('Press back again to exit', ToastAndroid.SHORT);
+        }
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => subscription.remove();
+    }, [lastBackPress])
+  );
 
   const fetchDashboardData = async () => {
     try {

@@ -36,7 +36,7 @@ export default function LandingScreen() {
   }, []);
 
   const handleGetStarted = () => {
-    router.push("/login");
+    router.replace("/login");
   };
 
   if (showSplash) {
@@ -122,7 +122,7 @@ export default function LandingScreen() {
           style={styles.footerLinks}
         >
           <ThemedText variant="bodyMedium" colorName="textSecondary">Don't have an account? </ThemedText>
-          <Pressable onPress={() => router.push("/register")}>
+          <Pressable onPress={() => router.replace("/register")}>
             <ThemedText variant="labelLarge" colorName="primary">Signup</ThemedText>
           </Pressable>
         </Animated.View>

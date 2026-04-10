@@ -14,6 +14,7 @@ export default function TabLayout() {
 
   return (
     <Tabs
+      backBehavior="initialRoute"
       screenOptions={{
         tabBarActiveTintColor: theme.primary,
         tabBarInactiveTintColor: theme.textMuted,

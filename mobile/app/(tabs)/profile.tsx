@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Pressable, Alert, ActivityIndicator, Image } from 'react-native';
+import { StyleSheet, View, Pressable, Alert, ActivityIndicator, Image, ScrollView } from 'react-native';
 import { Link, router } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { useAuth } from '@/context/auth-context';
@@ -50,17 +51,35 @@ export default function ProfileScreen() {
     if (!token) {
         return (
             <ScreenLayout 
-                scrollable 
-                keyboardAvoiding 
+                scrollable={false}
                 padding="none"
-                scrollViewProps={{ keyboardShouldPersistTaps: 'handled' }}
+                withSafeArea={false}
+                keyboardAvoiding
             >
-                <View style={[styles.loginContainer, { paddingTop: insets.top + Spacing.massive, paddingHorizontal: horizontalPadding }]}>
+                {/* Header for Unauthenticated State */}
+                <ThemedView 
+                    style={[
+                        styles.fixedHeader, 
+                        { paddingTop: insets.top + Spacing.sm, paddingHorizontal: horizontalPadding }
+                    ]}
+                >
+                    <View style={styles.topRow}>
+                        <ThemedText variant="headlineSmall" style={styles.brandLogo}>
+                            Connect<ThemedText colorName="primary">.</ThemedText>
+                        </ThemedText>
+                    </View>
+                </ThemedView>
+
+                <ScrollView 
+                    contentContainerStyle={[styles.loginContainer, { paddingHorizontal: horizontalPadding }]}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
                     <Animated.View 
                         entering={FadeInDown.duration(800)}
-                        style={[styles.loginCard, { backgroundColor: theme.surface }]}
+                        style={[styles.loginCard, { backgroundColor: theme.surface, borderColor: theme.outlineVariant, borderWidth: 1 }]}
                     >
-                        <ThemedText variant="headlineLarge" align="center" style={styles.loginHeader}>PuConnect</ThemedText>
+                        <ThemedText variant="headlineLarge" align="center" style={styles.loginHeader}>Welcome Back</ThemedText>
                         <ThemedText variant="bodyMedium" colorName="textSecondary" align="center" style={styles.loginSub}>The Campus Talent Marketplace</ThemedText>
 
                         <View style={styles.form}>
@@ -103,83 +122,110 @@ export default function ProfileScreen() {
                             </Animated.View>
                         </View>
                     </Animated.View>
-                </View>
+                </ScrollView>
             </ScreenLayout>
         );
     }
 
     return (
         <ScreenLayout 
-            scrollable 
+            scrollable={false}
             padding="none"
-            edges={['bottom', 'left', 'right']} // Exclude top to allow hero gradient to go edge-to-edge
+            withSafeArea={false}
         >
-            {/* Hero Header */}
-            <LinearGradient
-                colors={[theme.primary, theme.primaryContainer, theme.background]}
-                style={[styles.heroHeader, { height: 160 + insets.top }]}
-            />
-
-            {/* Profile Header Card */}
-            <Animated.View 
-                entering={FadeInUp.delay(200).duration(800)}
-                style={[styles.profileCard, { backgroundColor: theme.surface, marginTop: -80, marginHorizontal: horizontalPadding }]}
+            {/* Header - Matches Universal Style */}
+            <ThemedView 
+                style={[
+                    styles.fixedHeader, 
+                    { paddingTop: insets.top + Spacing.sm, paddingHorizontal: horizontalPadding }
+                ]}
             >
-                <View style={styles.headerInfo}>
-                    <Link href="/(tabs)/onboarding" asChild>
-                        <Pressable style={[styles.avatarContainer, { borderColor: theme.surface, backgroundColor: theme.surfaceVariant }]}>
-                            {user?.profilePictureUrl ? (
-                                <Image source={{ uri: user.profilePictureUrl }} style={styles.avatarImage} />
-                            ) : (
-                                <ThemedText variant="headlineLarge" colorName="primary" style={styles.avatarPlaceholder}>
-                                    {user?.fullName?.charAt(0)}
-                                </ThemedText>
-                            )}
-                            {user?.verifiedStudent && (
-                                <View style={[styles.verifiedBadge, { backgroundColor: theme.primary, borderColor: theme.surface }]}>
-                                    <ThemedIcon name="check-decagram" size={14} lightColor="#fff" darkColor="#fff" />
+                    <View style={styles.topRow}>
+                        <ThemedText variant="headlineSmall" style={styles.brandLogo}>
+                            Profile<ThemedText colorName="primary">.</ThemedText>
+                        </ThemedText>
+                        <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+                            <Pressable 
+                                style={styles.gridBtn}
+                                onPress={() => setMode(isDark ? 'light' : 'dark')}
+                            >
+                                <ThemedIcon 
+                                    name={isDark ? "moon-waning-crescent" : "white-balance-sunny"} 
+                                    size={22} 
+                                    colorName="text"
+                                />
+                            </Pressable>
+                            <Pressable style={styles.gridBtn}>
+                                <ThemedIcon name="cog-outline" size={22} colorName="text" />
+                            </Pressable>
+                        </View>
+                    </View>
+            </ThemedView>
+
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.massive }}
+            >
+                {/* Hero Section - Redesigned to be cleaner */}
+                <Animated.View 
+                    entering={FadeInUp.delay(200).duration(800)}
+                    style={[styles.heroSection, { backgroundColor: theme.surface }]}
+                >
+                    <View style={styles.headerInfo}>
+                        <Link href="/(tabs)/onboarding" asChild>
+                            <Pressable style={[styles.avatarContainer, { borderColor: theme.surface, backgroundColor: theme.surfaceVariant }]}>
+                                {user?.profilePictureUrl ? (
+                                    <Image source={{ uri: user.profilePictureUrl }} style={styles.avatarImage} />
+                                ) : (
+                                    <ThemedText variant="headlineLarge" colorName="primary" style={styles.avatarPlaceholder}>
+                                        {user?.fullName?.charAt(0)}
+                                    </ThemedText>
+                                )}
+                                {user?.verifiedStudent && (
+                                    <View style={[styles.verifiedBadge, { backgroundColor: theme.primary, borderColor: theme.surface }]}>
+                                        <ThemedIcon name="check-decagram" size={14} lightColor="#fff" darkColor="#fff" />
+                                    </View>
+                                )}
+                                <View style={[styles.editBadge, { backgroundColor: theme.surface, borderColor: theme.outlineVariant }]}>
+                                    <ThemedIcon name="camera" size={12} />
                                 </View>
-                            )}
-                            <View style={[styles.editBadge, { backgroundColor: theme.surface, borderColor: theme.outlineVariant }]}>
-                                <ThemedIcon name="camera" size={12} />
+                            </Pressable>
+                        </Link>
+
+                        <View style={styles.userNameContainer}>
+                            <ThemedText variant="titleLarge" style={styles.userName}>{user?.fullName || 'Campus Pro'}</ThemedText>
+                            <ThemedText variant="bodySmall" colorName="textSecondary">
+                                {user?.department || 'Student'} • Class of {user?.graduationYear || '2027'}
+                            </ThemedText>
+                        </View>
+                    </View>
+
+                    <View style={[styles.statsOverview, { borderColor: theme.outlineVariant }]}>
+                        <View style={styles.statBox}>
+                            <ThemedText variant="titleMedium" colorName="primary">{user?.completedProjects || 0}</ThemedText>
+                            <ThemedText variant="labelSmall" colorName="textMuted">Projects</ThemedText>
+                        </View>
+                        <View style={[styles.statDivider, { backgroundColor: theme.outlineVariant }]} />
+                        <View style={styles.statBox}>
+                            <View style={styles.ratingRow}>
+                                <ThemedIcon name="star" size={14} lightColor="#fbbf24" darkColor="#fbbf24" />
+                                <ThemedText variant="titleSmall">{user?.reputationScore || '0.0'}</ThemedText>
                             </View>
+                            <ThemedText variant="labelSmall" colorName="textMuted">Rating</ThemedText>
+                        </View>
+                        <View style={[styles.statDivider, { backgroundColor: theme.outlineVariant }]} />
+                        <View style={styles.statBox}>
+                            <View style={[styles.statusDot, { backgroundColor: user?.isAvailable ? '#22c55e' : theme.outline }]} />
+                            <ThemedText variant="labelSmall" colorName="textMuted">{user?.isAvailable ? 'Available' : 'Busy'}</ThemedText>
+                        </View>
+                    </View>
+
+                    <Link href="/(tabs)/onboarding" asChild>
+                        <Pressable style={[styles.editBtn, { backgroundColor: theme.surfaceVariant, borderColor: theme.outlineVariant }]}>
+                            <ThemedText variant="labelLarge">Edit Talent Profile</ThemedText>
                         </Pressable>
                     </Link>
-
-                    <View style={styles.userNameContainer}>
-                        <ThemedText variant="titleLarge" style={styles.userName}>{user?.fullName || 'Campus Pro'}</ThemedText>
-                        <ThemedText variant="bodySmall" colorName="textSecondary">
-                            {user?.department || 'Student'} • Class of {user?.graduationYear || '2027'}
-                        </ThemedText>
-                    </View>
-                </View>
-
-                <View style={[styles.statsOverview, { borderColor: theme.outlineVariant }]}>
-                    <View style={styles.statBox}>
-                        <ThemedText variant="titleMedium" colorName="primary">{user?.completedProjects || 0}</ThemedText>
-                        <ThemedText variant="labelSmall" colorName="textMuted">Projects</ThemedText>
-                    </View>
-                    <View style={[styles.statDivider, { backgroundColor: theme.outlineVariant }]} />
-                    <View style={styles.statBox}>
-                        <View style={styles.ratingRow}>
-                            <ThemedIcon name="star" size={14} lightColor="#fbbf24" darkColor="#fbbf24" />
-                            <ThemedText variant="titleSmall">{user?.reputationScore || '0.0'}</ThemedText>
-                        </View>
-                        <ThemedText variant="labelSmall" colorName="textMuted">Rating</ThemedText>
-                    </View>
-                    <View style={[styles.statDivider, { backgroundColor: theme.outlineVariant }]} />
-                    <View style={styles.statBox}>
-                        <View style={[styles.statusDot, { backgroundColor: user?.isAvailable ? '#22c55e' : theme.outline }]} />
-                        <ThemedText variant="labelSmall" colorName="textMuted">{user?.isAvailable ? 'Available' : 'Busy'}</ThemedText>
-                    </View>
-                </View>
-
-                <Link href="/(tabs)/onboarding" asChild>
-                    <Pressable style={[styles.editBtn, { backgroundColor: theme.surfaceVariant, borderColor: theme.outlineVariant }]}>
-                        <ThemedText variant="labelLarge">Edit Talent Profile</ThemedText>
-                    </Pressable>
-                </Link>
-            </Animated.View>
+                </Animated.View>
 
             {isProfileIncomplete && (
                 <Animated.View entering={FadeInDown.delay(400).duration(800)} style={{ marginHorizontal: horizontalPadding, marginTop: Spacing.lg }}>
@@ -227,8 +273,8 @@ export default function ProfileScreen() {
 
             {/* Grouped Settings Menu */}
             <Animated.View entering={FadeInDown.delay(600).duration(800)} style={[styles.menuWrapper, { marginHorizontal: horizontalPadding, marginBottom: insets.bottom + Spacing.massive }]}>
-                <ThemedText variant="labelMedium" colorName="textMuted" style={styles.menuLabel}>Account Settings</ThemedText>
-                <View style={[styles.groupedMenu, { backgroundColor: theme.surface }]}>
+                <ThemedText variant="titleLarge" style={styles.sectionTitle}>Account</ThemedText>
+                <View style={[styles.groupedMenu, { backgroundColor: theme.surface, borderColor: theme.outlineVariant }]}>
                     <Pressable style={styles.groupItem}>
                         <View style={[styles.groupIcon, { backgroundColor: theme.primaryContainer }]}>
                             <ThemedIcon name="briefcase-outline" size={20} colorName="onPrimaryContainer" />
@@ -237,19 +283,6 @@ export default function ProfileScreen() {
                         <ThemedIcon name="chevron-right" size={18} colorName="textMuted" />
                     </Pressable>
                     
-                    <View style={[styles.groupDivider, { backgroundColor: theme.outlineVariant }]} />
-
-                    <Pressable 
-                        style={styles.groupItem}
-                        onPress={() => setMode(isDark ? 'light' : 'dark')}
-                    >
-                        <View style={[styles.groupIcon, { backgroundColor: isDark ? theme.surfaceVariant : '#fef3c7' }]}>
-                            <ThemedIcon name={isDark ? "moon-waning-crescent" : "white-balance-sunny"} size={20} lightColor={isDark ? undefined : "#f59e0b"} darkColor={isDark ? "#94a3b8" : undefined} />
-                        </View>
-                        <ThemedText variant="titleMedium" style={styles.groupText}>{isDark ? 'Dark Mode' : 'Light Mode'}</ThemedText>
-                        <ThemedIcon name={isDark ? "toggle-switch" : "toggle-switch-off-outline"} size={32} colorName={isDark ? "primary" : "outline"} />
-                    </Pressable>
-
                     <View style={[styles.groupDivider, { backgroundColor: theme.outlineVariant }]} />
 
                     <Pressable style={styles.groupItem}>
@@ -262,7 +295,13 @@ export default function ProfileScreen() {
                     
                     <View style={[styles.groupDivider, { backgroundColor: theme.outlineVariant }]} />
 
-                    <Pressable style={styles.groupItem} onPress={signOut}>
+                    <Pressable 
+                        style={styles.groupItem} 
+                        onPress={async () => {
+                            await signOut();
+                            router.replace("/");
+                        }}
+                    >
                         <View style={[styles.groupIcon, { backgroundColor: theme.errorContainer }]}>
                             <ThemedIcon name="logout" size={20} colorName="onErrorContainer" />
                         </View>
@@ -270,7 +309,8 @@ export default function ProfileScreen() {
                     </Pressable>
                 </View>
             </Animated.View>
-        </ScreenLayout>
+        </ScrollView>
+    </ScreenLayout>
     );
 }
 
@@ -307,12 +347,25 @@ const styles = StyleSheet.create({
         marginTop: 12,
         opacity: 0.6,
     },
-    heroHeader: {
-        width: '100%',
+    fixedHeader: {
+        paddingBottom: Spacing.md,
+        zIndex: 10,
     },
-    profileCard: {
+    topRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    brandLogo: {
+        fontWeight: '800',
+    },
+    gridBtn: {
+        padding: Spacing.xs,
+    },
+    heroSection: {
         padding: Spacing.lg,
         borderRadius: BorderRadius.xl,
+        marginHorizontal: Spacing.xl,
         ...Shadows.level2,
     },
     headerInfo: {
@@ -450,15 +503,15 @@ const styles = StyleSheet.create({
     menuWrapper: {
         marginTop: Spacing.xl,
     },
-    menuLabel: {
-        fontWeight: '800',
-        marginBottom: 10,
+    sectionTitle: {
+        fontWeight: '700',
+        marginBottom: Spacing.md,
         marginLeft: 4,
-        textTransform: 'uppercase',
     },
     groupedMenu: {
         borderRadius: BorderRadius.xl,
         overflow: 'hidden',
+        borderWidth: 1,
         ...Shadows.level2,
     },
     groupItem: {
