@@ -9,12 +9,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
+import { useResponsive } from '@/hooks/use-responsive';
 
 export default function CategoryDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
     const { theme } = useTheme();
     const insets = useSafeAreaInsets();
+    const { contentPaddingLeft, contentPaddingRight, spacingMultiplier } = useResponsive();
+    const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
     const category = CAMPUS_CATEGORIES.find(c => c.id === id);
 
     if (!category) {
@@ -33,7 +36,7 @@ export default function CategoryDetailScreen() {
     return (
         <ScreenLayout scrollable padding="none" withSafeArea={false}>
             {/* Header */}
-            <View style={[styles.header, { paddingTop: insets.top + 10, paddingHorizontal: Spacing.md }]}>
+            <View style={[styles.header, { paddingTop: insets.top + 10, ...horizontalPadding }]}>
                 <Pressable onPress={() => router.back()} style={styles.iconBtn}>
                     <ThemedIcon name="chevron-left" size={24} />
                 </Pressable>
@@ -43,7 +46,7 @@ export default function CategoryDetailScreen() {
             </View>
 
             {/* Hero section */}
-            <View style={styles.heroSection}>
+            <View style={[styles.heroSection, horizontalPadding]}>
                 <ThemedIcon name={category.icon as any} size={80} colorName="primary" />
                 <ThemedText variant="headlineLarge" style={styles.title}>{category.title}</ThemedText>
                 <ThemedText variant="bodyLarge" colorName="textMuted" style={styles.tagline}>{category.tagline}</ThemedText>
@@ -53,11 +56,11 @@ export default function CategoryDetailScreen() {
             <View style={{ paddingBottom: insets.bottom + Spacing.xl }}>
                 {category.groups.map((group, groupIdx) => (
                     <View key={groupIdx} style={styles.groupContainer}>
-                        <ThemedText variant="labelLarge" colorName="textMuted" style={styles.groupHeader}>{group.header}</ThemedText>
+                        <ThemedText variant="labelLarge" colorName="textMuted" style={[styles.groupHeader, horizontalPadding]}>{group.header}</ThemedText>
                         {group.items.map((item, itemIdx) => (
                             <Pressable 
                                 key={itemIdx} 
-                                style={[styles.itemRow, { borderBottomColor: theme.outlineVariant }]}
+                                style={[styles.itemRow, { borderBottomColor: theme.outlineVariant, ...horizontalPadding }]}
                                 onPress={() => router.push({
                                     pathname: '/search/listings/[subcategory]',
                                     params: { 

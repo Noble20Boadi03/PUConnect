@@ -11,13 +11,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '@/hooks/use-responsive';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { useMessagesViewModel } from '@/hooks/view-models/use-messages-view-model';
+import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
 
 export default function MessagesScreen() {
     const { uiState, user, onRefresh } = useMessagesViewModel();
     const { theme } = useTheme();
     const insets = useSafeAreaInsets();
-    const { spacingMultiplier } = useResponsive();
-    const horizontalPadding = Spacing.xl * spacingMultiplier;
+    const { spacingMultiplier, contentPaddingLeft, contentPaddingRight } = useResponsive();
+    const tabBarHeight = useTabBarHeight();
+    const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
 
     // ── uiState: 'empty' used for both unauthenticated AND no messages ──
     if (uiState.status === 'empty') {
@@ -57,7 +59,7 @@ export default function MessagesScreen() {
 
     return (
         <ScreenLayout padding="none" withSafeArea={false}>
-            <View style={[styles.header, { paddingTop: insets.top + Spacing.sm, paddingHorizontal: horizontalPadding }]}>
+            <View style={[styles.header, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
                 <ThemedText variant="headlineSmall" style={styles.title}>Messages</ThemedText>
                 <Pressable style={[styles.newChatBtn, { backgroundColor: theme.primaryContainer }]}>
                     <ThemedIcon name="pencil-outline" size={20} colorName="onPrimaryContainer" />
@@ -70,7 +72,7 @@ export default function MessagesScreen() {
                     <Pressable
                         style={({ pressed }) => [
                             styles.chatItem,
-                            { backgroundColor: pressed ? theme.surfaceVariant : 'transparent', paddingHorizontal: horizontalPadding }
+                            { backgroundColor: pressed ? theme.surfaceVariant : 'transparent', ...horizontalPadding }
                         ]}
                         onPress={() => router.push({
                             pathname: "/chat/[id]",
@@ -103,7 +105,7 @@ export default function MessagesScreen() {
                     </Pressable>
                 )}
                 keyExtractor={(item) => item.id}
-                contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.massive }}
+                contentContainerStyle={{ paddingBottom: tabBarHeight }}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
                         <ThemedIcon name="chat-outline" size={64} colorName="outline" />

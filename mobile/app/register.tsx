@@ -16,6 +16,7 @@ import { PrimaryButton } from "@/components/ui/primary-button";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedIcon } from "@/components/ui/themed-icon";
 import { ScreenLayout } from "@/components/ui/screen-layout";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/context/theme-context";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { useResponsive } from "@/hooks/use-responsive";
@@ -25,7 +26,8 @@ const AnimatedThemedText = Animated.createAnimatedComponent(ThemedText);
 export default function RegisterScreen() {
     const { theme } = useTheme();
     const { register } = useAuth();
-    const { spacingMultiplier } = useResponsive();
+    const { spacingMultiplier, contentPaddingLeft, contentPaddingRight } = useResponsive();
+    const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
 
     const [formData, setFormData] = useState({
         username: "",
@@ -38,7 +40,7 @@ export default function RegisterScreen() {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
-    const horizontalPadding = Spacing.xl * spacingMultiplier;
+    const insets = useSafeAreaInsets();
 
     const handleRegister = async () => {
         const { fullName, email, universityId, password } = formData;
@@ -68,9 +70,10 @@ export default function RegisterScreen() {
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <ScreenLayout padding="large" keyboardAvoiding scrollable>
+            <ScreenLayout padding="none" keyboardAvoiding scrollable contentContainerStyle={horizontalPadding}>
                 <View style={styles.content}>
-                    <Pressable onPress={() => router.back()} style={[styles.backButton, { backgroundColor: theme.surfaceVariant }]}>
+                    {/* Back Button */}
+                    <Pressable onPress={() => router.back()} style={[styles.backButton, { backgroundColor: theme.surfaceVariant, marginTop: insets.top + Spacing.sm }]}>
                         <ThemedIcon name="chevron-left" size={24} />
                     </Pressable>
 

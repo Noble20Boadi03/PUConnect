@@ -11,11 +11,14 @@ export interface ScreenLayoutProps extends ViewProps {
   scrollable?: boolean;
   /** Whether to apply safe area insets as padding */
   withSafeArea?: boolean;
-  /** Edges to apply safe area insets */
+  /** Edges to apply safe area insets. Horizontal edges are auto-managed in landscape. */
   edges?: ('top' | 'bottom' | 'left' | 'right')[];
   /** Apply standard responsive padding */
   padding?: 'none' | 'small' | 'medium' | 'large';
-  /** Max width for the content area on large screens (tablets/foldables) */
+  /**
+   * Max width for the content area on large screens (tablets/foldables in landscape).
+   * Defaults to contentMaxWidth from useResponsive. Pass 0 to disable.
+   */
   maxWidth?: number;
   /** Props to pass to the ScrollView if scrollable is true */
   scrollViewProps?: ScrollViewProps;
@@ -33,7 +36,7 @@ export function ScreenLayout({
   withSafeArea = true,
   edges = ['top', 'bottom', 'left', 'right'],
   padding = 'none',
-  maxWidth = 840,
+  maxWidth,
   scrollViewProps,
   keyboardAvoiding = false,
   colorName = 'background',
@@ -42,7 +45,7 @@ export function ScreenLayout({
   ...props
 }: ScreenLayoutProps) {
   const insets = useSafeAreaInsets();
-  const { isPhone, spacingMultiplier, width } = useResponsive();
+  const { isPhone, isLandscape, spacingMultiplier, contentMaxWidth, width } = useResponsive();
 
   const getPadding = () => {
     switch (padding) {
@@ -56,16 +59,21 @@ export function ScreenLayout({
 
   const basePadding = getPadding();
 
-  // Calculate dynamic padding based on safe area and requested edges
+  // ── Safe-area inset calculation ───────────────────────────────────────
+  // In landscape on phones, the side insets cover the notch/camera.
+  // We always apply left/right safe area if the edge is requested —
+  // this is essential for correct layout in landscape.
   const pt = (withSafeArea && edges.includes('top') ? insets.top : 0) + basePadding;
   const pb = (withSafeArea && edges.includes('bottom') ? insets.bottom : 0) + basePadding;
   const pl = (withSafeArea && edges.includes('left') ? insets.left : 0) + basePadding;
   const pr = (withSafeArea && edges.includes('right') ? insets.right : 0) + basePadding;
 
-  // On large screens, we constrain the max width and center it
-  // This creates a beautiful letterboxed layout on tablets and desktops
-  const isConstrained = !isPhone && maxWidth > 0 && width > maxWidth;
-  
+  // ── Max-width constraint ──────────────────────────────────────────────
+  // On larger screens OR in landscape, constrain the content width.
+  // This prevents content from stretching uncomfortably wide.
+  const resolvedMaxWidth = maxWidth !== undefined ? maxWidth : contentMaxWidth;
+  const isConstrained = resolvedMaxWidth > 0 && width > resolvedMaxWidth;
+
   const innerContentStyle = [
     {
       paddingTop: pt,
@@ -73,16 +81,16 @@ export function ScreenLayout({
       paddingLeft: pl,
       paddingRight: pr,
     },
-    isConstrained && { 
-      maxWidth, 
-      width: '100%', 
-      alignSelf: 'center' as const 
+    isConstrained && {
+      maxWidth: resolvedMaxWidth,
+      width: '100%',
+      alignSelf: 'center' as const,
     },
     contentContainerStyle,
   ];
 
   let Content;
-  
+
   if (scrollable) {
     Content = (
       <ScrollView
@@ -92,6 +100,8 @@ export function ScreenLayout({
           innerContentStyle
         ]}
         style={styles.container}
+        // In landscape, horizontal scroll indicator also not needed
+        showsHorizontalScrollIndicator={false}
         {...scrollViewProps}
       >
         {children}
@@ -110,6 +120,8 @@ export function ScreenLayout({
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        // In landscape on iOS, padding mode works better
+        keyboardVerticalOffset={isLandscape && Platform.OS === 'ios' ? 20 : 0}
       >
         {Content}
       </KeyboardAvoidingView>

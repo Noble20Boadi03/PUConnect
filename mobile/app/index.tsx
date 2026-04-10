@@ -25,7 +25,8 @@ const AnimatedThemedText = Animated.createAnimatedComponent(ThemedText);
 
 export default function LandingScreen() {
   const [showSplash, setShowSplash] = useState(true);
-  const { width, height, isTablet, spacingMultiplier } = useResponsive();
+  const { width, height, isTablet, spacingMultiplier, contentPaddingLeft, contentPaddingRight } = useResponsive();
+  const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
   const { theme, isDark } = useTheme();
 
   useEffect(() => {
@@ -55,7 +56,7 @@ export default function LandingScreen() {
   return (
     <ScreenLayout padding="none">
       {/* Header */}
-      <View style={[styles.header, { paddingHorizontal: Spacing.xl * spacingMultiplier }]}>
+      <View style={[styles.header, horizontalPadding]}>
         <Image
           source={require("../assets/images/puconnect_logo.png")}
           style={styles.headerLogo}
@@ -80,7 +81,7 @@ export default function LandingScreen() {
       </Animated.View>
 
       {/* Content */}
-      <View style={[styles.content, { paddingHorizontal: Spacing.xl * spacingMultiplier }]}>
+      <View style={[styles.content, horizontalPadding]}>
         <AnimatedThemedText 
           entering={FadeInDown.delay(400).duration(800)}
           variant="headlineLarge"
@@ -109,7 +110,7 @@ export default function LandingScreen() {
       </View>
 
       {/* Footer */}
-      <View style={[styles.footer, { paddingHorizontal: Spacing.xl * spacingMultiplier }]}>
+      <View style={[styles.footer, horizontalPadding]}>
         <PrimaryButton
           title="Access Your Account"
           onPress={handleGetStarted}

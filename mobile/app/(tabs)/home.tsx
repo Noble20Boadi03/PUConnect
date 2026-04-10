@@ -12,16 +12,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '@/hooks/use-responsive';
 import { ServiceCard } from '@/components/service-card';
 import { useHomeViewModel } from '@/hooks/view-models/use-home-view-model';
+import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
 
 interface SectionHeaderProps {
   title: string;
   onSeeAll?: () => void;
-  horizontalPadding: number;
+  horizontalPadding: { paddingLeft: number; paddingRight: number };
 }
 
 const SectionHeader = ({ title, onSeeAll, horizontalPadding }: SectionHeaderProps) => {
   return (
-    <View style={[styles.sectionHeader, { paddingHorizontal: horizontalPadding }]}>
+    <View style={[styles.sectionHeader, { paddingLeft: horizontalPadding.paddingLeft, paddingRight: horizontalPadding.paddingRight }]}>
       <ThemedText variant="titleLarge" style={styles.sectionTitle}>{title}</ThemedText>
       {onSeeAll && (
         <Pressable onPress={onSeeAll}>
@@ -32,10 +33,10 @@ const SectionHeader = ({ title, onSeeAll, horizontalPadding }: SectionHeaderProp
   );
 };
 
-const PromotionBanner = ({ horizontalPadding }: { horizontalPadding: number }) => {
+const PromotionBanner = ({ horizontalPadding }: { horizontalPadding: { paddingLeft: number; paddingRight: number } }) => {
   const { theme } = useTheme();
   return (
-    <View style={{ paddingHorizontal: horizontalPadding, marginVertical: Spacing.xl }}>
+    <View style={{ ...horizontalPadding, marginVertical: Spacing.xl }}>
       <LinearGradient
         colors={[theme.primary, theme.primaryContainer]}
         start={{ x: 0, y: 0 }}
@@ -65,8 +66,12 @@ export default function HomeScreen() {
   const { uiState, onRefresh } = useHomeViewModel();
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const { isTablet, spacingMultiplier } = useResponsive();
-  const horizontalPadding = Spacing.xl * spacingMultiplier;
+  const { isTablet, isLandscape, spacingMultiplier, contentPaddingLeft, contentPaddingRight } = useResponsive();
+  const tabBarHeight = useTabBarHeight();
+  const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
+
+  // In landscape, cards can be wider since there's more horizontal space
+  const cardWidth = isTablet ? 240 : isLandscape ? 200 : 160;
 
   const isRefreshing = uiState.status === 'content' && !!uiState.isRefreshing;
 
@@ -108,7 +113,7 @@ export default function HomeScreen() {
       <ThemedView 
         style={[
           styles.fixedHeader, 
-          { paddingTop: insets.top + Spacing.sm, paddingHorizontal: horizontalPadding }
+          { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }
         ]}
       >
         <View style={styles.topRow}>
@@ -123,7 +128,11 @@ export default function HomeScreen() {
         {/* Search Bar Row */}
         <ThemedView 
           colorName="surfaceVariant" 
-          style={[styles.searchContainer, { borderColor: theme.outlineVariant }]}
+          style={[
+            styles.searchContainer, 
+            horizontalPadding,
+            { borderColor: theme.outlineVariant }
+          ]}
         >
           <ThemedIcon name="magnify" size={20} colorName="textMuted" />
           <TextInput
@@ -138,7 +147,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent, 
-          { paddingBottom: insets.bottom + Spacing.massive }
+          { paddingBottom: tabBarHeight }
         ]}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={theme.primary} />
@@ -149,14 +158,14 @@ export default function HomeScreen() {
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false} 
-          contentContainerStyle={{ paddingLeft: horizontalPadding, paddingRight: horizontalPadding - Spacing.md }}
+          contentContainerStyle={{ paddingLeft: horizontalPadding.paddingLeft, paddingRight: horizontalPadding.paddingRight - Spacing.md }}
           style={styles.horizontalSection}
         >
           {popular.map((item) => (
             <ServiceCard 
               key={`popular-${item.id}`} 
               listing={item} 
-              width={isTablet ? 220 : 160}
+              width={cardWidth}
               onPress={() => router.push({ pathname: "/listing/[id]", params: { id: item.id } })} 
             />
           ))}
@@ -164,20 +173,20 @@ export default function HomeScreen() {
 
         {/* Recommended For You Section */}
         <SectionHeader title="Recommended for you" horizontalPadding={horizontalPadding} onSeeAll={() => {}} />
-        <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.sectionSub, { paddingHorizontal: horizontalPadding }]}>
+        <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.sectionSub, horizontalPadding]}>
           Personalized based on your interests
         </ThemedText>
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false} 
-          contentContainerStyle={{ paddingLeft: horizontalPadding, paddingRight: horizontalPadding - Spacing.md }}
+          contentContainerStyle={{ paddingLeft: horizontalPadding.paddingLeft, paddingRight: horizontalPadding.paddingRight - Spacing.md }}
           style={styles.horizontalSection}
         >
           {recommended.map((item) => (
             <ServiceCard 
               key={`rec-${item.id}`} 
               listing={item} 
-              width={isTablet ? 220 : 160}
+              width={cardWidth}
               onPress={() => router.push({ pathname: "/listing/[id]", params: { id: item.id } })} 
             />
           ))}
@@ -191,14 +200,14 @@ export default function HomeScreen() {
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false} 
-          contentContainerStyle={{ paddingLeft: horizontalPadding, paddingRight: horizontalPadding - Spacing.md }}
+          contentContainerStyle={{ paddingLeft: horizontalPadding.paddingLeft, paddingRight: horizontalPadding.paddingRight - Spacing.md }}
           style={styles.horizontalSection}
         >
           {recent.map((item) => (
             <ServiceCard 
               key={`recent-${item.id}`} 
               listing={item} 
-              width={isTablet ? 220 : 160}
+              width={cardWidth}
               onPress={() => router.push({ pathname: "/listing/[id]", params: { id: item.id } })} 
             />
           ))}
@@ -206,20 +215,20 @@ export default function HomeScreen() {
 
         {/* Based on Last Order Section */}
         <SectionHeader title="Based on your last order" horizontalPadding={horizontalPadding} onSeeAll={() => {}} />
-        <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.sectionSub, { paddingHorizontal: horizontalPadding }]}>
+        <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.sectionSub, horizontalPadding]}>
           You hired a designer, you might also need...
         </ThemedText>
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false} 
-          contentContainerStyle={{ paddingLeft: horizontalPadding, paddingRight: horizontalPadding - Spacing.md }}
+          contentContainerStyle={{ paddingLeft: horizontalPadding.paddingLeft, paddingRight: horizontalPadding.paddingRight - Spacing.md }}
           style={styles.horizontalSection}
         >
           {lastOrderRecs.map((item) => (
             <ServiceCard 
               key={`last-${item.id}`} 
               listing={item} 
-              width={isTablet ? 220 : 160}
+              width={cardWidth}
               onPress={() => router.push({ pathname: "/listing/[id]", params: { id: item.id } })} 
             />
           ))}
@@ -230,14 +239,14 @@ export default function HomeScreen() {
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false} 
-          contentContainerStyle={{ paddingLeft: horizontalPadding, paddingRight: horizontalPadding - Spacing.md }}
+          contentContainerStyle={{ paddingLeft: horizontalPadding.paddingLeft, paddingRight: horizontalPadding.paddingRight - Spacing.md }}
           style={styles.horizontalSection}
         >
           {trending.map((item) => (
             <ServiceCard 
               key={`trend-${item.id}`} 
               listing={item} 
-              width={isTablet ? 220 : 160}
+              width={cardWidth}
               onPress={() => router.push({ pathname: "/listing/[id]", params: { id: item.id } })} 
             />
           ))}

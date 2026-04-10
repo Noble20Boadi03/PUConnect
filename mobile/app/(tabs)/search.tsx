@@ -10,27 +10,29 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { useResponsive } from '@/hooks/use-responsive';
+import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
 
 export default function SearchScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const { spacingMultiplier } = useResponsive();
+  const { spacingMultiplier, contentPaddingLeft, contentPaddingRight } = useResponsive();
+  const tabBarHeight = useTabBarHeight();
   const [activeTab, setActiveTab] = useState<'categories' | 'interests'>('categories');
 
-  const horizontalPadding = Spacing.xl * spacingMultiplier;
+  const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
 
   return (
     <ScreenLayout padding="none" withSafeArea={false}>
       {/* Fixed Header & Tabs */}
       <ThemedView elevation={1} style={{ zIndex: 10 }}>
-        <View style={[styles.header, { paddingTop: insets.top + Spacing.sm, paddingHorizontal: horizontalPadding }]}>
+        <View style={[styles.header, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
           <ThemedText variant="headlineSmall" style={styles.headerTitle}>Categories</ThemedText>
           <Pressable style={styles.iconBtn}>
             <ThemedIcon name="magnify" size={24} />
           </Pressable>
         </View>
 
-        <View style={[styles.tabBar, { paddingHorizontal: horizontalPadding }]}>
+        <View style={[styles.tabBar, horizontalPadding]}>
           <Pressable 
             onPress={() => setActiveTab('categories')}
             style={[styles.tab, activeTab === 'categories' && { borderBottomWidth: 3, borderBottomColor: theme.primary }]}
@@ -63,14 +65,14 @@ export default function SearchScreen() {
         showsVerticalScrollIndicator={false} 
         contentContainerStyle={[
           styles.listContent, 
-          { paddingBottom: insets.bottom + Spacing.massive }
+          { paddingBottom: tabBarHeight }
         ]}
       >
         {activeTab === 'categories' ? (
           CAMPUS_CATEGORIES.map((cat) => (
             <Pressable 
               key={cat.id} 
-              style={[styles.categoryItem, { borderBottomColor: theme.outlineVariant, paddingHorizontal: horizontalPadding }]} 
+              style={[styles.categoryItem, { borderBottomColor: theme.outlineVariant, ...horizontalPadding }]} 
               onPress={() => router.push({
                 pathname: "/search/[id]",
                 params: { id: cat.id }

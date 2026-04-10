@@ -10,6 +10,7 @@ import { ScreenLayout } from '@/components/ui/screen-layout';
 import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
 import { useListingViewModel } from '@/hooks/view-models/use-listing-view-model';
+import { useResponsive } from '@/hooks/use-responsive';
 
 export default function ListingDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -18,6 +19,8 @@ export default function ListingDetailsScreen() {
   const router = useRouter();
 
   const { uiState } = useListingViewModel(id as string);
+  const { contentPaddingLeft, contentPaddingRight, spacingMultiplier } = useResponsive();
+  const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
 
   if (uiState.status === 'loading') {
     return (
@@ -74,16 +77,13 @@ export default function ListingDetailsScreen() {
           />
           <Pressable
             onPress={() => router.back()}
-            style={[
-              styles.backBtn,
-              { top: insets.top + 10, backgroundColor: "rgba(0,0,0,0.3)" },
-            ]}
+            style={[styles.backBtn, { top: insets.top + Spacing.sm, left: Math.max(insets.left, Spacing.lg), backgroundColor: "rgba(0,0,0,0.3)" }]}
           >
             <ThemedIcon name="chevron-left" size={28} lightColor="#fff" darkColor="#fff" />
           </Pressable>
         </View>
 
-        <View style={[styles.content, { paddingHorizontal: Spacing.xl }]}>
+        <View style={[styles.content, horizontalPadding]}>
           {/* Title and Price */}
           <View style={styles.headerRow}>
             <View style={{ flex: 1 }}>
@@ -188,7 +188,7 @@ export default function ListingDetailsScreen() {
         <View
           style={[
             styles.bottomBar,
-            { paddingBottom: Math.max(insets.bottom, 20), backgroundColor: theme.surface },
+            { paddingBottom: Math.max(insets.bottom, 20), backgroundColor: theme.surface, ...horizontalPadding },
           ]}
         >
           <PrimaryButton

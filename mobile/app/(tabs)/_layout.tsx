@@ -5,12 +5,22 @@ import { BlurView } from 'expo-blur';
 import { Platform, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedIcon } from '@/components/ui/themed-icon';
+import { useResponsive } from '@/hooks/use-responsive';
 
 export default function TabLayout() {
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { isLandscape } = useResponsive();
 
-  const bottomInset = insets.bottom;
+  // In landscape, reduce tab bar height to preserve vertical screen space.
+  // The tab bar also needs side (left/right) inset padding on phones in landscape.
+  const tabBarHeight = isLandscape
+    ? (Platform.OS === 'ios' ? 48 : 46) + insets.bottom
+    : (Platform.OS === 'ios' ? 64 : 62) + insets.bottom;
+
+  const tabBarPaddingBottom = isLandscape
+    ? insets.bottom + 4
+    : insets.bottom + 8;
 
   return (
     <Tabs
@@ -23,9 +33,12 @@ export default function TabLayout() {
           position: Platform.OS === 'ios' ? 'absolute' : 'relative',
           borderTopWidth: 0,
           elevation: 0,
-          height: (Platform.OS === 'ios' ? 64 : 62) + bottomInset,
-          paddingBottom: bottomInset + 8,
-          paddingTop: 8,
+          height: tabBarHeight,
+          paddingBottom: tabBarPaddingBottom,
+          paddingTop: isLandscape ? 4 : 8,
+          // In landscape add side insets for the home-indicator / notch
+          paddingLeft: isLandscape ? insets.left : 0,
+          paddingRight: isLandscape ? insets.right : 0,
           backgroundColor: isDark ? 'rgba(26, 28, 30, 0.9)' : 'rgba(253, 251, 255, 0.9)',
         },
         tabBarBackground: () => (

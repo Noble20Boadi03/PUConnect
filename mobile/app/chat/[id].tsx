@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
+import { useResponsive } from '@/hooks/use-responsive';
 
 type Message = {
     id: string;
@@ -32,6 +33,8 @@ export default function ChatScreen() {
     const { user } = useAuth();
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const { contentPaddingLeft, contentPaddingRight, spacingMultiplier } = useResponsive();
+    const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
     const [inputText, setInputText] = useState('');
     
     // Mocking messages to match the requested image UI
@@ -98,7 +101,7 @@ export default function ChatScreen() {
             withSafeArea={false}
         >
             {/* Header */}
-            <View style={[styles.header, { borderBottomColor: theme.outlineVariant, paddingTop: insets.top + 10 }]}>
+            <View style={[styles.header, { borderBottomColor: theme.outlineVariant, paddingTop: insets.top + 10, ...horizontalPadding }]}>
                 <Pressable onPress={() => router.back()} style={styles.backBtn}>
                     <ThemedIcon name="chevron-left" size={28} />
                 </Pressable>
@@ -116,7 +119,7 @@ export default function ChatScreen() {
             {/* Chat Content */}
             <ScrollView 
                 style={styles.chatList}
-                contentContainerStyle={styles.scrollContent}
+                contentContainerStyle={[styles.scrollContent, horizontalPadding]}
                 showsVerticalScrollIndicator={false}
             >
                 {messages.map((item) => {
@@ -194,7 +197,7 @@ export default function ChatScreen() {
             {/* Input Area */}
             <View style={[
                 styles.inputContainer, 
-                { borderTopColor: theme.outlineVariant, paddingBottom: insets.bottom + 12 }
+                { borderTopColor: theme.outlineVariant, paddingBottom: insets.bottom + 12, ...horizontalPadding }
             ]}>
                 <Pressable style={styles.attachBtn}>
                     <ThemedIcon name="plus" size={24} colorName="textMuted" />

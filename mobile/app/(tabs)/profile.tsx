@@ -14,18 +14,20 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useResponsive } from '@/hooks/use-responsive';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useProfileViewModel } from '@/hooks/view-models/use-profile-view-model';
+import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
 
 export default function ProfileScreen() {
     const { uiState, handleLogin, handleLogout } = useProfileViewModel();
     const { theme, isDark, setMode } = useTheme();
     const insets = useSafeAreaInsets();
-    const { spacingMultiplier } = useResponsive();
+    const { spacingMultiplier, contentPaddingLeft, contentPaddingRight } = useResponsive();
+    const tabBarHeight = useTabBarHeight();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
-    const horizontalPadding = Spacing.xl * spacingMultiplier;
+    const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
 
     const onLogin = async () => {
         setIsLoggingIn(true);
@@ -58,7 +60,7 @@ export default function ProfileScreen() {
                 <ThemedView 
                     style={[
                         styles.fixedHeader, 
-                        { paddingTop: insets.top + Spacing.sm, paddingHorizontal: horizontalPadding }
+                        { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }
                     ]}
                 >
                     <View style={styles.topRow}>
@@ -69,7 +71,7 @@ export default function ProfileScreen() {
                 </ThemedView>
 
                 <ScrollView 
-                    contentContainerStyle={[styles.loginContainer, { paddingHorizontal: horizontalPadding }]}
+                    contentContainerStyle={[styles.loginContainer, horizontalPadding]}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
                 >
@@ -138,7 +140,7 @@ export default function ProfileScreen() {
             <ThemedView 
                 style={[
                     styles.fixedHeader, 
-                    { paddingTop: insets.top + Spacing.sm, paddingHorizontal: horizontalPadding }
+                    { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }
                 ]}
             >
                     <View style={styles.topRow}>
@@ -165,7 +167,7 @@ export default function ProfileScreen() {
 
             <ScrollView
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.massive }}
+                contentContainerStyle={{ paddingBottom: tabBarHeight }}
             >
                 {/* Hero Section - Redesigned to be cleaner */}
                 <Animated.View 
@@ -229,7 +231,7 @@ export default function ProfileScreen() {
                 </Animated.View>
 
             {isProfileIncomplete && (
-                <Animated.View entering={FadeInDown.delay(400).duration(800)} style={{ marginHorizontal: horizontalPadding, marginTop: Spacing.lg }}>
+                <View style={[horizontalPadding, { marginBottom: Spacing.md }]}>
                     <Link href={{ pathname: "/(tabs)/onboarding" }} asChild>
                         <Pressable style={[styles.alertBanner, { backgroundColor: theme.primaryContainer, borderColor: theme.primary }]}>
                             <View style={[styles.alertIcon, { backgroundColor: theme.primary }]}>
@@ -242,11 +244,11 @@ export default function ProfileScreen() {
                             <ThemedIcon name="chevron-right" size={18} colorName="onPrimaryContainer" />
                         </Pressable>
                     </Link>
-                </Animated.View>
+                </View>
             )}
 
             {/* About & Skills Row */}
-            <Animated.View entering={FadeInDown.delay(500).duration(800)} style={[styles.contentRow, { marginHorizontal: horizontalPadding }]}>
+            <Animated.View entering={FadeInDown.delay(500).duration(800)} style={[styles.contentRow, { ...horizontalPadding, marginTop: Spacing.lg }]}>
                 <View style={[styles.halfCard, { backgroundColor: theme.surface }]}>
                     <ThemedText variant="labelMedium" colorName="textMuted" style={styles.cardLabel}>About</ThemedText>
                     <ThemedText variant="bodySmall" colorName="textSecondary" numberOfLines={3}>
@@ -273,7 +275,7 @@ export default function ProfileScreen() {
             </Animated.View>
 
             {/* Grouped Settings Menu */}
-            <Animated.View entering={FadeInDown.delay(600).duration(800)} style={[styles.menuWrapper, { marginHorizontal: horizontalPadding, marginBottom: insets.bottom + Spacing.massive }]}>
+            <Animated.View entering={FadeInDown.delay(600).duration(800)} style={[styles.menuWrapper, horizontalPadding, { marginBottom: tabBarHeight + Spacing.md }]}>
                 <ThemedText variant="titleLarge" style={styles.sectionTitle}>Account</ThemedText>
                 <View style={[styles.groupedMenu, { backgroundColor: theme.surface, borderColor: theme.outlineVariant }]}>
                     <Pressable style={styles.groupItem}>

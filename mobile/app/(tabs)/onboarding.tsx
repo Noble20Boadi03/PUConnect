@@ -138,7 +138,6 @@ export default function OnboardingScreen() {
       scrollable 
       keyboardAvoiding 
       padding="large"
-      contentContainerStyle={styles.scrollContent}
     >
       <View style={styles.header}>
         <ThemedText variant="headlineLarge" style={styles.title}>
@@ -380,7 +379,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: Spacing.xl,
     paddingBottom: 100,
   },
   header: {

@@ -9,6 +9,7 @@ import {
     Alert,
     Image,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useAuth } from "@/context/auth-context";
@@ -27,14 +28,14 @@ const AnimatedThemedText = Animated.createAnimatedComponent(ThemedText);
 export default function LoginScreen() {
     const { theme, isDark } = useTheme();
     const { signIn } = useAuth();
-    const { spacingMultiplier } = useResponsive();
+    const insets = useSafeAreaInsets();
+    const { spacingMultiplier, contentPaddingLeft, contentPaddingRight } = useResponsive();
+    const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-
-    const horizontalPadding = Spacing.xl * spacingMultiplier;
 
     const handleLogin = async () => {
         setIsLoading(true);
@@ -51,10 +52,10 @@ export default function LoginScreen() {
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <ScreenLayout padding="large" keyboardAvoiding scrollable>
+            <ScreenLayout padding="none" keyboardAvoiding scrollable contentContainerStyle={horizontalPadding}>
                 <View style={styles.content}>
                     {/* Back Button */}
-                    <Pressable onPress={() => router.back()} style={[styles.backButton, { backgroundColor: theme.surfaceVariant }]}>
+                    <Pressable onPress={() => router.back()} style={[styles.backButton, { backgroundColor: theme.surfaceVariant, marginTop: insets.top + Spacing.sm }]}>
                         <ThemedIcon name="chevron-left" size={24} />
                     </Pressable>
 

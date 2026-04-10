@@ -11,6 +11,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { useSubcategoryViewModel } from '@/hooks/view-models/use-subcategory-view-model';
+import { useResponsive } from '@/hooks/use-responsive';
 
 export default function SubcategoryListingsScreen() {
     const { subcategory: subcategoryTitle, category, description } = useLocalSearchParams<{ 
@@ -22,6 +23,8 @@ export default function SubcategoryListingsScreen() {
     const router = useRouter();
     const { theme } = useTheme();
     const insets = useSafeAreaInsets();
+    const { contentPaddingLeft, contentPaddingRight, spacingMultiplier } = useResponsive();
+    const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
 
     const {
         uiState,
@@ -69,16 +72,16 @@ export default function SubcategoryListingsScreen() {
     const isAllSelected = Object.keys(activeFilters).length === 0;
 
     const renderHeader = () => (
-        <View style={styles.headerContent}>
+        <View style={[styles.headerContent, horizontalPadding]}>
             <ThemedText variant="headlineSmall" style={[styles.title, { paddingHorizontal: Spacing.md }]}>{subcategoryTitle}</ThemedText>
             {description && (
-                <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.description, { paddingHorizontal: Spacing.md }]}>{description}</ThemedText>
+                <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.description]}>{description}</ThemedText>
             )}
             
             <ScrollView 
                 horizontal 
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={[styles.filterContainer, { paddingHorizontal: Spacing.md }]}
+                contentContainerStyle={{ ...horizontalPadding, paddingBottom: 4 }}
             >
                 {/* 'All' Filter Pill */}
                 <Pressable 
@@ -192,7 +195,7 @@ export default function SubcategoryListingsScreen() {
     return (
         <ScreenLayout scrollable={false} padding="none" withSafeArea={false}>
             {/* Nav Header */}
-            <View style={[styles.navHeader, { paddingTop: insets.top + 5, paddingHorizontal: Spacing.md }]}>
+            <View style={[styles.navHeader, { paddingTop: insets.top + 5, ...horizontalPadding }]}>
                 <Pressable onPress={() => router.back()} style={styles.iconBtn}>
                     <ThemedIcon name="chevron-left" size={24} />
                 </Pressable>
@@ -206,7 +209,7 @@ export default function SubcategoryListingsScreen() {
                 renderItem={renderItem}
                 ListHeaderComponent={renderHeader}
                 keyExtractor={(item) => item.id}
-                contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + Spacing.massive }]}
+                contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + Spacing.xl }]}
                 refreshing={isRefreshing}
                 onRefresh={onRefresh}
                 ListEmptyComponent={
