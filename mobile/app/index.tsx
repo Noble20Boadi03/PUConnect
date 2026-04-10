@@ -9,7 +9,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, {
   FadeIn,
@@ -36,7 +35,6 @@ export default function LandingScreen() {
   if (showSplash) {
     return (
       <Animated.View exiting={FadeOut.duration(500)} style={styles.splashContainer}>
-        <StatusBar style="dark" />
         <Animated.Image
           entering={FadeIn.duration(800)}
           source={require("../assets/images/puconnect_logo.png")}
@@ -49,7 +47,6 @@ export default function LandingScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
       
       {/* Header */}
       <View style={styles.header}>
