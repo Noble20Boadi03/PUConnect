@@ -5,10 +5,14 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { Platform, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
+  const insets = useSafeAreaInsets();
+
+  const bottomInset = insets.bottom;
 
   return (
     <Tabs
@@ -20,8 +24,8 @@ export default function TabLayout() {
           position: Platform.OS === 'ios' ? 'absolute' : 'relative',
           borderTopWidth: 0,
           elevation: 0,
-          height: Platform.OS === 'ios' ? 88 : 64,
-          paddingBottom: Platform.OS === 'ios' ? 32 : 12,
+          height: (Platform.OS === 'ios' ? 56 : 52) + bottomInset,
+          paddingBottom: bottomInset,
           paddingTop: 12,
           backgroundColor: colorScheme === 'dark' ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.9)',
         },

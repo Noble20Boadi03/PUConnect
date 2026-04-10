@@ -22,6 +22,7 @@ import { api } from "@/services/api";
 import { ExperienceLevel } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const POPULAR_SKILLS = [
   "Tutoring",
@@ -54,6 +55,7 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? "light"];
+  const insets = useSafeAreaInsets();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -167,7 +169,7 @@ export default function OnboardingScreen() {
         style={[styles.container, { backgroundColor: theme.background }]}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
@@ -411,7 +413,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 25,
-    paddingTop: 60,
     paddingBottom: 100,
   },
   header: {

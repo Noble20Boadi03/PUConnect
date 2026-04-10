@@ -8,12 +8,14 @@ import { ChatMessage } from '@/types';
 import { Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function MessagesScreen() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [loading, setLoading] = useState(true);
     const { token, user } = useAuth();
     const { theme } = useTheme();
+    const insets = useSafeAreaInsets();
 
     useEffect(() => {
         if (token) {
@@ -53,7 +55,7 @@ export default function MessagesScreen() {
 
     return (
         <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
-            <View style={styles.header}>
+            <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
                 <Text style={[styles.title, { color: theme.text }]}>Messages</Text>
                 <Pressable style={[styles.newChatBtn, { backgroundColor: theme.primary + '11' }]}>
                     <Ionicons name="create-outline" size={20} color={theme.primary} />
@@ -116,7 +118,6 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     header: {
-        paddingTop: 60,
         paddingHorizontal: Spacing.md,
         paddingBottom: Spacing.md,
         flexDirection: 'row',

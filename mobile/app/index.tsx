@@ -6,9 +6,8 @@ import {
   Pressable,
   Dimensions,
   Image,
-  SafeAreaView,
-  StatusBar as RNStatusBar,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
