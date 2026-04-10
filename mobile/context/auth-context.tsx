@@ -65,16 +65,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     async function signIn(email: string, password: string) {
+        // BYPASS AUTH CHECKS FOR TESTING
+        const dummyToken = 'dev_dummy_token';
+        // await SecureStore.setItemAsync('userToken', dummyToken);
+        setToken(dummyToken);
+        setUser(normalizeUser({ 
+            fullName: 'Test User', 
+            email: email || 'test@domain.edu',
+            universityId: '20270000',
+            skillTags: ['React Native', 'Expo'],
+            isAvailable: true,
+            verifiedStudent: true
+        }));
+        /*
         const tokens = await api.login(email, password);
         await SecureStore.setItemAsync('userToken', tokens.access_token);
         setToken(tokens.access_token);
 
         const userDataResponse = await api.getMe(tokens.access_token) as any;
         setUser(normalizeUser(userDataResponse));
+        */
     }
 
     async function register(userData: any) {
-        await api.register(userData);
+        // BYPASS AUTH CHECKS FOR TESTING
+        // await api.register(userData);
+        console.log("Mock Registration:", userData);
     }
 
     async function signOut() {

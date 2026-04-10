@@ -50,3 +50,4 @@ ios/
 # Python virtual environment
 venv/
 .env
+expo-env.d.ts
