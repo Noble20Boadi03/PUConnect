@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { StyleSheet, View, FlatList, Pressable, Image, ActivityIndicator, Modal, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTheme } from '@/context/theme-context';
 import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
-import { api } from '@/services/api';
-import { Listing, SubcategoryFilter } from '@/types';
+import { Listing } from '@/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
+import { useSubcategoryViewModel } from '@/hooks/view-models/use-subcategory-view-model';
 
 export default function SubcategoryListingsScreen() {
     const { subcategory: subcategoryTitle, category, description } = useLocalSearchParams<{ 
@@ -22,79 +22,48 @@ export default function SubcategoryListingsScreen() {
     const router = useRouter();
     const { theme } = useTheme();
     const insets = useSafeAreaInsets();
-    
-    const [listings, setListings] = useState<Listing[]>([]);
-    const [filtersConfig, setFiltersConfig] = useState<SubcategoryFilter[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
-    
-    // activeFilters stores selected values. e.g., { "Subject": "Mathematics", "Rating": "4.5+" }
-    const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
-    
-    // Modal state
-    const [activeModalFilter, setActiveModalFilter] = useState<SubcategoryFilter | null>(null);
 
-    useEffect(() => {
-        const controller = new AbortController();
-        fetchData(controller.signal);
-        return () => controller.abort();
-    }, [subcategoryTitle, activeFilters]);
+    const {
+        uiState,
+        activeFilters,
+        activeModalFilter,
+        setActiveModalFilter,
+        selectFilter,
+        clearFilter,
+        onRefresh,
+    } = useSubcategoryViewModel({ subcategoryTitle: subcategoryTitle as string, category: category as string | undefined });
 
-    useEffect(() => {
-        // Fetch dynamic filters for this subcategory
-        const controller = new AbortController();
-        const loadFilters = async () => {
-            try {
-                const filters = await api.getSubcategoryFilters(subcategoryTitle);
-                setFiltersConfig(filters);
-            } catch (err: any) {
-                if (err.message === 'Aborted') return;
-                console.error('Failed to load subcategory filters', err);
-            }
-        };
-        loadFilters();
-        return () => controller.abort();
-    }, [subcategoryTitle]);
+    if (uiState.status === 'loading') {
+        return (
+            <ScreenLayout>
+                <View style={styles.centered}>
+                    <ActivityIndicator size="large" color={theme.primary} />
+                </View>
+            </ScreenLayout>
+        );
+    }
 
-    const fetchData = async (signal?: AbortSignal) => {
-        try {
-            setLoading(true);
-            
-            const apiFilters: any = {
-                category: category,
-                subcategory: subcategoryTitle,
-            };
+    if (uiState.status === 'error') {
+        return (
+            <ScreenLayout>
+                <View style={styles.centered}>
+                    <ThemedIcon name="alert-circle-outline" size={48} colorName="error" />
+                    <ThemedText variant="bodyLarge" style={{ marginTop: Spacing.md }}>{uiState.message}</ThemedText>
+                </View>
+            </ScreenLayout>
+        );
+    }
 
-            // Map selected dynamic filters to API parameters
-            Object.entries(activeFilters).forEach(([key, value]) => {
-                const lowerKey = key.toLowerCase();
-                if (lowerKey.includes('rating')) apiFilters.sortBy = 'rating';
-                else if (lowerKey.includes('price')) apiFilters.sortBy = 'price';
-                else if (lowerKey === 'department') apiFilters.department = value;
-                else if (lowerKey === 'academic level' || lowerKey === 'level') apiFilters.level = value;
-                else apiFilters.tag = value; // Fallback to tag for other custom filters
-            });
-            
-            const data = await api.getListings(0, 20, apiFilters, signal);
-            setListings(data);
-        } catch (error: any) {
-            if (error.message === 'Aborted') return;
-            console.error('Error fetching subcategory listings:', error);
-        } finally {
-            setLoading(false);
-            setRefreshing(false);
-        }
-    };
+    const listings = uiState.status === 'content' ? uiState.data.listings : [];
+    const filtersConfig = uiState.status === 'content' ? uiState.data.filtersConfig : [];
+    const isRefreshing = uiState.status === 'content' && !!uiState.isRefreshing;
 
     const handleSelectOption = (filterLabel: string, optionValue: string) => {
-        setActiveFilters(prev => ({ ...prev, [filterLabel]: optionValue }));
-        setActiveModalFilter(null);
+        selectFilter(filterLabel, optionValue);
     };
 
     const handleClearFilter = (filterLabel: string) => {
-        const newFilters = { ...activeFilters };
-        delete newFilters[filterLabel];
-        setActiveFilters(newFilters);
+        clearFilter(filterLabel);
     };
 
     const isAllSelected = Object.keys(activeFilters).length === 0;
@@ -118,7 +87,7 @@ export default function SubcategoryListingsScreen() {
                         { borderColor: theme.outlineVariant },
                         isAllSelected && { borderColor: theme.primary, borderWidth: 1.5, backgroundColor: theme.primary }
                     ]}
-                    onPress={() => setActiveFilters({})}
+                    onPress={() => clearFilter('__all__')}
                 >
                     <ThemedText 
                         variant="labelLarge"
@@ -238,24 +207,15 @@ export default function SubcategoryListingsScreen() {
                 ListHeaderComponent={renderHeader}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + Spacing.massive }]}
-                refreshing={refreshing}
-                onRefresh={() => {
-                    setRefreshing(true);
-                    fetchData();
-                }}
+                refreshing={isRefreshing}
+                onRefresh={onRefresh}
                 ListEmptyComponent={
-                    !loading ? (
-                        <View style={styles.emptyContainer}>
-                            <ThemedIcon name="file-document-outline" size={64} colorName="outline" />
-                            <ThemedText variant="bodyLarge" colorName="textMuted" align="center" style={styles.emptyText}>
-                                No students offering this service yet.
-                            </ThemedText>
-                        </View>
-                    ) : (
-                        <View style={styles.loadingContainer}>
-                            <ActivityIndicator size="large" color={theme.primary} />
-                        </View>
-                    )
+                    <View style={styles.emptyContainer}>
+                        <ThemedIcon name="file-document-outline" size={64} colorName="outline" />
+                        <ThemedText variant="bodyLarge" colorName="textMuted" align="center" style={styles.emptyText}>
+                            No students offering this service yet.
+                        </ThemedText>
+                    </View>
                 }
             />
 
@@ -402,6 +362,11 @@ const styles = StyleSheet.create({
     },
     loadingContainer: {
         marginTop: 80,
+    },
+    centered: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     modalOverlay: {
         flex: 1,

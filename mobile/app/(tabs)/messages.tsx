@@ -1,79 +1,56 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React from 'react';
 import { StyleSheet, FlatList, View, ActivityIndicator, Pressable } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
-import { api } from '@/services/api';
-import { useAuth } from '@/context/auth-context';
-import { ChatMessage } from '@/types';
 import { Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '@/hooks/use-responsive';
 import { PrimaryButton } from '@/components/ui/primary-button';
+import { useMessagesViewModel } from '@/hooks/view-models/use-messages-view-model';
 
 export default function MessagesScreen() {
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
-    const [loading, setLoading] = useState(true);
-    const lastRefreshTimestamp = useRef(0);
-    const { token, user } = useAuth();
+    const { uiState, user, onRefresh } = useMessagesViewModel();
     const { theme } = useTheme();
     const insets = useSafeAreaInsets();
     const { spacingMultiplier } = useResponsive();
-
     const horizontalPadding = Spacing.xl * spacingMultiplier;
 
-    useFocusEffect(
-        useCallback(() => {
-            if (!token) return;
-
-            const controller = new AbortController();
-            const now = Date.now();
-            const throttleMs = 5 * 60 * 1000; // 5 minutes
-
-            if (now - lastRefreshTimestamp.current > throttleMs) {
-                fetchMessages(controller.signal);
-                lastRefreshTimestamp.current = now;
-            }
-
-            return () => controller.abort();
-        }, [token])
-    );
-
-    const fetchMessages = async (signal?: AbortSignal) => {
-        try {
-            const data = await api.getMessages(token!, signal);
-            setMessages(data);
-        } catch (error: any) {
-            if (error.message === 'Aborted') return;
-            console.error('Failed to fetch messages:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    if (!token) {
+    // ── uiState: 'empty' used for both unauthenticated AND no messages ──
+    if (uiState.status === 'empty') {
         return (
             <ThemedView style={styles.centered}>
                 <ThemedIcon name="lock" size={48} colorName="outline" />
                 <ThemedText variant="bodyLarge" colorName="textSecondary" align="center" style={styles.emptyText}>
                     Please sign in to view your collaborations.
                 </ThemedText>
-                <PrimaryButton 
-                    title="Sign In" 
-                    onPress={() => router.push('/login')} 
+                <PrimaryButton
+                    title="Sign In"
+                    onPress={() => router.push('/login')}
                     style={{ marginTop: Spacing.xl }}
                 />
             </ThemedView>
         );
     }
 
-    if (loading) {
+    if (uiState.status === 'loading') {
         return (
             <ThemedView style={styles.centered}>
                 <ActivityIndicator size="large" color={theme.primary} />
+            </ThemedView>
+        );
+    }
+
+    if (uiState.status === 'error') {
+        return (
+            <ThemedView style={styles.centered}>
+                <ThemedIcon name="alert-circle-outline" size={48} colorName="error" />
+                <ThemedText variant="bodyLarge" colorName="textSecondary" align="center" style={styles.emptyText}>
+                    {uiState.message}
+                </ThemedText>
             </ThemedView>
         );
     }
@@ -88,7 +65,7 @@ export default function MessagesScreen() {
             </View>
 
             <FlatList
-                data={messages}
+                data={uiState.data}
                 renderItem={({ item }) => (
                     <Pressable
                         style={({ pressed }) => [

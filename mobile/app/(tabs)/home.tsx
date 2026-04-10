@@ -1,9 +1,6 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { FlatList, StyleSheet, View, ActivityIndicator, RefreshControl, ScrollView, Pressable, TextInput, BackHandler, ToastAndroid, Platform } from 'react-native';
-import { api } from '@/services/api';
-import { Listing } from '@/types';
-import { ServiceCard } from '@/components/service-card';
-import { router, useFocusEffect } from 'expo-router';
+import React from 'react';
+import { FlatList, StyleSheet, View, ActivityIndicator, RefreshControl, ScrollView, Pressable, TextInput } from 'react-native';
+import { router } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedIcon } from '@/components/ui/themed-icon';
@@ -13,6 +10,8 @@ import { Spacing, BorderRadius } from '@/constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '@/hooks/use-responsive';
+import { ServiceCard } from '@/components/service-card';
+import { useHomeViewModel } from '@/hooks/view-models/use-home-view-model';
 
 interface SectionHeaderProps {
   title: string;
@@ -63,90 +62,45 @@ const PromotionBanner = ({ horizontalPadding }: { horizontalPadding: number }) =
 };
 
 export default function HomeScreen() {
+  const { uiState, onRefresh } = useHomeViewModel();
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { isTablet, spacingMultiplier } = useResponsive();
-  
   const horizontalPadding = Spacing.xl * spacingMultiplier;
 
-  const [popular, setPopular] = useState<Listing[]>([]);
-  const [recommended, setRecommended] = useState<Listing[]>([]);
-  const [recent, setRecent] = useState<Listing[]>([]);
-  const [trending, setTrending] = useState<Listing[]>([]);
-  const [lastOrderRecs, setLastOrderRecs] = useState<Listing[]>([]);
-  const lastBackPress = useRef(0);
-  
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const lastRefreshTimestamp = useRef(0);
+  const isRefreshing = uiState.status === 'content' && !!uiState.isRefreshing;
 
-  // Implement Double Back to Exit for Android
-  useFocusEffect(
-    React.useCallback(() => {
-      const onBackPress = () => {
-        const currentTime = Date.now();
-        if (currentTime - lastBackPress.current < 2000) {
-          BackHandler.exitApp();
-          return true;
-        }
-
-        lastBackPress.current = currentTime;
-        if (Platform.OS === 'android') {
-          ToastAndroid.show('Press back again to exit', ToastAndroid.SHORT);
-        }
-        return true;
-      };
-
-      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
-      return () => subscription.remove();
-    }, [])
-  );
-
-  const fetchDashboardData = async (signal?: AbortSignal) => {
-    try {
-      const data = await api.getListings(0, 10, undefined, signal);
-      setPopular(data.slice(0, 5));
-      setRecommended(data.slice(2, 7));
-      setTrending(data.slice(5, 10));
-      setRecent(data.slice(1, 4));
-      setLastOrderRecs(data.slice(4, 9));
-    } catch (error: any) {
-      if (error.message === 'Aborted') return;
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      const controller = new AbortController();
-      const now = Date.now();
-      const throttleMs = 5 * 60 * 1000; // 5 minutes
-
-      if (now - lastRefreshTimestamp.current > throttleMs) {
-        fetchDashboardData(controller.signal);
-        lastRefreshTimestamp.current = now;
-      }
-
-      return () => controller.abort();
-    }, [])
-  );
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchDashboardData();
-  };
-
-  if (loading && !refreshing) {
+  if (uiState.status === 'loading') {
     return (
       <ThemedView style={styles.centered}>
         <ActivityIndicator size="large" color={theme.primary} />
       </ThemedView>
     );
   }
+
+  if (uiState.status === 'error') {
+    return (
+      <ThemedView style={styles.centered}>
+        <ThemedIcon name="alert-circle-outline" size={48} colorName="error" />
+        <ThemedText variant="bodyLarge" colorName="textSecondary" align="center" style={{ marginTop: Spacing.md }}>
+          {uiState.message}
+        </ThemedText>
+      </ThemedView>
+    );
+  }
+
+  if (uiState.status === 'empty') {
+    return (
+      <ThemedView style={styles.centered}>
+        <ThemedIcon name="store-off-outline" size={48} colorName="outline" />
+        <ThemedText variant="bodyLarge" colorName="textSecondary" align="center" style={{ marginTop: Spacing.md }}>
+          No listings available yet.
+        </ThemedText>
+      </ThemedView>
+    );
+  }
+
+  const { popular, recommended, recent, trending, lastOrderRecs } = uiState.data;
 
   return (
     <ScreenLayout padding="none" withSafeArea={false}>
@@ -187,7 +141,7 @@ export default function HomeScreen() {
           { paddingBottom: insets.bottom + Spacing.massive }
         ]}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={theme.primary} />
         }
       >
         {/* Popular Services Section */}

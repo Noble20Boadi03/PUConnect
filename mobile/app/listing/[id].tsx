@@ -1,9 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { StyleSheet, ScrollView, ActivityIndicator, Pressable, View, Image } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { api } from '@/services/api';
-import { Listing } from '@/types';
 import { useAuth } from '@/context/auth-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedIcon } from '@/components/ui/themed-icon';
@@ -11,42 +9,17 @@ import { PrimaryButton } from '@/components/ui/primary-button';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
+import { useListingViewModel } from '@/hooks/view-models/use-listing-view-model';
 
 export default function ListingDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
   const router = useRouter();
 
-  const [listing, setListing] = useState<Listing | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { uiState } = useListingViewModel(id as string);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    fetchListing(controller.signal);
-    return () => controller.abort();
-  }, [id]);
-
-  const fetchListing = async (signal?: AbortSignal) => {
-    try {
-      const response = await api.getListing(id as string, signal) as any;
-      const listingData: Listing = {
-        ...response,
-        ownerId: response.ownerId ?? response.owner_id,
-        createdAt: response.createdAt ?? response.created_at,
-        requiredSkills: response.requiredSkills ?? response.required_skills,
-      };
-      setListing(listingData);
-    } catch (error: any) {
-      if (error.message === 'Aborted') return;
-      console.error("Error fetching listing:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
+  if (uiState.status === 'loading') {
     return (
       <ScreenLayout>
         <View style={styles.centered}>
@@ -56,7 +29,20 @@ export default function ListingDetailsScreen() {
     );
   }
 
-  if (!listing) {
+  if (uiState.status === 'error') {
+    return (
+      <ScreenLayout>
+        <View style={styles.centered}>
+          <ThemedIcon name="alert-circle-outline" size={48} colorName="error" />
+          <ThemedText variant="titleMedium" style={{ marginTop: 10 }}>
+            {uiState.message}
+          </ThemedText>
+        </View>
+      </ScreenLayout>
+    );
+  }
+
+  if (uiState.status !== 'content') {
     return (
       <ScreenLayout>
         <View style={styles.centered}>
@@ -69,7 +55,7 @@ export default function ListingDetailsScreen() {
     );
   }
 
-  const isOwner = user?.id === listing.ownerId;
+  const { listing, isOwner } = uiState.data;
 
   return (
     <ScreenLayout padding="none" withSafeArea={false}>

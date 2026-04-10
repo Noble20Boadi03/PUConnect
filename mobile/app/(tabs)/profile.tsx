@@ -1,11 +1,10 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View, Pressable, Alert, ActivityIndicator, Image, ScrollView } from 'react-native';
-import { Link, router, useFocusEffect } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
-import { useAuth } from '@/context/auth-context';
 import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
 import { AnimatedInput } from '@/components/ui/animated-input';
@@ -14,9 +13,10 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useResponsive } from '@/hooks/use-responsive';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useProfileViewModel } from '@/hooks/view-models/use-profile-view-model';
 
 export default function ProfileScreen() {
-    const { user, token, signIn, signOut, isLoading } = useAuth();
+    const { uiState, handleLogin, handleLogout } = useProfileViewModel();
     const { theme, isDark, setMode } = useTheme();
     const insets = useSafeAreaInsets();
     const { spacingMultiplier } = useResponsive();
@@ -24,35 +24,13 @@ export default function ProfileScreen() {
     const [password, setPassword] = useState('');
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const lastRefreshTimestamp = useRef(0);
 
     const horizontalPadding = Spacing.xl * spacingMultiplier;
 
-    const isProfileIncomplete = !user?.bio || !user?.skillTags || user.skillTags.length === 0;
-
-    const { refreshUser } = useAuth();
-
-    useFocusEffect(
-        useCallback(() => {
-            if (!token) return;
-
-            const controller = new AbortController();
-            const now = Date.now();
-            const throttleMs = 5 * 60 * 1000; // 5 minutes
-
-            if (now - lastRefreshTimestamp.current > throttleMs) {
-                refreshUser(controller.signal);
-                lastRefreshTimestamp.current = now;
-            }
-
-            return () => controller.abort();
-        }, [token, refreshUser])
-    );
-
-    const handleLogin = async () => {
+    const onLogin = async () => {
         setIsLoggingIn(true);
         try {
-            await signIn(email, password);
+            await handleLogin(email, password);
         } catch (error) {
             Alert.alert('Login Failed', 'Invalid credentials or server error');
         } finally {
@@ -60,7 +38,7 @@ export default function ProfileScreen() {
         }
     };
 
-    if (isLoading) {
+    if (uiState.status === 'loading') {
         return (
             <ScreenLayout style={styles.centered}>
                 <ActivityIndicator size="large" color={theme.primary} />
@@ -68,7 +46,7 @@ export default function ProfileScreen() {
         );
     }
 
-    if (!token) {
+    if (uiState.status === 'guest') {
         return (
             <ScreenLayout 
                 scrollable={false}
@@ -129,7 +107,7 @@ export default function ProfileScreen() {
 
                             <PrimaryButton
                                 title="Sign In"
-                                onPress={handleLogin}
+                                onPress={onLogin}
                                 isLoading={isLoggingIn}
                                 delay={500}
                                 marginTop={Spacing.xl}
@@ -146,6 +124,9 @@ export default function ProfileScreen() {
             </ScreenLayout>
         );
     }
+
+    // uiState.status === 'content'
+    const { data: user, isProfileIncomplete } = uiState;
 
     return (
         <ScreenLayout 
@@ -318,7 +299,7 @@ export default function ProfileScreen() {
                     <Pressable 
                         style={styles.groupItem} 
                         onPress={async () => {
-                            await signOut();
+                            await handleLogout();
                             router.replace("/");
                         }}
                     >
