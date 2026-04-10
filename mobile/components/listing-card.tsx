@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { Image } from 'expo-image';
+import { View, StyleSheet, Pressable } from 'react-native';
 import { Listing } from '@/types';
-import { Colors, Spacing, BorderRadius, Shadows } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { Ionicons } from '@expo/vector-icons';
+import { Spacing, BorderRadius } from '@/constants/theme';
+import { useTheme } from '@/context/theme-context';
+import { ThemedText } from './themed-text';
+import { ThemedView } from './themed-view';
+import { ThemedIcon } from './ui/themed-icon';
 
 interface ListingCardProps {
     listing: Listing;
@@ -12,76 +13,94 @@ interface ListingCardProps {
 }
 
 export function ListingCard({ listing, onPress }: ListingCardProps) {
-    const colorScheme = useColorScheme();
-    const theme = Colors[colorScheme ?? 'light'];
+    const { theme } = useTheme();
 
     const getBadgeColors = () => {
         switch (listing.type) {
             case 'service_offer':
-                return { bg: '#e0e7ff', text: '#4338ca', label: 'Offer' };
+                return { colorName: 'primary' as const, bgName: 'primaryContainer' as const, label: 'Offer' };
             case 'service_request':
-                return { bg: '#fef3c7', text: '#92400e', label: 'Request' };
+                return { colorName: 'tertiary' as const, bgName: 'tertiaryContainer' as const, label: 'Request' };
             case 'project_team':
-                return { bg: '#d1fae5', text: '#065f46', label: 'Team' };
+                return { colorName: 'secondary' as const, bgName: 'secondaryContainer' as const, label: 'Team' };
             default:
-                return { bg: theme.border, text: theme.textSecondary, label: 'Other' };
+                return { colorName: 'textSecondary' as const, bgName: 'surfaceVariant' as const, label: 'Other' };
         }
     };
 
     const badge = getBadgeColors();
 
     return (
-        <Pressable
-            style={({ pressed }) => [
-                styles.container,
-                { backgroundColor: theme.surface, opacity: pressed ? 0.9 : 1 },
-                Shadows.medium
-            ]}
-            onPress={onPress}
+        <ThemedView
+            elevation={1}
+            colorName="surface"
+            style={styles.container}
         >
-            <View style={styles.content}>
-                <View style={styles.header}>
-                    <View style={[styles.badge, { backgroundColor: badge.bg }]}>
-                        <Text style={[styles.badgeText, { color: badge.text }]}>{badge.label}</Text>
+            <Pressable
+                style={({ pressed }) => [
+                    styles.pressable,
+                    { opacity: pressed ? 0.9 : 1 },
+                ]}
+                onPress={onPress}
+            >
+                <View style={styles.content}>
+                    <View style={styles.header}>
+                        <ThemedView colorName={badge.bgName} style={styles.badge}>
+                            <ThemedText variant="labelSmall" colorName={badge.colorName} style={styles.badgeText}>
+                                {badge.label}
+                            </ThemedText>
+                        </ThemedView>
+                        {listing.price ? (
+                            <ThemedText variant="titleMedium" colorName="primary">
+                                ${listing.price}
+                            </ThemedText>
+                        ) : listing.budget ? (
+                            <ThemedText variant="titleMedium" colorName="secondary">
+                                Budget: ${listing.budget}
+                            </ThemedText>
+                        ) : (
+                            <ThemedText variant="titleMedium" colorName="tertiary">
+                                Project
+                            </ThemedText>
+                        )}
                     </View>
-                    {listing.price ? (
-                        <Text style={[styles.price, { color: theme.primary }]}>${listing.price}</Text>
-                    ) : listing.budget ? (
-                        <Text style={[styles.price, { color: theme.secondary }]}>Budget: ${listing.budget}</Text>
-                    ) : (
-                        <Text style={[styles.price, { color: theme.accent }]}>Project</Text>
-                    )}
-                </View>
 
-                <Text style={[styles.title, { color: theme.text }]} numberOfLines={2}>
-                    {listing.title}
-                </Text>
+                    <ThemedText variant="titleMedium" numberOfLines={2} style={styles.title}>
+                        {listing.title}
+                    </ThemedText>
 
-                <Text style={[styles.description, { color: theme.textSecondary }]} numberOfLines={2}>
-                    {listing.description}
-                </Text>
+                    <ThemedText variant="bodyMedium" colorName="textSecondary" numberOfLines={2} style={styles.description}>
+                        {listing.description}
+                    </ThemedText>
 
-                <View style={styles.footer}>
-                    <View style={styles.metaInfo}>
-                        <Ionicons name="school-outline" size={14} color={theme.textMuted} />
-                        <Text style={[styles.metaText, { color: theme.textMuted }]}>{listing.category}</Text>
-                    </View>
-
-                    {listing.requiredSkills && listing.requiredSkills.length > 0 && (
-                        <View style={styles.skillsContainer}>
-                            {listing.requiredSkills.slice(0, 2).map((skill, idx) => (
-                                <View key={idx} style={[styles.skillTag, { borderColor: theme.border }]}>
-                                    <Text style={[styles.skillText, { color: theme.textSecondary }]}>{skill}</Text>
-                                </View>
-                            ))}
-                            {listing.requiredSkills.length > 2 && (
-                                <Text style={[styles.moreText, { color: theme.textMuted }]}>+{listing.requiredSkills.length - 2}</Text>
-                            )}
+                    <View style={styles.footer}>
+                        <View style={styles.metaInfo}>
+                            <ThemedIcon name="school-outline" size={14} colorName="textMuted" />
+                            <ThemedText variant="labelMedium" colorName="textMuted" style={styles.metaText}>
+                                {listing.category}
+                            </ThemedText>
                         </View>
-                    )}
+
+                        {listing.requiredSkills && listing.requiredSkills.length > 0 && (
+                            <View style={styles.skillsContainer}>
+                                {listing.requiredSkills.slice(0, 2).map((skill, idx) => (
+                                    <ThemedView key={idx} colorName="surfaceVariant" style={styles.skillTag}>
+                                        <ThemedText variant="labelSmall" colorName="onSurfaceVariant">
+                                            {skill}
+                                        </ThemedText>
+                                    </ThemedView>
+                                ))}
+                                {listing.requiredSkills.length > 2 && (
+                                    <ThemedText variant="labelSmall" colorName="textMuted" style={styles.moreText}>
+                                        +{listing.requiredSkills.length - 2}
+                                    </ThemedText>
+                                )}
+                            </View>
+                        )}
+                    </View>
                 </View>
-            </View>
-        </Pressable>
+            </Pressable>
+        </ThemedView>
     );
 }
 
@@ -89,8 +108,10 @@ const styles = StyleSheet.create({
     container: {
         borderRadius: BorderRadius.lg,
         marginBottom: Spacing.md,
-        borderWidth: 1,
-        borderColor: 'transparent',
+        overflow: 'hidden',
+    },
+    pressable: {
+        flex: 1,
     },
     content: {
         padding: Spacing.md,
@@ -107,31 +128,20 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.sm,
     },
     badgeText: {
-        fontSize: 10,
         fontWeight: '700',
         textTransform: 'uppercase',
     },
     title: {
-        fontSize: 18,
         fontWeight: '700',
         marginBottom: Spacing.xs,
-        lineHeight: 24,
     },
     description: {
-        fontSize: 14,
         marginBottom: Spacing.md,
-        lineHeight: 20,
-    },
-    price: {
-        fontSize: 16,
-        fontWeight: '800',
     },
     footer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        borderTopWidth: 1,
-        borderTopColor: '#f1f5f9',
         paddingTop: Spacing.sm,
     },
     metaInfo: {
@@ -139,7 +149,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     metaText: {
-        fontSize: 12,
         marginLeft: 4,
     },
     skillsContainer: {
@@ -147,18 +156,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     skillTag: {
-        borderWidth: 1,
         paddingHorizontal: 6,
         paddingVertical: 2,
-        borderRadius: BorderRadius.sm,
+        borderRadius: BorderRadius.xs,
         marginLeft: 4,
     },
-    skillText: {
-        fontSize: 10,
-        fontWeight: '500',
-    },
     moreText: {
-        fontSize: 10,
         marginLeft: 4,
     },
 });

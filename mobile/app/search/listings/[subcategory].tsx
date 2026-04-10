@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, FlatList, Pressable, Image, ActivityIndicator, Modal, ScrollView } from 'react-native';
+import { StyleSheet, View, FlatList, Pressable, Image, ActivityIndicator, Modal, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/context/theme-context';
 import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { api } from '@/services/api';
 import { Listing, SubcategoryFilter } from '@/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { ThemedView } from '@/components/themed-view';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedIcon } from '@/components/ui/themed-icon';
+import { ScreenLayout } from '@/components/ui/screen-layout';
 
 export default function SubcategoryListingsScreen() {
     const { subcategory: subcategoryTitle, category, description } = useLocalSearchParams<{ 
@@ -91,32 +95,33 @@ export default function SubcategoryListingsScreen() {
 
     const renderHeader = () => (
         <View style={styles.headerContent}>
-            <Text style={[styles.title, { color: theme.text }]}>{subcategoryTitle}</Text>
+            <ThemedText variant="headlineSmall" style={[styles.title, { paddingHorizontal: Spacing.md }]}>{subcategoryTitle}</ThemedText>
             {description && (
-                <Text style={[styles.description, { color: theme.textMuted }]}>{description}</Text>
+                <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.description, { paddingHorizontal: Spacing.md }]}>{description}</ThemedText>
             )}
             
             <ScrollView 
                 horizontal 
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.filterContainer}
+                contentContainerStyle={[styles.filterContainer, { paddingHorizontal: Spacing.md }]}
             >
                 {/* 'All' Filter Pill */}
                 <Pressable 
                     style={[
                         styles.filterPill, 
-                        { borderColor: theme.border },
-                        isAllSelected && { borderColor: theme.text, borderWidth: 1.5, backgroundColor: theme.text }
+                        { borderColor: theme.outlineVariant },
+                        isAllSelected && { borderColor: theme.primary, borderWidth: 1.5, backgroundColor: theme.primary }
                     ]}
                     onPress={() => setActiveFilters({})}
                 >
-                    <Text style={[
-                        styles.filterText, 
-                        { color: isAllSelected ? theme.background : theme.textMuted },
-                        isAllSelected && { fontWeight: '800' }
-                    ]}>
+                    <ThemedText 
+                        variant="labelLarge"
+                        lightColor={isAllSelected ? theme.onPrimary : theme.textMuted}
+                        darkColor={isAllSelected ? theme.onPrimary : theme.textMuted}
+                        style={isAllSelected && { fontWeight: '800' }}
+                    >
                         All
-                    </Text>
+                    </ThemedText>
                 </Pressable>
 
                 {/* Dynamic Filters */}
@@ -129,27 +134,27 @@ export default function SubcategoryListingsScreen() {
                             key={filter.id}
                             style={[
                                 styles.filterPill, 
-                                { borderColor: theme.border },
-                                isSelected && { borderColor: theme.text, borderWidth: 1.5, backgroundColor: theme.surface }
+                                { borderColor: theme.outlineVariant },
+                                isSelected && { borderColor: theme.primary, borderWidth: 1.5, backgroundColor: theme.surfaceVariant }
                             ]}
                             onPress={() => isSelected ? handleClearFilter(filter.filter_label) : setActiveModalFilter(filter)}
                         >
-                            <Text style={[
-                                styles.filterText, 
-                                { color: isSelected ? theme.text : theme.textMuted },
-                                isSelected && { fontWeight: '800' }
-                            ]}>
+                            <ThemedText 
+                                variant="labelLarge"
+                                colorName={isSelected ? "primary" : "textMuted"}
+                                style={isSelected && { fontWeight: '800' }}
+                            >
                                 {isSelected ? selectedVal : filter.filter_label}
-                            </Text>
+                            </ThemedText>
                             {isSelected ? (
                                 <View style={styles.clearIconWrapper}>
-                                    <Ionicons name="close" size={14} color={theme.text} />
+                                    <ThemedIcon name="close" size={14} colorName="primary" />
                                 </View>
                             ) : (
-                                <Ionicons 
+                                <ThemedIcon 
                                     name="chevron-down" 
                                     size={12} 
-                                    color={theme.textMuted} 
+                                    colorName="textMuted" 
                                     style={{ marginLeft: 4 }}
                                 />
                             )}
@@ -178,28 +183,28 @@ export default function SubcategoryListingsScreen() {
                 <View style={styles.infoContainer}>
                     <View style={styles.topRow}>
                         <View style={styles.ratingRow}>
-                            <Ionicons name="star" size={14} color="#fbbf24" />
-                            <Text style={[styles.ratingText, { color: theme.text }]}>
+                            <ThemedIcon name="star" size={14} lightColor="#fbbf24" darkColor="#fbbf24" />
+                            <ThemedText variant="labelLarge" style={styles.ratingText}>
                                 {item.average_rating ? item.average_rating.toFixed(1) : '5.0'}
-                            </Text>
-                            <Text style={[styles.reviewCount, { color: theme.textMuted }]}>
+                            </ThemedText>
+                            <ThemedText variant="labelSmall" colorName="textMuted">
                                 ({item.review_count || '0'})
-                            </Text>
+                            </ThemedText>
                         </View>
                         <Pressable>
-                            <Ionicons name="heart-outline" size={20} color={theme.textMuted} />
+                            <ThemedIcon name="heart-outline" size={20} colorName="textMuted" />
                         </Pressable>
                     </View>
                     
-                    <Text numberOfLines={2} style={[styles.serviceTitle, { color: theme.text }]}>
+                    <ThemedText variant="titleSmall" numberOfLines={2} style={styles.serviceTitle}>
                         {item.title}
-                    </Text>
+                    </ThemedText>
                     
                     <View style={styles.bottomRow}>
-                        <Text style={[styles.pricePrefix, { color: theme.textMuted }]}>From</Text>
-                        <Text style={[styles.priceValue, { color: theme.text }]}>
+                        <ThemedText variant="labelSmall" colorName="textMuted">From</ThemedText>
+                        <ThemedText variant="titleSmall" colorName="primary">
                             GH₵ {item.price || item.budget || '0'}
-                        </Text>
+                        </ThemedText>
                     </View>
                 </View>
             </View>
@@ -207,14 +212,14 @@ export default function SubcategoryListingsScreen() {
     );
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <ScreenLayout scrollable={false} padding="none" withSafeArea={false}>
             {/* Nav Header */}
-            <View style={[styles.navHeader, { paddingTop: insets.top + 5 }]}>
+            <View style={[styles.navHeader, { paddingTop: insets.top + 5, paddingHorizontal: Spacing.md }]}>
                 <Pressable onPress={() => router.back()} style={styles.iconBtn}>
-                    <Ionicons name="arrow-back" size={24} color={theme.text} />
+                    <ThemedIcon name="chevron-left" size={24} />
                 </Pressable>
                 <Pressable style={styles.iconBtn}>
-                    <Ionicons name="search-outline" size={24} color={theme.text} />
+                    <ThemedIcon name="magnify" size={24} />
                 </Pressable>
             </View>
 
@@ -223,7 +228,7 @@ export default function SubcategoryListingsScreen() {
                 renderItem={renderItem}
                 ListHeaderComponent={renderHeader}
                 keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.listContent}
+                contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + Spacing.massive }]}
                 refreshing={refreshing}
                 onRefresh={() => {
                     setRefreshing(true);
@@ -232,14 +237,14 @@ export default function SubcategoryListingsScreen() {
                 ListEmptyComponent={
                     !loading ? (
                         <View style={styles.emptyContainer}>
-                            <Ionicons name="documents-outline" size={64} color={theme.textMuted} />
-                            <Text style={[styles.emptyText, { color: theme.textMuted }]}>
+                            <ThemedIcon name="file-document-outline" size={64} colorName="outline" />
+                            <ThemedText variant="bodyLarge" colorName="textMuted" align="center" style={styles.emptyText}>
                                 No students offering this service yet.
-                            </Text>
+                            </ThemedText>
                         </View>
                     ) : (
                         <View style={styles.loadingContainer}>
-                            <ActivityIndicator size="large" color={(theme as any).discoveryPrimary || theme.primary} />
+                            <ActivityIndicator size="large" color={theme.primary} />
                         </View>
                     )
                 }
@@ -253,43 +258,39 @@ export default function SubcategoryListingsScreen() {
                 onRequestClose={() => setActiveModalFilter(null)}
             >
                 <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
-                    <View style={[styles.modalContent, { backgroundColor: theme.background, paddingBottom: insets.bottom + 20 }]}>
-                        <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
-                            <Text style={[styles.modalTitle, { color: theme.text }]}>
+                    <ThemedView style={[styles.modalContent, { paddingBottom: insets.bottom + 20 }]}>
+                        <View style={[styles.modalHeader, { borderBottomColor: theme.outlineVariant }]}>
+                            <ThemedText variant="titleLarge">
                                 Select {activeModalFilter?.filter_label}
-                            </Text>
+                            </ThemedText>
                             <Pressable onPress={() => setActiveModalFilter(null)} style={styles.iconBtn}>
-                                <Ionicons name="close" size={24} color={theme.text} />
+                                <ThemedIcon name="close" size={24} />
                             </Pressable>
                         </View>
                         <ScrollView style={styles.modalScroll}>
                             {activeModalFilter?.filter_options?.map((option: string, idx: number) => (
                                 <Pressable 
                                     key={idx}
-                                    style={[styles.modalOption, { borderBottomColor: theme.border }]}
+                                    style={[styles.modalOption, { borderBottomColor: theme.outlineVariant }]}
                                     onPress={() => handleSelectOption(activeModalFilter.filter_label, option)}
                                 >
-                                    <Text style={[styles.modalOptionText, { color: theme.text }]}>{option}</Text>
-                                    <Ionicons name="chevron-forward" color={theme.textMuted} size={20} />
+                                    <ThemedText variant="bodyLarge">{option}</ThemedText>
+                                    <ThemedIcon name="chevron-right" colorName="textMuted" size={20} />
                                 </Pressable>
                             ))}
                         </ScrollView>
-                    </View>
+                    </ThemedView>
                 </View>
             </Modal>
-        </View>
+        </ScreenLayout>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
     navHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: Spacing.md,
         paddingBottom: 8,
     },
     iconBtn: {
@@ -302,18 +303,14 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: '800',
         letterSpacing: -0.5,
-        paddingHorizontal: Spacing.lg,
     },
     description: {
         fontSize: 15,
         marginTop: 4,
         lineHeight: 20,
-        paddingHorizontal: Spacing.lg,
     },
     filterContainer: {
         marginTop: 16,
-        paddingHorizontal: Spacing.lg,
-        paddingRight: 40,
         paddingBottom: 4,
     },
     filterPill: {
@@ -324,10 +321,6 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.full,
         borderWidth: 1,
         marginRight: 8,
-    },
-    filterText: {
-        fontSize: 14,
-        fontWeight: '600',
     },
     clearIconWrapper: {
         marginLeft: 6,
@@ -341,7 +334,7 @@ const styles = StyleSheet.create({
         marginHorizontal: Spacing.lg,
         marginTop: 16,
         borderRadius: BorderRadius.lg,
-        ...Shadows.small,
+        ...Shadows.level2,
         overflow: 'hidden',
     },
     cardContent: {
@@ -377,9 +370,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '700',
     },
-    reviewCount: {
-        fontSize: 13,
-    },
     serviceTitle: {
         fontSize: 15,
         fontWeight: '500',
@@ -391,15 +381,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 8,
         gap: 4,
-    },
-    pricePrefix: {
-        fontSize: 12,
-        fontWeight: '600',
-        textTransform: 'uppercase',
-    },
-    priceValue: {
-        fontSize: 16,
-        fontWeight: '800',
     },
     emptyContainer: {
         alignItems: 'center',
@@ -431,10 +412,6 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         borderBottomWidth: 1,
     },
-    modalTitle: {
-        fontSize: 18,
-        fontWeight: '800',
-    },
     modalScroll: {
         paddingHorizontal: Spacing.lg,
         paddingTop: 10,
@@ -446,8 +423,4 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         borderBottomWidth: 1,
     },
-    modalOptionText: {
-        fontSize: 16,
-        fontWeight: '500',
-    }
 });

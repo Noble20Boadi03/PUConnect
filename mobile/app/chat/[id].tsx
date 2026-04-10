@@ -1,21 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, ScrollView, TextInput, Pressable, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import { StyleSheet, View, ScrollView, TextInput, Pressable, Platform, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/context/theme-context';
-import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedIcon } from '@/components/ui/themed-icon';
+import { ScreenLayout } from '@/components/ui/screen-layout';
+import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 
-interface Message {
+type Message = {
     id: string;
     text: string;
     senderId: string;
     timestamp: string;
-    type?: 'text' | 'card';
-    cardData?: any;
-}
-
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+    type: 'text' | 'card';
+    cardData?: {
+        company: string;
+        industry: string;
+        title: string;
+        salary: string;
+        type: string;
+        location: string;
+        date: string;
+    };
+};
 
 export default function ChatScreen() {
     const { id, listingId } = useLocalSearchParams<{ id: string, listingId?: string }>();
@@ -82,20 +91,25 @@ export default function ChatScreen() {
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <ScreenLayout 
+            scrollable={false} 
+            keyboardAvoiding 
+            padding="none" 
+            withSafeArea={false}
+        >
             {/* Header */}
-            <View style={[styles.header, { borderBottomColor: theme.border, paddingTop: insets.top + 10 }]}>
+            <View style={[styles.header, { borderBottomColor: theme.outlineVariant, paddingTop: insets.top + 10 }]}>
                 <Pressable onPress={() => router.back()} style={styles.backBtn}>
-                    <Ionicons name="chevron-back" size={28} color={theme.text} />
+                    <ThemedIcon name="chevron-left" size={28} />
                 </Pressable>
                 
                 <View style={styles.headerInfo}>
-                    <Text style={[styles.headerName, { color: theme.text }]}>Nina Patel</Text>
-                    <Text style={[styles.headerSub, { color: theme.textMuted }]}>Talent Recruiter @ Saral Software</Text>
+                    <ThemedText variant="titleMedium" style={styles.headerName}>Nina Patel</ThemedText>
+                    <ThemedText variant="labelSmall" colorName="textMuted">Talent Recruiter @ Saral Software</ThemedText>
                 </View>
                 
                 <Pressable>
-                    <Text style={[styles.muteBtn, { color: theme.text }]}>Mute</Text>
+                    <ThemedText variant="labelLarge" style={styles.muteBtn}>Mute</ThemedText>
                 </Pressable>
             </View>
 
@@ -108,15 +122,15 @@ export default function ChatScreen() {
                 {messages.map((item) => {
                     if (item.senderId === 'time-separator') {
                         return (
-                            <Text key={item.id} style={[styles.timeSeparator, { color: theme.textMuted }]}>
+                            <ThemedText key={item.id} variant="labelSmall" colorName="textMuted" style={styles.timeSeparator}>
                                 {item.timestamp}
-                            </Text>
+                            </ThemedText>
                         );
                     }
 
                     const isMe = item.senderId === user?.id || item.senderId === 'me';
                     
-                    if (item.type === 'card') {
+                    if (item.type === 'card' && item.cardData) {
                         return (
                             <View key={item.id} style={styles.cardWrapper}>
                                 <View style={[
@@ -124,25 +138,25 @@ export default function ChatScreen() {
                                     { 
                                         backgroundColor: theme.surface, 
                                         borderLeftColor: theme.primary,
-                                        borderColor: theme.border 
+                                        borderColor: theme.outlineVariant 
                                     }
                                 ]}>
                                     <View style={styles.cardHeader}>
                                         <View style={[styles.companyLogo, { backgroundColor: '#f97316' }]}>
-                                            <Ionicons name="grid" size={20} color="#fff" />
+                                            <ThemedIcon name="apps" size={20} lightColor="#fff" darkColor="#fff" />
                                         </View>
                                         <View>
-                                            <Text style={[styles.companyName, { color: theme.text }]}>{item.cardData.company}</Text>
-                                            <Text style={[styles.industry, { color: theme.textMuted }]}>{item.cardData.industry}</Text>
+                                            <ThemedText variant="titleSmall" style={styles.companyName}>{item.cardData.company}</ThemedText>
+                                            <ThemedText variant="labelSmall" colorName="textMuted">{item.cardData.industry}</ThemedText>
                                         </View>
                                     </View>
-                                    <Text style={[styles.jobTitle, { color: theme.text }]}>{item.cardData.title}</Text>
-                                    <Text style={[styles.jobMeta, { color: theme.textSecondary }]}>
+                                    <ThemedText variant="titleMedium" style={styles.jobTitle}>{item.cardData.title}</ThemedText>
+                                    <ThemedText variant="bodySmall" colorName="textSecondary" style={styles.jobMeta}>
                                         {item.cardData.salary} • {item.cardData.type}
-                                    </Text>
-                                    <Text style={[styles.jobLocation, { color: theme.textMuted }]}>
+                                    </ThemedText>
+                                    <ThemedText variant="labelSmall" colorName="textMuted" style={styles.jobLocation}>
                                         {item.cardData.location} • {item.cardData.date}
-                                    </Text>
+                                    </ThemedText>
                                 </View>
                             </View>
                         );
@@ -161,10 +175,16 @@ export default function ChatScreen() {
                             <View style={[
                                 styles.bubble, 
                                 isMe ? 
-                                    { backgroundColor: isDark ? '#312e81' : '#f5f3ff' } : 
-                                    { backgroundColor: isDark ? '#1e293b' : '#f3f4f6' }
+                                    { backgroundColor: isDark ? theme.primaryContainer : theme.primaryContainer } : 
+                                    { backgroundColor: theme.surfaceVariant }
                             ]}>
-                                <Text style={[styles.messageText, { color: theme.text }]}>{item.text}</Text>
+                                <ThemedText 
+                                    variant="bodyLarge" 
+                                    colorName={isMe ? "onPrimaryContainer" : "onSurfaceVariant"}
+                                    style={styles.messageText}
+                                >
+                                    {item.text}
+                                </ThemedText>
                             </View>
                         </View>
                     );
@@ -172,41 +192,41 @@ export default function ChatScreen() {
             </ScrollView>
 
             {/* Input Area */}
-            <KeyboardAvoidingView 
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-            >
-                <View style={[
-                        styles.inputContainer, 
-                        { backgroundColor: theme.surface, borderTopColor: theme.border, paddingBottom: insets.bottom + 12 }
-                    ]}>
-                    <Pressable style={styles.attachBtn}>
-                        <Ionicons name="add" size={24} color={theme.textMuted} />
-                    </Pressable>
-                    <TextInput
-                        style={[styles.input, { color: theme.text, backgroundColor: isDark ? theme.background : '#f9fafb', borderColor: theme.border, borderWidth: 1 }]}
-                        placeholder="Type a message..."
-                        placeholderTextColor={theme.textMuted}
-                        value={inputText}
-                        onChangeText={setInputText}
-                        multiline
-                    />
-                    <Pressable 
-                        style={[styles.sendBtn, { opacity: inputText.trim() ? 1 : 0.5 }]} 
-                        onPress={handleSendMessage}
-                    >
-                        <Ionicons name="send" size={20} color={theme.primary} />
-                    </Pressable>
-                </View>
-            </KeyboardAvoidingView>
-        </View>
+            <View style={[
+                styles.inputContainer, 
+                { borderTopColor: theme.outlineVariant, paddingBottom: insets.bottom + 12 }
+            ]}>
+                <Pressable style={styles.attachBtn}>
+                    <ThemedIcon name="plus" size={24} colorName="textMuted" />
+                </Pressable>
+                <TextInput
+                    style={[
+                        styles.input, 
+                        { 
+                            color: theme.text, 
+                            backgroundColor: theme.surfaceVariant, 
+                            borderColor: theme.outlineVariant, 
+                            borderWidth: 1 
+                        }
+                    ]}
+                    placeholder="Type a message..."
+                    placeholderTextColor={theme.textMuted}
+                    value={inputText}
+                    onChangeText={setInputText}
+                    multiline
+                />
+                <Pressable 
+                    style={[styles.sendBtn, { opacity: inputText.trim() ? 1 : 0.5 }]} 
+                    onPress={handleSendMessage}
+                >
+                    <ThemedIcon name="send" size={20} colorName="primary" />
+                </Pressable>
+            </View>
+        </ScreenLayout>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -290,7 +310,7 @@ const styles = StyleSheet.create({
         padding: Spacing.md,
         borderWidth: 1,
         borderLeftWidth: 4,
-        ...Shadows.small,
+        ...Shadows.level1,
     },
     cardHeader: {
         flexDirection: 'row',
@@ -351,3 +371,5 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 });
+
+

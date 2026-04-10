@@ -26,10 +26,6 @@ function RootLayoutContent() {
     if (Platform.OS === 'android') {
       // Set the button style (light icons for dark theme, dark icons for light theme)
       NavigationBar.setButtonStyleAsync(isDark ? "light" : "dark");
-      
-      // Optional: Set background color if not using full edge-to-edge transparency,
-      // or to ensure the nav bar background matches the app theme.
-      NavigationBar.setBackgroundColorAsync(theme.background);
     }
   }, [isDark, theme.background]);
 

@@ -1,11 +1,14 @@
 import React from 'react';
-import { StyleSheet, View, Text, ScrollView, Pressable } from 'react-native';
+import { StyleSheet, View, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/context/theme-context';
 import { Spacing, BorderRadius } from '@/constants/theme';
 import { CAMPUS_CATEGORIES } from '@/constants/categories';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { ThemedText } from '@/components/themed-text';
+import { ThemedIcon } from '@/components/ui/themed-icon';
+import { ScreenLayout } from '@/components/ui/screen-layout';
 
 export default function CategoryDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -16,73 +19,73 @@ export default function CategoryDetailScreen() {
 
     if (!category) {
         return (
-            <View style={[styles.centered, { backgroundColor: theme.background, paddingTop: insets.top }]}>
-                <Text style={{ color: theme.text }}>Category not found</Text>
-                <Pressable onPress={() => router.back()} style={{ marginTop: 20 }}>
-                    <Text style={{ color: (theme as any).discoveryPrimary }}>Go Back</Text>
-                </Pressable>
-            </View>
+            <ScreenLayout>
+                <View style={styles.centered}>
+                    <ThemedText>Category not found</ThemedText>
+                    <Pressable onPress={() => router.back()} style={{ marginTop: 20 }}>
+                        <ThemedText colorName="primary">Go Back</ThemedText>
+                    </Pressable>
+                </View>
+            </ScreenLayout>
         );
     }
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <ScreenLayout scrollable padding="none" withSafeArea={false}>
             {/* Header */}
-            <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+            <View style={[styles.header, { paddingTop: insets.top + 10, paddingHorizontal: Spacing.md }]}>
                 <Pressable onPress={() => router.back()} style={styles.iconBtn}>
-                    <Ionicons name="arrow-back" size={24} color={theme.text} />
+                    <ThemedIcon name="chevron-left" size={24} />
                 </Pressable>
                 <Pressable style={styles.iconBtn}>
-                    <Ionicons name="search-outline" size={24} color={theme.text} />
+                    <ThemedIcon name="magnify" size={24} />
                 </Pressable>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
-                {/* Hero section */}
-                <View style={styles.heroSection}>
-                    <Ionicons name={category.icon as any} size={80} color={theme.textSecondary} />
-                    <Text style={[styles.title, { color: theme.text }]}>{category.title}</Text>
-                    <Text style={[styles.tagline, { color: theme.textMuted }]}>{category.tagline}</Text>
-                </View>
+            {/* Hero section */}
+            <View style={styles.heroSection}>
+                <ThemedIcon name={category.icon as any} size={80} colorName="primary" />
+                <ThemedText variant="headlineLarge" style={styles.title}>{category.title}</ThemedText>
+                <ThemedText variant="bodyLarge" colorName="textMuted" style={styles.tagline}>{category.tagline}</ThemedText>
+            </View>
 
-                {/* Subcategories */}
+            {/* Subcategories */}
+            <View style={{ paddingBottom: insets.bottom + Spacing.xl }}>
                 {category.groups.map((group, groupIdx) => (
                     <View key={groupIdx} style={styles.groupContainer}>
-                        <Text style={[styles.groupHeader, { color: theme.textMuted }]}>{group.header}</Text>
+                        <ThemedText variant="labelLarge" colorName="textMuted" style={styles.groupHeader}>{group.header}</ThemedText>
                         {group.items.map((item, itemIdx) => (
                             <Pressable 
                                 key={itemIdx} 
-                                style={[styles.itemRow, { borderBottomColor: theme.border }]}
+                                style={[styles.itemRow, { borderBottomColor: theme.outlineVariant }]}
                                 onPress={() => router.push({
-                                    pathname: `/search/listings/${item.title}`,
+                                    pathname: '/search/listings/[subcategory]',
                                     params: { 
+                                        subcategory: item.title,
                                         category: category.title,
                                         description: item.description 
                                     }
                                 })}
                             >
                                 <View style={styles.itemTitleContainer}>
-                                    <Text style={[styles.itemTitle, { color: theme.text }]}>{item.title}</Text>
+                                    <ThemedText variant="titleMedium" style={styles.itemTitle}>{item.title}</ThemedText>
                                     {item.isNew && (
-                                        <View style={styles.newBadge}>
-                                            <Text style={styles.newBadgeText}>NEW</Text>
+                                        <View style={[styles.newBadge, { backgroundColor: theme.primary }]}>
+                                            <ThemedText variant="labelSmall" lightColor="#fff" darkColor="#fff">NEW</ThemedText>
                                         </View>
                                     )}
                                 </View>
-                                <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
+                                <ThemedIcon name="chevron-right" size={20} colorName="textMuted" />
                             </Pressable>
                         ))}
                     </View>
                 ))}
-            </ScrollView>
-        </View>
+            </View>
+        </ScreenLayout>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
     centered: {
         flex: 1,
         justifyContent: 'center',
@@ -92,7 +95,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: Spacing.md,
         paddingBottom: 10,
     },
     iconBtn: {
@@ -143,14 +145,8 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     newBadge: {
-        backgroundColor: '#3b82f6',
         paddingHorizontal: 6,
         paddingVertical: 2,
         borderRadius: 4,
     },
-    newBadgeText: {
-        color: '#fff',
-        fontSize: 10,
-        fontWeight: '800',
-    }
 });

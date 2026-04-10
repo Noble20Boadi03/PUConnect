@@ -1,176 +1,224 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Pressable, Alert } from 'react-native';
+import { StyleSheet, ScrollView, ActivityIndicator, Pressable, View, Image } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '@/services/api';
-import { Listing, User } from '@/types';
+import { Listing } from '@/types';
 import { useAuth } from '@/context/auth-context';
-import { ThemedView } from '@/components/themed-view';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedIcon } from '@/components/ui/themed-icon';
+import { PrimaryButton } from '@/components/ui/primary-button';
+import { ScreenLayout } from '@/components/ui/screen-layout';
 import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
 
 export default function ListingDetailsScreen() {
-    const { id } = useLocalSearchParams<{ id: string }>();
-    const [listing, setListing] = useState<Listing | null>(null);
-    const [owner, setOwner] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
+  const { user } = useAuth();
+  const router = useRouter();
 
-    const { token, user } = useAuth();
-    const router = useRouter();
-    const { theme } = useTheme();
+  const [listing, setListing] = useState<Listing | null>(null);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetchData();
-    }, [id]);
+  useEffect(() => {
+    fetchListing();
+  }, [id]);
 
-    const fetchData = async () => {
-        try {
-            const response = await api.getListing(id) as any;
-
-            // Normalize API response to handle potential snake_case from backend
-            const listingData: Listing = {
-                ...response,
-                ownerId: response.ownerId ?? response.owner_id,
-                createdAt: response.createdAt ?? response.created_at,
-                requiredSkills: response.requiredSkills ?? response.required_skills,
-            };
-
-            setListing(listingData);
-
-            // Fetch owner profile if we can, this assumes an endpoint like users/{id} exists, 
-            // but for now we might not have a public user endpoint, so we might skip it or use a mock
-            // In a complete app we would do:
-            // const ownerData = await api.getUser(listingData.ownerId);
-            // setOwner(ownerData);
-
-        } catch (error) {
-            console.error('Error fetching listing details:', error);
-            Alert.alert('Error', 'Could not load the listing.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleMessage = () => {
-        if (!token || !user) {
-            Alert.alert('Authentication Required', 'Please log in to contact this student.');
-            return;
-        }
-
-        if (listing?.ownerId === user.id) {
-            Alert.alert('Notice', "You can't message yourself!");
-            return;
-        }
-
-        // Navigate to chat with owner, passing listingId as a context
-        router.push(`/chat/${listing?.ownerId}?listingId=${listing?.id}`);
-    };
-
-    if (loading) {
-        return (
-            <ThemedView style={[styles.centered, { backgroundColor: theme.background }]}>
-                <Stack.Screen options={{ title: 'Loading...' }} />
-                <ActivityIndicator size="large" color={theme.primary} />
-            </ThemedView>
-        );
+  const fetchListing = async () => {
+    try {
+      const response = await api.getListing(id as string) as any;
+      const listingData: Listing = {
+        ...response,
+        ownerId: response.ownerId ?? response.owner_id,
+        createdAt: response.createdAt ?? response.created_at,
+        requiredSkills: response.requiredSkills ?? response.required_skills,
+      };
+      setListing(listingData);
+    } catch (error) {
+      console.error("Error fetching listing:", error);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    if (!listing) {
-        return (
-            <ThemedView style={[styles.centered, { backgroundColor: theme.background }]}>
-                <Stack.Screen options={{ title: 'Not Found' }} />
-                <Ionicons name="alert-circle-outline" size={48} color={theme.textMuted} />
-                <Text style={{ color: theme.textMuted, marginTop: 10 }}>Listing not found.</Text>
-            </ThemedView>
-        );
-    }
-
+  if (loading) {
     return (
-        <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
-            <Stack.Screen
-                options={{
-                    title: 'Details',
-                    headerTintColor: theme.text,
-                    headerStyle: { backgroundColor: theme.background }
-                }}
-            />
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-
-                <View style={styles.header}>
-                    <View style={styles.typeBadge}>
-                        <Text style={[styles.typeBadgeText, { color: theme.primary }]}>
-                            {listing.type === 'service_offer' ? 'OFFER' : listing.type === 'service_request' ? 'REQUEST' : 'TEAM'}
-                        </Text>
-                    </View>
-                    <Text style={[styles.title, { color: theme.text }]}>{listing.title}</Text>
-                    <Text style={[styles.priceInfo, { color: theme.primary }]}>
-                        {listing.price ? `$${listing.price}` : listing.budget ? `Budget: $${listing.budget}` : 'Project'}
-                    </Text>
-                </View>
-
-                <View style={[styles.card, { backgroundColor: theme.surface }]}>
-                    <Text style={[styles.sectionTitle, { color: theme.text }]}>Description</Text>
-                    <Text style={[styles.description, { color: theme.textSecondary }]}>
-                        {listing.description || 'No description provided.'}
-                    </Text>
-
-                    <View style={styles.metaRow}>
-                        <View style={styles.metaItem}>
-                            <Ionicons name="folder-outline" size={16} color={theme.textMuted} />
-                            <Text style={[styles.metaText, { color: theme.textMuted }]}>{listing.category}</Text>
-                        </View>
-                        <View style={styles.metaItem}>
-                            <Ionicons name="calendar-outline" size={16} color={theme.textMuted} />
-                            <Text style={[styles.metaText, { color: theme.textMuted }]}>
-                                {new Date(listing.createdAt).toLocaleDateString()}
-                            </Text>
-                        </View>
-                    </View>
-                </View>
-
-                {listing.requiredSkills && listing.requiredSkills.length > 0 && (
-                    <View style={[styles.card, { backgroundColor: theme.surface }]}>
-                        <Text style={[styles.sectionTitle, { color: theme.text }]}>Required Skills</Text>
-                        <View style={styles.skillsContainer}>
-                            {listing.requiredSkills.map((skill, idx) => (
-                                <View key={idx} style={[styles.skillTag, { borderColor: theme.border, backgroundColor: theme.background }]}>
-                                    <Text style={[styles.skillText, { color: theme.text }]}>{skill}</Text>
-                                </View>
-                            ))}
-                        </View>
-                    </View>
-                )}
-
-                <View style={[styles.card, { backgroundColor: theme.surface }]}>
-                    <Text style={[styles.sectionTitle, { color: theme.text }]}>Posted By</Text>
-                    <View style={styles.ownerRow}>
-                        <View style={[styles.avatar, { backgroundColor: theme.background }]}>
-                            <Ionicons name="person" size={24} color={theme.textMuted} />
-                        </View>
-                        <View style={styles.ownerInfo}>
-                            <Text style={[styles.ownerName, { color: theme.text }]}>
-                                Student {listing.ownerId?.slice(0, 4) ?? 'Unknown'}
-                            </Text>
-                            <Text style={[styles.ownerSubtitle, { color: theme.textMuted }]}>
-                                View Profile
-                            </Text>
-                        </View>
-                    </View>
-                </View>
-
-            </ScrollView>
-
-            <View style={[styles.bottomBar, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
-                <Pressable
-                    style={[styles.messageButton, { backgroundColor: theme.primary }]}
-                    onPress={handleMessage}
-                >
-                    <Ionicons name="chatbubble-ellipses" size={20} color="#fff" />
-                    <Text style={styles.messageButtonText}>Message Student</Text>
-                </Pressable>
-            </View>
-        </ThemedView>
+      <ScreenLayout>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={theme.primary} />
+        </View>
+      </ScreenLayout>
     );
+  }
+
+  if (!listing) {
+    return (
+      <ScreenLayout>
+        <View style={styles.centered}>
+          <ThemedIcon name="alert-circle-outline" size={48} colorName="error" />
+          <ThemedText variant="titleMedium" style={{ marginTop: 10 }}>
+            Listing not found
+          </ThemedText>
+        </View>
+      </ScreenLayout>
+    );
+  }
+
+  const isOwner = user?.id === listing.ownerId;
+
+  return (
+    <ScreenLayout padding="none" withSafeArea={false}>
+      <Stack.Screen options={{ headerShown: false }} />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }}
+      >
+        {/* Image Header */}
+        <View style={styles.imageHeader}>
+          <Image
+            source={{
+              uri: "https://images.unsplash.com/photo-1626785774573-4b799315345d?q=80&w=800&auto=format&fit=crop",
+            }}
+            style={styles.mainImage}
+          />
+          <Pressable
+            onPress={() => router.back()}
+            style={[
+              styles.backBtn,
+              { top: insets.top + 10, backgroundColor: "rgba(0,0,0,0.3)" },
+            ]}
+          >
+            <ThemedIcon name="chevron-left" size={28} lightColor="#fff" darkColor="#fff" />
+          </Pressable>
+        </View>
+
+        <View style={[styles.content, { paddingHorizontal: Spacing.xl }]}>
+          {/* Title and Price */}
+          <View style={styles.headerRow}>
+            <View style={{ flex: 1 }}>
+              <ThemedText variant="headlineSmall" style={styles.title}>
+                {listing.title}
+              </ThemedText>
+              <View style={styles.categoryRow}>
+                <ThemedIcon name="folder-outline" size={16} colorName="primary" />
+                <ThemedText
+                  variant="labelLarge"
+                  colorName="primary"
+                  style={{ marginLeft: 6 }}
+                >
+                  {listing.category}
+                </ThemedText>
+              </View>
+            </View>
+            <ThemedText variant="headlineSmall" colorName="primary" style={styles.price}>
+              ${listing.price || listing.budget || "25"}
+            </ThemedText>
+          </View>
+
+          {/* Meta info */}
+          <View style={[styles.metaRow, { borderColor: theme.border }]}>
+            <View style={styles.metaItem}>
+              <ThemedIcon name="calendar-outline" size={20} colorName="textMuted" />
+              <ThemedText variant="labelSmall" colorName="textMuted" style={{ marginTop: 4 }}>
+                Posted {new Date(listing.createdAt).toLocaleDateString()}
+              </ThemedText>
+            </View>
+            <View style={styles.metaItem}>
+              <ThemedIcon name="star" size={20} lightColor="#fbbf24" darkColor="#fbbf24" />
+              <ThemedText variant="labelSmall" colorName="textMuted" style={{ marginTop: 4 }}>
+                4.9 Rating
+              </ThemedText>
+            </View>
+            <View style={styles.metaItem}>
+              <ThemedIcon name="account" size={20} colorName="textMuted" />
+              <ThemedText variant="labelSmall" colorName="textMuted" style={{ marginTop: 4 }}>
+                Verified Pro
+              </ThemedText>
+            </View>
+          </View>
+
+          {/* Description */}
+          <View style={styles.section}>
+            <ThemedText variant="titleMedium" style={styles.sectionTitle}>
+              About this service
+            </ThemedText>
+            <ThemedText variant="bodyLarge" colorName="textSecondary" style={styles.description}>
+              {listing.description}
+            </ThemedText>
+          </View>
+
+          {/* Skills */}
+          {listing.requiredSkills && listing.requiredSkills.length > 0 && (
+            <View style={styles.section}>
+              <ThemedText variant="titleMedium" style={styles.sectionTitle}>
+                Expertise
+              </ThemedText>
+              <View style={styles.tagGrid}>
+                {listing.requiredSkills.map((skill) => (
+                  <View
+                    key={skill}
+                    style={[
+                      styles.skillTag,
+                      { backgroundColor: theme.surfaceVariant || theme.surface },
+                    ]}
+                  >
+                    <ThemedText variant="labelLarge">{skill}</ThemedText>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Seller Info */}
+          <View style={[styles.sellerCard, { backgroundColor: theme.surfaceVariant || theme.surface }]}>
+            <View style={styles.sellerInfo}>
+              <View style={[styles.avatar, { backgroundColor: theme.primary + "15" }]}>
+                <ThemedIcon name="account" size={32} colorName="primary" />
+              </View>
+              <View style={{ marginLeft: 12 }}>
+                <ThemedText variant="titleMedium">Campus Talent</ThemedText>
+                <ThemedText variant="bodySmall" colorName="textMuted">
+                  CS Student • 2nd Year
+                </ThemedText>
+              </View>
+            </View>
+            <PrimaryButton
+              title="View Profile"
+              variant="ghost"
+              onPress={() => {}}
+              size="small"
+            />
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Bottom Action Bar */}
+      {!isOwner && (
+        <View
+          style={[
+            styles.bottomBar,
+            { paddingBottom: Math.max(insets.bottom, 20), backgroundColor: theme.surface },
+          ]}
+        >
+          <PrimaryButton
+            title="Send Message"
+            onPress={() => router.push(`/chat/${listing.ownerId}?listingId=${listing.id}`)}
+            style={{ flex: 1 }}
+          />
+          <Pressable
+            style={[
+              styles.chatBtn,
+              { backgroundColor: theme.primary + "15" },
+            ]}
+          >
+            <ThemedIcon name="chat-processing" size={24} colorName="primary" />
+          </Pressable>
+        </View>
+      )}
+    </ScreenLayout>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -181,6 +229,68 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    imageHeader: {
+        height: 250,
+        position: 'relative',
+    },
+    mainImage: {
+        width: '100%',
+        height: '100%',
+    },
+    backBtn: {
+        position: 'absolute',
+        left: Spacing.md,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    content: {
+        paddingVertical: Spacing.xl,
+    },
+    headerRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: Spacing.lg,
+    },
+    categoryRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: Spacing.xs,
+    },
+    price: {
+        fontWeight: '700',
+    },
+    section: {
+        marginTop: Spacing.xl,
+    },
+    tagGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: Spacing.sm,
+        marginTop: Spacing.sm,
+    },
+    sellerCard: {
+        marginTop: Spacing.xl,
+        padding: Spacing.lg,
+        borderRadius: BorderRadius.lg,
+        ...Shadows.level1,
+    },
+    sellerInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: Spacing.md,
+    },
+    chatBtn: {
+        width: 54,
+        height: 54,
+        borderRadius: BorderRadius.lg,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginLeft: Spacing.md,
     },
     scrollContent: {
         padding: Spacing.md,
@@ -203,10 +313,8 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
     },
     title: {
-        fontSize: 26,
         fontWeight: '800',
         marginBottom: Spacing.xs,
-        lineHeight: 32,
     },
     priceInfo: {
         fontSize: 20,
@@ -216,25 +324,21 @@ const styles = StyleSheet.create({
         padding: Spacing.lg,
         borderRadius: BorderRadius.xl,
         marginBottom: Spacing.md,
-        ...Shadows.small,
+        ...Shadows.level1,
     },
     sectionTitle: {
-        fontSize: 16,
         fontWeight: '700',
         marginBottom: Spacing.sm,
     },
     description: {
-        fontSize: 15,
-        lineHeight: 22,
-        marginBottom: Spacing.md,
+        marginTop: Spacing.xs,
     },
     metaRow: {
         flexDirection: 'row',
         gap: Spacing.lg,
         marginTop: Spacing.sm,
-        paddingTop: Spacing.sm,
+        paddingTop: Spacing.lg,
         borderTopWidth: 1,
-        borderTopColor: '#f1f5f9',
     },
     metaItem: {
         flexDirection: 'row',
@@ -251,7 +355,6 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     skillTag: {
-        borderWidth: 1,
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: BorderRadius.full,
@@ -288,8 +391,10 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         padding: Spacing.md,
-        paddingBottom: 30, // account for safe area
         borderTopWidth: 1,
+        borderTopColor: 'rgba(0,0,0,0.05)',
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     messageButton: {
         flexDirection: 'row',
@@ -298,7 +403,7 @@ const styles = StyleSheet.create({
         height: 54,
         borderRadius: BorderRadius.lg,
         gap: 8,
-        ...Shadows.medium,
+        ...Shadows.level2,
     },
     messageButtonText: {
         color: '#fff',

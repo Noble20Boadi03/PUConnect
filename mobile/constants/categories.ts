@@ -24,7 +24,7 @@ export const CAMPUS_CATEGORIES: DetailedCategory[] = [
         title: 'Tutoring & Peer Learning',
         subtitle: 'Subject Tutoring, Exam Preparation',
         tagline: '"Learn from those who\'ve been there"',
-        icon: 'book-outline',
+        icon: 'book-open-variant',
         groups: [
             {
                 header: 'ACADEMIC SUPPORT',
@@ -49,7 +49,7 @@ export const CAMPUS_CATEGORIES: DetailedCategory[] = [
         title: 'Tech & Development',
         subtitle: 'Portfolio Websites, Campus Tools',
         tagline: '"Build something that matters"',
-        icon: 'code-slash-outline',
+        icon: 'code-tags',
         groups: [
             {
                 header: 'PERSONAL PROJECTS',
@@ -74,7 +74,7 @@ export const CAMPUS_CATEGORIES: DetailedCategory[] = [
         title: 'Creative Design',
         subtitle: 'Event Posters, Club Flyers',
         tagline: '"Make your ideas look as good as they are"',
-        icon: 'color-palette-outline',
+        icon: 'palette-outline',
         groups: [
             {
                 header: 'EVENT & CAMPUS',
@@ -99,7 +99,7 @@ export const CAMPUS_CATEGORIES: DetailedCategory[] = [
         title: 'Career Development',
         subtitle: 'CV Writing, Cover Letters',
         tagline: '"Your career starts on campus"',
-        icon: 'briefcase-outline',
+        icon: 'briefcase-variant-outline',
         groups: [
             {
                 header: 'JOB READINESS',
@@ -149,7 +149,7 @@ export const CAMPUS_CATEGORIES: DetailedCategory[] = [
         title: 'Video & Content Creation',
         subtitle: 'Club Highlights, Event Recaps',
         tagline: '"Tell your story, your way"',
-        icon: 'videocam-outline',
+        icon: 'video-outline',
         groups: [
             {
                 header: 'PERSONAL PROJECTS',
@@ -174,7 +174,7 @@ export const CAMPUS_CATEGORIES: DetailedCategory[] = [
         title: 'Music & Performing Arts',
         subtitle: 'Audio Mixing, Voiceover',
         tagline: '"Campus has talent — let it show"',
-        icon: 'musical-notes-outline',
+        icon: 'music-note-outline',
         groups: [
             {
                 header: 'AUDIO',
@@ -199,7 +199,7 @@ export const CAMPUS_CATEGORIES: DetailedCategory[] = [
         title: 'Language & Communication',
         subtitle: 'Translation, Proofreading',
         tagline: '"Break barriers, connect better"',
-        icon: 'text-outline',
+        icon: 'text-recognition',
         groups: [
             {
                 header: 'TRANSLATION',
@@ -224,7 +224,7 @@ export const CAMPUS_CATEGORIES: DetailedCategory[] = [
         title: 'Business & Entrepreneurship',
         subtitle: 'Startups, Market Research',
         tagline: '"From student to founder"',
-        icon: 'trending-up-outline',
+        icon: 'trending-up',
         groups: [
             {
                 header: 'STARTUPS',

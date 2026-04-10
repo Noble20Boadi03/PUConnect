@@ -1,151 +1,146 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, Pressable, Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet, View, ScrollView, Pressable } from 'react-native';
 import { useTheme } from '@/context/theme-context';
 import { Spacing, BorderRadius } from '@/constants/theme';
 import { router } from 'expo-router';
 import { CAMPUS_CATEGORIES } from '@/constants/categories';
-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ThemedView } from '@/components/themed-view';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedIcon } from '@/components/ui/themed-icon';
+import { ScreenLayout } from '@/components/ui/screen-layout';
+import { useResponsive } from '@/hooks/use-responsive';
 
 export default function SearchScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+  const { spacingMultiplier } = useResponsive();
   const [activeTab, setActiveTab] = useState<'categories' | 'interests'>('categories');
 
-  return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>Categories</Text>
-        <Pressable style={styles.iconBtn}>
-          <Ionicons name="search-outline" size={24} color={theme.text} />
-        </Pressable>
-      </View>
+  const horizontalPadding = Spacing.xl * spacingMultiplier;
 
-      {/* Tabs */}
-      <View style={[styles.tabBar, { borderBottomColor: theme.border }]}>
-        <Pressable 
-          onPress={() => setActiveTab('categories')}
-          style={[styles.tab, activeTab === 'categories' && { borderBottomWidth: 3, borderBottomColor: (theme as any).discoveryPrimary }]}
-        >
-          <Text style={[
-            styles.tabText, 
-            { color: activeTab === 'categories' ? theme.text : theme.textMuted },
-            activeTab === 'categories' && styles.activeTabText
-          ]}>
-            Categories
-          </Text>
-        </Pressable>
-        <Pressable 
-          onPress={() => setActiveTab('interests')}
-          style={[styles.tab, activeTab === 'interests' && { borderBottomWidth: 3, borderBottomColor: (theme as any).discoveryPrimary }]}
-        >
-          <Text style={[
-            styles.tabText, 
-            { color: activeTab === 'interests' ? theme.text : theme.textMuted },
-            activeTab === 'interests' && styles.activeTabText
-          ]}>
-            Interests
-          </Text>
-        </Pressable>
-      </View>
+  return (
+    <ScreenLayout padding="none" withSafeArea={false}>
+      {/* Fixed Header & Tabs */}
+      <ThemedView elevation={1} style={{ zIndex: 10 }}>
+        <View style={[styles.header, { paddingTop: insets.top + Spacing.sm, paddingHorizontal: horizontalPadding }]}>
+          <ThemedText variant="headlineSmall" style={styles.headerTitle}>Categories</ThemedText>
+          <Pressable style={styles.iconBtn}>
+            <ThemedIcon name="magnify" size={24} />
+          </Pressable>
+        </View>
+
+        <View style={[styles.tabBar, { paddingHorizontal: horizontalPadding }]}>
+          <Pressable 
+            onPress={() => setActiveTab('categories')}
+            style={[styles.tab, activeTab === 'categories' && { borderBottomWidth: 3, borderBottomColor: theme.primary }]}
+          >
+            <ThemedText 
+              variant="titleSmall"
+              colorName={activeTab === 'categories' ? 'text' : 'textMuted'}
+              style={activeTab === 'categories' && styles.activeTabText}
+            >
+              Categories
+            </ThemedText>
+          </Pressable>
+          <Pressable 
+            onPress={() => setActiveTab('interests')}
+            style={[styles.tab, activeTab === 'interests' && { borderBottomWidth: 3, borderBottomColor: theme.primary }]}
+          >
+            <ThemedText 
+              variant="titleSmall"
+              colorName={activeTab === 'interests' ? 'text' : 'textMuted'}
+              style={activeTab === 'interests' && styles.activeTabText}
+            >
+              Interests
+            </ThemedText>
+          </Pressable>
+        </View>
+      </ThemedView>
 
       {/* List */}
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={[
+          styles.listContent, 
+          { paddingBottom: insets.bottom + Spacing.massive }
+        ]}
+      >
         {activeTab === 'categories' ? (
           CAMPUS_CATEGORIES.map((cat) => (
             <Pressable 
               key={cat.id} 
-              style={[styles.categoryItem, { borderBottomColor: theme.border }]} 
+              style={[styles.categoryItem, { borderBottomColor: theme.outlineVariant, paddingHorizontal: horizontalPadding }]} 
               onPress={() => router.push(`/search/${cat.id}`)}
-              android_ripple={{ color: theme.border }}
             >
-              <View style={styles.iconContainer}>
-                <Ionicons name={cat.icon as any} size={32} color={theme.textSecondary} />
-              </View>
+              <ThemedView colorName="surfaceVariant" style={styles.iconContainer}>
+                <ThemedIcon name={cat.icon as any} size={32} colorName="primary" />
+              </ThemedView>
               <View style={styles.textContainer}>
-                <Text style={[styles.categoryTitle, { color: theme.text }]}>{cat.title}</Text>
-                <Text style={[styles.categorySubtitle, { color: theme.textMuted }]}>{cat.subtitle}</Text>
+                <ThemedText variant="titleMedium">{cat.title}</ThemedText>
+                <ThemedText variant="bodySmall" colorName="textMuted">{cat.subtitle}</ThemedText>
               </View>
+              <ThemedIcon name="chevron-right" size={20} colorName="outline" />
             </Pressable>
           ))
         ) : (
           <View style={styles.emptyContainer}>
-             <Ionicons name="sparkles-outline" size={48} color={theme.textMuted} />
-             <Text style={[styles.emptyText, { color: theme.textSecondary }]}>Your personalized interests will appear here.</Text>
+             <ThemedIcon name="creation" size={48} colorName="outline" />
+             <ThemedText variant="bodyLarge" colorName="textSecondary" align="center" style={styles.emptyText}>
+               Your personalized interests will appear here.
+             </ThemedText>
           </View>
         )}
       </ScrollView>
-    </View>
+    </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: 10,
+    paddingBottom: Spacing.sm,
   },
   headerTitle: {
-    fontSize: 24,
     fontWeight: '800',
-    letterSpacing: -0.5,
   },
   iconBtn: {
-    padding: 4,
+    padding: Spacing.xs,
   },
   tabBar: {
     flexDirection: 'row',
-    paddingHorizontal: Spacing.lg,
-    borderBottomWidth: 1,
-    marginTop: 10,
+    marginTop: Spacing.sm,
   },
   tab: {
-    paddingHorizontal: 12,
-    paddingVertical: 14,
-    marginRight: 20,
-  },
-  tabText: {
-    fontSize: 15,
-    fontWeight: '600',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    marginRight: Spacing.lg,
   },
   activeTabText: {
     fontWeight: '800',
   },
   listContent: {
-    paddingVertical: 10,
+    paddingVertical: Spacing.sm,
   },
   categoryItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: 20,
+    paddingVertical: Spacing.xl,
     borderBottomWidth: 1,
   },
   iconContainer: {
-    width: 50,
-    height: 50,
+    width: 56,
+    height: 56,
+    borderRadius: BorderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: Spacing.lg,
   },
   textContainer: {
     flex: 1,
     gap: 2,
-  },
-  categoryTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  categorySubtitle: {
-    fontSize: 13,
-    fontWeight: '500',
   },
   emptyContainer: {
     flex: 1,
@@ -154,9 +149,9 @@ const styles = StyleSheet.create({
     paddingTop: 100,
   },
   emptyText: {
-    marginTop: 16,
-    fontSize: 15,
-    textAlign: 'center',
-    paddingHorizontal: 40,
+    marginTop: Spacing.lg,
+    paddingHorizontal: Spacing.huge,
   }
 });
+
+

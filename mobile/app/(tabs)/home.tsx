@@ -1,65 +1,74 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, View, Text, ActivityIndicator, RefreshControl, ScrollView, Pressable, TextInput, Dimensions } from 'react-native';
+import { FlatList, StyleSheet, View, ActivityIndicator, RefreshControl, ScrollView, Pressable, TextInput } from 'react-native';
 import { api } from '@/services/api';
-import { Listing, ListingType } from '@/types';
+import { Listing } from '@/types';
 import { ServiceCard } from '@/components/service-card';
 import { router } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
+import { ThemedIcon } from '@/components/ui/themed-icon';
+import { ScreenLayout } from '@/components/ui/screen-layout';
 import { useTheme } from '@/context/theme-context';
-import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
+import { Spacing, BorderRadius } from '@/constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-const { width } = Dimensions.get('window');
+import { useResponsive } from '@/hooks/use-responsive';
 
 interface SectionHeaderProps {
   title: string;
   onSeeAll?: () => void;
+  horizontalPadding: number;
 }
 
-const SectionHeader = ({ title, onSeeAll }: SectionHeaderProps) => {
-  const { theme } = useTheme();
+const SectionHeader = ({ title, onSeeAll, horizontalPadding }: SectionHeaderProps) => {
   return (
-    <View style={styles.sectionHeader}>
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>{title}</Text>
+    <View style={[styles.sectionHeader, { paddingHorizontal: horizontalPadding }]}>
+      <ThemedText variant="titleLarge" style={styles.sectionTitle}>{title}</ThemedText>
       {onSeeAll && (
         <Pressable onPress={onSeeAll}>
-          <Text style={[styles.seeAll, { color: theme.primary }]}>See All</Text>
+          <ThemedText variant="labelLarge" colorName="primary">See All</ThemedText>
         </Pressable>
       )}
     </View>
   );
 };
 
-const PromotionBanner = () => {
+const PromotionBanner = ({ horizontalPadding }: { horizontalPadding: number }) => {
+  const { theme } = useTheme();
   return (
-    <LinearGradient
-      colors={['#831843', '#4c0519']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.promoBanner}
-    >
-      <View style={styles.promoContent}>
-        <Text style={styles.promoTitle}>Invite friends & get rewards</Text>
-        <Text style={styles.promoSub}>Spread the word and help your campus community build together.</Text>
-        <Pressable style={styles.promoBtn}>
-          <Text style={styles.promoBtnText}>Invite now →</Text>
-        </Pressable>
-      </View>
-      <View style={styles.promoIcon}>
-        <Ionicons name="gift-outline" size={60} color="rgba(255,255,255,0.2)" />
-      </View>
-    </LinearGradient>
+    <View style={{ paddingHorizontal: horizontalPadding, marginVertical: Spacing.xl }}>
+      <LinearGradient
+        colors={[theme.primary, theme.primaryContainer]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.promoBanner}
+      >
+        <View style={styles.promoContent}>
+          <ThemedText variant="titleMedium" lightColor="#ffffff" darkColor={theme.onPrimaryContainer} style={styles.promoTitle}>
+            Invite friends & get rewards
+          </ThemedText>
+          <ThemedText variant="bodySmall" lightColor="#ffffff" darkColor={theme.onPrimaryContainer} style={styles.promoSub}>
+            Spread the word and help your campus community build together.
+          </ThemedText>
+          <Pressable style={[styles.promoBtn, { backgroundColor: theme.background }]}>
+            <ThemedText variant="labelLarge" colorName="primary">Invite now →</ThemedText>
+          </Pressable>
+        </View>
+        <View style={styles.promoIcon}>
+          <ThemedIcon name="gift-outline" size={60} lightColor="rgba(255,255,255,0.2)" darkColor="rgba(0,0,0,0.1)" />
+        </View>
+      </LinearGradient>
+    </View>
   );
 };
 
 export default function HomeScreen() {
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { isTablet, spacingMultiplier } = useResponsive();
   
+  const horizontalPadding = Spacing.xl * spacingMultiplier;
+
   const [popular, setPopular] = useState<Listing[]>([]);
   const [recommended, setRecommended] = useState<Listing[]>([]);
   const [recent, setRecent] = useState<Listing[]>([]);
@@ -72,7 +81,6 @@ export default function HomeScreen() {
   const fetchDashboardData = async () => {
     try {
       const data = await api.getListings();
-      // Logic to split the data into different mock categories for the UI
       setPopular(data.slice(0, 5));
       setRecommended(data.slice(2, 7));
       setTrending(data.slice(5, 10));
@@ -97,90 +105,154 @@ export default function HomeScreen() {
 
   if (loading && !refreshing) {
     return (
-      <View style={[styles.centered, { backgroundColor: theme.background }]}>
+      <ThemedView style={styles.centered}>
         <ActivityIndicator size="large" color={theme.primary} />
-      </View>
+      </ThemedView>
     );
   }
 
   return (
-    <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.scrollContent, 
-          { paddingTop: insets.top + Spacing.md }
+    <ScreenLayout padding="none" withSafeArea={false}>
+      {/* Fixed Sticky Header */}
+      <ThemedView 
+        style={[
+          styles.fixedHeader, 
+          { paddingTop: insets.top + Spacing.sm, paddingHorizontal: horizontalPadding }
         ]}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
-        }
       >
-        {/* Top Header Row (Logo and Grid) */}
         <View style={styles.topRow}>
-          <Text style={[styles.brandLogo, { color: theme.text }]}>PuConnect<Text style={{ color: theme.primary }}>.</Text></Text>
+          <ThemedText variant="headlineSmall" style={styles.brandLogo}>
+            PuConnect<ThemedText colorName="primary">.</ThemedText>
+          </ThemedText>
           <Pressable style={styles.gridBtn}>
-            <Ionicons name="grid-outline" size={24} color={theme.text} />
+            <ThemedIcon name="apps" size={24} />
           </Pressable>
         </View>
 
         {/* Search Bar Row */}
-        <View style={[styles.searchContainer, { backgroundColor: isDark ? theme.surface : '#f8fafc', borderColor: theme.border }]}>
-          <Ionicons name="search-outline" size={20} color={theme.textMuted} />
+        <ThemedView 
+          colorName="surfaceVariant" 
+          style={[styles.searchContainer, { borderColor: theme.outlineVariant }]}
+        >
+          <ThemedIcon name="magnify" size={20} colorName="textMuted" />
           <TextInput
             placeholder="Search services"
             placeholderTextColor={theme.textMuted}
             style={[styles.searchInput, { color: theme.text }]}
           />
-        </View>
+        </ThemedView>
+      </ThemedView>
 
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.scrollContent, 
+          { paddingBottom: insets.bottom + Spacing.massive }
+        ]}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
+        }
+      >
         {/* Popular Services Section */}
-        <SectionHeader title="Popular Services" onSeeAll={() => {}} />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalSection}>
+        <SectionHeader title="Popular Services" horizontalPadding={horizontalPadding} onSeeAll={() => {}} />
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          contentContainerStyle={{ paddingLeft: horizontalPadding, paddingRight: horizontalPadding - Spacing.md }}
+          style={styles.horizontalSection}
+        >
           {popular.map((item) => (
-            <ServiceCard key={`popular-${item.id}`} listing={item} onPress={() => router.push(`/listing/${item.id}`)} />
+            <ServiceCard 
+              key={`popular-${item.id}`} 
+              listing={item} 
+              width={isTablet ? 220 : 160}
+              onPress={() => router.push(`/listing/${item.id}`)} 
+            />
           ))}
         </ScrollView>
 
         {/* Recommended For You Section */}
-        <SectionHeader title="Recommended for you" onSeeAll={() => {}} />
-        <Text style={[styles.sectionSub, { color: theme.textMuted }]}>Personalized based on your interests</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalSection}>
+        <SectionHeader title="Recommended for you" horizontalPadding={horizontalPadding} onSeeAll={() => {}} />
+        <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.sectionSub, { paddingHorizontal: horizontalPadding }]}>
+          Personalized based on your interests
+        </ThemedText>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          contentContainerStyle={{ paddingLeft: horizontalPadding, paddingRight: horizontalPadding - Spacing.md }}
+          style={styles.horizontalSection}
+        >
           {recommended.map((item) => (
-            <ServiceCard key={`rec-${item.id}`} listing={item} onPress={() => router.push(`/listing/${item.id}`)} />
+            <ServiceCard 
+              key={`rec-${item.id}`} 
+              listing={item} 
+              width={isTablet ? 220 : 160}
+              onPress={() => router.push(`/listing/${item.id}`)} 
+            />
           ))}
         </ScrollView>
 
         {/* Promotion Banner */}
-        <PromotionBanner />
+        <PromotionBanner horizontalPadding={horizontalPadding} />
 
         {/* Recently Viewed Section */}
-        <SectionHeader title="Recently viewed" onSeeAll={() => {}} />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalSection}>
+        <SectionHeader title="Recently viewed" horizontalPadding={horizontalPadding} onSeeAll={() => {}} />
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          contentContainerStyle={{ paddingLeft: horizontalPadding, paddingRight: horizontalPadding - Spacing.md }}
+          style={styles.horizontalSection}
+        >
           {recent.map((item) => (
-            <ServiceCard key={`recent-${item.id}`} listing={item} onPress={() => router.push(`/listing/${item.id}`)} />
+            <ServiceCard 
+              key={`recent-${item.id}`} 
+              listing={item} 
+              width={isTablet ? 220 : 160}
+              onPress={() => router.push(`/listing/${item.id}`)} 
+            />
           ))}
         </ScrollView>
 
         {/* Based on Last Order Section */}
-        <SectionHeader title="Based on your last order" onSeeAll={() => {}} />
-        <Text style={[styles.sectionSub, { color: theme.textMuted }]}>You hired a designer, you might also need...</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalSection}>
+        <SectionHeader title="Based on your last order" horizontalPadding={horizontalPadding} onSeeAll={() => {}} />
+        <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.sectionSub, { paddingHorizontal: horizontalPadding }]}>
+          You hired a designer, you might also need...
+        </ThemedText>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          contentContainerStyle={{ paddingLeft: horizontalPadding, paddingRight: horizontalPadding - Spacing.md }}
+          style={styles.horizontalSection}
+        >
           {lastOrderRecs.map((item) => (
-            <ServiceCard key={`last-${item.id}`} listing={item} onPress={() => router.push(`/listing/${item.id}`)} />
+            <ServiceCard 
+              key={`last-${item.id}`} 
+              listing={item} 
+              width={isTablet ? 220 : 160}
+              onPress={() => router.push(`/listing/${item.id}`)} 
+            />
           ))}
         </ScrollView>
 
         {/* Trending This Week Section */}
-        <SectionHeader title="Trending this week" onSeeAll={() => {}} />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalSection}>
+        <SectionHeader title="Trending this week" horizontalPadding={horizontalPadding} onSeeAll={() => {}} />
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          contentContainerStyle={{ paddingLeft: horizontalPadding, paddingRight: horizontalPadding - Spacing.md }}
+          style={styles.horizontalSection}
+        >
           {trending.map((item) => (
-            <ServiceCard key={`trend-${item.id}`} listing={item} onPress={() => router.push(`/listing/${item.id}`)} />
+            <ServiceCard 
+              key={`trend-${item.id}`} 
+              listing={item} 
+              width={isTablet ? 220 : 160}
+              onPress={() => router.push(`/listing/${item.id}`)} 
+            />
           ))}
         </ScrollView>
-
-        <View style={{ height: 40 }} />
       </ScrollView>
-    </ThemedView>
+    </ScreenLayout>
   );
 }
 
@@ -188,117 +260,88 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollContent: {
-    paddingTop: 60,
-    paddingBottom: 40,
-  },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  fixedHeader: {
+    paddingBottom: Spacing.md,
+    zIndex: 10,
+  },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
   },
   brandLogo: {
-    fontSize: 24,
-    fontWeight: '900',
-    letterSpacing: -1,
+    fontWeight: '800',
   },
   gridBtn: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: Spacing.xs,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
-    height: 52,
-    marginHorizontal: Spacing.lg,
-    borderRadius: BorderRadius.md,
+    height: 48,
+    borderRadius: BorderRadius.full,
     borderWidth: 1,
-    marginBottom: Spacing.xl,
-    ...Shadows.small,
   },
   searchInput: {
     flex: 1,
     marginLeft: Spacing.sm,
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 14,
+  },
+  scrollContent: {
+    paddingTop: Spacing.sm,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'baseline',
-    paddingHorizontal: Spacing.lg,
-    marginBottom: 8,
+    alignItems: 'center',
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.sm,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    letterSpacing: -0.3,
-  },
-  sectionSub: {
-    fontSize: 13,
-    paddingHorizontal: Spacing.lg,
-    marginBottom: 8,
-    marginTop: -4,
-  },
-  seeAll: {
-    fontSize: 14,
     fontWeight: '700',
   },
+  sectionSub: {
+    marginBottom: Spacing.md,
+  },
   horizontalSection: {
-    paddingLeft: Spacing.lg,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.sm,
   },
   promoBanner: {
-    marginHorizontal: Spacing.lg,
     borderRadius: BorderRadius.xl,
-    padding: Spacing.lg,
-    marginBottom: Spacing.xl,
+    padding: Spacing.xl,
     flexDirection: 'row',
+    alignItems: 'center',
     overflow: 'hidden',
   },
   promoContent: {
     flex: 1,
-    zIndex: 2,
+    zIndex: 1,
   },
   promoTitle: {
-    color: '#fff',
-    fontSize: 20,
     fontWeight: '800',
-    marginBottom: 8,
+    marginBottom: Spacing.xs,
   },
   promoSub: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 16,
+    marginBottom: Spacing.lg,
+    opacity: 0.9,
   },
   promoBtn: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: BorderRadius.full,
     alignSelf: 'flex-start',
-  },
-  promoBtnText: {
-    color: '#4c0519',
-    fontWeight: '700',
-    fontSize: 13,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
   },
   promoIcon: {
     position: 'absolute',
     right: -10,
     bottom: -10,
-    opacity: 0.8,
   },
 });
 

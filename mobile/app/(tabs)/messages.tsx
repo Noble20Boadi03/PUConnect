@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, FlatList, View, ActivityIndicator, Pressable, Text, Image } from 'react-native';
+import { StyleSheet, FlatList, View, ActivityIndicator, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedIcon } from '@/components/ui/themed-icon';
+import { ScreenLayout } from '@/components/ui/screen-layout';
 import { api } from '@/services/api';
 import { useAuth } from '@/context/auth-context';
 import { ChatMessage } from '@/types';
 import { Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useResponsive } from '@/hooks/use-responsive';
+import { PrimaryButton } from '@/components/ui/primary-button';
 
 export default function MessagesScreen() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -16,6 +20,9 @@ export default function MessagesScreen() {
     const { token, user } = useAuth();
     const { theme } = useTheme();
     const insets = useSafeAreaInsets();
+    const { spacingMultiplier } = useResponsive();
+
+    const horizontalPadding = Spacing.xl * spacingMultiplier;
 
     useEffect(() => {
         if (token) {
@@ -38,27 +45,34 @@ export default function MessagesScreen() {
 
     if (!token) {
         return (
-            <ThemedView style={[styles.centered, { backgroundColor: theme.background }]}>
-                <Ionicons name="lock-closed-outline" size={48} color={theme.textMuted} />
-                <Text style={[styles.emptyText, { color: theme.textSecondary }]}>Please sign in to view your collaborations.</Text>
+            <ThemedView style={styles.centered}>
+                <ThemedIcon name="lock" size={48} colorName="outline" />
+                <ThemedText variant="bodyLarge" colorName="textSecondary" align="center" style={styles.emptyText}>
+                    Please sign in to view your collaborations.
+                </ThemedText>
+                <PrimaryButton 
+                    title="Sign In" 
+                    onPress={() => router.push('/login')} 
+                    style={{ marginTop: Spacing.xl }}
+                />
             </ThemedView>
         );
     }
 
     if (loading) {
         return (
-            <View style={[styles.centered, { backgroundColor: theme.background }]}>
+            <ThemedView style={styles.centered}>
                 <ActivityIndicator size="large" color={theme.primary} />
-            </View>
+            </ThemedView>
         );
     }
 
     return (
-        <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
-            <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-                <Text style={[styles.title, { color: theme.text }]}>Messages</Text>
-                <Pressable style={[styles.newChatBtn, { backgroundColor: theme.primary + '11' }]}>
-                    <Ionicons name="create-outline" size={20} color={theme.primary} />
+        <ScreenLayout padding="none" withSafeArea={false}>
+            <View style={[styles.header, { paddingTop: insets.top + Spacing.sm, paddingHorizontal: horizontalPadding }]}>
+                <ThemedText variant="headlineSmall" style={styles.title}>Messages</ThemedText>
+                <Pressable style={[styles.newChatBtn, { backgroundColor: theme.primaryContainer }]}>
+                    <ThemedIcon name="pencil-outline" size={20} colorName="onPrimaryContainer" />
                 </Pressable>
             </View>
 
@@ -68,48 +82,51 @@ export default function MessagesScreen() {
                     <Pressable
                         style={({ pressed }) => [
                             styles.chatItem,
-                            { backgroundColor: pressed ? theme.surface : 'transparent' }
+                            { backgroundColor: pressed ? theme.surfaceVariant : 'transparent', paddingHorizontal: horizontalPadding }
                         ]}
                     >
-                        <View style={[styles.avatar, { backgroundColor: theme.primary + '22' }]}>
-                            <Ionicons name="person" size={24} color={theme.primary} />
+                        <ThemedView colorName="primaryContainer" style={styles.avatar}>
+                            <ThemedIcon name="account" size={24} colorName="onPrimaryContainer" />
                             {!item.isRead && item.senderId !== user?.id && (
-                                <View style={[styles.unreadDot, { backgroundColor: theme.primary }]} />
+                                <View style={[styles.unreadDot, { backgroundColor: theme.primary, borderColor: theme.background }]} />
                             )}
-                        </View>
+                        </ThemedView>
 
-                        <View style={styles.chatContent}>
+                        <View style={[styles.chatContent, { borderBottomColor: theme.outlineVariant }]}>
                             <View style={styles.chatHeader}>
-                                <Text style={[styles.sender, { color: theme.text }]}>Campus Member {item.senderId.slice(0, 4)}</Text>
-                                <Text style={[styles.time, { color: theme.textMuted }]}>
+                                <ThemedText variant="titleMedium">Campus Member {item.senderId.slice(0, 4)}</ThemedText>
+                                <ThemedText variant="labelSmall" colorName="textMuted">
                                     {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </Text>
+                                </ThemedText>
                             </View>
-                            <Text numberOfLines={1} style={[
-                                styles.lastMessage,
-                                { color: item.isRead ? theme.textSecondary : theme.text, fontWeight: item.isRead ? '400' : '600' }
-                            ]}>
+                            <ThemedText 
+                                variant="bodyMedium" 
+                                colorName={item.isRead ? "textSecondary" : "text"} 
+                                numberOfLines={1}
+                                style={{ fontWeight: item.isRead ? '400' : '600' }}
+                            >
                                 {item.message}
-                            </Text>
+                            </ThemedText>
                         </View>
                     </Pressable>
                 )}
                 keyExtractor={(item) => item.id}
-                contentContainerStyle={{ paddingBottom: 100 }}
+                contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.massive }}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
-                        <Ionicons name="chatbubbles-outline" size={64} color={theme.textMuted} />
-                        <Text style={[styles.emptyText, { color: theme.textMuted }]}>No active collaborations yet.</Text>
-                        <Pressable
-                            style={[styles.browseBtn, { backgroundColor: theme.primary }]}
+                        <ThemedIcon name="chat-outline" size={64} colorName="outline" />
+                        <ThemedText variant="bodyLarge" colorName="textMuted" align="center" style={styles.emptyText}>
+                            No active collaborations yet.
+                        </ThemedText>
+                        <PrimaryButton
+                            title="Explore Market"
                             onPress={() => router.push('/(tabs)/home')}
-                        >
-                            <Text style={styles.browseBtnText}>Explore Market</Text>
-                        </Pressable>
+                            style={{ marginTop: Spacing.xl }}
+                        />
                     </View>
                 }
             />
-        </ThemedView>
+        </ScreenLayout>
     );
 }
 
@@ -118,32 +135,31 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     header: {
-        paddingHorizontal: Spacing.md,
         paddingBottom: Spacing.md,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        zIndex: 10,
     },
     title: {
-        fontSize: 32,
         fontWeight: '800',
     },
     newChatBtn: {
         width: 40,
         height: 40,
-        borderRadius: 20,
+        borderRadius: BorderRadius.full,
         justifyContent: 'center',
         alignItems: 'center',
     },
     chatItem: {
         flexDirection: 'row',
-        padding: Spacing.md,
+        paddingVertical: Spacing.md,
         alignItems: 'center',
     },
     avatar: {
         width: 56,
         height: 56,
-        borderRadius: 28,
+        borderRadius: BorderRadius.full,
         justifyContent: 'center',
         alignItems: 'center',
         position: 'relative',
@@ -156,29 +172,17 @@ const styles = StyleSheet.create({
         height: 14,
         borderRadius: 7,
         borderWidth: 2,
-        borderColor: '#fff',
     },
     chatContent: {
         flex: 1,
         marginLeft: Spacing.md,
         borderBottomWidth: 1,
-        borderBottomColor: '#f1f5f9',
         paddingBottom: Spacing.md,
     },
     chatHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginBottom: 4,
-    },
-    sender: {
-        fontWeight: '700',
-        fontSize: 16,
-    },
-    time: {
-        fontSize: 12,
-    },
-    lastMessage: {
-        fontSize: 14,
     },
     centered: {
         flex: 1,
@@ -193,17 +197,5 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         marginTop: Spacing.md,
-        fontSize: 16,
-        textAlign: 'center',
-    },
-    browseBtn: {
-        marginTop: Spacing.lg,
-        paddingHorizontal: Spacing.xl,
-        paddingVertical: 12,
-        borderRadius: BorderRadius.full,
-    },
-    browseBtnText: {
-        color: '#fff',
-        fontWeight: '700',
     },
 });

@@ -1,37 +1,34 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Pressable, TextInput, Alert, ActivityIndicator, ScrollView, Image } from 'react-native';
-import { Link } from 'expo-router';
-import { ThemedView } from '@/components/themed-view';
+import { StyleSheet, View, Pressable, Alert, ActivityIndicator, Image } from 'react-native';
+import { Link, router } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
+import { ThemedIcon } from '@/components/ui/themed-icon';
+import { ScreenLayout } from '@/components/ui/screen-layout';
 import { useAuth } from '@/context/auth-context';
 import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AnimatedInput } from '@/components/ui/animated-input';
 import { PrimaryButton } from '@/components/ui/primary-button';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useResponsive } from '@/hooks/use-responsive';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ProfileScreen() {
     const { user, token, signIn, signOut, isLoading } = useAuth();
-    const { theme, setMode, isDark } = useTheme();
+    const { theme, isDark, setMode } = useTheme();
     const insets = useSafeAreaInsets();
+    const { spacingMultiplier } = useResponsive();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
+    const horizontalPadding = Spacing.xl * spacingMultiplier;
+
     const isProfileIncomplete = !user?.bio || !user?.skillTags || user.skillTags.length === 0;
 
     const handleLogin = async () => {
-        // BYPASS AUTH CHECKS FOR TESTING
-        /*
-        if (!email || !password) {
-            Alert.alert('Error', 'Please enter email and password');
-            return;
-        }
-        */
-
         setIsLoggingIn(true);
         try {
             await signIn(email, password);
@@ -44,24 +41,32 @@ export default function ProfileScreen() {
 
     if (isLoading) {
         return (
-            <View style={[styles.centered, { backgroundColor: theme.background }]}>
+            <ScreenLayout style={styles.centered}>
                 <ActivityIndicator size="large" color={theme.primary} />
-            </View>
+            </ScreenLayout>
         );
     }
 
     if (!token) {
         return (
-            <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
-                <View style={styles.loginContainer}>
-                    <View style={[styles.loginCard, { backgroundColor: theme.surface }]}>
-                        <ThemedText style={styles.loginHeader}>PuConnect</ThemedText>
-                        <ThemedText style={styles.loginSub}>The Campus Talent Marketplace</ThemedText>
+            <ScreenLayout 
+                scrollable 
+                keyboardAvoiding 
+                padding="none"
+                scrollViewProps={{ keyboardShouldPersistTaps: 'handled' }}
+            >
+                <View style={[styles.loginContainer, { paddingTop: insets.top + Spacing.massive, paddingHorizontal: horizontalPadding }]}>
+                    <Animated.View 
+                        entering={FadeInDown.duration(800)}
+                        style={[styles.loginCard, { backgroundColor: theme.surface }]}
+                    >
+                        <ThemedText variant="headlineLarge" align="center" style={styles.loginHeader}>PuConnect</ThemedText>
+                        <ThemedText variant="bodyMedium" colorName="textSecondary" align="center" style={styles.loginSub}>The Campus Talent Marketplace</ThemedText>
 
                         <View style={styles.form}>
                             <AnimatedInput
                                 label="University Email"
-                                iconName="mail-outline"
+                                iconName="email-outline"
                                 placeholder="name@university.edu"
                                 value={email}
                                 onChangeText={setEmail}
@@ -72,7 +77,7 @@ export default function ProfileScreen() {
 
                             <AnimatedInput
                                 label="Password"
-                                iconName="lock-closed-outline"
+                                iconName="lock-outline"
                                 placeholder="••••••••"
                                 value={password}
                                 onChangeText={setPassword}
@@ -80,7 +85,7 @@ export default function ProfileScreen() {
                                 showPassword={showPassword}
                                 onTogglePassword={() => setShowPassword(!showPassword)}
                                 delay={300}
-                                marginTop={20}
+                                marginTop={Spacing.lg}
                             />
 
                             <PrimaryButton
@@ -88,166 +93,184 @@ export default function ProfileScreen() {
                                 onPress={handleLogin}
                                 isLoading={isLoggingIn}
                                 delay={500}
-                                marginTop={20}
+                                marginTop={Spacing.xl}
                             />
 
                             <Animated.View entering={FadeInDown.delay(600).duration(800)}>
-                                <ThemedText style={styles.forgotPass}>Forgot password?</ThemedText>
+                                <ThemedText variant="labelLarge" colorName="primary" align="center" style={styles.forgotPass}>
+                                    Forgot password?
+                                </ThemedText>
                             </Animated.View>
                         </View>
-                    </View>
+                    </Animated.View>
                 </View>
-            </ThemedView>
+            </ScreenLayout>
         );
     }
 
     return (
-        <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 60, paddingTop: insets.top }}>
-                {/* Profile Header Card */}
-                <View style={[styles.profileCard, { backgroundColor: theme.surface }]}>
-                    <View style={styles.headerInfo}>
-                        <Link href="/(tabs)/onboarding" asChild>
-                            <Pressable style={[styles.avatarContainer, { borderColor: theme.primary, backgroundColor: theme.background }]}>
-                                {user?.profilePictureUrl ? (
-                                    <Image source={{ uri: user.profilePictureUrl }} style={styles.avatarImage} />
-                                ) : (
-                                    <ThemedText style={[styles.avatarPlaceholder, { color: theme.textMuted }]}>
-                                        {user?.fullName?.charAt(0)}
-                                    </ThemedText>
-                                )}
-                                {user?.verifiedStudent && (
-                                    <View style={[styles.verifiedBadge, { backgroundColor: theme.secondary, borderColor: theme.surface }]}>
-                                        <Ionicons name="checkmark" size={12} color="#fff" />
-                                    </View>
-                                )}
-                                <View style={[styles.editBadge, { backgroundColor: theme.primary, borderColor: theme.surface }]}>
-                                    <Ionicons name="camera" size={10} color="#fff" />
+        <ScreenLayout 
+            scrollable 
+            padding="none"
+            edges={['bottom', 'left', 'right']} // Exclude top to allow hero gradient to go edge-to-edge
+        >
+            {/* Hero Header */}
+            <LinearGradient
+                colors={[theme.primary, theme.primaryContainer, theme.background]}
+                style={[styles.heroHeader, { height: 160 + insets.top }]}
+            />
+
+            {/* Profile Header Card */}
+            <Animated.View 
+                entering={FadeInUp.delay(200).duration(800)}
+                style={[styles.profileCard, { backgroundColor: theme.surface, marginTop: -80, marginHorizontal: horizontalPadding }]}
+            >
+                <View style={styles.headerInfo}>
+                    <Link href="/(tabs)/onboarding" asChild>
+                        <Pressable style={[styles.avatarContainer, { borderColor: theme.surface, backgroundColor: theme.surfaceVariant }]}>
+                            {user?.profilePictureUrl ? (
+                                <Image source={{ uri: user.profilePictureUrl }} style={styles.avatarImage} />
+                            ) : (
+                                <ThemedText variant="headlineLarge" colorName="primary" style={styles.avatarPlaceholder}>
+                                    {user?.fullName?.charAt(0)}
+                                </ThemedText>
+                            )}
+                            {user?.verifiedStudent && (
+                                <View style={[styles.verifiedBadge, { backgroundColor: theme.primary, borderColor: theme.surface }]}>
+                                    <ThemedIcon name="check-decagram" size={14} lightColor="#fff" darkColor="#fff" />
                                 </View>
-                            </Pressable>
-                        </Link>
-
-                        <View style={styles.userNameContainer}>
-                            <ThemedText style={styles.userName}>{user?.fullName || 'Campus Pro'}</ThemedText>
-                            <ThemedText style={[styles.userMajor, { color: theme.textSecondary }]}>
-                                {user?.department || 'Student'} • Class of {user?.graduationYear || '2027'}
-                            </ThemedText>
-                            <View style={styles.ratingRow}>
-                                <Ionicons name="star" size={16} color={theme.accent} />
-                                <ThemedText style={[styles.ratingText, { color: theme.text }]}>{user?.reputationScore || '0.0'} Reputation</ThemedText>
+                            )}
+                            <View style={[styles.editBadge, { backgroundColor: theme.surface, borderColor: theme.outlineVariant }]}>
+                                <ThemedIcon name="camera" size={12} />
                             </View>
-                        </View>
-                    </View>
-
-                    <View style={[styles.statsOverview, { borderColor: theme.border }]}>
-                        <View style={styles.statBox}>
-                            <ThemedText style={[styles.statNum, { color: theme.primary }]}>{user?.completedProjects || 0}</ThemedText>
-                            <ThemedText style={[styles.statLab, { color: theme.textMuted }]}>Projects</ThemedText>
-                        </View>
-                        <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
-                        <View style={styles.statBox}>
-                            <ThemedText style={[styles.statNum, { color: theme.secondary }]}>0</ThemedText>
-                            <ThemedText style={[styles.statLab, { color: theme.textMuted }]}>Reviews</ThemedText>
-                        </View>
-                        <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
-                        <View style={styles.statBox}>
-                            <View style={[styles.statusDot, { backgroundColor: user?.isAvailable ? theme.secondary : theme.textMuted }]} />
-                            <ThemedText style={[styles.statLab, { color: theme.textMuted }]}>{user?.isAvailable ? 'Available' : 'Busy'}</ThemedText>
-                        </View>
-                    </View>
-
-                    <Link href="/(tabs)/onboarding" asChild>
-                        <Pressable style={[styles.editBtn, { borderColor: theme.border }]}>
-                            <ThemedText style={[styles.editBtnText, { color: theme.textSecondary }]}>Edit Portfolio Profile</ThemedText>
                         </Pressable>
                     </Link>
+
+                    <View style={styles.userNameContainer}>
+                        <ThemedText variant="titleLarge" style={styles.userName}>{user?.fullName || 'Campus Pro'}</ThemedText>
+                        <ThemedText variant="bodySmall" colorName="textSecondary">
+                            {user?.department || 'Student'} • Class of {user?.graduationYear || '2027'}
+                        </ThemedText>
+                    </View>
                 </View>
 
-                {isProfileIncomplete && (
+                <View style={[styles.statsOverview, { borderColor: theme.outlineVariant }]}>
+                    <View style={styles.statBox}>
+                        <ThemedText variant="titleMedium" colorName="primary">{user?.completedProjects || 0}</ThemedText>
+                        <ThemedText variant="labelSmall" colorName="textMuted">Projects</ThemedText>
+                    </View>
+                    <View style={[styles.statDivider, { backgroundColor: theme.outlineVariant }]} />
+                    <View style={styles.statBox}>
+                        <View style={styles.ratingRow}>
+                            <ThemedIcon name="star" size={14} lightColor="#fbbf24" darkColor="#fbbf24" />
+                            <ThemedText variant="titleSmall">{user?.reputationScore || '0.0'}</ThemedText>
+                        </View>
+                        <ThemedText variant="labelSmall" colorName="textMuted">Rating</ThemedText>
+                    </View>
+                    <View style={[styles.statDivider, { backgroundColor: theme.outlineVariant }]} />
+                    <View style={styles.statBox}>
+                        <View style={[styles.statusDot, { backgroundColor: user?.isAvailable ? '#22c55e' : theme.outline }]} />
+                        <ThemedText variant="labelSmall" colorName="textMuted">{user?.isAvailable ? 'Available' : 'Busy'}</ThemedText>
+                    </View>
+                </View>
+
+                <Link href="/(tabs)/onboarding" asChild>
+                    <Pressable style={[styles.editBtn, { backgroundColor: theme.surfaceVariant, borderColor: theme.outlineVariant }]}>
+                        <ThemedText variant="labelLarge">Edit Talent Profile</ThemedText>
+                    </Pressable>
+                </Link>
+            </Animated.View>
+
+            {isProfileIncomplete && (
+                <Animated.View entering={FadeInDown.delay(400).duration(800)} style={{ marginHorizontal: horizontalPadding, marginTop: Spacing.lg }}>
                     <Link href="/(tabs)/onboarding" asChild>
-                        <Pressable style={[styles.alertBanner, { backgroundColor: theme.primary + '11', borderColor: theme.primary }]}>
-                            <Ionicons name="flash" size={20} color={theme.primary} />
-                            <ThemedText style={[styles.alertText, { color: theme.primary }]}>Complete your profile to unlock more opportunities</ThemedText>
-                            <Ionicons name="chevron-forward" size={16} color={theme.primary} />
+                        <Pressable style={[styles.alertBanner, { backgroundColor: theme.primaryContainer, borderColor: theme.primary }]}>
+                            <View style={[styles.alertIcon, { backgroundColor: theme.primary }]}>
+                                <ThemedIcon name="creation" size={16} lightColor="#fff" darkColor="#fff" />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <ThemedText variant="labelLarge" colorName="onPrimaryContainer">Profile Strength: Low</ThemedText>
+                                <ThemedText variant="bodySmall" colorName="onPrimaryContainer" style={{ opacity: 0.8 }}>Add a bio and skills to get noticed.</ThemedText>
+                            </View>
+                            <ThemedIcon name="chevron-right" size={18} colorName="onPrimaryContainer" />
                         </Pressable>
                     </Link>
-                )}
+                </Animated.View>
+            )}
 
-                {/* About Section */}
-                <View style={styles.sectionHeader}>
-                    <ThemedText style={styles.sectionTitle}>About</ThemedText>
-                </View>
-                <View style={[styles.contentCard, { backgroundColor: theme.surface }]}>
-                    <ThemedText style={[styles.bioText, { color: theme.textSecondary }]}>
-                        {user?.bio || 'Professional university student looking to collaborate and offer skills to the campus community.'}
+            {/* About & Skills Row */}
+            <Animated.View entering={FadeInDown.delay(500).duration(800)} style={[styles.contentRow, { marginHorizontal: horizontalPadding }]}>
+                <View style={[styles.halfCard, { backgroundColor: theme.surface }]}>
+                    <ThemedText variant="labelMedium" colorName="textMuted" style={styles.cardLabel}>About</ThemedText>
+                    <ThemedText variant="bodySmall" colorName="textSecondary" numberOfLines={3}>
+                        {user?.bio || 'No bio added yet. Tell people what you do!'}
                     </ThemedText>
                 </View>
-
-                {/* Skills Section */}
-                <View style={styles.sectionHeader}>
-                    <ThemedText style={styles.sectionTitle}>Top Skills</ThemedText>
-                </View>
-                <View style={[styles.contentCard, { backgroundColor: theme.surface }]}>
-                    <View style={styles.skillsList}>
+                <View style={[styles.halfCard, { backgroundColor: theme.surface }]}>
+                    <ThemedText variant="labelMedium" colorName="textMuted" style={styles.cardLabel}>Skills</ThemedText>
+                    <View style={styles.skillsPreview}>
                         {user?.skillTags && user.skillTags.length > 0 ? (
-                            user.skillTags.map(tag => (
-                                <View key={tag} style={[styles.skillTag, { backgroundColor: theme.background, borderColor: theme.border }]}>
-                                    <ThemedText style={[styles.skillTagText, { color: theme.text }]}>{tag}</ThemedText>
+                            user.skillTags.slice(0, 3).map(tag => (
+                                <View key={tag} style={[styles.miniTag, { backgroundColor: theme.surfaceVariant }]}>
+                                    <ThemedText variant="labelSmall" numberOfLines={1}>{tag}</ThemedText>
                                 </View>
                             ))
                         ) : (
-                            <ThemedText style={{ color: theme.textMuted }}>No skills added yet.</ThemedText>
+                            <ThemedText variant="bodySmall" colorName="textMuted">None set</ThemedText>
+                        )}
+                        {user?.skillTags && user.skillTags.length > 3 && (
+                            <ThemedText variant="labelSmall" colorName="primary">+{user.skillTags.length - 3} more</ThemedText>
                         )}
                     </View>
                 </View>
+            </Animated.View>
 
-                {/* Menu Options */}
-                <View style={styles.menuContainer}>
-                    <Pressable style={[styles.menuItem, { backgroundColor: theme.surface }]}>
-                        <View style={[styles.menuIcon, { backgroundColor: '#e0e7ff' }]}>
-                            <Ionicons name="briefcase-outline" size={20} color={theme.primary} />
+            {/* Grouped Settings Menu */}
+            <Animated.View entering={FadeInDown.delay(600).duration(800)} style={[styles.menuWrapper, { marginHorizontal: horizontalPadding, marginBottom: insets.bottom + Spacing.massive }]}>
+                <ThemedText variant="labelMedium" colorName="textMuted" style={styles.menuLabel}>Account Settings</ThemedText>
+                <View style={[styles.groupedMenu, { backgroundColor: theme.surface }]}>
+                    <Pressable style={styles.groupItem}>
+                        <View style={[styles.groupIcon, { backgroundColor: theme.primaryContainer }]}>
+                            <ThemedIcon name="briefcase-outline" size={20} colorName="onPrimaryContainer" />
                         </View>
-                        <ThemedText style={styles.menuText}>My Active Services</ThemedText>
-                        <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
+                        <ThemedText variant="titleMedium" style={styles.groupText}>My Services</ThemedText>
+                        <ThemedIcon name="chevron-right" size={18} colorName="textMuted" />
                     </Pressable>
-
-                    <Pressable style={[styles.menuItem, { backgroundColor: theme.surface }]}>
-                        <View style={[styles.menuIcon, { backgroundColor: '#dcfce7' }]}>
-                            <Ionicons name="shield-checkmark-outline" size={20} color={theme.secondary} />
-                        </View>
-                        <ThemedText style={styles.menuText}>Trust & Verification</ThemedText>
-                        <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
-                    </Pressable>
+                    
+                    <View style={[styles.groupDivider, { backgroundColor: theme.outlineVariant }]} />
 
                     <Pressable 
-                        style={[styles.menuItem, { backgroundColor: theme.surface }]}
+                        style={styles.groupItem}
                         onPress={() => setMode(isDark ? 'light' : 'dark')}
                     >
-                        <View style={[styles.menuIcon, { backgroundColor: isDark ? '#334155' : '#fef3c7' }]}>
-                            <Ionicons name={isDark ? "moon" : "sunny"} size={20} color={isDark ? "#94a3b8" : "#f59e0b"} />
+                        <View style={[styles.groupIcon, { backgroundColor: isDark ? theme.surfaceVariant : '#fef3c7' }]}>
+                            <ThemedIcon name={isDark ? "moon-waning-crescent" : "white-balance-sunny"} size={20} lightColor={isDark ? undefined : "#f59e0b"} darkColor={isDark ? "#94a3b8" : undefined} />
                         </View>
-                        <ThemedText style={styles.menuText}>{isDark ? 'Dark Mode' : 'Light Mode'}</ThemedText>
-                        <Ionicons name={isDark ? "toggle" : "toggle-outline"} size={28} color={isDark ? theme.primary : "#cbd5e1"} />
+                        <ThemedText variant="titleMedium" style={styles.groupText}>{isDark ? 'Dark Mode' : 'Light Mode'}</ThemedText>
+                        <ThemedIcon name={isDark ? "toggle-switch" : "toggle-switch-off-outline"} size={32} colorName={isDark ? "primary" : "outline"} />
                     </Pressable>
 
-                    <Pressable style={[styles.menuItem, { backgroundColor: theme.surface }]}>
-                        <View style={[styles.menuIcon, { backgroundColor: isDark ? '#1e293b' : '#fef3c7' }]}>
-                            <Ionicons name="settings-outline" size={20} color={theme.accent} />
-                        </View>
-                        <ThemedText style={styles.menuText}>Account Settings</ThemedText>
-                        <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
-                    </Pressable>
+                    <View style={[styles.groupDivider, { backgroundColor: theme.outlineVariant }]} />
 
-                    <Pressable style={[styles.menuItem, { backgroundColor: theme.surface }]} onPress={signOut}>
-                        <View style={[styles.menuIcon, { backgroundColor: isDark ? '#1e293b' : '#fee2e2' }]}>
-                            <Ionicons name="log-out-outline" size={20} color={theme.error} />
+                    <Pressable style={styles.groupItem}>
+                        <View style={[styles.groupIcon, { backgroundColor: theme.secondaryContainer }]}>
+                            <ThemedIcon name="cog-outline" size={20} colorName="onSecondaryContainer" />
                         </View>
-                        <ThemedText style={[styles.menuText, { color: theme.error }]}>Log Out</ThemedText>
-                        <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
+                        <ThemedText variant="titleMedium" style={styles.groupText}>Preferences</ThemedText>
+                        <ThemedIcon name="chevron-right" size={18} colorName="textMuted" />
+                    </Pressable>
+                    
+                    <View style={[styles.groupDivider, { backgroundColor: theme.outlineVariant }]} />
+
+                    <Pressable style={styles.groupItem} onPress={signOut}>
+                        <View style={[styles.groupIcon, { backgroundColor: theme.errorContainer }]}>
+                            <ThemedIcon name="logout" size={20} colorName="onErrorContainer" />
+                        </View>
+                        <ThemedText variant="titleMedium" colorName="error" style={styles.groupText}>Log Out</ThemedText>
                     </Pressable>
                 </View>
-            </ScrollView>
-        </ThemedView>
+            </Animated.View>
+        </ScreenLayout>
     );
 }
 
@@ -263,65 +286,34 @@ const styles = StyleSheet.create({
     loginContainer: {
         flex: 1,
         justifyContent: 'center',
-        paddingHorizontal: Spacing.xl,
+        paddingBottom: 40,
     },
     loginCard: {
         padding: Spacing.xl,
         borderRadius: BorderRadius.xl,
-        ...Shadows.medium,
+        ...Shadows.level2,
     },
     loginHeader: {
-        fontSize: 32,
         fontWeight: '900',
-        textAlign: 'center',
         marginBottom: 4,
     },
     loginSub: {
-        textAlign: 'center',
-        opacity: 0.6,
         marginBottom: 32,
-        fontSize: 14,
     },
     form: {
         gap: 16,
     },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        height: 56,
-        borderRadius: BorderRadius.lg,
-        paddingHorizontal: Spacing.md,
-        borderWidth: 1,
-    },
-    input: {
-        flex: 1,
-        marginLeft: 12,
-        fontSize: 16,
-    },
-    button: {
-        height: 56,
-        borderRadius: BorderRadius.lg,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 8,
-    },
-    buttonText: {
-        color: '#fff',
-        fontSize: 17,
-        fontWeight: '700',
-    },
     forgotPass: {
-        textAlign: 'center',
-        fontSize: 14,
         marginTop: 12,
         opacity: 0.6,
     },
+    heroHeader: {
+        width: '100%',
+    },
     profileCard: {
-        marginTop: Spacing.md,
-        marginHorizontal: Spacing.md,
         padding: Spacing.lg,
         borderRadius: BorderRadius.xl,
-        ...Shadows.medium,
+        ...Shadows.level2,
     },
     headerInfo: {
         flexDirection: 'row',
@@ -332,39 +324,39 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: BorderRadius.full,
-        borderWidth: 2,
+        borderWidth: 3,
         justifyContent: 'center',
         alignItems: 'center',
         position: 'relative',
+        ...Shadows.level1,
     },
     avatarImage: {
-        width: 76,
-        height: 76,
-        borderRadius: 38,
+        width: 74,
+        height: 74,
+        borderRadius: 37,
     },
     avatarPlaceholder: {
-        fontSize: 32,
         fontWeight: '700',
     },
     verifiedBadge: {
         position: 'absolute',
-        bottom: 0,
-        right: 0,
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        borderWidth: 2,
+        bottom: -2,
+        right: -2,
+        width: 26,
+        height: 26,
+        borderRadius: 13,
+        borderWidth: 3,
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 2,
     },
     editBadge: {
         position: 'absolute',
-        top: 0,
-        right: 0,
-        width: 20,
-        height: 20,
-        borderRadius: 10,
+        top: -2,
+        right: -2,
+        width: 22,
+        height: 22,
+        borderRadius: 11,
         borderWidth: 2,
         justifyContent: 'center',
         alignItems: 'center',
@@ -375,23 +367,13 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     userName: {
-        fontSize: 22,
-        fontWeight: '800',
+        fontWeight: '900',
         marginBottom: 2,
-    },
-    userMajor: {
-        fontSize: 14,
-        fontWeight: '500',
-        marginBottom: 6,
+        letterSpacing: -0.5,
     },
     ratingRow: {
         flexDirection: 'row',
         alignItems: 'center',
-    },
-    ratingText: {
-        fontSize: 13,
-        fontWeight: '600',
-        marginLeft: 4,
     },
     statsOverview: {
         flexDirection: 'row',
@@ -404,108 +386,102 @@ const styles = StyleSheet.create({
     },
     statBox: {
         alignItems: 'center',
-    },
-    statNum: {
-        fontSize: 18,
-        fontWeight: '800',
-    },
-    statLab: {
-        fontSize: 12,
-        fontWeight: '600',
+        flex: 1,
     },
     statDivider: {
         width: 1,
-        height: 24,
+        height: 30,
     },
     statusDot: {
         width: 10,
         height: 10,
         borderRadius: 5,
-        marginBottom: 4,
+        marginBottom: 2,
     },
     editBtn: {
-        height: 44,
+        height: 48,
         borderWidth: 1,
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.lg,
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    editBtnText: {
-        fontSize: 14,
-        fontWeight: '600',
     },
     alertBanner: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginHorizontal: Spacing.md,
-        marginTop: Spacing.md,
         padding: Spacing.md,
-        borderRadius: BorderRadius.lg,
+        borderRadius: BorderRadius.xl,
         borderWidth: 1,
     },
-    alertText: {
-        flex: 1,
-        fontSize: 13,
-        fontWeight: '600',
-        marginHorizontal: 10,
+    alertIcon: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
     },
-    sectionHeader: {
-        marginTop: Spacing.lg,
-        marginHorizontal: Spacing.lg,
-        marginBottom: Spacing.sm,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: '800',
-    },
-    contentCard: {
-        marginHorizontal: Spacing.md,
-        padding: Spacing.md,
-        borderRadius: BorderRadius.lg,
-        ...Shadows.small,
-    },
-    bioText: {
-        fontSize: 14,
-        lineHeight: 20,
-    },
-    skillsList: {
+    contentRow: {
         flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-    },
-    skillTag: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: BorderRadius.full,
-        borderWidth: 1,
-    },
-    skillTagText: {
-        fontSize: 13,
-        fontWeight: '500',
-    },
-    menuContainer: {
-        marginTop: Spacing.xl,
-        marginHorizontal: Spacing.md,
+        marginTop: Spacing.md,
         gap: 12,
     },
-    menuItem: {
+    halfCard: {
+        flex: 1,
+        padding: Spacing.md,
+        borderRadius: BorderRadius.xl,
+        ...Shadows.level1,
+    },
+    cardLabel: {
+        fontWeight: '800',
+        marginBottom: 6,
+        textTransform: 'uppercase',
+    },
+    skillsPreview: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 6,
+        alignItems: 'center',
+    },
+    miniTag: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    menuWrapper: {
+        marginTop: Spacing.xl,
+    },
+    menuLabel: {
+        fontWeight: '800',
+        marginBottom: 10,
+        marginLeft: 4,
+        textTransform: 'uppercase',
+    },
+    groupedMenu: {
+        borderRadius: BorderRadius.xl,
+        overflow: 'hidden',
+        ...Shadows.level2,
+    },
+    groupItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: Spacing.sm,
-        borderRadius: BorderRadius.lg,
-        ...Shadows.small,
+        padding: Spacing.md,
     },
-    menuIcon: {
-        width: 40,
-        height: 40,
+    groupIcon: {
+        width: 38,
+        height: 38,
         borderRadius: 10,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
     },
-    menuText: {
+    groupText: {
         flex: 1,
-        fontSize: 15,
         fontWeight: '600',
     },
+    groupDivider: {
+        height: 1,
+        marginHorizontal: Spacing.md,
+    },
 });
+
+

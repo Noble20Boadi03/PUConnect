@@ -4,25 +4,20 @@ import {
   View,
   TextInput,
   Pressable,
-  ScrollView,
   Alert,
   Switch,
   ActivityIndicator,
   Image,
-  KeyboardAvoidingView,
-  Platform,
-  Text,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { ThemedView } from "@/components/themed-view";
-import { Colors, Spacing, BorderRadius, Shadows } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedIcon } from "@/components/ui/themed-icon";
+import { ScreenLayout } from "@/components/ui/screen-layout";
+import { useTheme } from "@/context/theme-context";
 import { useAuth } from "@/context/auth-context";
 import { api } from "@/services/api";
-import { ExperienceLevel } from "@/types";
-import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Spacing, BorderRadius } from "@/constants/theme";
 
 const POPULAR_SKILLS = [
   "Tutoring",
@@ -39,44 +34,26 @@ const POPULAR_SKILLS = [
   "Fitness",
 ];
 
-const DEPARTMENTS = [
-  "Computer Science",
-  "Business",
-  "Engineering",
-  "Arts",
-  "Sciences",
-  "Medicine",
-  "Law",
-  "Other",
-];
-
 export default function OnboardingScreen() {
   const { user, token, refreshUser } = useAuth();
+  const { theme } = useTheme();
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-  const insets = useSafeAreaInsets();
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Form fields
-  const [bio, setBio] = useState(user?.bio || "");
-  const [skillTags, setSkillTags] = useState<string[]>(user?.skillTags || []);
-  const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel>(
-    user?.experienceLevel || "beginner",
-  );
-  const [portfolioLinks, setPortfolioLinks] = useState<string[]>(
-    user?.portfolioLinks || [],
-  );
-  const [newLink, setNewLink] = useState("");
-  const [isAvailable, setIsAvailable] = useState(user?.isAvailable ?? true);
   const [profilePictureUrl, setProfilePictureUrl] = useState(
-    user?.profilePictureUrl || "",
+    user?.profilePictureUrl || ""
   );
   const [department, setDepartment] = useState(user?.department || "");
   const [graduationYear, setGraduationYear] = useState(
-    user?.graduationYear?.toString() || "2027",
+    user?.graduationYear?.toString() || ""
   );
+  const [bio, setBio] = useState(user?.bio || "");
+  const [skillTags, setSkillTags] = useState<string[]>(user?.skillTags || []);
+  const [portfolioLinks, setPortfolioLinks] = useState<string[]>(
+    user?.portfolioLinks || []
+  );
+  const [isAvailable, setIsAvailable] = useState(user?.isAvailable ?? true);
+  const [newLink, setNewLink] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const toggleSkill = (skill: string) => {
     if (skillTags.includes(skill)) {
@@ -116,10 +93,7 @@ export default function OnboardingScreen() {
     setIsSubmitting(true);
     try {
       let finalImageUrl = profilePictureUrl;
-      const finalPortfolioLinks = newLink
-        ? [...portfolioLinks, newLink]
-        : portfolioLinks;
-
+      
       // Upload if it's a local file
       if (profilePictureUrl && profilePictureUrl.startsWith("file://")) {
         const uploadResult = await api.uploadImage(profilePictureUrl, token);
@@ -131,13 +105,12 @@ export default function OnboardingScreen() {
         {
           bio,
           skillTags,
-          experienceLevel,
-          portfolioLinks: finalPortfolioLinks,
+          portfolioLinks,
           isAvailable,
           profilePictureUrl: finalImageUrl,
           department,
           graduationYear: parseInt(graduationYear),
-          verifiedStudent: true, // Mocking verification for demo
+          verifiedStudent: true,
         },
         token,
       );
@@ -161,249 +134,244 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1 }}
+    <ScreenLayout 
+      scrollable 
+      keyboardAvoiding 
+      padding="large"
+      contentContainerStyle={styles.scrollContent}
     >
-      <ThemedView
-        style={[styles.container, { backgroundColor: theme.background }]}
-      >
-        <ScrollView
-          contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.header}>
-            <Text style={[styles.title, { color: theme.text }]}>
-              Professional Setup
-            </Text>
-            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-              Showcase your talent to the campus
-            </Text>
-          </View>
+      <View style={styles.header}>
+        <ThemedText variant="headlineLarge" style={styles.title}>
+          Professional Setup
+        </ThemedText>
+        <ThemedText variant="bodyLarge" colorName="textSecondary" style={styles.subtitle}>
+          Showcase your talent to the campus
+        </ThemedText>
+      </View>
 
-          {/* Profile Picture */}
-          <View style={styles.section}>
-            <View style={styles.avatarContainer}>
-              <Pressable
-                style={[
-                  styles.avatarFrame,
-                  {
-                    borderColor: theme.primary,
-                    backgroundColor: theme.surface,
-                  },
-                ]}
-                onPress={pickImage}
-              >
-                {profilePictureUrl ? (
-                  <Image
-                    source={{ uri: profilePictureUrl }}
-                    style={styles.avatar}
-                  />
-                ) : (
-                  <Ionicons
-                    name="person-circle"
-                    size={100}
-                    color={theme.textMuted}
-                  />
-                )}
-                <View
-                  style={[
-                    styles.editIconBadge,
-                    { backgroundColor: theme.primary },
-                  ]}
-                >
-                  <Ionicons name="camera" size={16} color="#fff" />
-                </View>
-              </Pressable>
-            </View>
-          </View>
-
-          {/* University Info */}
-          <View style={[styles.card, { backgroundColor: theme.surface }]}>
-            <Text style={[styles.label, { color: theme.text }]}>
-              University Info
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                { color: theme.text, borderColor: theme.border },
-              ]}
-              placeholder="Major / Department"
-              placeholderTextColor={theme.textMuted}
-              value={department}
-              onChangeText={setDepartment}
-            />
-            <TextInput
-              style={[
-                styles.input,
-                { color: theme.text, borderColor: theme.border },
-              ]}
-              placeholder="Graduation Year"
-              placeholderTextColor={theme.textMuted}
-              keyboardType="numeric"
-              value={graduationYear}
-              onChangeText={setGraduationYear}
-            />
-          </View>
-
-          {/* Short Bio */}
-          <View style={[styles.card, { backgroundColor: theme.surface }]}>
-            <Text style={[styles.label, { color: theme.text }]}>
-              Professional Bio
-            </Text>
-            <TextInput
-              style={[
-                styles.textArea,
-                { color: theme.text, borderColor: theme.border },
-              ]}
-              placeholder="Tell potential collaborators about your skills and experience..."
-              placeholderTextColor={theme.textMuted}
-              multiline
-              numberOfLines={4}
-              value={bio}
-              onChangeText={setBio}
-              maxLength={300}
-            />
-          </View>
-
-          {/* Skill Tags */}
-          <View style={[styles.card, { backgroundColor: theme.surface }]}>
-            <Text style={[styles.label, { color: theme.text }]}>
-              Skills & Expertise
-            </Text>
-            <View style={styles.tagGrid}>
-              {POPULAR_SKILLS.map((skill) => (
-                <Pressable
-                  key={skill}
-                  style={[
-                    styles.tag,
-                    {
-                      backgroundColor: skillTags.includes(skill)
-                        ? theme.primary
-                        : theme.background,
-                      borderColor: skillTags.includes(skill)
-                        ? theme.primary
-                        : theme.border,
-                    },
-                  ]}
-                  onPress={() => toggleSkill(skill)}
-                >
-                  <Text
-                    style={{
-                      color: skillTags.includes(skill)
-                        ? "#fff"
-                        : theme.textSecondary,
-                      fontWeight: "600",
-                      fontSize: 13,
-                    }}
-                  >
-                    {skill}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-
-          {/* Portfolio Links */}
-          <View style={[styles.card, { backgroundColor: theme.surface }]}>
-            <Text style={[styles.label, { color: theme.text }]}>
-              Portfolio & Links
-            </Text>
-            <View style={styles.linkInputContainer}>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    flex: 1,
-                    color: theme.text,
-                    borderColor: theme.border,
-                    marginBottom: 0,
-                  },
-                ]}
-                placeholder="Link (e.g. GitHub, LinkedIn)"
-                placeholderTextColor={theme.textMuted}
-                value={newLink}
-                onChangeText={setNewLink}
-                onSubmitEditing={addPortfolioLink}
-                returnKeyType="done"
-              />
-              <Pressable
-                style={[styles.addBtn, { backgroundColor: theme.primary }]}
-                onPress={addPortfolioLink}
-              >
-                <Ionicons name="add" size={24} color="#fff" />
-              </Pressable>
-            </View>
-            <View style={styles.linkList}>
-              {portfolioLinks.map((link) => (
-                <View
-                  key={link}
-                  style={[
-                    styles.linkItem,
-                    {
-                      backgroundColor: theme.background,
-                      borderColor: theme.border,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[styles.linkText, { color: theme.textSecondary }]}
-                    numberOfLines={1}
-                  >
-                    {link}
-                  </Text>
-                  <Pressable onPress={() => removePortfolioLink(link)}>
-                    <Ionicons
-                      name="close-circle"
-                      size={20}
-                      color={theme.error}
-                    />
-                  </Pressable>
-                </View>
-              ))}
-            </View>
-          </View>
-
-          {/* Availability */}
-          <View
-            style={[
-              styles.card,
-              styles.row,
-              { backgroundColor: theme.surface },
-            ]}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.label, { color: theme.text, marginTop: 0 }]}>
-                Available for Hire
-              </Text>
-              <Text style={{ color: theme.textMuted, fontSize: 13 }}>
-                Show up in campus talent searches
-              </Text>
-            </View>
-            <Switch
-              value={isAvailable}
-              onValueChange={setIsAvailable}
-              trackColor={{ false: "#cbd5e1", true: theme.primary }}
-              thumbColor="#fff"
-            />
-          </View>
-
+      {/* Profile Picture */}
+      <View style={styles.section}>
+        <View style={styles.avatarContainer}>
           <Pressable
-            style={[styles.saveButton, { backgroundColor: theme.primary }]}
-            onPress={handleSave}
-            disabled={isSubmitting}
+            style={[
+              styles.avatarFrame,
+              {
+                borderColor: theme.primary,
+                backgroundColor: theme.surfaceVariant,
+              },
+            ]}
+            onPress={pickImage}
           >
-            {isSubmitting ? (
-              <ActivityIndicator color="#fff" />
+            {profilePictureUrl ? (
+              <Image
+                source={{ uri: profilePictureUrl }}
+                style={styles.avatar}
+              />
             ) : (
-              <Text style={styles.saveButtonText}>
-                Complete Professional Profile
-              </Text>
+              <ThemedIcon
+                name="account-circle"
+                size={100}
+                colorName="textMuted"
+              />
             )}
+            <View
+              style={[
+                styles.editIconBadge,
+                { backgroundColor: theme.primary },
+              ]}
+            >
+              <ThemedIcon name="camera" size={16} lightColor="#fff" darkColor="#fff" />
+            </View>
           </Pressable>
-        </ScrollView>
-      </ThemedView>
-    </KeyboardAvoidingView>
+        </View>
+      </View>
+
+      {/* University Info */}
+      <View style={[styles.card, { backgroundColor: theme.surface }]}>
+        <ThemedText variant="labelLarge" style={styles.label}>
+          University Info
+        </ThemedText>
+        <TextInput
+          style={[
+            styles.input,
+            { color: theme.text, borderColor: theme.outlineVariant },
+          ]}
+          placeholder="Major / Department"
+          placeholderTextColor={theme.textMuted}
+          value={department}
+          onChangeText={setDepartment}
+        />
+        <TextInput
+          style={[
+            styles.input,
+            { color: theme.text, borderColor: theme.outlineVariant, marginTop: Spacing.md },
+          ]}
+          placeholder="Graduation Year"
+          placeholderTextColor={theme.textMuted}
+          keyboardType="numeric"
+          value={graduationYear}
+          onChangeText={setGraduationYear}
+        />
+      </View>
+
+      {/* Short Bio */}
+      <View style={[styles.card, { backgroundColor: theme.surface }]}>
+        <ThemedText variant="labelLarge" style={styles.label}>
+          Professional Bio
+        </ThemedText>
+        <TextInput
+          style={[
+            styles.textArea,
+            { color: theme.text, borderColor: theme.outlineVariant },
+          ]}
+          placeholder="Tell potential collaborators about your skills and experience..."
+          placeholderTextColor={theme.textMuted}
+          multiline
+          numberOfLines={4}
+          value={bio}
+          onChangeText={setBio}
+          maxLength={300}
+        />
+      </View>
+
+      {/* Skill Tags */}
+      <View style={[styles.card, { backgroundColor: theme.surface }]}>
+        <ThemedText variant="labelLarge" style={styles.label}>
+          Skills & Expertise
+        </ThemedText>
+        <View style={styles.tagGrid}>
+          {POPULAR_SKILLS.map((skill) => (
+            <Pressable
+              key={skill}
+              style={[
+                styles.tag,
+                {
+                  backgroundColor: skillTags.includes(skill)
+                    ? theme.primary
+                    : theme.surfaceVariant,
+                  borderColor: skillTags.includes(skill)
+                    ? theme.primary
+                    : theme.outlineVariant,
+                  borderWidth: 1,
+                },
+              ]}
+              onPress={() => toggleSkill(skill)}
+            >
+              <ThemedText
+                style={{
+                  color: skillTags.includes(skill)
+                    ? "#fff"
+                    : theme.textSecondary,
+                  fontWeight: "600",
+                  fontSize: 13,
+                }}
+              >
+                {skill}
+              </ThemedText>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      {/* Portfolio Links */}
+      <View style={[styles.card, { backgroundColor: theme.surface }]}>
+        <ThemedText variant="labelLarge" style={styles.label}>
+          Portfolio & Links
+        </ThemedText>
+        <View style={styles.linkInputContainer}>
+          <TextInput
+            style={[
+              styles.input,
+              {
+                flex: 1,
+                color: theme.text,
+                borderColor: theme.outlineVariant,
+              },
+            ]}
+            placeholder="Link (e.g. GitHub, LinkedIn)"
+            placeholderTextColor={theme.textMuted}
+            value={newLink}
+            onChangeText={setNewLink}
+            onSubmitEditing={addPortfolioLink}
+            returnKeyType="done"
+          />
+          <Pressable
+            style={[styles.addBtn, { backgroundColor: theme.primary }]}
+            onPress={addPortfolioLink}
+          >
+            <ThemedIcon name="plus" size={24} lightColor="#fff" darkColor="#fff" />
+          </Pressable>
+        </View>
+        <View style={styles.linkList}>
+          {portfolioLinks.map((link) => (
+            <View
+              key={link}
+              style={[
+                styles.linkItem,
+                {
+                  backgroundColor: theme.surfaceVariant,
+                  borderColor: theme.outlineVariant,
+                  borderWidth: 1,
+                },
+              ]}
+            >
+              <ThemedText
+                variant="bodySmall"
+                numberOfLines={1}
+                style={{ flex: 1, marginRight: 10 }}
+              >
+                {link}
+              </ThemedText>
+              <Pressable onPress={() => removePortfolioLink(link)}>
+                <ThemedIcon
+                  name="close-circle"
+                  size={20}
+                  colorName="error"
+                />
+              </Pressable>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      {/* Availability */}
+      <View
+        style={[
+          styles.card,
+          styles.row,
+          { backgroundColor: theme.surface },
+        ]}
+      >
+        <View style={{ flex: 1 }}>
+          <ThemedText variant="labelLarge">
+            Available for Hire
+          </ThemedText>
+          <ThemedText variant="bodySmall" colorName="textMuted">
+            Show up in campus talent searches
+          </ThemedText>
+        </View>
+        <Switch
+          value={isAvailable}
+          onValueChange={setIsAvailable}
+          trackColor={{ false: theme.outlineVariant, true: theme.primary }}
+          thumbColor="#fff"
+        />
+      </View>
+
+      <Pressable
+        style={[styles.saveButton, { backgroundColor: theme.primary }]}
+        onPress={handleSave}
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <ThemedText variant="titleMedium" lightColor="#fff" darkColor="#fff" style={{ fontWeight: 'bold' }}>
+            Complete Professional Profile
+          </ThemedText>
+        )}
+      </Pressable>
+    </ScreenLayout>
   );
 }
 
@@ -412,25 +380,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 25,
+    padding: Spacing.xl,
     paddingBottom: 100,
   },
   header: {
-    fontSize: 28,
-    marginBottom: 8,
+    marginBottom: Spacing.xl,
   },
   title: {
-    fontSize: 32,
     fontWeight: "800",
-    color: "#000",
   },
   subtitle: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#666",
+    marginTop: 4,
   },
   section: {
-    marginBottom: 25,
+    marginBottom: Spacing.xl,
   },
   row: {
     flexDirection: "row",
@@ -438,40 +401,33 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   card: {
-    padding: 20,
-    borderRadius: 10,
-    backgroundColor: "#fff",
-    marginBottom: 15,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.md,
   },
   addBtn: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 55,
+    height: 55,
+    borderRadius: BorderRadius.md,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#007BFF",
   },
   label: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
+    marginBottom: Spacing.sm,
+    fontWeight: 'bold',
   },
   input: {
     height: 55,
-    borderRadius: 15,
-    paddingHorizontal: 15,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.md,
     fontSize: 16,
     borderWidth: 1,
   },
   textArea: {
     height: 120,
-    borderRadius: 15,
-    paddingHorizontal: 15,
-    paddingTop: 15,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.md,
     fontSize: 16,
     textAlignVertical: "top",
     borderWidth: 1,
@@ -484,28 +440,18 @@ const styles = StyleSheet.create({
   tag: {
     paddingHorizontal: 15,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: BorderRadius.full,
   },
   saveButton: {
     height: 60,
-    borderRadius: 15,
+    borderRadius: BorderRadius.lg,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 20,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  saveButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
+    marginTop: Spacing.xl,
   },
   avatarContainer: {
     alignItems: "center",
-    marginVertical: 10,
+    marginVertical: Spacing.md,
   },
   avatarFrame: {
     width: 120,
@@ -536,7 +482,7 @@ const styles = StyleSheet.create({
   linkInputContainer: {
     flexDirection: "row",
     gap: 10,
-    marginBottom: 10,
+    marginBottom: Spacing.md,
   },
   linkList: {
     gap: 10,
@@ -545,12 +491,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 12,
-    borderRadius: 12,
-  },
-  linkText: {
-    flex: 1,
-    marginRight: 10,
-    fontSize: 14,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
   },
 });

@@ -2,32 +2,30 @@ import React, { useState } from "react";
 import {
     StyleSheet,
     View,
-    Text,
-    TextInput,
     Pressable,
-    Dimensions,
-    KeyboardAvoidingView,
-    Platform,
     TouchableWithoutFeedback,
     Keyboard,
-    ActivityIndicator,
     Alert,
-    ScrollView,
     Image,
 } from "react-native";
 import { router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { Colors } from "@/constants/theme";
 import { useAuth } from "@/context/auth-context";
 import { AnimatedInput } from "@/components/ui/animated-input";
 import { PrimaryButton } from "@/components/ui/primary-button";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedIcon } from "@/components/ui/themed-icon";
+import { ScreenLayout } from "@/components/ui/screen-layout";
+import { useTheme } from "@/context/theme-context";
+import { Spacing, BorderRadius } from "@/constants/theme";
+import { useResponsive } from "@/hooks/use-responsive";
 
-const { width } = Dimensions.get("window");
+const AnimatedThemedText = Animated.createAnimatedComponent(ThemedText);
 
 export default function RegisterScreen() {
-    const theme = Colors.light;
+    const { theme } = useTheme();
     const { register } = useAuth();
+    const { spacingMultiplier } = useResponsive();
 
     const [formData, setFormData] = useState({
         username: "",
@@ -40,21 +38,10 @@ export default function RegisterScreen() {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
+    const horizontalPadding = Spacing.xl * spacingMultiplier;
+
     const handleRegister = async () => {
-        const { fullName, email, universityId, password, confirmPassword } = formData;
-
-        // BYPASS AUTH CHECKS FOR TESTING
-        /*
-        if (!fullName || !email || !universityId || !password || !confirmPassword) {
-            Alert.alert("Error", "Please fill in all fields");
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            Alert.alert("Error", "Passwords do not match");
-            return;
-        }
-        */
+        const { fullName, email, universityId, password } = formData;
 
         setIsLoading(true);
         try {
@@ -81,179 +68,139 @@ export default function RegisterScreen() {
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View style={styles.container}>
-                
-                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                    <KeyboardAvoidingView
-                        behavior={Platform.OS === "ios" ? "padding" : "height"}
-                        style={styles.keyboardView}
-                    >
-                        <View style={styles.content}>
-                            <Pressable onPress={() => router.back()} style={styles.backButton}>
-                                <Ionicons name="chevron-back" size={24} color="#1a1a1a" />
-                            </Pressable>
+            <ScreenLayout padding="large" keyboardAvoiding scrollable>
+                <View style={styles.content}>
+                    <Pressable onPress={() => router.back()} style={[styles.backButton, { backgroundColor: theme.surfaceVariant }]}>
+                        <ThemedIcon name="chevron-left" size={24} />
+                    </Pressable>
 
-                            <View style={styles.header}>
-                                <Image 
-                                    source={require("../assets/images/puconnect_logo.png")}
-                                    style={styles.logo}
-                                    resizeMode="contain"
-                                />
-                                <Animated.Text entering={FadeInDown.delay(200).duration(800)} style={styles.title}>
-                                    Create Account
-                                </Animated.Text>
-                                <Animated.Text entering={FadeInDown.delay(300).duration(800)} style={styles.subtitle}>
-                                    Fill in your details to get started
-                                </Animated.Text>
-                            </View>
+                    <View style={styles.header}>
+                        <Image 
+                            source={require("../assets/images/puconnect_logo.png")}
+                            style={styles.logo}
+                            resizeMode="contain"
+                        />
+                        <AnimatedThemedText entering={FadeInDown.delay(200).duration(800)} variant="headlineLarge" style={styles.title}>
+                            Create Account
+                        </AnimatedThemedText>
+                        <AnimatedThemedText entering={FadeInDown.delay(300).duration(800)} variant="bodyLarge" colorName="textSecondary">
+                            Fill in your details to get started
+                        </AnimatedThemedText>
+                    </View>
 
-                            <View style={styles.form}>
-                                <AnimatedInput
-                                    label="Full Name"
-                                    iconName="person-outline"
-                                    placeholder="John Doe"
-                                    value={formData.fullName}
-                                    onChangeText={(text) => setFormData({ ...formData, fullName: text })}
-                                    autoCapitalize="words"
-                                    delay={400}
-                                />
+                    <View style={styles.form}>
+                        <AnimatedInput
+                            label="Full Name"
+                            iconName="account"
+                            placeholder="John Doe"
+                            value={formData.fullName}
+                            onChangeText={(text) => setFormData({ ...formData, fullName: text })}
+                            autoCapitalize="words"
+                            delay={400}
+                        />
 
-                                <AnimatedInput
-                                    label="University Email"
-                                    iconName="mail-outline"
-                                    placeholder="name@university.edu"
-                                    value={formData.email}
-                                    onChangeText={(text) => setFormData({ ...formData, email: text })}
-                                    autoCapitalize="none"
-                                    keyboardType="email-address"
-                                    delay={500}
-                                    marginTop={20}
-                                />
+                        <AnimatedInput
+                            label="University Email"
+                            iconName="email"
+                            placeholder="name@university.edu"
+                            value={formData.email}
+                            onChangeText={(text) => setFormData({ ...formData, email: text })}
+                            autoCapitalize="none"
+                            keyboardType="email-address"
+                            delay={500}
+                            marginTop={Spacing.lg}
+                        />
 
-                                <AnimatedInput
-                                    label="University ID"
-                                    iconName="card-outline"
-                                    placeholder="20230001"
-                                    value={formData.universityId}
-                                    onChangeText={(text) => setFormData({ ...formData, universityId: text })}
-                                    autoCapitalize="none"
-                                    delay={600}
-                                    marginTop={20}
-                                />
+                        <AnimatedInput
+                            label="University ID"
+                            iconName="card-account-details"
+                            placeholder="20230001"
+                            value={formData.universityId}
+                            onChangeText={(text) => setFormData({ ...formData, universityId: text })}
+                            autoCapitalize="none"
+                            delay={600}
+                            marginTop={Spacing.lg}
+                        />
 
-                                <AnimatedInput
-                                    label="Password"
-                                    iconName="lock-closed-outline"
-                                    placeholder="••••••••"
-                                    value={formData.password}
-                                    onChangeText={(text) => setFormData({ ...formData, password: text })}
-                                    isPassword={true}
-                                    showPassword={showPassword}
-                                    onTogglePassword={() => setShowPassword(!showPassword)}
-                                    delay={700}
-                                    marginTop={20}
-                                />
+                        <AnimatedInput
+                            label="Password"
+                            iconName="lock"
+                            placeholder="••••••••"
+                            value={formData.password}
+                            onChangeText={(text) => setFormData({ ...formData, password: text })}
+                            isPassword={true}
+                            showPassword={showPassword}
+                            onTogglePassword={() => setShowPassword(!showPassword)}
+                            delay={700}
+                            marginTop={Spacing.lg}
+                        />
 
-                                <AnimatedInput
-                                    label="Confirm Password"
-                                    iconName="checkmark-circle-outline"
-                                    placeholder="••••••••"
-                                    value={formData.confirmPassword}
-                                    onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
-                                    isPassword={true}
-                                    showPassword={showPassword}
-                                    delay={800}
-                                    marginTop={20}
-                                />
+                        <AnimatedInput
+                            label="Confirm Password"
+                            iconName="check-circle"
+                            placeholder="••••••••"
+                            value={formData.confirmPassword}
+                            onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
+                            isPassword={true}
+                            showPassword={showPassword}
+                            delay={800}
+                            marginTop={Spacing.lg}
+                        />
 
-                                <PrimaryButton
-                                    title="Create Account"
-                                    onPress={handleRegister}
-                                    isLoading={isLoading}
-                                    delay={1000}
-                                    marginTop={40}
-                                />
-                            </View>
+                        <PrimaryButton
+                            title="Create Account"
+                            onPress={handleRegister}
+                            isLoading={isLoading}
+                            delay={1000}
+                            size="large"
+                            marginTop={Spacing.massive}
+                        />
+                    </View>
 
-                            <Animated.View entering={FadeInDown.delay(1200).duration(800)} style={styles.footer}>
-                                <Text style={styles.footerText}>Already have an account? </Text>
-                                <Pressable onPress={() => router.push("/login")}>
-                                    <Text style={styles.footerLink}>Sign In</Text>
-                                </Pressable>
-                            </Animated.View>
-                        </View>
-                    </KeyboardAvoidingView>
-                </ScrollView>
-            </View>
+                    <Animated.View entering={FadeInDown.delay(1200).duration(800)} style={styles.footer}>
+                        <ThemedText variant="bodyMedium" colorName="textSecondary">Already have an account? </ThemedText>
+                        <Pressable onPress={() => router.push("/login")}>
+                            <ThemedText variant="labelLarge" colorName="primary">Sign In</ThemedText>
+                        </Pressable>
+                    </Animated.View>
+                </View>
+            </ScreenLayout>
         </TouchableWithoutFeedback>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#ffffff",
-    },
-    scrollContent: {
-        flexGrow: 1,
-    },
-    keyboardView: {
-        flex: 1,
-    },
     content: {
         flex: 1,
-        paddingHorizontal: 24,
-        paddingTop: Platform.OS === "ios" ? 60 : 40,
     },
     backButton: {
         width: 40,
         height: 40,
-        borderRadius: 20,
-        backgroundColor: "#f9f9f9",
+        borderRadius: BorderRadius.full,
         justifyContent: "center",
         alignItems: "center",
-        marginBottom: 20,
+        marginBottom: Spacing.lg,
     },
     header: {
-        marginBottom: 30,
+        marginBottom: Spacing.xl,
     },
     logo: {
         width: 120,
         height: 40,
-        marginBottom: 24,
+        marginBottom: Spacing.xl,
     },
     title: {
-        fontSize: 32,
         fontWeight: "800",
-        color: "#1a1a1a",
-        marginBottom: 8,
-    },
-    subtitle: {
-        fontSize: 16,
-        color: "#888",
-        fontWeight: "400",
+        marginBottom: Spacing.xs,
     },
     form: {
         flex: 1,
-    },
-    showPassword: {
-        padding: 10,
     },
     footer: {
         flexDirection: "row",
         justifyContent: "center",
         alignItems: "center",
-        paddingBottom: 40,
-        marginTop: "auto",
-    },
-    footerText: {
-        fontSize: 15,
-        color: "#888",
-        fontWeight: "500",
-    },
-    footerLink: {
-        fontSize: 15,
-        fontWeight: "700",
-        color: "#1a1a1a",
+        paddingBottom: Spacing.xl,
+        marginTop: Spacing.lg,
     },
 });

@@ -1,15 +1,13 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '@/context/theme-context';
 import { BlurView } from 'expo-blur';
 import { Platform, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ThemedIcon } from '@/components/ui/themed-icon';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? 'light'];
+  const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
 
   const bottomInset = insets.bottom;
@@ -25,18 +23,18 @@ export default function TabLayout() {
           borderTopWidth: 0,
           elevation: 0,
           height: (Platform.OS === 'ios' ? 64 : 62) + bottomInset,
-          paddingBottom: bottomInset + 12,
-          paddingTop: 12,
-          backgroundColor: colorScheme === 'dark' ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+          paddingBottom: bottomInset + 8,
+          paddingTop: 8,
+          backgroundColor: isDark ? 'rgba(26, 28, 30, 0.9)' : 'rgba(253, 251, 255, 0.9)',
         },
         tabBarBackground: () => (
           Platform.OS === 'ios' ? (
-            <BlurView intensity={80} style={StyleSheet.absoluteFill} tint={colorScheme === 'dark' ? 'dark' : 'light'} />
+            <BlurView intensity={80} style={StyleSheet.absoluteFill} tint={isDark ? 'dark' : 'light'} />
           ) : null
         ),
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
+          fontSize: 12,
+          fontWeight: '500',
         },
       }}>
       <Tabs.Screen
@@ -44,7 +42,12 @@ export default function TabLayout() {
         options={{
           title: 'Market',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "briefcase" : "briefcase-outline"} size={24} color={color} />
+            <ThemedIcon 
+              name={focused ? "briefcase" : "briefcase-outline"} 
+              size={24} 
+              lightColor={color} 
+              darkColor={color} 
+            />
           ),
         }}
       />
@@ -53,7 +56,12 @@ export default function TabLayout() {
         options={{
           title: 'Messages',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "chatbubbles" : "chatbubbles-outline"} size={24} color={color} />
+            <ThemedIcon 
+              name={focused ? "chat" : "chat-outline"} 
+              size={24} 
+              lightColor={color} 
+              darkColor={color} 
+            />
           ),
         }}
       />
@@ -62,7 +70,12 @@ export default function TabLayout() {
         options={{
           title: 'Search',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "search" : "search-outline"} size={26} color={color} />
+            <ThemedIcon 
+              name={focused ? "magnify" : "magnify"} 
+              size={26} 
+              lightColor={color} 
+              darkColor={color} 
+            />
           ),
         }}
       />
@@ -71,7 +84,12 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "person" : "person-outline"} size={24} color={color} />
+            <ThemedIcon 
+              name={focused ? "account" : "account-outline"} 
+              size={24} 
+              lightColor={color} 
+              darkColor={color} 
+            />
           ),
         }}
       />
@@ -85,7 +103,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="explore"
         options={{
-          href: null, // Keep explore but don't show in tabs if search/talent is enough
+          href: null,
         }}
       />
     </Tabs>

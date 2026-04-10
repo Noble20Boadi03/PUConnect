@@ -1,31 +1,38 @@
 import { StyleSheet, Text, type TextProps } from 'react-native';
-
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { Typography, Colors } from '@/constants/theme';
+
+export type TypographyVariant = 
+  | 'displayLarge' | 'displayMedium' | 'displaySmall'
+  | 'headlineLarge' | 'headlineMedium' | 'headlineSmall'
+  | 'titleLarge' | 'titleMedium' | 'titleSmall'
+  | 'bodyLarge' | 'bodyMedium' | 'bodySmall'
+  | 'labelLarge' | 'labelMedium' | 'labelSmall';
 
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
-  type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
+  variant?: TypographyVariant;
+  colorName?: keyof typeof Colors.light;
+  align?: 'auto' | 'left' | 'right' | 'center' | 'justify';
 };
 
 export function ThemedText({
   style,
   lightColor,
   darkColor,
-  type = 'default',
+  variant = 'bodyLarge',
+  colorName = 'text',
+  align = 'auto',
   ...rest
 }: ThemedTextProps) {
-  const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
+  const color = useThemeColor({ light: lightColor, dark: darkColor }, colorName);
 
   return (
     <Text
       style={[
-        { color },
-        type === 'default' ? styles.default : undefined,
-        type === 'title' ? styles.title : undefined,
-        type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
-        type === 'subtitle' ? styles.subtitle : undefined,
-        type === 'link' ? styles.link : undefined,
+        { color, textAlign: align },
+        getTypographyStyle(variant) as any,
         style,
       ]}
       {...rest}
@@ -33,28 +40,23 @@ export function ThemedText({
   );
 }
 
-const styles = StyleSheet.create({
-  default: {
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  defaultSemiBold: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '600',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    lineHeight: 32,
-  },
-  subtitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  link: {
-    lineHeight: 30,
-    fontSize: 16,
-    color: '#0a7ea4',
-  },
-});
+function getTypographyStyle(variant: TypographyVariant) {
+  switch (variant) {
+    case 'displayLarge': return Typography.display.large;
+    case 'displayMedium': return Typography.display.medium;
+    case 'displaySmall': return Typography.display.small;
+    case 'headlineLarge': return Typography.headline.large;
+    case 'headlineMedium': return Typography.headline.medium;
+    case 'headlineSmall': return Typography.headline.small;
+    case 'titleLarge': return Typography.title.large;
+    case 'titleMedium': return Typography.title.medium;
+    case 'titleSmall': return Typography.title.small;
+    case 'bodyLarge': return Typography.body.large;
+    case 'bodyMedium': return Typography.body.medium;
+    case 'bodySmall': return Typography.body.small;
+    case 'labelLarge': return Typography.label.large;
+    case 'labelMedium': return Typography.label.medium;
+    case 'labelSmall': return Typography.label.small;
+    default: return Typography.body.large;
+  }
+}

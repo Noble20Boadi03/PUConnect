@@ -1,11 +1,14 @@
 import React from "react";
-import { StyleSheet, Text, TextInput, TextInputProps, View, Pressable } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { StyleSheet, TextInput, TextInputProps, View, Pressable } from "react-native";
 import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedIcon, IconName } from "@/components/ui/themed-icon";
+import { useTheme } from "@/context/theme-context";
+import { Spacing, BorderRadius } from "@/constants/theme";
 
 interface AnimatedInputProps extends TextInputProps {
     label: string;
-    iconName: keyof typeof Ionicons.glyphMap;
+    iconName: IconName;
     delay?: number;
     marginTop?: number;
     isPassword?: boolean;
@@ -23,21 +26,22 @@ export function AnimatedInput({
     onTogglePassword,
     ...props
 }: AnimatedInputProps) {
+    const { theme } = useTheme();
     const focusValue = useSharedValue(0);
 
     const animatedStyle = useAnimatedStyle(() => ({
-        borderColor: withTiming(focusValue.value ? "#1a1a1a" : "#f0f0f0"),
-        backgroundColor: withTiming(focusValue.value ? "#ffffff" : "#f9f9f9"),
+        borderColor: withTiming(focusValue.value ? theme.primary : theme.outlineVariant),
+        backgroundColor: withTiming(focusValue.value ? theme.surface : theme.surfaceVariant),
     }));
 
     return (
         <Animated.View entering={FadeInDown.delay(delay).duration(800)} style={{ marginTop }}>
-            <Text style={styles.inputLabel}>{label}</Text>
+            <ThemedText variant="labelLarge" style={styles.inputLabel}>{label}</ThemedText>
             <Animated.View style={[styles.inputContainer, animatedStyle]}>
-                <Ionicons name={iconName} size={20} color="#888" style={styles.inputIcon} />
+                <ThemedIcon name={iconName} size={20} colorName="textMuted" style={styles.inputIcon} />
                 <TextInput
-                    style={styles.input}
-                    placeholderTextColor="#bbb"
+                    style={[styles.input, { color: theme.text }]}
+                    placeholderTextColor={theme.textMuted}
                     onFocus={(e) => {
                         focusValue.value = 1;
                         props.onFocus?.(e);
@@ -51,10 +55,10 @@ export function AnimatedInput({
                 />
                 {isPassword && onTogglePassword && (
                     <Pressable onPress={onTogglePassword} style={styles.showPassword}>
-                        <Ionicons
+                        <ThemedIcon
                             name={showPassword ? "eye-off-outline" : "eye-outline"}
                             size={20}
-                            color="#888"
+                            colorName="textMuted"
                         />
                     </Pressable>
                 )}
@@ -65,30 +69,26 @@ export function AnimatedInput({
 
 const styles = StyleSheet.create({
     inputLabel: {
-        fontSize: 14,
         fontWeight: "600",
-        color: "#1a1a1a",
-        marginBottom: 10,
+        marginBottom: Spacing.sm,
     },
     inputContainer: {
-        height: 60,
-        borderRadius: 30,
+        height: 56,
+        borderRadius: BorderRadius.lg,
         borderWidth: 1.5,
         flexDirection: "row",
         alignItems: "center",
-        paddingHorizontal: 20,
-        gap: 12,
+        paddingHorizontal: Spacing.lg,
     },
     inputIcon: {
-        width: 24,
+        marginRight: Spacing.sm,
     },
     input: {
         flex: 1,
-        color: "#1a1a1a",
         fontSize: 16,
         fontWeight: "500",
     },
     showPassword: {
-        padding: 10,
+        padding: Spacing.sm,
     },
 });
