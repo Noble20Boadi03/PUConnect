@@ -71,7 +71,10 @@ export default function SearchScreen() {
             <Pressable 
               key={cat.id} 
               style={[styles.categoryItem, { borderBottomColor: theme.outlineVariant, paddingHorizontal: horizontalPadding }]} 
-              onPress={() => router.push(`/search/${cat.id}`)}
+              onPress={() => router.push({
+                pathname: "/search/[id]",
+                params: { id: cat.id }
+              })}
             >
               <ThemedView colorName="surfaceVariant" style={styles.iconContainer}>
                 <ThemedIcon name={cat.icon as any} size={32} colorName="primary" />

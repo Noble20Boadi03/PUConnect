@@ -36,7 +36,7 @@ export default function LandingScreen() {
   }, []);
 
   const handleGetStarted = () => {
-    router.replace("/login");
+    router.replace({ pathname: "/login" });
   };
 
   if (showSplash) {
@@ -122,7 +122,7 @@ export default function LandingScreen() {
           style={styles.footerLinks}
         >
           <ThemedText variant="bodyMedium" colorName="textSecondary">Don't have an account? </ThemedText>
-          <Pressable onPress={() => router.replace("/register")}>
+          <Pressable onPress={() => router.replace({ pathname: "/register" })}>
             <ThemedText variant="labelLarge" colorName="primary">Signup</ThemedText>
           </Pressable>
         </Animated.View>

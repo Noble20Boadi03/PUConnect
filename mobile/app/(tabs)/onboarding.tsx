@@ -122,7 +122,7 @@ export default function OnboardingScreen() {
       Alert.alert("Success", "Profile updated successfully!", [
         {
           text: "View Profile",
-          onPress: () => router.replace("/(tabs)/profile"),
+          onPress: () => router.replace({ pathname: "/(tabs)/profile" }),
         },
       ]);
     } catch (error) {

@@ -10,7 +10,7 @@ interface AuthContextType {
     signIn: (email: string, password: string) => Promise<void>;
     signOut: () => Promise<void>;
     register: (userData: any) => Promise<void>;
-    refreshUser: () => Promise<void>;
+    refreshUser: (signal?: AbortSignal) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -99,12 +99,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
     }
 
-    async function refreshUser() {
+    async function refreshUser(signal?: AbortSignal) {
         if (token) {
             try {
-                const response = await api.getMe(token) as any;
+                const response = await api.getMe(token, signal) as any;
                 setUser(normalizeUser(response));
-            } catch (error) {
+            } catch (error: any) {
+                if (error.message === 'Aborted') return;
                 console.error('Failed to refresh user', error);
             }
         }

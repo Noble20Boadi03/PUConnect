@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { StyleSheet, FlatList, View, ActivityIndicator, Pressable } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedIcon } from '@/components/ui/themed-icon';
@@ -17,6 +17,7 @@ import { PrimaryButton } from '@/components/ui/primary-button';
 export default function MessagesScreen() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [loading, setLoading] = useState(true);
+    const lastRefreshTimestamp = useRef(0);
     const { token, user } = useAuth();
     const { theme } = useTheme();
     const insets = useSafeAreaInsets();
@@ -24,19 +25,29 @@ export default function MessagesScreen() {
 
     const horizontalPadding = Spacing.xl * spacingMultiplier;
 
-    useEffect(() => {
-        if (token) {
-            fetchMessages();
-        } else {
-            setLoading(false);
-        }
-    }, [token]);
+    useFocusEffect(
+        useCallback(() => {
+            if (!token) return;
 
-    const fetchMessages = async () => {
+            const controller = new AbortController();
+            const now = Date.now();
+            const throttleMs = 5 * 60 * 1000; // 5 minutes
+
+            if (now - lastRefreshTimestamp.current > throttleMs) {
+                fetchMessages(controller.signal);
+                lastRefreshTimestamp.current = now;
+            }
+
+            return () => controller.abort();
+        }, [token])
+    );
+
+    const fetchMessages = async (signal?: AbortSignal) => {
         try {
-            const data = await api.getMessages(token!);
+            const data = await api.getMessages(token!, signal);
             setMessages(data);
-        } catch (error) {
+        } catch (error: any) {
+            if (error.message === 'Aborted') return;
             console.error('Failed to fetch messages:', error);
         } finally {
             setLoading(false);
@@ -84,6 +95,10 @@ export default function MessagesScreen() {
                             styles.chatItem,
                             { backgroundColor: pressed ? theme.surfaceVariant : 'transparent', paddingHorizontal: horizontalPadding }
                         ]}
+                        onPress={() => router.push({
+                            pathname: "/chat/[id]",
+                            params: { id: item.senderId }
+                        })}
                     >
                         <ThemedView colorName="primaryContainer" style={styles.avatar}>
                             <ThemedIcon name="account" size={24} colorName="onPrimaryContainer" />

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { StyleSheet, View, Pressable, Alert, ActivityIndicator, Image, ScrollView } from 'react-native';
-import { Link, router } from 'expo-router';
+import { Link, router, useFocusEffect } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedIcon } from '@/components/ui/themed-icon';
@@ -24,10 +24,30 @@ export default function ProfileScreen() {
     const [password, setPassword] = useState('');
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const lastRefreshTimestamp = useRef(0);
 
     const horizontalPadding = Spacing.xl * spacingMultiplier;
 
     const isProfileIncomplete = !user?.bio || !user?.skillTags || user.skillTags.length === 0;
+
+    const { refreshUser } = useAuth();
+
+    useFocusEffect(
+        useCallback(() => {
+            if (!token) return;
+
+            const controller = new AbortController();
+            const now = Date.now();
+            const throttleMs = 5 * 60 * 1000; // 5 minutes
+
+            if (now - lastRefreshTimestamp.current > throttleMs) {
+                refreshUser(controller.signal);
+                lastRefreshTimestamp.current = now;
+            }
+
+            return () => controller.abort();
+        }, [token, refreshUser])
+    );
 
     const handleLogin = async () => {
         setIsLoggingIn(true);
@@ -172,7 +192,7 @@ export default function ProfileScreen() {
                     style={[styles.heroSection, { backgroundColor: theme.surface }]}
                 >
                     <View style={styles.headerInfo}>
-                        <Link href="/(tabs)/onboarding" asChild>
+                        <Link href={{ pathname: "/(tabs)/onboarding" }} asChild>
                             <Pressable style={[styles.avatarContainer, { borderColor: theme.surface, backgroundColor: theme.surfaceVariant }]}>
                                 {user?.profilePictureUrl ? (
                                     <Image source={{ uri: user.profilePictureUrl }} style={styles.avatarImage} />
@@ -220,7 +240,7 @@ export default function ProfileScreen() {
                         </View>
                     </View>
 
-                    <Link href="/(tabs)/onboarding" asChild>
+                    <Link href={{ pathname: "/(tabs)/onboarding" }} asChild>
                         <Pressable style={[styles.editBtn, { backgroundColor: theme.surfaceVariant, borderColor: theme.outlineVariant }]}>
                             <ThemedText variant="labelLarge">Edit Talent Profile</ThemedText>
                         </Pressable>
@@ -229,7 +249,7 @@ export default function ProfileScreen() {
 
             {isProfileIncomplete && (
                 <Animated.View entering={FadeInDown.delay(400).duration(800)} style={{ marginHorizontal: horizontalPadding, marginTop: Spacing.lg }}>
-                    <Link href="/(tabs)/onboarding" asChild>
+                    <Link href={{ pathname: "/(tabs)/onboarding" }} asChild>
                         <Pressable style={[styles.alertBanner, { backgroundColor: theme.primaryContainer, borderColor: theme.primary }]}>
                             <View style={[styles.alertIcon, { backgroundColor: theme.primary }]}>
                                 <ThemedIcon name="creation" size={16} lightColor="#fff" darkColor="#fff" />

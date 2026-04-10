@@ -23,12 +23,14 @@ export default function ListingDetailsScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchListing();
+    const controller = new AbortController();
+    fetchListing(controller.signal);
+    return () => controller.abort();
   }, [id]);
 
-  const fetchListing = async () => {
+  const fetchListing = async (signal?: AbortSignal) => {
     try {
-      const response = await api.getListing(id as string) as any;
+      const response = await api.getListing(id as string, signal) as any;
       const listingData: Listing = {
         ...response,
         ownerId: response.ownerId ?? response.owner_id,
@@ -36,7 +38,8 @@ export default function ListingDetailsScreen() {
         requiredSkills: response.requiredSkills ?? response.required_skills,
       };
       setListing(listingData);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === 'Aborted') return;
       console.error("Error fetching listing:", error);
     } finally {
       setLoading(false);
@@ -204,7 +207,10 @@ export default function ListingDetailsScreen() {
         >
           <PrimaryButton
             title="Send Message"
-            onPress={() => router.push(`/chat/${listing.ownerId}?listingId=${listing.id}`)}
+            onPress={() => router.push({
+              pathname: "/chat/[id]",
+              params: { id: listing.ownerId, listingId: listing.id }
+            })}
             style={{ flex: 1 }}
           />
           <Pressable

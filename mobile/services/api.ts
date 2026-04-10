@@ -246,7 +246,23 @@ const MOCK_TALENT: User[] = [
 // ──────────────────────────────────────────────
 // Simulated delay to mimic network latency
 // ──────────────────────────────────────────────
-const delay = (ms: number = 300) => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms: number = 300, signal?: AbortSignal) => {
+    return new Promise((resolve, reject) => {
+        const timeout = setTimeout(resolve, ms);
+
+        if (signal) {
+            if (signal.aborted) {
+                clearTimeout(timeout);
+                reject(new Error('Aborted'));
+            }
+
+            signal.addEventListener('abort', () => {
+                clearTimeout(timeout);
+                reject(new Error('Aborted'));
+            });
+        }
+    });
+};
 
 // ──────────────────────────────────────────────
 // Mock API (no network calls)
@@ -266,8 +282,8 @@ export const api = {
         return MOCK_USER;
     },
 
-    getMe: async (_token: string): Promise<User> => {
-        await delay();
+    getMe: async (_token: string, signal?: AbortSignal): Promise<User> => {
+        await delay(300, signal);
         return MOCK_USER;
     },
 
@@ -299,14 +315,15 @@ export const api = {
             minPrice?: number;
             maxPrice?: number;
             sortBy?: string;
-        }
+        },
+        signal?: AbortSignal
     ): Promise<Listing[]> => {
-        await delay(400);
+        await delay(400, signal);
         return MOCK_LISTINGS;
     },
 
-    getListing: async (id: string): Promise<Listing> => {
-        await delay();
+    getListing: async (id: string, signal?: AbortSignal): Promise<Listing> => {
+        await delay(300, signal);
         return MOCK_LISTINGS.find(l => l.id === id) || MOCK_LISTINGS[0];
     },
 
@@ -316,8 +333,8 @@ export const api = {
     },
 
     // Chat
-    getMessages: async (_token: string): Promise<ChatMessage[]> => {
-        await delay();
+    getMessages: async (_token: string, signal?: AbortSignal): Promise<ChatMessage[]> => {
+        await delay(300, signal);
         return MOCK_MESSAGES;
     },
 

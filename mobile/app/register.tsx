@@ -56,7 +56,7 @@ export default function RegisterScreen() {
             Alert.alert(
                 "Success",
                 "Account created successfully!",
-                [{ text: "OK", onPress: () => router.push("/login") }]
+                [{ text: "OK", onPress: () => router.push({ pathname: "/login" }) }]
             );
         } catch (error) {
             console.error("Registration failed:", error);
@@ -159,7 +159,7 @@ export default function RegisterScreen() {
 
                     <Animated.View entering={FadeInDown.delay(1200).duration(800)} style={styles.footer}>
                         <ThemedText variant="bodyMedium" colorName="textSecondary">Already have an account? </ThemedText>
-                        <Pressable onPress={() => router.push("/login")}>
+                        <Pressable onPress={() => router.push({ pathname: "/login" })}>
                             <ThemedText variant="labelLarge" colorName="primary">Sign In</ThemedText>
                         </Pressable>
                     </Animated.View>

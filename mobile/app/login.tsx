@@ -40,7 +40,7 @@ export default function LoginScreen() {
         setIsLoading(true);
         try {
             await signIn(email, password);
-            router.replace("/(tabs)/home");
+            router.replace({ pathname: "/(tabs)/home" });
         } catch (error) {
             console.error("Login failed:", error);
             Alert.alert("Login Failed", "Invalid email or password. Please try again.");
@@ -119,7 +119,7 @@ export default function LoginScreen() {
                     {/* Footer */}
                     <Animated.View entering={FadeInDown.delay(900).duration(800)} style={styles.footer}>
                         <ThemedText variant="bodyMedium" colorName="textSecondary">New here? </ThemedText>
-                        <Pressable onPress={() => router.push("/register")}>
+                        <Pressable onPress={() => router.push({ pathname: "/register" })}>
                             <ThemedText variant="labelLarge" colorName="primary">Create Account</ThemedText>
                         </Pressable>
                     </Animated.View>

@@ -35,23 +35,28 @@ export default function SubcategoryListingsScreen() {
     const [activeModalFilter, setActiveModalFilter] = useState<SubcategoryFilter | null>(null);
 
     useEffect(() => {
-        fetchData();
+        const controller = new AbortController();
+        fetchData(controller.signal);
+        return () => controller.abort();
     }, [subcategoryTitle, activeFilters]);
 
     useEffect(() => {
         // Fetch dynamic filters for this subcategory
+        const controller = new AbortController();
         const loadFilters = async () => {
             try {
                 const filters = await api.getSubcategoryFilters(subcategoryTitle);
                 setFiltersConfig(filters);
-            } catch (err) {
+            } catch (err: any) {
+                if (err.message === 'Aborted') return;
                 console.error('Failed to load subcategory filters', err);
             }
         };
         loadFilters();
+        return () => controller.abort();
     }, [subcategoryTitle]);
 
-    const fetchData = async () => {
+    const fetchData = async (signal?: AbortSignal) => {
         try {
             setLoading(true);
             
@@ -70,9 +75,10 @@ export default function SubcategoryListingsScreen() {
                 else apiFilters.tag = value; // Fallback to tag for other custom filters
             });
             
-            const data = await api.getListings(0, 20, apiFilters);
+            const data = await api.getListings(0, 20, apiFilters, signal);
             setListings(data);
-        } catch (error) {
+        } catch (error: any) {
+            if (error.message === 'Aborted') return;
             console.error('Error fetching subcategory listings:', error);
         } finally {
             setLoading(false);
@@ -168,7 +174,10 @@ export default function SubcategoryListingsScreen() {
     const renderItem = ({ item }: { item: Listing }) => (
         <Pressable 
             style={[styles.card, { backgroundColor: theme.surface }]}
-            onPress={() => router.push(`/listing/${item.id}` as any)}
+        onPress={() => router.push({
+            pathname: "/listing/[id]",
+            params: { id: item.id }
+        })}
         >
             <View style={styles.cardContent}>
                 {/* Left: Portfoilo/Profile Photo */}

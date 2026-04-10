@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { FlatList, StyleSheet, View, ActivityIndicator, RefreshControl, ScrollView, Pressable, TextInput, BackHandler, ToastAndroid, Platform } from 'react-native';
 import { api } from '@/services/api';
 import { Listing } from '@/types';
@@ -74,22 +74,23 @@ export default function HomeScreen() {
   const [recent, setRecent] = useState<Listing[]>([]);
   const [trending, setTrending] = useState<Listing[]>([]);
   const [lastOrderRecs, setLastOrderRecs] = useState<Listing[]>([]);
-  const [lastBackPress, setLastBackPress] = useState(0);
+  const lastBackPress = useRef(0);
   
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const lastRefreshTimestamp = useRef(0);
 
   // Implement Double Back to Exit for Android
   useFocusEffect(
     React.useCallback(() => {
       const onBackPress = () => {
         const currentTime = Date.now();
-        if (currentTime - lastBackPress < 2000) {
+        if (currentTime - lastBackPress.current < 2000) {
           BackHandler.exitApp();
           return true;
         }
 
-        setLastBackPress(currentTime);
+        lastBackPress.current = currentTime;
         if (Platform.OS === 'android') {
           ToastAndroid.show('Press back again to exit', ToastAndroid.SHORT);
         }
@@ -99,18 +100,19 @@ export default function HomeScreen() {
       const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
 
       return () => subscription.remove();
-    }, [lastBackPress])
+    }, [])
   );
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (signal?: AbortSignal) => {
     try {
-      const data = await api.getListings();
+      const data = await api.getListings(0, 10, undefined, signal);
       setPopular(data.slice(0, 5));
       setRecommended(data.slice(2, 7));
       setTrending(data.slice(5, 10));
       setRecent(data.slice(1, 4));
       setLastOrderRecs(data.slice(4, 9));
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === 'Aborted') return;
       console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
@@ -118,9 +120,20 @@ export default function HomeScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const controller = new AbortController();
+      const now = Date.now();
+      const throttleMs = 5 * 60 * 1000; // 5 minutes
+
+      if (now - lastRefreshTimestamp.current > throttleMs) {
+        fetchDashboardData(controller.signal);
+        lastRefreshTimestamp.current = now;
+      }
+
+      return () => controller.abort();
+    }, [])
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -190,7 +203,7 @@ export default function HomeScreen() {
               key={`popular-${item.id}`} 
               listing={item} 
               width={isTablet ? 220 : 160}
-              onPress={() => router.push(`/listing/${item.id}`)} 
+              onPress={() => router.push({ pathname: "/listing/[id]", params: { id: item.id } })} 
             />
           ))}
         </ScrollView>
@@ -211,7 +224,7 @@ export default function HomeScreen() {
               key={`rec-${item.id}`} 
               listing={item} 
               width={isTablet ? 220 : 160}
-              onPress={() => router.push(`/listing/${item.id}`)} 
+              onPress={() => router.push({ pathname: "/listing/[id]", params: { id: item.id } })} 
             />
           ))}
         </ScrollView>
@@ -232,7 +245,7 @@ export default function HomeScreen() {
               key={`recent-${item.id}`} 
               listing={item} 
               width={isTablet ? 220 : 160}
-              onPress={() => router.push(`/listing/${item.id}`)} 
+              onPress={() => router.push({ pathname: "/listing/[id]", params: { id: item.id } })} 
             />
           ))}
         </ScrollView>
@@ -253,7 +266,7 @@ export default function HomeScreen() {
               key={`last-${item.id}`} 
               listing={item} 
               width={isTablet ? 220 : 160}
-              onPress={() => router.push(`/listing/${item.id}`)} 
+              onPress={() => router.push({ pathname: "/listing/[id]", params: { id: item.id } })} 
             />
           ))}
         </ScrollView>
@@ -271,7 +284,7 @@ export default function HomeScreen() {
               key={`trend-${item.id}`} 
               listing={item} 
               width={isTablet ? 220 : 160}
-              onPress={() => router.push(`/listing/${item.id}`)} 
+              onPress={() => router.push({ pathname: "/listing/[id]", params: { id: item.id } })} 
             />
           ))}
         </ScrollView>
