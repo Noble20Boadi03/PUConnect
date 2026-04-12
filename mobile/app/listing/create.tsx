@@ -1,0 +1,337 @@
+import React, { useEffect, useState, useCallback } from 'react';
+import {
+  StyleSheet,
+  View,
+  ScrollView,
+  Pressable,
+  TextInput,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '@/context/auth-context';
+import { api } from '@/services/api';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { ThemedIcon } from '@/components/ui/themed-icon';
+import { PrimaryButton } from '@/components/ui/primary-button';
+import { ScreenLayout } from '@/components/ui/screen-layout';
+import { Spacing, BorderRadius } from '@/constants/theme';
+import { useTheme } from '@/context/theme-context';
+import { CAMPUS_CATEGORIES } from '@/constants/categories';
+import { ListingType } from '@/types';
+import { useResponsive } from '@/hooks/use-responsive';
+
+export default function CreateListingScreen() {
+  const params = useLocalSearchParams<{ editId?: string }>();
+  const editId = typeof params.editId === 'string' ? params.editId : params.editId?.[0];
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
+  const { token, user } = useAuth();
+  const canOffer = user?.canOfferServices === true;
+  const { contentPaddingLeft, contentPaddingRight } = useResponsive();
+  const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
+
+  const [loading, setLoading] = useState(!!editId);
+  const [submitting, setSubmitting] = useState(false);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [price, setPrice] = useState('');
+  const [listingType, setListingType] = useState<ListingType>('service_request');
+  const [categoryTitle, setCategoryTitle] = useState(CAMPUS_CATEGORIES[0]?.title ?? '');
+
+  const load = useCallback(async () => {
+    if (!editId || !token) return;
+    try {
+      const listing = await api.getListing(editId);
+      setTitle(listing.title);
+      setDescription(listing.description ?? '');
+      setPrice(String(listing.price ?? listing.budget ?? ''));
+      const offerNeedsProvider = listing.type === 'service_offer' && user?.canOfferServices !== true;
+      if (offerNeedsProvider) {
+        Alert.alert(
+          'Provider status required',
+          'This listing is a service offer. Complete your provider profile to keep editing it as an offer.'
+        );
+      }
+      setListingType(offerNeedsProvider ? 'service_request' : listing.type);
+      setCategoryTitle(listing.category);
+    } catch {
+      Alert.alert('Error', 'Could not load listing.');
+      router.back();
+    } finally {
+      setLoading(false);
+    }
+  }, [editId, token, router, user?.canOfferServices]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    if (!canOffer && listingType === 'service_offer') {
+      setListingType('service_request');
+    }
+  }, [canOffer, listingType]);
+
+  const onSubmit = async () => {
+    if (!token) {
+      Alert.alert('Sign in required', 'Please sign in to post a listing.');
+      router.push('/login');
+      return;
+    }
+    if (listingType === 'service_offer' && !canOffer) {
+      Alert.alert(
+        'Provider upgrade required',
+        'Complete your professional profile (skills and campus details) to post a service offer, or post a request for help instead.',
+        [
+          { text: 'Post a request', onPress: () => setListingType('service_request') },
+          { text: 'Upgrade profile', onPress: () => router.push('/(tabs)/onboarding') },
+        ]
+      );
+      return;
+    }
+
+    const p = parseFloat(price.replace(/,/g, ''));
+    if (!title.trim() || !description.trim() || Number.isNaN(p) || p < 0) {
+      Alert.alert('Validation', 'Please enter title, description, and a valid price.');
+      return;
+    }
+    const cat = CAMPUS_CATEGORIES.find((c) => c.title === categoryTitle) ?? CAMPUS_CATEGORIES[0];
+    const sub =
+      cat.groups[0]?.items[0]?.title ?? 'General';
+
+    setSubmitting(true);
+    try {
+      if (editId) {
+        await api.updateListing(
+          editId as string,
+          {
+            title: title.trim(),
+            description: description.trim(),
+            category: cat.title,
+            subcategory: sub,
+            type: listingType,
+            ...(listingType === 'service_request' ? { budget: p, price: undefined } : { price: p, budget: undefined }),
+            tags: title.split(/\s+/).slice(0, 5).map((s) => s.toLowerCase()),
+          },
+          token
+        );
+        Alert.alert('Saved', 'Your listing was updated.', [
+          { text: 'OK', onPress: () => router.replace('/profile/my-listings') },
+        ]);
+      } else {
+        await api.createListing(
+          {
+            title: title.trim(),
+            description: description.trim(),
+            category: cat.title,
+            subcategory: sub,
+            type: listingType,
+            ...(listingType === 'service_request' ? { budget: p } : { price: p }),
+            level: 'intermediate',
+            tags: title.split(/\s+/).slice(0, 5).map((s) => s.toLowerCase()),
+          },
+          token
+        );
+        Alert.alert('Published', 'Your listing is live.', [
+          { text: 'OK', onPress: () => router.replace('/profile/my-listings') },
+        ]);
+      }
+    } catch (e: any) {
+      Alert.alert('Error', e?.message ?? 'Something went wrong.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <ScreenLayout>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={theme.primary} />
+        </View>
+      </ScreenLayout>
+    );
+  }
+
+  return (
+    <ScreenLayout padding="none" withSafeArea={false} scrollable={false}>
+      <Stack.Screen options={{ headerShown: false }} />
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={insets.top}
+      >
+        <ThemedView style={[styles.header, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
+          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <ThemedIcon name="chevron-left" size={28} />
+          </Pressable>
+          <ThemedText variant="headlineSmall" style={styles.headerTitle}>
+            {editId ? 'Edit listing' : 'New listing'}
+          </ThemedText>
+          <View style={{ width: 40 }} />
+        </ThemedView>
+
+        <ScrollView
+          contentContainerStyle={[styles.scroll, horizontalPadding, { paddingBottom: insets.bottom + Spacing.xl }]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.label}>
+            Listing type
+          </ThemedText>
+          {!canOffer ? (
+            <ThemedText variant="bodySmall" colorName="textMuted" style={{ marginBottom: Spacing.sm }}>
+              Everyone can post a request for help. To offer a service, complete your provider profile first.
+            </ThemedText>
+          ) : null}
+          <View style={styles.row}>
+            {(['service_offer', 'service_request'] as const).map((t) => {
+              const disabled = t === 'service_offer' && !canOffer;
+              return (
+                <Pressable
+                  key={t}
+                  disabled={disabled}
+                  onPress={() => !disabled && setListingType(t)}
+                  style={[
+                    styles.chip,
+                    {
+                      opacity: disabled ? 0.45 : 1,
+                    borderColor: listingType === t ? theme.primary : theme.outlineVariant,
+                    backgroundColor: listingType === t ? theme.primaryContainer : theme.surfaceVariant,
+                  },
+                ]}
+              >
+                <ThemedText variant="labelLarge" colorName={listingType === t ? 'primary' : 'textSecondary'}>
+                  {t === 'service_offer' ? 'I offer a service' : 'I need help'}
+                </ThemedText>
+              </Pressable>
+              );
+            })}
+          </View>
+
+          <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.label}>
+            Category
+          </ThemedText>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.catRow}>
+            {CAMPUS_CATEGORIES.map((c) => (
+              <Pressable
+                key={c.id}
+                onPress={() => setCategoryTitle(c.title)}
+                style={[
+                  styles.chipSm,
+                  {
+                    borderColor: categoryTitle === c.title ? theme.primary : theme.outlineVariant,
+                    backgroundColor: categoryTitle === c.title ? theme.primaryContainer : theme.surface,
+                  },
+                ]}
+              >
+                <ThemedText variant="labelSmall" numberOfLines={1}>
+                  {c.title}
+                </ThemedText>
+              </Pressable>
+            ))}
+          </ScrollView>
+
+          <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.label}>
+            Title
+          </ThemedText>
+          <TextInput
+            value={title}
+            onChangeText={setTitle}
+            placeholder="Short headline"
+            placeholderTextColor={theme.textMuted}
+            style={[styles.input, { color: theme.text, borderColor: theme.outlineVariant, backgroundColor: theme.surfaceVariant }]}
+          />
+
+          <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.label}>
+            {listingType === 'service_request' ? 'Budget (USD)' : 'Price (USD)'}
+          </ThemedText>
+          <TextInput
+            value={price}
+            onChangeText={setPrice}
+            placeholder="0"
+            keyboardType="decimal-pad"
+            placeholderTextColor={theme.textMuted}
+            style={[styles.input, { color: theme.text, borderColor: theme.outlineVariant, backgroundColor: theme.surfaceVariant }]}
+          />
+
+          <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.label}>
+            Description
+          </ThemedText>
+          <TextInput
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Describe what you offer or what you need..."
+            placeholderTextColor={theme.textMuted}
+            multiline
+            textAlignVertical="top"
+            style={[
+              styles.textArea,
+              { color: theme.text, borderColor: theme.outlineVariant, backgroundColor: theme.surfaceVariant },
+            ]}
+          />
+
+          <PrimaryButton
+            title={editId ? 'Save changes' : 'Publish listing'}
+            onPress={onSubmit}
+            isLoading={submitting}
+            disabled={submitting}
+            size="large"
+            marginTop={Spacing.xl}
+          />
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </ScreenLayout>
+  );
+}
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: Spacing.md,
+  },
+  backBtn: { padding: Spacing.xs },
+  headerTitle: { fontWeight: '800' },
+  scroll: { paddingTop: Spacing.sm },
+  label: { marginBottom: Spacing.sm, marginTop: Spacing.md },
+  row: { flexDirection: 'row', gap: Spacing.sm, flexWrap: 'wrap' },
+  chip: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+  },
+  catRow: { gap: Spacing.sm, paddingVertical: Spacing.xs },
+  chipSm: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    maxWidth: 280,
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    fontSize: 16,
+  },
+  textArea: {
+    borderWidth: 1,
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    minHeight: 120,
+    fontSize: 16,
+  },
+});

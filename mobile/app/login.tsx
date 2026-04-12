@@ -100,7 +100,16 @@ export default function LoginScreen() {
                         />
                         
                         <Animated.View entering={FadeInDown.delay(500).duration(800)}>
-                            <Pressable style={styles.forgotPassword}>
+                            <Pressable
+                                onPress={() =>
+                                    Alert.alert(
+                                        'Password reset',
+                                        'If your school email is on file, you will receive reset instructions (demo).',
+                                        [{ text: 'OK' }]
+                                    )
+                                }
+                                style={styles.forgotPassword}
+                            >
                                 <ThemedText variant="labelLarge" colorName="primary" style={styles.forgotPasswordText}>
                                     Forgot password?
                                 </ThemedText>

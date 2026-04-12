@@ -116,9 +116,19 @@ export default function ProfileScreen() {
                             />
 
                             <Animated.View entering={FadeInDown.delay(600).duration(800)}>
-                                <ThemedText variant="labelLarge" colorName="primary" align="center" style={styles.forgotPass}>
-                                    Forgot password?
-                                </ThemedText>
+                                <Pressable
+                                    onPress={() =>
+                                        Alert.alert(
+                                            'Password reset',
+                                            'If your school email is on file, you will receive reset instructions (demo).',
+                                            [{ text: 'OK' }]
+                                        )
+                                    }
+                                >
+                                    <ThemedText variant="labelLarge" colorName="primary" align="center" style={styles.forgotPass}>
+                                        Forgot password?
+                                    </ThemedText>
+                                </Pressable>
                             </Animated.View>
                         </View>
                     </Animated.View>
@@ -158,7 +168,7 @@ export default function ProfileScreen() {
                                     colorName="text"
                                 />
                             </Pressable>
-                            <Pressable style={styles.gridBtn}>
+                            <Pressable style={styles.gridBtn} onPress={() => router.push('/settings')}>
                                 <ThemedIcon name="cog-outline" size={22} colorName="text" />
                             </Pressable>
                         </View>
@@ -200,8 +210,33 @@ export default function ProfileScreen() {
                             <ThemedText variant="bodySmall" colorName="textSecondary">
                                 {user?.department || 'Student'} • Class of {user?.graduationYear || '2027'}
                             </ThemedText>
+                            <View style={styles.roleRow}>
+                                <View style={[styles.roleChip, { backgroundColor: theme.surfaceVariant, borderColor: theme.outlineVariant }]}>
+                                    <ThemedText variant="labelSmall">Seeker</ThemedText>
+                                </View>
+                                {user?.canOfferServices ? (
+                                    <View style={[styles.roleChip, { backgroundColor: theme.primaryContainer, borderColor: theme.primary }]}>
+                                        <ThemedText variant="labelSmall" colorName="primary">Provider</ThemedText>
+                                    </View>
+                                ) : null}
+                            </View>
                         </View>
                     </View>
+
+                    {!user?.canOfferServices && (
+                        <Link href={{ pathname: '/(tabs)/onboarding' }} asChild>
+                            <Pressable style={[styles.providerBanner, { backgroundColor: theme.secondaryContainer, borderColor: theme.secondary }]}>
+                                <ThemedIcon name="star-circle-outline" size={22} colorName="onSecondaryContainer" />
+                                <View style={{ flex: 1, marginLeft: Spacing.sm }}>
+                                    <ThemedText variant="labelLarge" colorName="onSecondaryContainer">Become a provider</ThemedText>
+                                    <ThemedText variant="bodySmall" colorName="onSecondaryContainer" style={{ opacity: 0.9 }}>
+                                        Add skills and campus details to post service offers.
+                                    </ThemedText>
+                                </View>
+                                <ThemedIcon name="chevron-right" size={20} colorName="onSecondaryContainer" />
+                            </Pressable>
+                        </Link>
+                    )}
 
                     <View style={[styles.statsOverview, { borderColor: theme.outlineVariant }]}>
                         <View style={styles.statBox}>
@@ -278,17 +313,33 @@ export default function ProfileScreen() {
             <Animated.View entering={FadeInDown.delay(600).duration(800)} style={[styles.menuWrapper, horizontalPadding, { marginBottom: tabBarHeight + Spacing.md }]}>
                 <ThemedText variant="titleLarge" style={styles.sectionTitle}>Account</ThemedText>
                 <View style={[styles.groupedMenu, { backgroundColor: theme.surface, borderColor: theme.outlineVariant }]}>
-                    <Pressable style={styles.groupItem}>
+                    <Pressable style={styles.groupItem} onPress={() => router.push({ pathname: '/profile/my-listings', params: { tab: 'requests' } })}>
+                        <View style={[styles.groupIcon, { backgroundColor: theme.primaryContainer }]}>
+                            <ThemedIcon name="clipboard-text-outline" size={20} colorName="onPrimaryContainer" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <ThemedText variant="titleMedium" style={styles.groupText}>My requests</ThemedText>
+                            <ThemedText variant="bodySmall" colorName="textMuted">Need-help & service requests</ThemedText>
+                        </View>
+                        <ThemedIcon name="chevron-right" size={18} colorName="textMuted" />
+                    </Pressable>
+
+                    <View style={[styles.groupDivider, { backgroundColor: theme.outlineVariant }]} />
+
+                    <Pressable style={styles.groupItem} onPress={() => router.push({ pathname: '/profile/my-listings', params: { tab: 'offers' } })}>
                         <View style={[styles.groupIcon, { backgroundColor: theme.primaryContainer }]}>
                             <ThemedIcon name="briefcase-outline" size={20} colorName="onPrimaryContainer" />
                         </View>
-                        <ThemedText variant="titleMedium" style={styles.groupText}>My Services</ThemedText>
+                        <View style={{ flex: 1 }}>
+                            <ThemedText variant="titleMedium" style={styles.groupText}>My services</ThemedText>
+                            <ThemedText variant="bodySmall" colorName="textMuted">Service offers you publish</ThemedText>
+                        </View>
                         <ThemedIcon name="chevron-right" size={18} colorName="textMuted" />
                     </Pressable>
                     
                     <View style={[styles.groupDivider, { backgroundColor: theme.outlineVariant }]} />
 
-                    <Pressable style={styles.groupItem}>
+                    <Pressable style={styles.groupItem} onPress={() => router.push('/settings')}>
                         <View style={[styles.groupIcon, { backgroundColor: theme.secondaryContainer }]}>
                             <ThemedIcon name="cog-outline" size={20} colorName="onSecondaryContainer" />
                         </View>
@@ -426,6 +477,26 @@ const styles = StyleSheet.create({
         fontWeight: '900',
         marginBottom: 2,
         letterSpacing: -0.5,
+    },
+    roleRow: {
+        flexDirection: 'row',
+        gap: Spacing.sm,
+        marginTop: Spacing.sm,
+        flexWrap: 'wrap',
+    },
+    roleChip: {
+        paddingHorizontal: Spacing.sm,
+        paddingVertical: 4,
+        borderRadius: BorderRadius.full,
+        borderWidth: 1,
+    },
+    providerBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: Spacing.md,
+        padding: Spacing.md,
+        borderRadius: BorderRadius.lg,
+        borderWidth: 1,
     },
     ratingRow: {
         flexDirection: 'row',

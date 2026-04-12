@@ -101,6 +101,13 @@ export default function OnboardingScreen() {
         finalImageUrl = `${baseUrl}${uploadResult.url}`;
       }
 
+      const yearNum = parseInt(graduationYear, 10);
+      const canOfferServices =
+        skillTags.length > 0 &&
+        department.trim().length > 0 &&
+        !Number.isNaN(yearNum) &&
+        bio.trim().length > 0;
+
       await api.updateProfile(
         {
           bio,
@@ -109,8 +116,9 @@ export default function OnboardingScreen() {
           isAvailable,
           profilePictureUrl: finalImageUrl,
           department,
-          graduationYear: parseInt(graduationYear),
+          graduationYear: yearNum,
           verifiedStudent: true,
+          canOfferServices,
         },
         token,
       );
@@ -144,7 +152,7 @@ export default function OnboardingScreen() {
           Professional Setup
         </ThemedText>
         <ThemedText variant="bodyLarge" colorName="textSecondary" style={styles.subtitle}>
-          Showcase your talent to the campus
+          Complete your profile with skills and campus details to become a provider and post service offers. Everyone can post requests for help without this step.
         </ThemedText>
       </View>
 

@@ -3,12 +3,13 @@
  * To re-enable, restore this file from version control.
  */
 
-import { AuthTokens, Listing, User, ChatMessage } from '../types';
+import { AuthTokens, Listing, User, ChatMessage, Review, ConversationLifecycle } from '../types';
 
 // ──────────────────────────────────────────────
 // Mock Data
 // ──────────────────────────────────────────────
 
+/** Template for mock data; live session user is `mockSessionUser` (Seeker by default). */
 const MOCK_USER: User = {
     id: 'mock-user-001',
     email: 'test@university.edu',
@@ -27,9 +28,12 @@ const MOCK_USER: User = {
     verifiedStudent: true,
     department: 'Computer Science',
     graduationYear: 2027,
+    canOfferServices: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
 };
+
+let mockSessionUser: User = { ...MOCK_USER };
 
 const MOCK_LISTINGS: Listing[] = [
     {
@@ -243,6 +247,35 @@ const MOCK_TALENT: User[] = [
     { ...MOCK_USER, id: 'talent-003', fullName: 'Nana Yaa', department: 'Business', skillTags: ['Marketing', 'Social Media', 'Copywriting'] },
 ];
 
+/** Synthetic campus users backing listing `ownerId`s (public profiles + chat headers). */
+const MOCK_PEER_USERS: Record<string, User> = {
+    'user-002': { ...MOCK_USER, id: 'user-002', fullName: 'Alex Rivera', email: 'arivera@university.edu', universityId: '2024002', department: 'Graphic Design', graduationYear: 2026, skillTags: ['Logo Design', 'Branding', 'Figma'], bio: 'Design lead for campus clubs and startups.' },
+    'user-003': { ...MOCK_USER, id: 'user-003', fullName: 'Jordan Kim', email: 'jkim@university.edu', universityId: '2024003', department: 'Physics', graduationYear: 2025, skillTags: ['STEM Tutoring', 'Calculus'], bio: 'Peer tutor for math and physics courses.' },
+    'user-004': { ...MOCK_USER, id: 'user-004', fullName: 'Sam Okoro', email: 'sokoro@university.edu', universityId: '2024004', department: 'Computer Science', graduationYear: 2026, skillTags: ['React Native', 'Expo', 'TypeScript'], bio: 'Mobile and full-stack projects for student orgs.' },
+    'user-005': { ...MOCK_USER, id: 'user-005', fullName: 'Riley Chen', email: 'rchen@university.edu', universityId: '2024005', department: 'Business', graduationYear: 2027, skillTags: ['Delivery', 'Logistics'], bio: 'Fast campus delivery and errands.' },
+    'user-006': { ...MOCK_USER, id: 'user-006', fullName: 'Morgan Blake', email: 'mblake@university.edu', universityId: '2024006', department: 'Film', graduationYear: 2025, skillTags: ['Photography', 'Video'], bio: 'Events, portraits, and short-form content.' },
+    'user-007': { ...MOCK_USER, id: 'user-007', fullName: 'Casey Lee', email: 'clee@university.edu', universityId: '2024007', department: 'English', graduationYear: 2026, skillTags: ['Writing', 'Career'], bio: 'Resume reviews and writing help.' },
+    'user-008': { ...MOCK_USER, id: 'user-008', fullName: 'Taylor Brooks', email: 'tbrooks@university.edu', universityId: '2024008', department: 'Marketing', graduationYear: 2027, skillTags: ['Social Media', 'Growth'], bio: 'Campus campaigns and brand strategy.' },
+    'user-009': { ...MOCK_USER, id: 'user-009', fullName: 'Jamie Fox', email: 'jfox@university.edu', universityId: '2024009', department: 'Music', graduationYear: 2025, skillTags: ['Production', 'Mixing'], bio: 'Beats and studio sessions.' },
+    'user-010': { ...MOCK_USER, id: 'user-010', fullName: 'Riley Nguyen', email: 'rnguyen@university.edu', universityId: '2024010', department: 'Hospitality', graduationYear: 2026, skillTags: ['Events', 'Planning'], bio: 'Student org events and logistics.' },
+    'user-011': { ...MOCK_USER, id: 'user-011', fullName: 'Quinn Patel', email: 'qpatel@university.edu', universityId: '2024011', department: 'Linguistics', graduationYear: 2027, skillTags: ['Translation', 'Editing'], bio: 'Multilingual editing and translation.' },
+};
+
+let extraListings: Listing[] = [];
+
+const conversationLifecycle: Record<string, ConversationLifecycle> = {};
+
+const submittedReviews: Review[] = [];
+
+function convKey(me: string, peer: string, listingId?: string): string {
+    const [a, b] = [me, peer].sort();
+    return `${a}|${b}|${listingId ?? ''}`;
+}
+
+function allListingsMerged(): Listing[] {
+    return [...MOCK_LISTINGS, ...extraListings];
+}
+
 // ──────────────────────────────────────────────
 // Simulated delay to mimic network latency
 // ──────────────────────────────────────────────
@@ -284,12 +317,13 @@ export const api = {
 
     getMe: async (_token: string, signal?: AbortSignal): Promise<User> => {
         await delay(300, signal);
-        return MOCK_USER;
+        return { ...mockSessionUser };
     },
 
     updateProfile: async (profileData: Partial<User>, _token: string): Promise<User> => {
         await delay();
-        return { ...MOCK_USER, ...profileData };
+        mockSessionUser = { ...mockSessionUser, ...profileData, updatedAt: new Date().toISOString() };
+        return { ...mockSessionUser };
     },
 
     getTalent: async (_search: string = '', _skip: number = 0, _limit: number = 10): Promise<User[]> => {
@@ -319,17 +353,143 @@ export const api = {
         signal?: AbortSignal
     ): Promise<Listing[]> => {
         await delay(400, signal);
-        return MOCK_LISTINGS;
+        let rows = allListingsMerged().filter((l) => l.isActive);
+        if (_filters?.category) {
+            rows = rows.filter((l) => l.category === _filters.category);
+        }
+        if (_filters?.subcategory) {
+            rows = rows.filter((l) => l.subcategory === _filters.subcategory);
+        }
+        if (_filters?.tag) {
+            const t = _filters.tag.toLowerCase();
+            rows = rows.filter((l) => l.tags?.some((x) => x.toLowerCase().includes(t)));
+        }
+        if (_filters?.level) {
+            rows = rows.filter((l) => l.level === _filters.level);
+        }
+        if (_filters?.department) {
+            rows = rows.filter((l) => l.department === _filters.department);
+        }
+        if (_filters?.minPrice != null) {
+            rows = rows.filter((l) => (l.price ?? l.budget ?? 0) >= _filters.minPrice!);
+        }
+        if (_filters?.maxPrice != null) {
+            rows = rows.filter((l) => (l.price ?? l.budget ?? 0) <= _filters.maxPrice!);
+        }
+        if (_filters?.sortBy === 'price') {
+            rows = [...rows].sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+        } else if (_filters?.sortBy === 'rating') {
+            rows = [...rows].sort((a, b) => (b.average_rating ?? 0) - (a.average_rating ?? 0));
+        }
+        return rows.slice(_skip, _skip + _limit);
     },
 
     getListing: async (id: string, signal?: AbortSignal): Promise<Listing> => {
         await delay(300, signal);
-        return MOCK_LISTINGS.find(l => l.id === id) || MOCK_LISTINGS[0];
+        const found = allListingsMerged().find((l) => l.id === id);
+        if (found) return found;
+        return MOCK_LISTINGS[0];
     },
 
-    createListing: async (listingData: any, _token: string): Promise<Listing> => {
+    createListing: async (listingData: Partial<Listing>, _token: string): Promise<Listing> => {
         await delay();
-        return { ...MOCK_LISTINGS[0], ...listingData, id: `listing-new-${Date.now()}` };
+        const now = new Date().toISOString();
+        const listing: Listing = {
+            ...MOCK_LISTINGS[0],
+            ...listingData,
+            id: `listing-new-${Date.now()}`,
+            ownerId: MOCK_USER.id,
+            isActive: true,
+            createdAt: now,
+            updatedAt: now,
+        };
+        extraListings = [listing, ...extraListings];
+        return listing;
+    },
+
+    updateListing: async (id: string, patch: Partial<Listing>, _token: string): Promise<Listing> => {
+        await delay();
+        const idx = extraListings.findIndex((l) => l.id === id);
+        if (idx < 0) throw new Error('Listing not found or not editable');
+        const updated = { ...extraListings[idx], ...patch, updatedAt: new Date().toISOString() };
+        extraListings[idx] = updated;
+        return updated;
+    },
+
+    deleteListing: async (id: string, _token: string): Promise<void> => {
+        await delay();
+        const idx = extraListings.findIndex((l) => l.id === id);
+        if (idx < 0) throw new Error('Listing not found or not removable');
+        extraListings[idx] = { ...extraListings[idx], isActive: false, updatedAt: new Date().toISOString() };
+    },
+
+    searchListings: async (query: string, signal?: AbortSignal): Promise<Listing[]> => {
+        await delay(250, signal);
+        const q = query.trim().toLowerCase();
+        if (!q) return allListingsMerged().filter((l) => l.isActive).slice(0, 30);
+        return allListingsMerged()
+            .filter((l) => l.isActive)
+            .filter(
+                (l) =>
+                    l.title.toLowerCase().includes(q) ||
+                    (l.description && l.description.toLowerCase().includes(q)) ||
+                    l.category.toLowerCase().includes(q) ||
+                    (l.subcategory && l.subcategory.toLowerCase().includes(q)) ||
+                    (l.tags && l.tags.some((t) => t.toLowerCase().includes(q)))
+            )
+            .slice(0, 40);
+    },
+
+    getUserById: async (id: string, signal?: AbortSignal): Promise<User | null> => {
+        await delay(200, signal);
+        if (id === MOCK_USER.id) return MOCK_USER;
+        return MOCK_PEER_USERS[id] ?? null;
+    },
+
+    getListingsByOwner: async (ownerId: string, signal?: AbortSignal): Promise<Listing[]> => {
+        await delay(250, signal);
+        return allListingsMerged().filter((l) => l.ownerId === ownerId);
+    },
+
+    getConversationLifecycle: async (
+        meId: string,
+        peerId: string,
+        listingId: string | undefined,
+        _token: string
+    ): Promise<ConversationLifecycle> => {
+        await delay(100);
+        const k = convKey(meId, peerId, listingId);
+        return conversationLifecycle[k] ?? 'open';
+    },
+
+    setConversationLifecycle: async (
+        meId: string,
+        peerId: string,
+        listingId: string | undefined,
+        state: ConversationLifecycle,
+        _token: string
+    ): Promise<void> => {
+        await delay(150);
+        const k = convKey(meId, peerId, listingId);
+        conversationLifecycle[k] = state;
+    },
+
+    submitReview: async (
+        payload: { listingId: string; targetUserId: string; rating: number; comment: string },
+        _token: string
+    ): Promise<Review> => {
+        await delay();
+        const r: Review = {
+            id: `review-${Date.now()}`,
+            listingId: payload.listingId,
+            authorUserId: MOCK_USER.id,
+            targetUserId: payload.targetUserId,
+            rating: payload.rating,
+            comment: payload.comment,
+            createdAt: new Date().toISOString(),
+        };
+        submittedReviews.push(r);
+        return r;
     },
 
     // Chat

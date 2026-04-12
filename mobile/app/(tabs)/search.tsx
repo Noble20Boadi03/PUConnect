@@ -27,7 +27,10 @@ export default function SearchScreen() {
       <ThemedView elevation={1} style={{ zIndex: 10 }}>
         <View style={[styles.header, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
           <ThemedText variant="headlineSmall" style={styles.headerTitle}>Categories</ThemedText>
-          <Pressable style={styles.iconBtn}>
+          <Pressable
+            style={styles.iconBtn}
+            onPress={() => router.push({ pathname: '/search/results', params: { q: '' } })}
+          >
             <ThemedIcon name="magnify" size={24} />
           </Pressable>
         </View>

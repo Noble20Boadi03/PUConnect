@@ -2,21 +2,25 @@ import { useState, useRef, useCallback } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { api } from '@/services/api';
 import { ChatMessage } from '@/types';
-import { UiState } from '@/types/ui-state';
 import { useAuth } from '@/context/auth-context';
 
-export type MessagesUiState = UiState<ChatMessage[]>;
+export type MessagesUiState =
+    | { status: 'loading' }
+    | { status: 'guest' }
+    | { status: 'empty_inbox' }
+    | { status: 'content'; data: ChatMessage[]; isRefreshing?: boolean }
+    | { status: 'error'; message: string };
 
 export function useMessagesViewModel() {
     const { token, user } = useAuth();
     const [uiState, setUiState] = useState<MessagesUiState>(
-        token ? { status: 'loading' } : { status: 'empty' }
+        token ? { status: 'loading' } : { status: 'guest' }
     );
     const lastRefreshTimestamp = useRef(0);
 
     const fetchMessages = useCallback(async (signal?: AbortSignal) => {
         if (!token) {
-            setUiState({ status: 'empty' });
+            setUiState({ status: 'guest' });
             return;
         }
 
@@ -24,7 +28,7 @@ export function useMessagesViewModel() {
             const data = await api.getMessages(token, signal);
 
             if (data.length === 0) {
-                setUiState({ status: 'empty' });
+                setUiState({ status: 'empty_inbox' });
             } else {
                 setUiState({ status: 'content', data, isRefreshing: false });
             }
@@ -37,7 +41,7 @@ export function useMessagesViewModel() {
     useFocusEffect(
         useCallback(() => {
             if (!token) {
-                setUiState({ status: 'empty' });
+                setUiState({ status: 'guest' });
                 return;
             }
 
@@ -46,7 +50,7 @@ export function useMessagesViewModel() {
             const throttleMs = 5 * 60 * 1000;
 
             if (now - lastRefreshTimestamp.current > throttleMs) {
-                setUiState(prev =>
+                setUiState((prev) =>
                     prev.status === 'content'
                         ? { ...prev, isRefreshing: true }
                         : { status: 'loading' }
@@ -62,7 +66,7 @@ export function useMessagesViewModel() {
     const onRefresh = useCallback(() => {
         if (!token) return;
         const controller = new AbortController();
-        setUiState(prev =>
+        setUiState((prev) =>
             prev.status === 'content'
                 ? { ...prev, isRefreshing: true }
                 : { status: 'loading' }

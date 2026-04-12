@@ -1,5 +1,5 @@
-import React from 'react';
-import { FlatList, StyleSheet, View, ActivityIndicator, RefreshControl, ScrollView, Pressable, TextInput } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, View, ActivityIndicator, RefreshControl, ScrollView, Pressable, TextInput, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
@@ -13,6 +13,7 @@ import { useResponsive } from '@/hooks/use-responsive';
 import { ServiceCard } from '@/components/service-card';
 import { useHomeViewModel } from '@/hooks/view-models/use-home-view-model';
 import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
+import { useAuth } from '@/context/auth-context';
 
 interface SectionHeaderProps {
   title: string;
@@ -50,7 +51,12 @@ const PromotionBanner = ({ horizontalPadding }: { horizontalPadding: { paddingLe
           <ThemedText variant="bodySmall" lightColor="#ffffff" darkColor={theme.onPrimaryContainer} style={styles.promoSub}>
             Spread the word and help your campus community build together.
           </ThemedText>
-          <Pressable style={[styles.promoBtn, { backgroundColor: theme.background }]}>
+          <Pressable
+            onPress={() =>
+              Alert.alert('Invite friends', 'Referral rewards will be available in a future update.', [{ text: 'OK' }])
+            }
+            style={[styles.promoBtn, { backgroundColor: theme.background }]}
+          >
             <ThemedText variant="labelLarge" colorName="primary">Invite now →</ThemedText>
           </Pressable>
         </View>
@@ -64,8 +70,10 @@ const PromotionBanner = ({ horizontalPadding }: { horizontalPadding: { paddingLe
 
 export default function HomeScreen() {
   const { uiState, onRefresh } = useHomeViewModel();
+  const { token, user } = useAuth();
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const [searchQuery, setSearchQuery] = useState('');
   const { isTablet, isLandscape, spacingMultiplier, contentPaddingLeft, contentPaddingRight } = useResponsive();
   const tabBarHeight = useTabBarHeight();
   const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
@@ -120,7 +128,10 @@ export default function HomeScreen() {
           <ThemedText variant="headlineSmall" style={styles.brandLogo}>
             PuConnect<ThemedText colorName="primary">.</ThemedText>
           </ThemedText>
-          <Pressable style={styles.gridBtn}>
+          <Pressable
+            style={styles.gridBtn}
+            onPress={() => (token ? router.push('/listing/create') : router.push('/login'))}
+          >
             <ThemedIcon name="apps" size={24} />
           </Pressable>
         </View>
@@ -138,9 +149,20 @@ export default function HomeScreen() {
           <TextInput
             placeholder="Search services"
             placeholderTextColor={theme.textMuted}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+            onSubmitEditing={() =>
+              router.push({ pathname: '/search/results', params: { q: searchQuery.trim() } })
+            }
             style={[styles.searchInput, { color: theme.text }]}
           />
         </ThemedView>
+        <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.discoveryTip, horizontalPadding]}>
+          {token && user?.canOfferServices
+            ? 'Tip: Check the Requests tab to find students who need your skills.'
+            : 'Tip: Browse Services for help; use the + menu to post a request when you need something done.'}
+        </ThemedText>
       </ThemedView>
 
       <ScrollView
@@ -154,7 +176,11 @@ export default function HomeScreen() {
         }
       >
         {/* Popular Services Section */}
-        <SectionHeader title="Popular Services" horizontalPadding={horizontalPadding} onSeeAll={() => {}} />
+        <SectionHeader
+          title="Popular Services"
+          horizontalPadding={horizontalPadding}
+          onSeeAll={() => router.push({ pathname: '/search/results', params: { q: '', section: 'popular' } })}
+        />
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false} 
@@ -172,7 +198,11 @@ export default function HomeScreen() {
         </ScrollView>
 
         {/* Recommended For You Section */}
-        <SectionHeader title="Recommended for you" horizontalPadding={horizontalPadding} onSeeAll={() => {}} />
+        <SectionHeader
+          title="Recommended for you"
+          horizontalPadding={horizontalPadding}
+          onSeeAll={() => router.push({ pathname: '/search/results', params: { q: '', section: 'recommended' } })}
+        />
         <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.sectionSub, horizontalPadding]}>
           Personalized based on your interests
         </ThemedText>
@@ -196,7 +226,11 @@ export default function HomeScreen() {
         <PromotionBanner horizontalPadding={horizontalPadding} />
 
         {/* Recently Viewed Section */}
-        <SectionHeader title="Recently viewed" horizontalPadding={horizontalPadding} onSeeAll={() => {}} />
+        <SectionHeader
+          title="Recently viewed"
+          horizontalPadding={horizontalPadding}
+          onSeeAll={() => router.push({ pathname: '/search/results', params: { q: '', section: 'recent' } })}
+        />
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false} 
@@ -214,7 +248,11 @@ export default function HomeScreen() {
         </ScrollView>
 
         {/* Based on Last Order Section */}
-        <SectionHeader title="Based on your last order" horizontalPadding={horizontalPadding} onSeeAll={() => {}} />
+        <SectionHeader
+          title="Based on your last order"
+          horizontalPadding={horizontalPadding}
+          onSeeAll={() => router.push({ pathname: '/search/results', params: { q: '', section: 'lastOrder' } })}
+        />
         <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.sectionSub, horizontalPadding]}>
           You hired a designer, you might also need...
         </ThemedText>
@@ -235,7 +273,11 @@ export default function HomeScreen() {
         </ScrollView>
 
         {/* Trending This Week Section */}
-        <SectionHeader title="Trending this week" horizontalPadding={horizontalPadding} onSeeAll={() => {}} />
+        <SectionHeader
+          title="Trending this week"
+          horizontalPadding={horizontalPadding}
+          onSeeAll={() => router.push({ pathname: '/search/results', params: { q: '', section: 'trending' } })}
+        />
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false} 
@@ -293,6 +335,10 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: Spacing.sm,
     fontSize: 14,
+  },
+  discoveryTip: {
+    marginTop: Spacing.sm,
+    lineHeight: 18,
   },
   scrollContent: {
     paddingTop: Spacing.sm,

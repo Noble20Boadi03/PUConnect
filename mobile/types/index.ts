@@ -25,6 +25,9 @@ export interface User {
   department?: string;
   graduationYear?: number;
 
+  /** After provider upgrade (skills + trust fields). Required to publish service_offer listings. */
+  canOfferServices?: boolean;
+
   createdAt: string;
   updatedAt: string;
 }
@@ -76,6 +79,19 @@ export interface AuthTokens {
 export interface LoginResponse extends AuthTokens { }
 
 export interface UserResponse extends User { }
+
+/** Negotiation state between two users for a listing thread (mock API). */
+export type ConversationLifecycle = 'open' | 'hired' | 'completed';
+
+export interface Review {
+  id: string;
+  listingId: string;
+  authorUserId: string;
+  targetUserId: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
 
 export interface SubcategoryFilter {
   id: string;

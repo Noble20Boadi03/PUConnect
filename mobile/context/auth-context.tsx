@@ -45,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             reputationScore: response.reputationScore ?? response.reputation_score,
             completedProjects: response.completedProjects ?? response.completed_projects,
             verifiedStudent: response.verifiedStudent ?? response.verified_student,
+            canOfferServices: response.canOfferServices ?? response.can_offer_services,
         };
     };
 
@@ -75,7 +76,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             universityId: '20270000',
             skillTags: ['React Native', 'Expo'],
             isAvailable: true,
-            verifiedStudent: true
+            verifiedStudent: true,
+            canOfferServices: false,
         }));
         /*
         const tokens = await api.login(email, password);

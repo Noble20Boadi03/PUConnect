@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, ScrollView, ActivityIndicator, Pressable, View, Image } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +11,8 @@ import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
 import { useListingViewModel } from '@/hooks/view-models/use-listing-view-model';
 import { useResponsive } from '@/hooks/use-responsive';
+import { api } from '@/services/api';
+import { User } from '@/types';
 
 export default function ListingDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -21,6 +23,21 @@ export default function ListingDetailsScreen() {
   const { uiState } = useListingViewModel(id as string);
   const { contentPaddingLeft, contentPaddingRight, spacingMultiplier } = useResponsive();
   const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
+
+  const [owner, setOwner] = useState<User | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (uiState.status !== 'content') return;
+      const oid = uiState.data.listing.ownerId;
+      const u = await api.getUserById(oid);
+      if (!cancelled) setOwner(u);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [uiState]);
 
   if (uiState.status === 'loading') {
     return (
@@ -166,17 +183,21 @@ export default function ListingDetailsScreen() {
               <View style={[styles.avatar, { backgroundColor: theme.primary + "15" }]}>
                 <ThemedIcon name="account" size={32} colorName="primary" />
               </View>
-              <View style={{ marginLeft: 12 }}>
-                <ThemedText variant="titleMedium">Campus Talent</ThemedText>
+              <View style={{ marginLeft: 12, flex: 1 }}>
+                <ThemedText variant="titleMedium">{owner?.fullName ?? 'Campus member'}</ThemedText>
                 <ThemedText variant="bodySmall" colorName="textMuted">
-                  CS Student • 2nd Year
+                  {owner
+                    ? `${owner.department ?? 'Student'} · Class of ${owner.graduationYear ?? '—'}`
+                    : 'Loading…'}
                 </ThemedText>
               </View>
             </View>
             <PrimaryButton
               title="View Profile"
               variant="ghost"
-              onPress={() => {}}
+              onPress={() =>
+                router.push({ pathname: '/profile/[id]', params: { id: listing.ownerId } })
+              }
               size="small"
             />
           </View>
@@ -200,6 +221,10 @@ export default function ListingDetailsScreen() {
             style={{ flex: 1 }}
           />
           <Pressable
+            onPress={() => router.push({
+              pathname: "/chat/[id]",
+              params: { id: listing.ownerId, listingId: listing.id }
+            })}
             style={[
               styles.chatBtn,
               { backgroundColor: theme.primary + "15" },
