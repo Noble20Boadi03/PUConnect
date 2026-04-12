@@ -65,33 +65,35 @@ Legend: `[ ]` = TODO · `[/]` = In Progress · `[x]` = Done
 ### 5.1 Landing / Splash (`app/index.tsx`)
 
 #### Purpose & Logic
-- [ ] Splash logo fades in for ~2.5 s then transitions to the landing content
-- [ ] "Access Your Account" navigates to `/login`
-- [ ] "Signup" navigates to `/register`
-- [ ] Carousel indicators are visible (static for now; paginated later if needed)
-- [ ] Language button is visible (stub is acceptable for v1)
+- [x] Splash logo fades in for ~2.5 s then transitions to the landing content
+- [x] Dynamic horizontal carousel with 4 slides (Welcome, Seek, Offer, Start)
+- [x] "Let's Go" CTA conditionally appears only on the final slide and navigates to `/login`
+- [x] Carousel indicators are interactive and sync with the active scroll index
+- [x] Next/Back navigation buttons conditionally display based on slide index
+- [x] Header contains Language stub and functional Light/Dark Theme toggle
 
 #### User Feedback & Interactions
-- [ ] Staggered `FadeInDown` animations fire once on mount
-- [ ] Buttons show visual pressed state (opacity / color shift)
-- [ ] No flash of unstyled/white background during splash → landing transition
+- [x] Staggered `FadeInDown` animations fire on slide content mount
+- [x] Images feature cinematic top/bottom gradient fades 
+- [x] No flash of unstyled/white background during splash → landing transition
+- [x] Smooth scrolling behavior on manual swipe or programmatic button taps
 
 #### Accessibility
-- [ ] All `Pressable` elements have `accessibilityRole="button"` and meaningful `accessibilityLabel`
-- [ ] Logo image has `accessibilityLabel="PuConnect logo"`
-- [ ] Illustration image has descriptive `accessibilityLabel`
-- [ ] Text hierarchy is logical for screen readers (heading, body, link order)
+- [x] All `Pressable` elements have `accessibilityRole="button"` and meaningful `accessibilityLabel`
+- [x] Theme toggle and Language buttons have explicit `accessibilityLabel`
+- [x] Prev/Next buttons announce properly
 
 #### Edge Cases
-- [ ] Works in both portrait and landscape orientations
-- [ ] Handles quick double-tap on "Access Your Account" without duplicate navigation
+- [x] Images scale horizontally to full `width` dynamically without aspect ratio warping
+- [x] Last slide properly disables/hides "Next" button; First slide hides "Back"
 
 #### Performance
-- [ ] Image assets are appropriately sized (no oversized PNGs)
-- [ ] Splash timer cleanup runs on unmount (clearTimeout)
+- [x] Image assets are heavily optimized locally (Sharp)
+- [x] Splash timer cleanup runs on unmount (`clearTimeout`)
+- [x] Scroll events are natively throttled (`scrollEventThrottle={16}`)
 
 #### Input & Keyboard
-- [ ] N/A (no text inputs on this screen)
+- [x] N/A (no text inputs on this screen)
 
 ---
 

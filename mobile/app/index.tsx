@@ -79,6 +79,18 @@ export default function LandingScreen() {
     }
   };
 
+  const scrollNext = () => {
+    if (activeIndex < slides.length - 1) {
+      scrollRef.current?.scrollTo({ x: (activeIndex + 1) * width, animated: true });
+    }
+  };
+
+  const scrollBack = () => {
+    if (activeIndex > 0) {
+      scrollRef.current?.scrollTo({ x: (activeIndex - 1) * width, animated: true });
+    }
+  };
+
   const handleGetStarted = () => {
     router.replace({ pathname: "/login" });
   };
@@ -110,11 +122,15 @@ export default function LandingScreen() {
           source={require("../assets/images/puconnect_logo.png")}
           style={[styles.headerLogo, { tintColor: isDark ? '#ffffff' : theme.primary }]}
           resizeMode="contain"
+          accessible={true}
+          accessibilityLabel="PuConnect logo"
         />
         <View style={styles.headerActions}>
           <Pressable 
             onPress={() => setMode(isDark ? 'light' : 'dark')}
             style={[styles.iconButton, { backgroundColor: theme.surfaceVariant }]}
+            accessibilityRole="button"
+            accessibilityLabel={`Switch to ${isDark ? 'light' : 'dark'} theme`}
           >
             <ThemedIcon 
               name={isDark ? "white-balance-sunny" : "moon-waning-crescent"} 
@@ -122,7 +138,11 @@ export default function LandingScreen() {
               colorName="textSecondary" 
             />
           </Pressable>
-          <Pressable style={[styles.languageButton, { backgroundColor: theme.surfaceVariant }]}>
+          <Pressable 
+            style={[styles.languageButton, { backgroundColor: theme.surfaceVariant }]}
+            accessibilityRole="button"
+            accessibilityLabel="Select language, currently English"
+          >
             <ThemedIcon name="translate" size={16} colorName="textSecondary" />
             <ThemedText variant="labelMedium" colorName="textSecondary">English</ThemedText>
           </Pressable>
@@ -137,7 +157,7 @@ export default function LandingScreen() {
         showsHorizontalScrollIndicator={false}
         onScroll={handleScroll}
         scrollEventThrottle={16}
-        style={styles.carouselContainer}
+        style={[styles.carouselContainer, { marginTop: height * 0.05 }]}
         contentContainerStyle={{ flexGrow: 1 }}
       >
         {slides.map((slide, index) => (
@@ -150,6 +170,8 @@ export default function LandingScreen() {
                 source={slide.image}
                 style={[styles.illustration, { width: width, height: height * 0.45, borderRadius: BorderRadius.lg }]}
                 resizeMode="cover"
+                accessible={true}
+                accessibilityLabel={`Illustration for ${slide.title}`}
               />
               <LinearGradient
                 colors={[theme.background, 'transparent']}
@@ -186,23 +208,57 @@ export default function LandingScreen() {
 
       {/* Footer */}
       <View style={[styles.footer, horizontalPadding]}>
-        {/* Carousel indicators */}
-        <View style={styles.indicatorContainer}>
-          {slides.map((_, index) => (
+        {/* Navigation row with buttons and indicators */}
+        <View style={styles.navigationRow}>
+          {activeIndex > 0 ? (
             <Pressable 
-              key={index} 
-              onPress={() => {
-                scrollRef.current?.scrollTo({ x: index * width, animated: true });
-              }}
+              onPress={scrollBack} 
+              style={styles.navButton}
+              accessibilityRole="button"
+              accessibilityLabel="Previous slide"
             >
-              <View 
-                style={[
-                  styles.dot, 
-                  { backgroundColor: activeIndex === index ? theme.primary : theme.outlineVariant }
-                ]} 
-              />
+              <ThemedIcon name="chevron-left" size={20} colorName="primary" />
+              <ThemedText variant="labelLarge" colorName="primary">Back</ThemedText>
             </Pressable>
-          ))}
+          ) : (
+            <View style={styles.navButtonPlaceholder} />
+          )}
+
+          {/* Carousel indicators */}
+          <View style={styles.indicatorContainer}>
+            {slides.map((_, index) => (
+              <Pressable 
+                key={index} 
+                onPress={() => {
+                  scrollRef.current?.scrollTo({ x: index * width, animated: true });
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`Go to slide ${index + 1}`}
+                accessibilityState={{ selected: activeIndex === index }}
+              >
+                <View 
+                  style={[
+                    styles.dot, 
+                    { backgroundColor: activeIndex === index ? theme.primary : theme.outlineVariant }
+                  ]} 
+                />
+              </Pressable>
+            ))}
+          </View>
+
+          {activeIndex < slides.length - 1 ? (
+            <Pressable 
+              onPress={scrollNext} 
+              style={styles.navButton}
+              accessibilityRole="button"
+              accessibilityLabel="Next slide"
+            >
+              <ThemedText variant="labelLarge" colorName="primary">Next</ThemedText>
+              <ThemedIcon name="chevron-right" size={20} colorName="primary" />
+            </Pressable>
+          ) : (
+            <View style={styles.navButtonPlaceholder} />
+          )}
         </View>
 
         <View style={styles.buttonContainer}>
@@ -280,7 +336,7 @@ const styles = StyleSheet.create({
   },
   illustrationContainer: {
     width: "100%",
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.md,
     overflow: "hidden",
     position: "relative",
   },
@@ -306,7 +362,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     paddingBottom: Spacing.xl,
   },
   title: {
@@ -316,11 +372,25 @@ const styles = StyleSheet.create({
   subtitle: {
     lineHeight: 22,
   },
+  navigationRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Spacing.md,
+  },
+  navButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    minWidth: 64,
+  },
+  navButtonPlaceholder: {
+    minWidth: 64,
+  },
   indicatorContainer: {
     flexDirection: "row",
     gap: Spacing.sm,
     justifyContent: "center",
-    marginBottom: Spacing.xl,
   },
   dot: {
     width: 8,
@@ -328,7 +398,8 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   footer: {
-    paddingBottom: Spacing.xl,
+    paddingBottom: Spacing.md,
+    marginTop: "auto",
   },
   buttonContainer: {
     minHeight: 56,
