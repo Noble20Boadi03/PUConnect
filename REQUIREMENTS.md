@@ -45,13 +45,22 @@ The platform facilitates the exchange of services and talent between students, e
 
 ## 5. Mobile (Android) — Screen QA Checklist
 
-> **Already addressed:** Layout, Theming, State Management, Navigation.
-> **Sequencing:** Align the app with **Section 6** (Seeker default, provider upgrade, listing permissions, and related UX) before or in lockstep with the detailed checklist below—many items depend on correct role behavior, copy, and gating.
+> **Already addressed (But can be verified and improved):** Layout, Theming, State Management, Navigation.
 > The checklist below covers the **remaining audit categories** for every screen.
 
 Legend: `[ ]` = TODO · `[/]` = In Progress · `[x]` = Done
 
+
+
 ---
+
+---
+
+> [!NOTE]
+> **Scope:** Development is currently focused exclusively on the **`mobile/`** directory. All updates must respect and build upon the existing implementation patterns and logical foundations already established in the codebase.
+
+---
+
 
 ### 5.1 Landing / Splash (`app/index.tsx`)
 
@@ -823,9 +832,3 @@ Legend: `[ ]` = TODO · `[/]` = In Progress · `[x]` = Done
 - [ ] Content does not clip behind system bars (notch, nav bar) in landscape
 - [ ] Horizontal scroll sections on Home still work in landscape
 
----
-
-> [!NOTE]
-> **Scope:** Development is currently focused exclusively on the **`mobile/`** directory. All updates must respect and build upon the existing implementation patterns and logical foundations already established in the codebase.
-
----

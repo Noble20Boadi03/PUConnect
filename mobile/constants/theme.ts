@@ -120,31 +120,31 @@ export const Colors = {
     errorContainer: palette.error[20],
     onErrorContainer: palette.error[90],
     
-    background: palette.neutral[10],
-    onBackground: palette.neutral[90],
+    background: '#121212',
+    onBackground: '#ffffff',
     
-    surface: palette.neutral[10],
-    onSurface: palette.neutral[90],
-    surfaceVariant: palette.neutralVariant[30],
-    onSurfaceVariant: palette.neutralVariant[80],
+    surface: '#121212',
+    onSurface: '#ffffff',
+    surfaceVariant: '#282828',
+    onSurfaceVariant: '#a3a3a3',
     
-    outline: palette.neutralVariant[80],
-    outlineVariant: palette.neutralVariant[30],
+    outline: '#3f3f3f',
+    outlineVariant: '#282828',
     
-    inverseSurface: palette.neutral[90],
-    inverseOnSurface: palette.neutral[10],
+    inverseSurface: '#ffffff',
+    inverseOnSurface: '#121212',
     inversePrimary: palette.primary[40],
     
     // Legacy mapping
-    text: palette.neutral[90],
-    textSecondary: palette.neutralVariant[80],
-    textMuted: palette.neutralVariant[50],
+    text: '#ffffff',
+    textSecondary: '#a3a3a3',
+    textMuted: '#666666',
     tint: palette.primary[80],
     discoveryPrimary: '#1dbf73',
-    icon: palette.neutralVariant[80],
-    tabIconDefault: palette.neutralVariant[50],
-    tabIconSelected: palette.primary[80],
-    border: palette.neutralVariant[30],
+    icon: '#a3a3a3',
+    tabIconDefault: '#666666',
+    tabIconSelected: '#ffffff',
+    border: '#282828',
   },
 };
 
