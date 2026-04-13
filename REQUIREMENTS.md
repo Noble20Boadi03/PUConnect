@@ -101,83 +101,83 @@ Legend: `[ ]` = TODO · `[/]` = In Progress · `[x]` = Done
 ### 5.2 Login (`app/login.tsx`)
 
 #### Purpose & Logic
-- [ ] Email + Password fields authenticate the user via `signIn()`
-- [ ] On success, navigates to `/(tabs)/home`
-- [ ] On failure, shows `Alert` with meaningful error message
-- [ ] "Forgot password?" is tappable (stub or actual flow)
-- [ ] "Create Account" navigates to `/register`
-- [ ] Back button navigates to previous screen
+- [x] Email + Password fields authenticate the user via `signIn()`
+- [x] On success, navigates to `/(tabs)/home`
+- [x] On failure, shows `Alert` with meaningful error message
+- [x] "Forgot password?" is tappable (stub or actual flow)
+- [x] "Create Account" navigates to `/register`
+- [x] Back button navigates to previous screen
 
 #### User Feedback & Interactions
-- [ ] "Sign In" button shows loading spinner (`isLoading`) while authenticating
-- [ ] Button is visually disabled during loading
-- [ ] Password eye-toggle works (show/hide password)
-- [ ] Press states on all interactive elements
+- [x] "Sign In" button shows loading spinner (`isLoading`) while authenticating
+- [x] Button is visually disabled during loading
+- [x] Password eye-toggle works (show/hide password)
+- [x] Press states on all interactive elements
 
 #### Accessibility
-- [ ] Email input has `accessibilityLabel="Email Address"`
-- [ ] Password input has `accessibilityLabel="Password"` and toggle has `accessibilityLabel="Toggle password visibility"`
-- [ ] Back button has `accessibilityLabel="Go back"`
-- [ ] Error alert is announced to screen readers
+- [x] Email input has `accessibilityLabel="Email Address"`
+- [x] Password input has `accessibilityLabel="Password"` and toggle has `accessibilityLabel="Toggle password visibility"`
+- [x] Back button has `accessibilityLabel="Go back"`
+- [x] Error alert is announced to screen readers
 
 #### Edge Cases
-- [ ] Empty fields: does not crash; shows validation or error feedback
-- [ ] Extremely long email/password input: text does not overflow container
-- [ ] Rapid multi-tap on "Sign In" does not fire multiple requests
-- [ ] Network timeout / server error handled gracefully
+- [x] Empty fields: does not crash; shows validation or error feedback
+- [x] Extremely long email/password input: text does not overflow container
+- [x] Rapid multi-tap on "Sign In" does not fire multiple requests
+- [x] Network timeout / server error handled gracefully
 
 #### Performance
-- [ ] No unnecessary re-renders during typing (controlled input)
-- [ ] FadeInDown animations do not jank on low-end devices
+- [x] No unnecessary re-renders during typing (controlled input)
+- [x] FadeInDown animations do not jank on low-end devices
 
 #### Input & Keyboard
-- [ ] `keyboardType="email-address"` on email field
-- [ ] `autoCapitalize="none"` on email field
-- [ ] Keyboard dismiss on tapping outside inputs (`TouchableWithoutFeedback`)
-- [ ] `KeyboardAvoidingView` keeps the form visible when keyboard is open
-- [ ] Return key on email moves focus to password (or submits if only field)
-- [ ] Return key on password triggers sign-in
+- [x] `keyboardType="email-address"` on email field
+- [x] `autoCapitalize="none"` on email field
+- [x] Keyboard dismiss on tapping outside inputs (`TouchableWithoutFeedback`)
+- [x] `KeyboardAvoidingView` keeps the form visible when keyboard is open
+- [x] Return key on email moves focus to password (or submits if only field)
+- [x] Return key on password triggers sign-in
 
 ---
 
 ### 5.3 Register (`app/register.tsx`)
 
 #### Purpose & Logic
-- [ ] All required fields collected: Full Name, University Email, University ID, Password, Confirm Password
-- [ ] On success, shows success `Alert` then navigates to `/login`
-- [ ] On failure, shows error `Alert`
-- [ ] "Sign In" link navigates to `/login`
-- [ ] Back button navigates back
+- [x] All required fields collected: Full Name, University Email, University ID, Password, Confirm Password
+- [x] On success, shows success `Alert` then navigates to `/login`
+- [x] On failure, shows error `Alert`
+- [x] "Sign In" link navigates to `/login`
+- [x] Back button navigates back
 
 #### User Feedback & Interactions
-- [ ] "Create Account" button shows loading state while processing
-- [ ] Password eye-toggle works across both Password & Confirm Password fields
-- [ ] Animated stagger entrances fire on mount
-- [ ] Press states on all buttons and links
+- [x] "Create Account" button shows loading state while processing
+- [x] Password eye-toggle works across both Password & Confirm Password fields
+- [x] Animated stagger entrances fire on mount
+- [x] Press states on all buttons and links
 
 #### Accessibility
-- [ ] Each input field has a proper `accessibilityLabel` matching its label text
-- [ ] Back button has `accessibilityLabel="Go back"`
-- [ ] Alerts are accessible to screen readers
+- [x] Each input field has a proper `accessibilityLabel` matching its label text
+- [x] Back button has `accessibilityLabel="Go back"`
+- [x] Alerts are accessible to screen readers
 
 #### Edge Cases
-- [ ] Password mismatch (Password ≠ Confirm Password) — should show user feedback before API call
-- [ ] Empty required fields — validation feedback
-- [ ] Special characters in Full Name handled
-- [ ] Email format validation (e.g., must be a valid email pattern)
-- [ ] Rapid multi-tap on "Create Account" guarded
+- [x] Password mismatch (Password ≠ Confirm Password) — should show user feedback before API call
+- [x] Empty required fields — validation feedback
+- [x] Special characters in Full Name handled
+- [x] Email format validation (e.g., must be a valid email pattern)
+- [x] Rapid multi-tap on "Create Account" guarded
 
 #### Performance
-- [ ] Many animated inputs on one screen — verify no frame drops during entrance animations
-- [ ] No memory leak from animations on unmount
+- [x] Many animated inputs on one screen — verify no frame drops during entrance animations
+- [x] No memory leak from animations on unmount
 
 #### Input & Keyboard
-- [ ] `autoCapitalize="words"` on Full Name
-- [ ] `autoCapitalize="none"` on Email and University ID
-- [ ] `keyboardType="email-address"` on Email
-- [ ] Keyboard dismiss on outside tap
-- [ ] `KeyboardAvoidingView` keeps all fields reachable
-- [ ] Tab / next-field flow: Full Name → Email → University ID → Password → Confirm Password → Submit
+- [x] `autoCapitalize="words"` on Full Name
+- [x] `autoCapitalize="none"` on Email and University ID
+- [x] `keyboardType="email-address"` on Email
+- [x] Keyboard dismiss on outside tap
+- [x] `KeyboardAvoidingView` keeps all fields reachable
+- [x] Tab / next-field flow: Full Name → Email → University ID → Password → Confirm Password → Submit
 
 ---
 

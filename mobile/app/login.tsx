@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import { TextInput } from "react-native";
 import {
     StyleSheet,
     View,
@@ -44,8 +45,20 @@ export default function LoginScreen() {
     const [isForgotModalVisible, setForgotModalVisible] = useState(false);
     const [isResetSent, setIsResetSent] = useState(false);
     const [resetEmail, setResetEmail] = useState("");
+    
+    // Keyboard accessibility reference
+    const passwordRef = useRef<TextInput>(null);
 
     const handleLogin = async () => {
+        if (!email.trim() || !password) {
+            showAlert({
+                title: "Incomplete Fields",
+                subtitle: "Please enter both your email and password.",
+                severity: "warning"
+            });
+            return;
+        }
+
         setIsLoading(true);
         try {
             await signIn(email, password);
@@ -91,6 +104,8 @@ export default function LoginScreen() {
                                 router.replace("/");
                             }
                         }} 
+                        accessibilityRole="button"
+                        accessibilityLabel="Go back"
                         style={[styles.backButton, { backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.25)', marginTop: insets.top + Spacing.sm }]}
                     >
                         <ThemedIcon name="chevron-left" size={24} lightColor="#ffffff" darkColor="#ffffff" />
@@ -113,6 +128,9 @@ export default function LoginScreen() {
                             onChangeText={setEmail}
                             autoCapitalize="none"
                             keyboardType="email-address"
+                            returnKeyType="next"
+                            onSubmitEditing={() => passwordRef.current?.focus()}
+                            accessibilityLabel="Email Address"
                             delay={400}
                         />
 
@@ -123,6 +141,10 @@ export default function LoginScreen() {
                             isPassword={true}
                             showPassword={showPassword}
                             onTogglePassword={() => setShowPassword(!showPassword)}
+                            ref={passwordRef}
+                            returnKeyType="done"
+                            onSubmitEditing={handleLogin}
+                            accessibilityLabel="Password"
                             delay={500}
                             marginTop={Spacing.xl}
                         />

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import { TextInput } from "react-native";
 import {
     StyleSheet,
     View,
@@ -35,6 +36,7 @@ export default function RegisterScreen() {
         username: "",
         fullName: "",
         email: "",
+        universityId: "",
         password: "",
         confirmPassword: "",
     });
@@ -42,11 +44,17 @@ export default function RegisterScreen() {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
+    // Keyboard accessibility references
+    const emailRef = useRef<TextInput>(null);
+    const uniIdRef = useRef<TextInput>(null);
+    const passwordRef = useRef<TextInput>(null);
+    const confirmPasswordRef = useRef<TextInput>(null);
+
     const insets = useSafeAreaInsets();
 
     const handleContinue = () => {
-        if (!formData.fullName || !formData.email) {
-            showAlert({ title: "Missing Fields", subtitle: "Please fill in all identity fields to continue.", severity: "warning" });
+        if (!formData.fullName || !formData.email || !formData.universityId) {
+            showAlert({ title: "Incomplete Fields", subtitle: "Please fill in all identity fields to continue.", severity: "warning" });
             return;
         }
         if (!formData.email.includes('@')) {
@@ -103,6 +111,8 @@ export default function RegisterScreen() {
                         <Animated.View entering={FadeInDown.duration(300)}>
                             <Pressable 
                                 onPress={() => setStep(1)} 
+                                accessibilityRole="button"
+                                accessibilityLabel="Go back"
                                 style={[styles.backButton, { backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.25)', marginTop: insets.top + Spacing.sm }]}
                             >
                                 <ThemedIcon name="chevron-left" size={24} lightColor="#ffffff" darkColor="#ffffff" />
@@ -133,23 +143,43 @@ export default function RegisterScreen() {
                                     value={formData.fullName}
                                     onChangeText={(text) => setFormData({ ...formData, fullName: text })}
                                     autoCapitalize="words"
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => emailRef.current?.focus()}
+                                    accessibilityLabel="Full Name"
                                     delay={100}
                                 />
 
                                 <AnimatedInput
-                                    placeholder="Email"
+                                    placeholder="University Email"
                                     value={formData.email}
                                     onChangeText={(text) => setFormData({ ...formData, email: text })}
                                     autoCapitalize="none"
                                     keyboardType="email-address"
+                                    ref={emailRef}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => uniIdRef.current?.focus()}
+                                    accessibilityLabel="University Email"
                                     delay={200}
+                                    marginTop={Spacing.lg}
+                                />
+
+                                <AnimatedInput
+                                    placeholder="University ID"
+                                    value={formData.universityId}
+                                    onChangeText={(text) => setFormData({ ...formData, universityId: text })}
+                                    autoCapitalize="none"
+                                    ref={uniIdRef}
+                                    returnKeyType="done"
+                                    onSubmitEditing={handleContinue}
+                                    accessibilityLabel="University ID"
+                                    delay={300}
                                     marginTop={Spacing.lg}
                                 />
 
                                 <PrimaryButton
                                     title="Continue"
                                     onPress={handleContinue}
-                                    delay={300}
+                                    delay={400}
                                     size="large"
                                     marginTop={Spacing.massive}
                                 />
@@ -163,6 +193,10 @@ export default function RegisterScreen() {
                                     isPassword={true}
                                     showPassword={showPassword}
                                     onTogglePassword={() => setShowPassword(!showPassword)}
+                                    ref={passwordRef}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => confirmPasswordRef.current?.focus()}
+                                    accessibilityLabel="Password"
                                     delay={100}
                                 />
 
@@ -172,6 +206,10 @@ export default function RegisterScreen() {
                                     onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
                                     isPassword={true}
                                     showPassword={showPassword}
+                                    ref={confirmPasswordRef}
+                                    returnKeyType="done"
+                                    onSubmitEditing={handleRegister}
+                                    accessibilityLabel="Confirm Password"
                                     delay={200}
                                     marginTop={Spacing.lg}
                                 />

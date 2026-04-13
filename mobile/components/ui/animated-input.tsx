@@ -16,7 +16,7 @@ interface AnimatedInputProps extends TextInputProps {
     onTogglePassword?: () => void;
 }
 
-export function AnimatedInput({
+export const AnimatedInput = React.forwardRef<TextInput, AnimatedInputProps>(({
     label,
     iconName,
     delay = 0,
@@ -25,7 +25,7 @@ export function AnimatedInput({
     showPassword = false,
     onTogglePassword,
     ...props
-}: AnimatedInputProps) {
+}, ref) => {
     const { theme } = useTheme();
     const focusValue = useSharedValue(0);
 
@@ -40,6 +40,7 @@ export function AnimatedInput({
             <Animated.View style={[styles.inputContainer, animatedStyle]}>
                 {iconName && <ThemedIcon name={iconName} size={20} colorName="textMuted" style={styles.inputIcon} />}
                 <TextInput
+                    ref={ref}
                     style={[styles.input, { color: theme.text }]}
                     placeholderTextColor={theme.textMuted}
                     onFocus={(e) => {
@@ -65,7 +66,7 @@ export function AnimatedInput({
             </Animated.View>
         </Animated.View>
     );
-}
+});
 
 const styles = StyleSheet.create({
     inputLabel: {
