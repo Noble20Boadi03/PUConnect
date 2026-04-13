@@ -6,19 +6,21 @@ import {
     TouchableWithoutFeedback,
     Keyboard,
     ActivityIndicator,
-    Alert,
     Image,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useAuth } from "@/context/auth-context";
+import { useAppAlert } from "@/context/alert-context";
 import { AnimatedInput } from "@/components/ui/animated-input";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { ThemedView } from "@/components/themed-view";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedIcon } from "@/components/ui/themed-icon";
 import { ScreenLayout } from "@/components/ui/screen-layout";
+import { AuthBackground } from "@/components/ui/auth-background";
+import { ActionModal } from "@/components/ui/action-modal";
 import { useTheme } from "@/context/theme-context";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { useResponsive } from "@/hooks/use-responsive";
@@ -28,6 +30,7 @@ const AnimatedThemedText = Animated.createAnimatedComponent(ThemedText);
 export default function LoginScreen() {
     const { theme, isDark } = useTheme();
     const { signIn } = useAuth();
+    const { showAlert } = useAppAlert();
     const insets = useSafeAreaInsets();
     const { spacingMultiplier, contentPaddingLeft, contentPaddingRight } = useResponsive();
     const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
@@ -36,6 +39,11 @@ export default function LoginScreen() {
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    
+    // Forgot Password Modal State
+    const [isForgotModalVisible, setForgotModalVisible] = useState(false);
+    const [isResetSent, setIsResetSent] = useState(false);
+    const [resetEmail, setResetEmail] = useState("");
 
     const handleLogin = async () => {
         setIsLoading(true);
@@ -44,41 +52,63 @@ export default function LoginScreen() {
             router.replace({ pathname: "/(tabs)/home" });
         } catch (error) {
             console.error("Login failed:", error);
-            Alert.alert("Login Failed", "Invalid email or password. Please try again.");
+            showAlert({
+                title: "Login Failed",
+                subtitle: "Invalid email or password. Please try again.",
+                severity: "error",
+                primaryButtonTitle: "Try Again"
+            });
         } finally {
             setIsLoading(false);
         }
     };
 
+    const handleResetPassword = () => {
+        if (!resetEmail) return;
+        setIsResetSent(true);
+    };
+
+    const handleCloseModal = () => {
+        setForgotModalVisible(false);
+        setTimeout(() => {
+            setIsResetSent(false);
+            setResetEmail("");
+        }, 400); // Wait for modal exit animation before resetting UI state
+    };
+
     return (
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <ScreenLayout padding="none" keyboardAvoiding scrollable contentContainerStyle={horizontalPadding}>
-                <View style={styles.content}>
+        <>
+            <AuthBackground />
+            <ScreenLayout transparent padding="none" keyboardAvoiding scrollable contentContainerStyle={horizontalPadding}>
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+                    <View style={styles.content}>
                     {/* Back Button */}
-                    <Pressable onPress={() => router.back()} style={[styles.backButton, { backgroundColor: theme.surfaceVariant, marginTop: insets.top + Spacing.sm }]}>
-                        <ThemedIcon name="chevron-left" size={24} />
+                    <Pressable 
+                        onPress={() => {
+                            if (router.canGoBack()) {
+                                router.back();
+                            } else {
+                                router.replace("/");
+                            }
+                        }} 
+                        style={[styles.backButton, { backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.25)', marginTop: insets.top + Spacing.sm }]}
+                    >
+                        <ThemedIcon name="chevron-left" size={24} lightColor="#ffffff" darkColor="#ffffff" />
                     </Pressable>
 
                     <View style={styles.header}>
-                        <Image 
-                            source={require("../assets/images/puconnect_logo.png")}
-                            style={styles.logo}
-                            resizeMode="contain"
-                        />
-                        <AnimatedThemedText entering={FadeInDown.delay(200).duration(800)} variant="headlineLarge" style={styles.title}>
-                            Welcome Back
+                        <AnimatedThemedText entering={FadeInDown.delay(200).duration(800)} variant="headlineLarge" colorName="primary" style={styles.title}>
+                            Login here
                         </AnimatedThemedText>
-                        <AnimatedThemedText entering={FadeInDown.delay(300).duration(800)} variant="bodyLarge" colorName="textSecondary">
-                            Please enter your details to sign in
+                        <AnimatedThemedText entering={FadeInDown.delay(300).duration(800)} variant="titleLarge" style={styles.subtitle}>
+                            Welcome back you've{"\n"}been missed!
                         </AnimatedThemedText>
                     </View>
 
                     {/* Form */}
                     <View style={styles.form}>
                         <AnimatedInput
-                            label="Email Address"
-                            iconName="email-outline"
-                            placeholder="email@example.com"
+                            placeholder="Email"
                             value={email}
                             onChangeText={setEmail}
                             autoCapitalize="none"
@@ -87,9 +117,7 @@ export default function LoginScreen() {
                         />
 
                         <AnimatedInput
-                            label="Password"
-                            iconName="lock-outline"
-                            placeholder="••••••••"
+                            placeholder="Password"
                             value={password}
                             onChangeText={setPassword}
                             isPassword={true}
@@ -101,17 +129,20 @@ export default function LoginScreen() {
                         
                         <Animated.View entering={FadeInDown.delay(500).duration(800)}>
                             <Pressable
-                                onPress={() =>
-                                    Alert.alert(
-                                        'Password reset',
-                                        'If your school email is on file, you will receive reset instructions (demo).',
-                                        [{ text: 'OK' }]
-                                    )
-                                }
-                                style={styles.forgotPassword}
+                                onPress={() => setForgotModalVisible(true)}
+                                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                                style={({ pressed }) => [
+                                    styles.forgotPasswordPill,
+                                    { 
+                                        backgroundColor: theme.primaryContainer,
+                                        opacity: pressed ? 0.8 : 1,
+                                        transform: [{ scale: pressed ? 0.96 : 1 }]
+                                    }
+                                ]}
                             >
-                                <ThemedText variant="labelLarge" colorName="primary" style={styles.forgotPasswordText}>
-                                    Forgot password?
+                                <ThemedIcon name="key-outline" size={14} colorName="primary" style={{ marginRight: 6 }} />
+                                <ThemedText variant="labelMedium" colorName="primary" style={styles.forgotPasswordText}>
+                                    Forgot Password
                                 </ThemedText>
                             </Pressable>
                         </Animated.View>
@@ -126,16 +157,48 @@ export default function LoginScreen() {
                         />
                     </View>
 
-                    {/* Footer */}
                     <Animated.View entering={FadeInDown.delay(900).duration(800)} style={styles.footer}>
-                        <ThemedText variant="bodyMedium" colorName="textSecondary">New here? </ThemedText>
                         <Pressable onPress={() => router.push({ pathname: "/register" })}>
-                            <ThemedText variant="labelLarge" colorName="primary">Create Account</ThemedText>
+                            <ThemedText variant="labelLarge" colorName="primary" style={styles.footerText}>Create new account</ThemedText>
                         </Pressable>
                     </Animated.View>
-                </View>
+                    </View>
+                </TouchableWithoutFeedback>
             </ScreenLayout>
-        </TouchableWithoutFeedback>
+
+            {/* Custom Interactive Forgot Password Modal */}
+            {isResetSent ? (
+                <ActionModal
+                    visible={isForgotModalVisible}
+                    onRequestClose={handleCloseModal}
+                    iconName="check-circle-outline"
+                    title="Link Sent"
+                    subtitle={`If ${resetEmail || 'that email'} matches an account, we've sent a reset link to it.`}
+                    primaryButtonTitle="OK"
+                    onPrimaryPress={handleCloseModal}
+                />
+            ) : (
+                <ActionModal
+                    visible={isForgotModalVisible}
+                    onRequestClose={handleCloseModal}
+                    iconName="email-fast-outline"
+                    title="Reset Password"
+                    subtitle="Enter your university email address. We'll send you a secure link to create a new password."
+                    primaryButtonTitle="Send Reset Link"
+                    onPrimaryPress={handleResetPassword}
+                    secondaryButtonTitle="Cancel"
+                    onSecondaryPress={handleCloseModal}
+                >
+                    <AnimatedInput
+                        placeholder="Email"
+                        value={resetEmail}
+                        onChangeText={setResetEmail}
+                        autoCapitalize="none"
+                        keyboardType="email-address"
+                    />
+                </ActionModal>
+            )}
+        </>
     );
 }
 
@@ -152,26 +215,35 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.lg,
     },
     header: {
-        marginBottom: Spacing.massive,
-    },
-    logo: {
-        width: 120,
-        height: 40,
-        marginBottom: Spacing.xl,
+        marginBottom: Spacing.xxl,
+        alignItems: "center",
+        marginTop: Spacing.xl,
     },
     title: {
         fontWeight: "800",
-        marginBottom: Spacing.xs,
+        marginBottom: Spacing.md,
+        textAlign: "center",
+    },
+    subtitle: {
+        textAlign: "center",
+        fontWeight: "600",
+        lineHeight: 28,
     },
     form: {
         flex: 1,
     },
-    forgotPassword: {
+    forgotPasswordPill: {
         alignSelf: "flex-end",
-        marginTop: Spacing.md,
+        marginTop: Spacing.xl,
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.sm,
+        borderRadius: BorderRadius.full,
     },
     forgotPasswordText: {
-        fontWeight: "600",
+        fontWeight: "700",
+        fontSize: 13,
     },
     footer: {
         flexDirection: "row",
@@ -179,5 +251,9 @@ const styles = StyleSheet.create({
         alignItems: "center",
         paddingBottom: Spacing.xl,
         marginTop: Spacing.lg,
+    },
+    footerText: {
+        fontWeight: "600",
+        textDecorationLine: "underline",
     },
 });

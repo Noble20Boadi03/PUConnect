@@ -7,13 +7,13 @@ import {
   Pressable,
   Platform,
   Image,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/context/theme-context';
 import { useAuth } from '@/context/auth-context';
+import { useAppAlert } from '@/context/alert-context';
 import { api } from '@/services/api';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedIcon } from '@/components/ui/themed-icon';
@@ -43,6 +43,7 @@ export default function ChatScreen() {
   const { id, listingId } = useLocalSearchParams<{ id: string; listingId?: string }>();
   const { theme, isDark } = useTheme();
   const { user, token } = useAuth();
+  const { showAlert } = useAppAlert();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { contentPaddingLeft, contentPaddingRight } = useResponsive();
@@ -126,7 +127,7 @@ export default function ChatScreen() {
       await api.setConversationLifecycle(user.id, id as string, listingId as string | undefined, 'hired', token);
       setLifecycle('hired');
     } catch (e: any) {
-      Alert.alert('Error', e?.message ?? 'Could not update status.');
+      showAlert({ title: 'Error', subtitle: e?.message ?? 'Could not update status.', severity: 'error' });
     }
   };
 
@@ -136,7 +137,7 @@ export default function ChatScreen() {
       await api.setConversationLifecycle(user.id, id as string, listingId as string | undefined, 'completed', token);
       setLifecycle('completed');
       if (!listingId) {
-        Alert.alert('Completed', 'This thread is marked complete.');
+        showAlert({ title: 'Completed', subtitle: 'This thread is marked complete.', severity: 'success' });
         return;
       }
       router.push({
@@ -144,7 +145,7 @@ export default function ChatScreen() {
         params: { id: listingId as string, targetUserId: id as string },
       });
     } catch (e: any) {
-      Alert.alert('Error', e?.message ?? 'Could not complete.');
+      showAlert({ title: 'Error', subtitle: e?.message ?? 'Could not complete.', severity: 'error' });
     }
   };
 
@@ -170,7 +171,7 @@ export default function ChatScreen() {
           )}
         </View>
 
-        <Pressable onPress={() => Alert.alert('Mute', 'Mute controls will arrive in a later build.')}>
+        <Pressable onPress={() => showAlert({ title: 'Mute', subtitle: 'Mute controls will arrive in a later build.', severity: 'info' })}>
           <ThemedText variant="labelLarge" style={styles.muteBtn}>
             Mute
           </ThemedText>
@@ -309,7 +310,7 @@ export default function ChatScreen() {
       >
         <Pressable
           style={styles.attachBtn}
-          onPress={() => Alert.alert('Attachments', 'File sharing will be available later.')}
+          onPress={() => showAlert({ title: 'Attachments', subtitle: 'File sharing will be available later.', severity: 'info' })}
         >
           <ThemedIcon name="plus" size={24} colorName="textMuted" />
         </Pressable>

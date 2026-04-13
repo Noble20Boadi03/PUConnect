@@ -58,7 +58,8 @@ Legend: `[ ]` = TODO · `[/]` = In Progress · `[x]` = Done
 
 > [!NOTE]
 > **Scope:** Development is currently focused exclusively on the **`mobile/`** directory. All updates must respect and build upon the existing implementation patterns and logical foundations already established in the codebase.
-
+[!NOTE]
+>Checklist items might not be up to date with latest screen implementation.
 ---
 
 

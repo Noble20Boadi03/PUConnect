@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, ActivityIndicator, RefreshControl, ScrollView, Pressable, TextInput, Alert } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, RefreshControl, ScrollView, Pressable, TextInput } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
@@ -14,6 +14,7 @@ import { ServiceCard } from '@/components/service-card';
 import { useHomeViewModel } from '@/hooks/view-models/use-home-view-model';
 import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
 import { useAuth } from '@/context/auth-context';
+import { useAppAlert } from '@/context/alert-context';
 
 interface SectionHeaderProps {
   title: string;
@@ -36,6 +37,7 @@ const SectionHeader = ({ title, onSeeAll, horizontalPadding }: SectionHeaderProp
 
 const PromotionBanner = ({ horizontalPadding }: { horizontalPadding: { paddingLeft: number; paddingRight: number } }) => {
   const { theme } = useTheme();
+  const { showAlert } = useAppAlert();
   return (
     <View style={{ ...horizontalPadding, marginVertical: Spacing.xl }}>
       <LinearGradient
@@ -53,7 +55,7 @@ const PromotionBanner = ({ horizontalPadding }: { horizontalPadding: { paddingLe
           </ThemedText>
           <Pressable
             onPress={() =>
-              Alert.alert('Invite friends', 'Referral rewards will be available in a future update.', [{ text: 'OK' }])
+              showAlert({ title: 'Invite friends', subtitle: 'Referral rewards will be available in a future update.', severity: 'info' })
             }
             style={[styles.promoBtn, { backgroundColor: theme.background }]}
           >

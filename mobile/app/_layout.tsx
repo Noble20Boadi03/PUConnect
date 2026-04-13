@@ -9,6 +9,7 @@ import * as SystemUI from 'expo-system-ui';
 
 import { AuthProvider } from '@/context/auth-context';
 import { ThemeProvider, useTheme } from '@/context/theme-context';
+import { AppAlertProvider } from '@/context/alert-context';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export const unstable_settings = {
@@ -69,7 +70,9 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AuthProvider>
         <ThemeProvider>
-          <RootLayoutContent />
+          <AppAlertProvider>
+            <RootLayoutContent />
+          </AppAlertProvider>
         </ThemeProvider>
       </AuthProvider>
     </SafeAreaProvider>

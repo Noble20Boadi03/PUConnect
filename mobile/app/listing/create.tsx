@@ -6,7 +6,6 @@ import {
   Pressable,
   TextInput,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -15,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/auth-context';
 import { api } from '@/services/api';
 import { ThemedText } from '@/components/themed-text';
+import { useAppAlert } from '@/context/alert-context';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { PrimaryButton } from '@/components/ui/primary-button';
@@ -32,6 +32,7 @@ export default function CreateListingScreen() {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const { token, user } = useAuth();
+  const { showAlert } = useAppAlert();
   const canOffer = user?.canOfferServices === true;
   const { contentPaddingLeft, contentPaddingRight } = useResponsive();
   const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
@@ -53,16 +54,21 @@ export default function CreateListingScreen() {
       setPrice(String(listing.price ?? listing.budget ?? ''));
       const offerNeedsProvider = listing.type === 'service_offer' && user?.canOfferServices !== true;
       if (offerNeedsProvider) {
-        Alert.alert(
-          'Provider status required',
-          'This listing is a service offer. Complete your provider profile to keep editing it as an offer.'
-        );
+        showAlert({
+          title: 'Provider status required',
+          subtitle: 'This listing is a service offer. Complete your provider profile to keep editing it as an offer.',
+          severity: 'warning'
+        });
       }
       setListingType(offerNeedsProvider ? 'service_request' : listing.type);
       setCategoryTitle(listing.category);
     } catch {
-      Alert.alert('Error', 'Could not load listing.');
-      router.back();
+      showAlert({
+        title: 'Error',
+        subtitle: 'Could not load listing.',
+        severity: 'error',
+        onPrimaryPress: () => router.back()
+      });
     } finally {
       setLoading(false);
     }
@@ -80,25 +86,31 @@ export default function CreateListingScreen() {
 
   const onSubmit = async () => {
     if (!token) {
-      Alert.alert('Sign in required', 'Please sign in to post a listing.');
-      router.push('/login');
+      showAlert({
+        title: 'Sign in required',
+        subtitle: 'Please sign in to post a listing.',
+        severity: 'warning',
+        primaryButtonTitle: 'Sign in',
+        onPrimaryPress: () => router.push('/login')
+      });
       return;
     }
     if (listingType === 'service_offer' && !canOffer) {
-      Alert.alert(
-        'Provider upgrade required',
-        'Complete your professional profile (skills and campus details) to post a service offer, or post a request for help instead.',
-        [
-          { text: 'Post a request', onPress: () => setListingType('service_request') },
-          { text: 'Upgrade profile', onPress: () => router.push('/(tabs)/onboarding') },
-        ]
-      );
+      showAlert({
+        title: 'Provider upgrade required',
+        subtitle: 'Complete your professional profile (skills and campus details) to post a service offer, or post a request for help instead.',
+        severity: 'info',
+        primaryButtonTitle: 'Post a request',
+        onPrimaryPress: () => setListingType('service_request'),
+        secondaryButtonTitle: 'Upgrade profile',
+        onSecondaryPress: () => router.push('/(tabs)/onboarding')
+      });
       return;
     }
 
     const p = parseFloat(price.replace(/,/g, ''));
     if (!title.trim() || !description.trim() || Number.isNaN(p) || p < 0) {
-      Alert.alert('Validation', 'Please enter title, description, and a valid price.');
+      showAlert({ title: 'Validation', subtitle: 'Please enter title, description, and a valid price.', severity: 'warning' });
       return;
     }
     const cat = CAMPUS_CATEGORIES.find((c) => c.title === categoryTitle) ?? CAMPUS_CATEGORIES[0];
@@ -121,9 +133,12 @@ export default function CreateListingScreen() {
           },
           token
         );
-        Alert.alert('Saved', 'Your listing was updated.', [
-          { text: 'OK', onPress: () => router.replace('/profile/my-listings') },
-        ]);
+        showAlert({
+          title: 'Saved',
+          subtitle: 'Your listing was updated.',
+          severity: 'success',
+          onPrimaryPress: () => router.replace('/profile/my-listings')
+        });
       } else {
         await api.createListing(
           {
@@ -138,12 +153,15 @@ export default function CreateListingScreen() {
           },
           token
         );
-        Alert.alert('Published', 'Your listing is live.', [
-          { text: 'OK', onPress: () => router.replace('/profile/my-listings') },
-        ]);
+        showAlert({
+          title: 'Published',
+          subtitle: 'Your listing is live.',
+          severity: 'success',
+          onPrimaryPress: () => router.replace('/profile/my-listings')
+        });
       }
     } catch (e: any) {
-      Alert.alert('Error', e?.message ?? 'Something went wrong.');
+      showAlert({ title: 'Error', subtitle: e?.message ?? 'Something went wrong.', severity: 'error' });
     } finally {
       setSubmitting(false);
     }

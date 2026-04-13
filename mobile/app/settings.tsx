@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, ScrollView, Pressable, Switch, Alert, Platform } from 'react-native';
+import { StyleSheet, View, ScrollView, Pressable, Switch, Platform } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
@@ -8,10 +8,12 @@ import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
+import { useAppAlert } from '@/context/alert-context';
 import { useResponsive } from '@/hooks/use-responsive';
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { showAlert } = useAppAlert();
   const insets = useSafeAreaInsets();
   const { theme, isDark, setMode } = useTheme();
   const { contentPaddingLeft, contentPaddingRight } = useResponsive();
@@ -66,11 +68,11 @@ export default function SettingsScreen() {
         </ThemedText>
         <Pressable
           onPress={() =>
-            Alert.alert(
-              'Password reset',
-              'If this were production, we would email a reset link to your university address.',
-              [{ text: 'OK' }]
-            )
+            showAlert({
+              title: 'Password reset',
+              subtitle: 'If this were production, we would email a reset link to your university address.',
+              severity: 'info'
+            })
           }
         >
           <ThemedView style={[styles.row, { borderColor: theme.outlineVariant, backgroundColor: theme.surface }]}>

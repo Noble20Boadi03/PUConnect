@@ -91,8 +91,17 @@ export default function LandingScreen() {
     }
   };
 
+  const isNavigating = useRef(false);
+
   const handleGetStarted = () => {
-    router.replace({ pathname: "/login" });
+    if (isNavigating.current) return;
+    isNavigating.current = true;
+    router.push({ pathname: "/login" });
+    
+    // Re-enable after a short delay so back-navigation works normally later
+    setTimeout(() => {
+        isNavigating.current = false;
+    }, 500);
   };
 
   if (showSplash) {

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View, FlatList, Pressable, ActivityIndicator, Alert, RefreshControl } from 'react-native';
+import { StyleSheet, View, FlatList, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
@@ -12,6 +12,7 @@ import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
+import { useAppAlert } from '@/context/alert-context';
 import { useResponsive } from '@/hooks/use-responsive';
 
 export default function MyListingsScreen() {
@@ -19,6 +20,7 @@ export default function MyListingsScreen() {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const { token, user } = useAuth();
+  const { showAlert } = useAppAlert();
   const { contentPaddingLeft, contentPaddingRight } = useResponsive();
   const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
 
@@ -51,7 +53,7 @@ export default function MyListingsScreen() {
       const data = await api.getListingsByOwner(user.id);
       setListings(data.filter((l) => l.isActive));
     } catch {
-      Alert.alert('Error', 'Could not load your listings.');
+      showAlert({ title: 'Error', subtitle: 'Could not load your listings.', severity: 'error' });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -71,22 +73,25 @@ export default function MyListingsScreen() {
   };
 
   const confirmDelete = (item: Listing) => {
-    Alert.alert('Remove listing', 'This will hide your post from the marketplace.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: async () => {
-          if (!token) return;
-          try {
-            await api.deleteListing(item.id, token);
-            load();
-          } catch (e: any) {
-            Alert.alert('Error', e?.message ?? 'Could not remove listing.');
-          }
-        },
+    showAlert({
+      title: 'Remove listing',
+      subtitle: 'This will hide your post from the marketplace.',
+      severity: 'warning',
+      primaryButtonTitle: 'Remove',
+      onPrimaryPress: async () => {
+        if (!token) return;
+        try {
+          await api.deleteListing(item.id, token);
+          load();
+        } catch (e: any) {
+          // A tiny timeout avoids state collisions with two modals stacking concurrently instantly
+          setTimeout(() => {
+              showAlert({ title: 'Error', subtitle: e?.message ?? 'Could not remove listing.', severity: 'error' });
+          }, 500);
+        }
       },
-    ]);
+      secondaryButtonTitle: 'Cancel'
+    });
   };
 
   if (!token) {

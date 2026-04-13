@@ -4,7 +4,6 @@ import {
   View,
   TextInput,
   Pressable,
-  Alert,
   Switch,
   ActivityIndicator,
   Image,
@@ -15,6 +14,7 @@ import { ThemedIcon } from "@/components/ui/themed-icon";
 import { ScreenLayout } from "@/components/ui/screen-layout";
 import { useTheme } from "@/context/theme-context";
 import { useAuth } from "@/context/auth-context";
+import { useAppAlert } from "@/context/alert-context";
 import { api } from "@/services/api";
 import * as ImagePicker from 'expo-image-picker';
 import { Spacing, BorderRadius } from "@/constants/theme";
@@ -37,6 +37,7 @@ const POPULAR_SKILLS = [
 export default function OnboardingScreen() {
   const { user, token, refreshUser } = useAuth();
   const { theme } = useTheme();
+  const { showAlert } = useAppAlert();
   const router = useRouter();
 
   const [profilePictureUrl, setProfilePictureUrl] = useState(
@@ -127,15 +128,16 @@ export default function OnboardingScreen() {
         await refreshUser();
       }
 
-      Alert.alert("Success", "Profile updated successfully!", [
-        {
-          text: "View Profile",
-          onPress: () => router.replace({ pathname: "/(tabs)/profile" }),
-        },
-      ]);
+      showAlert({
+        title: "Success",
+        subtitle: "Profile updated successfully!",
+        severity: "success",
+        primaryButtonTitle: "View Profile",
+        onPrimaryPress: () => router.replace({ pathname: "/(tabs)/profile" })
+      });
     } catch (error) {
       console.error("Update profile error:", error);
-      Alert.alert("Error", "Failed to update profile.");
+      showAlert({ title: "Error", subtitle: "Failed to update profile.", severity: "error" });
     } finally {
       setIsSubmitting(false);
     }

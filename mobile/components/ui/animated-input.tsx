@@ -7,8 +7,8 @@ import { useTheme } from "@/context/theme-context";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 interface AnimatedInputProps extends TextInputProps {
-    label: string;
-    iconName: IconName;
+    label?: string;
+    iconName?: IconName;
     delay?: number;
     marginTop?: number;
     isPassword?: boolean;
@@ -36,9 +36,9 @@ export function AnimatedInput({
 
     return (
         <Animated.View entering={FadeInDown.delay(delay).duration(800)} style={{ marginTop }}>
-            <ThemedText variant="labelLarge" style={styles.inputLabel}>{label}</ThemedText>
+            {label && <ThemedText variant="labelLarge" style={styles.inputLabel}>{label}</ThemedText>}
             <Animated.View style={[styles.inputContainer, animatedStyle]}>
-                <ThemedIcon name={iconName} size={20} colorName="textMuted" style={styles.inputIcon} />
+                {iconName && <ThemedIcon name={iconName} size={20} colorName="textMuted" style={styles.inputIcon} />}
                 <TextInput
                     style={[styles.input, { color: theme.text }]}
                     placeholderTextColor={theme.textMuted}

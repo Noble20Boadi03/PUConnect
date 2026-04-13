@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Pressable, Alert, ActivityIndicator, Image, ScrollView } from 'react-native';
+import { StyleSheet, View, Pressable, ActivityIndicator, Image, ScrollView } from 'react-native';
 import { Link, router } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -14,12 +14,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useResponsive } from '@/hooks/use-responsive';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useProfileViewModel } from '@/hooks/view-models/use-profile-view-model';
+import { useAppAlert } from '@/context/alert-context';
 import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
 
 export default function ProfileScreen() {
     const { uiState, handleLogin, handleLogout } = useProfileViewModel();
     const { theme, isDark, setMode } = useTheme();
     const insets = useSafeAreaInsets();
+    const { showAlert } = useAppAlert();
     const { spacingMultiplier, contentPaddingLeft, contentPaddingRight } = useResponsive();
     const tabBarHeight = useTabBarHeight();
     const [email, setEmail] = useState('');
@@ -34,7 +36,7 @@ export default function ProfileScreen() {
         try {
             await handleLogin(email, password);
         } catch (error) {
-            Alert.alert('Login Failed', 'Invalid credentials or server error');
+            showAlert({ title: 'Login Failed', subtitle: 'Invalid credentials or server error', severity: 'error' });
         } finally {
             setIsLoggingIn(false);
         }
@@ -118,11 +120,11 @@ export default function ProfileScreen() {
                             <Animated.View entering={FadeInDown.delay(600).duration(800)}>
                                 <Pressable
                                     onPress={() =>
-                                        Alert.alert(
-                                            'Password reset',
-                                            'If your school email is on file, you will receive reset instructions (demo).',
-                                            [{ text: 'OK' }]
-                                        )
+                                        showAlert({
+                                            title: 'Password reset',
+                                            subtitle: 'If your school email is on file, you will receive reset instructions (demo).',
+                                            severity: 'info'
+                                        })
                                     }
                                 >
                                     <ThemedText variant="labelLarge" colorName="primary" align="center" style={styles.forgotPass}>

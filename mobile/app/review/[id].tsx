@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, TextInput, Pressable, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, View, TextInput, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/auth-context';
@@ -10,6 +10,7 @@ import { PrimaryButton } from '@/components/ui/primary-button';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
+import { useAppAlert } from '@/context/alert-context';
 import { useResponsive } from '@/hooks/use-responsive';
 
 const STARS = [1, 2, 3, 4, 5];
@@ -20,6 +21,7 @@ export default function ReviewScreen() {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const { token } = useAuth();
+  const { showAlert } = useAppAlert();
   const { contentPaddingLeft, contentPaddingRight } = useResponsive();
   const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
 
@@ -31,11 +33,11 @@ export default function ReviewScreen() {
 
   const submit = async () => {
     if (!token || !listingId || !peerId) {
-      Alert.alert('Missing data', 'Cannot submit review.');
+      showAlert({ title: 'Missing data', subtitle: 'Cannot submit review.', severity: 'error' });
       return;
     }
     if (!comment.trim()) {
-      Alert.alert('Add a comment', 'Tell others about your experience.');
+      showAlert({ title: 'Add a comment', subtitle: 'Tell others about your experience.', severity: 'warning' });
       return;
     }
     setSubmitting(true);
@@ -44,11 +46,15 @@ export default function ReviewScreen() {
         { listingId: listingId as string, targetUserId: peerId, rating, comment: comment.trim() },
         token
       );
-      Alert.alert('Thank you', 'Your review was submitted.', [
-        { text: 'Done', onPress: () => router.replace('/(tabs)/home') },
-      ]);
+      showAlert({
+        title: 'Thank you',
+        subtitle: 'Your review was submitted.',
+        severity: 'success',
+        primaryButtonTitle: 'Done',
+        onPrimaryPress: () => router.replace('/(tabs)/home')
+      });
     } catch (e: any) {
-      Alert.alert('Error', e?.message ?? 'Could not submit review.');
+      showAlert({ title: 'Error', subtitle: e?.message ?? 'Could not submit review.', severity: 'error' });
     } finally {
       setSubmitting(false);
     }

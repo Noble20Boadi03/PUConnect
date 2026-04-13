@@ -26,6 +26,8 @@ export interface ScreenLayoutProps extends ViewProps {
   keyboardAvoiding?: boolean;
   /** Background color token */
   colorName?: keyof typeof Colors.light;
+  /** Pass true to forcefully omit root color fills */
+  transparent?: boolean;
   /** Content container style */
   contentContainerStyle?: any;
 }
@@ -40,6 +42,7 @@ export function ScreenLayout({
   scrollViewProps,
   keyboardAvoiding = false,
   colorName = 'background',
+  transparent = false,
   style,
   contentContainerStyle,
   ...props
@@ -129,7 +132,14 @@ export function ScreenLayout({
   }
 
   return (
-    <ThemedView style={[styles.container, !scrollable && !isConstrained ? style : undefined]} colorName={colorName}>
+    <ThemedView 
+      style={[
+        styles.container, 
+        !scrollable && !isConstrained ? style : undefined,
+        transparent ? { backgroundColor: 'transparent' } : undefined
+      ]} 
+      colorName={transparent ? undefined : colorName}
+    >
       {Content}
     </ThemedView>
   );
