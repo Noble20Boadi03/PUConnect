@@ -43,6 +43,117 @@ The platform facilitates the exchange of services and talent between students, e
 
 ---
 
+## 4.1 Requirement Journeys (Plan Layer)
+This section defines user-facing journey flows for delivery planning. It is separate from the screen QA checklist and focuses on end-to-end outcomes.
+### 1) Requirement: Join and access account
+- **Primary actor:** Standard User
+- **Entry page:** `Landing` or `Login`
+- **Page-to-page flow:**
+  1. `Landing` -> `Login`
+  2. `Login` -> `Register` (optional path)
+  3. `Register` -> `Login`
+  4. `Login` -> `Home / Market`
+- **What the user does:**
+  - Starts from landing, then signs in or creates an account.
+  - Completes registration when needed and returns to login.
+  - Signs in and reaches the main marketplace feed.
+- **Success criteria:** User reaches the authenticated home experience.
+- **Fallback path:** `Login` -> `Forgot Password` -> `Login`.
+
+### 2) Requirement: Discover opportunities
+- **Primary actor:** Standard User
+- **Entry page:** `Home / Market`
+- **Page-to-page flow:**
+  1. `Home / Market` (Services tab) -> provider service ad cards -> `Listing Detail`
+  2. `Home / Market` -> `Search / Categories` -> `Category Detail` -> `Subcategory Listings` (provider profile list) -> `Public Profile`
+  3. `Home / Market` (Gigs/Requests tab for providers) -> seeker need-help post -> `Listing Detail`
+- **What the user does:**
+   - As a seeker, discovers providers from service ads on home or from provider profile lists in subcategories.
+  - As a provider, toggles to gigs/requests on home to discover seeker demand.
+  - Opens listing/profile details to validate fit before deciding to start conversation.
+- **Success criteria:** User finds a relevant provider profile or service/request listing in their target field.
+- **Fallback path:** User switches tabs, categories, or subcategories and retries discovery.
+
+
+### 3) Requirement: Start collaboration
+- **Primary actor:** Standard User (Seeker or Provider)
+- **Entry page:** `Listing Detail` or `Public Profile`
+- **Page-to-page flow:**
+ 1. Seeker path A: `Subcategory Listings` (provider profile list) -> `Public Profile` -> `Chat`
+  2. Seeker path B: `Home / Market` provider service ad -> `Listing Detail` -> `Chat with Provider of this service` -> `Chat`
+  3. Provider path: `Home / Market` (Gigs/Requests tab) -> seeker request `Listing Detail` -> `Chat with User` -> `Chat`
+  4. `Chat` -> ongoing negotiation and service coordination
+- **What the user does:**
+  - Seeker starts chat either from provider public profile or from provider service listing detail.
+  - Provider starts chat from seeker request detail after reviewing the need-help post.
+  - Both sides agree on scope, terms, timeline, and delivery details in chat.
+- **Success criteria:** A clear active service conversation is established.
+- **Fallback path:** User exits chat and returns to discovery paths.
+
+### 4) Requirement: Publish and manage marketplace participation
+- **Primary actor:** Standard User
+- **Entry page:** `Profile`
+- **Page-to-page flow:**
+  1. `Profile` -> `Create Listing`
+  2. `Create Listing` -> `My Listings`
+  3. `My Listings` -> `Create Listing` (edit path)
+  4. `My Listings` -> `Listing Detail` (verification path)
+- **What the user does:**
+  - Creates new request/offer listings.
+  - Reviews own listings and edits/removes existing entries.
+  - Verifies listing output from public listing views.
+- **Success criteria:** User can reliably create, update, and maintain active listings.
+- **Fallback path:** User cancels editing and returns to `My Listings` with no changes.
+
+### 5) Requirement: Build provider profile
+- **Primary actor:** Standard User upgrading capability
+- **Entry page:** `Profile`
+- **Page-to-page flow:**
+  1. `Profile` -> `Onboarding / Professional Setup`
+  2. `Onboarding / Professional Setup` -> `Profile` (updated state)
+  3. `Profile` -> `Public Profile` (validation path)
+- **What the user does:**
+  - Adds professional bio, skills, availability, and links.
+  - Saves profile improvements and confirms how public identity is presented.
+- **Success criteria:** Provider-relevant profile data is complete and visible.
+- **Fallback path:** User defers completion and returns later to onboarding.
+
+### 6) Requirement: Complete service and review
+- **Primary actor:** Standard User (both sides)
+- **Entry page:** `Chat`
+- **Page-to-page flow:**
+  1. `Chat` -> completion agreement between participants
+  2. `Chat` -> `Review`
+  3. `Review` -> `Home / Market` or `Public Profile`
+- **What the user does:**
+  - Confirms work completion in the chat context.
+  - Leaves a rating/comment to capture service quality.
+- **Success criteria:** Service closes with a review opportunity and reputation signal.
+- **Fallback path:** If completion is disputed, users continue coordination in `Chat`.
+
+### 7) Requirement: Personalize settings and session
+- **Primary actor:** Standard User
+- **Entry page:** `Profile` or `Home / Market`
+- **Page-to-page flow:**
+  1. `Profile`/`Home / Market` -> `Settings`
+  2. `Settings` -> theme/preferences updates
+  3. `Settings` -> logout action -> `Landing`
+- **What the user does:**
+  - Manages app preferences like appearance and notifications.
+  - Ends session when required and returns to entry experience.
+- **Success criteria:** User can control preferences and session lifecycle from one place.
+- **Fallback path:** User exits settings without applying changes.
+
+### End-to-end macro journey
+1. User accesses account and reaches `Home / Market`.
+2. Seeker discovers providers via home service ads or category/subcategory provider profile lists.
+3. Provider discovers seeker demand via `Home / Market` gigs/requests tab.
+4. User opens `Listing Detail` or `Public Profile` and initiates chat from role-specific CTA.
+5. User manages own listings and profile maturity from `Profile`.
+6. Service is completed and reviewed.
+7. User manages preferences and session in `Settings`.
+---
+
 ## 5. Mobile (Android) — Screen QA Checklist
 
 > **Already addressed (But can be verified and improved):** Layout, Theming, State Management, Navigation.
