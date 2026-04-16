@@ -3,7 +3,6 @@ import {
   StyleSheet,
   View,
   FlatList,
-  TextInput,
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
@@ -12,14 +11,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '@/services/api';
 import { Listing } from '@/types';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { ScreenHeader } from '@/components/ui/screen-header';
-import { Spacing, BorderRadius } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
 import { useResponsive } from '@/hooks/use-responsive';
 import { ListingCard } from '@/components/listing-card';
+import { SearchBar } from '@/components/ui/search-bar';
 
 export default function SearchResultsScreen() {
   const router = useRouter();
@@ -87,21 +86,12 @@ export default function SearchResultsScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <ScreenHeader 
         title={
-          <ThemedView
-            colorName="surfaceVariant"
-            style={[styles.searchBox, { borderColor: theme.outlineVariant }]}
-          >
-            <ThemedIcon name="magnify" size={20} colorName="textMuted" />
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              onSubmitEditing={onSubmit}
-              returnKeyType="search"
-              placeholder="Search services"
-              placeholderTextColor={theme.textMuted}
-              style={[styles.searchInput, { color: theme.text }]}
-            />
-          </ThemedView>
+          <SearchBar
+            value={query}
+            onChangeText={setQuery}
+            onSubmit={onSubmit}
+            placeholder="Search services"
+          />
         }
       />
 
@@ -164,20 +154,7 @@ export default function SearchResultsScreen() {
 
 const styles = StyleSheet.create({
 
-  searchBox: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    height: 48,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: Spacing.sm,
-    fontSize: 16,
-  },
+
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   list: { paddingTop: Spacing.sm },
   emptyList: { flexGrow: 1, justifyContent: 'center' },

@@ -15,7 +15,6 @@ interface ListingCardProps {
 
 export function ListingCard({ listing, width, onPress }: ListingCardProps) {
 
-
     const getBadgeColors = () => {
         switch (listing.type) {
             case 'service_offer':

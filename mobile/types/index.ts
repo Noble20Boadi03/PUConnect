@@ -67,6 +67,8 @@ export interface ChatMessage {
   listingId: string;
   message: string;
   isRead: boolean;
+  senderName?: string;
+  senderAvatar?: string;
   createdAt: string;
   updatedAt: string;
 }

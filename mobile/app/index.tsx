@@ -97,8 +97,6 @@ export default function LandingScreen() {
     if (isNavigating.current) return;
     isNavigating.current = true;
     router.push({ pathname: "/login" });
-    
-    // Re-enable after a short delay so back-navigation works normally later
     setTimeout(() => {
         isNavigating.current = false;
     }, 500);
@@ -296,12 +294,6 @@ const styles = StyleSheet.create({
   },
   splashLogo: {
     height: 100,
-  },
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
   },
   header: {
     flexDirection: "row",

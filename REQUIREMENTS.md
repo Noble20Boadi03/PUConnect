@@ -241,20 +241,20 @@ Both are nearly identical pill-shaped search inputs with magnify icon.
 
 | ID | Issue | Severity | Files Affected |
 |---|---|---|---|
-| A | Duplicate login form | 🔴 High | `login.tsx`, `profile.tsx` |
-| B | Duplicate logout action | 🟡 Medium | `profile.tsx`, `settings.tsx` |
-| C | Triple theme toggle | 🟡 Medium | `index.tsx`, `profile.tsx`, `settings.tsx` |
-| D | Duplicate header layout | 🟡 Medium | 7+ screens |
-| E | `horizontalPadding` boilerplate | 🟢 Low | All screens |
-| F | Duplicate `centered` style | 🟢 Low | 7 files |
-| G | Duplicate `cardWidth` calc | 🟢 Low | 3 files |
-| H | Dead styles and imports | 🟢 Low | `index.tsx`, `home.tsx`, `settings.tsx` |
-| I | Overlapping password reset | 🟡 Medium | `login.tsx`, `profile.tsx`, `settings.tsx` |
-| J | Hardcoded peer names | 🟡 Medium | `messages.tsx` |
-| K | Non-persistent notification toggles | 🟢 Low | `settings.tsx` |
-| L | Duplicate search bar | 🟢 Low | `home.tsx`, `search/results.tsx` |
-| M | Dead `explore.tsx` scaffolding | 🟢 Low | `explore.tsx` |
-| N | Dead `modal.tsx` scaffolding | 🟢 Low | `modal.tsx` |
+| A | Duplicate login form | 🔴 High | `login.tsx`, `profile.tsx` | [x] |
+| B | Duplicate logout action | 🟡 Medium | `profile.tsx`, `settings.tsx` | [x] |
+| C | Triple theme toggle | 🟡 Medium | `index.tsx`, `profile.tsx`, `settings.tsx` | [x] |
+| D | Duplicate header layout | 🟡 Medium | 7+ screens | [x] |
+| E | `horizontalPadding` boilerplate | 🟢 Low | All screens | [x] |
+| F | Duplicate `centered` style | 🟢 Low | 7 files | [x] |
+| G | Duplicate `cardWidth` calc | 🟢 Low | 3 files | [x] |
+| H | Dead styles and imports | 🟢 Low | `index.tsx`, `home.tsx`, `settings.tsx` | [x] |
+| I | Overlapping password reset | 🟡 Medium | `login.tsx`, `profile.tsx`, `settings.tsx` | [x] |
+| J | Hardcoded peer names | 🟡 Medium | `messages.tsx` | [x] |
+| K | Non-persistent notification toggles | 🟢 Low | `settings.tsx` | [x] |
+| L | Duplicate search bar | 🟢 Low | `home.tsx`, `search/results.tsx` | [x] |
+| M | Dead `explore.tsx` scaffolding | 🟢 Low | `explore.tsx` | [x] |
+| N | Dead `modal.tsx` scaffolding | 🟢 Low | `modal.tsx` | [x] |
 
 ---
 

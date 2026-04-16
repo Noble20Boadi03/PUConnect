@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, FlatList, View, ActivityIndicator, Pressable, RefreshControl } from 'react-native';
+import { StyleSheet, FlatList, View, ActivityIndicator, Pressable, RefreshControl, Image } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
@@ -120,7 +120,11 @@ export default function MessagesScreen() {
                         }
                     >
                         <ThemedView colorName="primaryContainer" style={styles.avatar}>
-                            <ThemedIcon name="account" size={24} colorName="onPrimaryContainer" />
+                            {item.senderAvatar ? (
+                                <Image source={{ uri: item.senderAvatar }} style={styles.avatarImage} />
+                            ) : (
+                                <ThemedIcon name="account" size={24} colorName="onPrimaryContainer" />
+                            )}
                             {!item.isRead && item.senderId !== user?.id && (
                                 <View style={[styles.unreadDot, { backgroundColor: theme.primary, borderColor: theme.background }]} />
                             )}
@@ -128,7 +132,7 @@ export default function MessagesScreen() {
 
                         <View style={[styles.chatContent, { borderBottomColor: theme.outlineVariant }]}>
                             <View style={styles.chatHeader}>
-                                <ThemedText variant="titleMedium">Campus Member {item.senderId.slice(0, 4)}</ThemedText>
+                                <ThemedText variant="titleMedium">{item.senderName || `Campus Member ${item.senderId.slice(0, 4)}`}</ThemedText>
                                 <ThemedText variant="labelSmall" colorName="textMuted">
                                     {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </ThemedText>
@@ -181,6 +185,12 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         position: 'relative',
+        overflow: 'hidden',
+    },
+    avatarImage: {
+        width: '100%',
+        height: '100%',
+        borderRadius: BorderRadius.full,
     },
     unreadDot: {
         position: 'absolute',

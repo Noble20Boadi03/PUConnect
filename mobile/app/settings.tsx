@@ -9,22 +9,20 @@ import { ScreenLayout } from '@/components/ui/screen-layout';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
-import { useAppAlert } from '@/context/alert-context';
 import { useResponsive } from '@/hooks/use-responsive';
+import { PasswordResetModal } from '@/components/ui/password-reset-modal';
 
 import { useAuth } from '@/context/auth-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { signOut } = useAuth();
-  const { showAlert } = useAppAlert();
+  const { signOut, user } = useAuth();
   const insets = useSafeAreaInsets();
   const { theme, isDark, setMode } = useTheme();
   const { horizontalPadding } = useResponsive();
 
-  const [pushEnabled, setPushEnabled] = useState(true);
-  const [emailDigest, setEmailDigest] = useState(false);
+  const [isResetModalVisible, setIsResetModalVisible] = useState(false);
 
   return (
     <ScreenLayout padding="none" withSafeArea={false}>
@@ -54,28 +52,7 @@ export default function SettingsScreen() {
           </ThemedView>
         </View>
 
-        <View style={styles.section}>
-          <ThemedText variant="labelLarge" colorName="textMuted" style={styles.sectionLabel}>
-            NOTIFICATIONS (DEMO)
-          </ThemedText>
-          <ThemedView style={[styles.groupedMenu, { backgroundColor: theme.surface, borderColor: theme.outlineVariant }]}>
-            <View style={styles.menuItem}>
-              <View style={[styles.iconBox, { backgroundColor: theme.secondaryContainer }]}>
-                <ThemedIcon name="bell-outline" size={20} colorName="onSecondaryContainer" />
-              </View>
-              <ThemedText variant="titleMedium" style={styles.menuText}>Push Notifications</ThemedText>
-              <Switch value={pushEnabled} onValueChange={setPushEnabled} trackColor={{ false: theme.outlineVariant, true: theme.primary }} />
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.menuItem}>
-              <View style={[styles.iconBox, { backgroundColor: theme.secondaryContainer }]}>
-                <ThemedIcon name="email-outline" size={20} colorName="onSecondaryContainer" />
-              </View>
-              <ThemedText variant="titleMedium" style={styles.menuText}>Weekly Digest</ThemedText>
-              <Switch value={emailDigest} onValueChange={setEmailDigest} trackColor={{ false: theme.outlineVariant, true: theme.primary }} />
-            </View>
-          </ThemedView>
-        </View>
+
 
         <View style={styles.section}>
           <ThemedText variant="labelLarge" colorName="textMuted" style={styles.sectionLabel}>
@@ -83,13 +60,7 @@ export default function SettingsScreen() {
           </ThemedText>
           <ThemedView style={[styles.groupedMenu, { backgroundColor: theme.surface, borderColor: theme.outlineVariant }]}>
             <Pressable
-              onPress={() =>
-                showAlert({
-                  title: 'Password reset',
-                  subtitle: 'If this were production, we would email a reset link to your university address.',
-                  severity: 'info'
-                })
-              }
+              onPress={() => setIsResetModalVisible(true)}
               style={styles.menuItem}
             >
               <View style={[styles.iconBox, { backgroundColor: theme.surfaceVariant }]}>
@@ -117,6 +88,11 @@ export default function SettingsScreen() {
            </ThemedText>
         </Animated.View>
       </ScrollView>
+      <PasswordResetModal
+        isVisible={isResetModalVisible}
+        onClose={() => setIsResetModalVisible(false)}
+        initialEmail={user?.email}
+      />
     </ScreenLayout>
   );
 }

@@ -54,29 +54,39 @@ export default function ChatScreen() {
   const [lifecycle, setLifecycle] = useState<ConversationLifecycle>('open');
   const [loadingPeer, setLoadingPeer] = useState(true);
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      timestamp: 'Today',
-      text: '',
-      senderId: 'time-separator',
-      type: 'text',
-    },
-    {
-      id: '2',
-      text: 'Hi! Thanks for reaching out about this listing.',
-      senderId: 'peer',
-      timestamp: '',
-      type: 'text',
-    },
-    {
-      id: '3',
-      text: 'Let me know if you have any questions.',
-      senderId: 'peer',
-      timestamp: '',
-      type: 'text',
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!id || !token) return;
+      try {
+        const data = await api.getConversation(token, id as string, listingId as string | undefined);
+        if (!cancelled) {
+          const mappedMessages: Message[] = data.map(m => ({
+            id: m.id,
+            text: m.message,
+            senderId: m.senderId,
+            timestamp: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            type: 'text'
+          }));
+          
+          // Add a time separator if there are messages
+          if (mappedMessages.length > 0) {
+            setMessages([
+              { id: 'time-sep', text: '', senderId: 'time-separator', timestamp: 'Today', type: 'text' },
+              ...mappedMessages
+            ]);
+          } else {
+            setMessages([]);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch messages:", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [id, token, listingId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -155,17 +165,26 @@ export default function ChatScreen() {
       <ScreenHeader
         title={
           <View style={styles.headerInfo}>
-            {loadingPeer ? (
+             {loadingPeer ? (
               <ActivityIndicator size="small" color={theme.primary} />
             ) : (
-              <>
-                <ThemedText variant="titleMedium" style={styles.headerName}>
-                  {peerLabel}
-                </ThemedText>
-                <ThemedText variant="labelSmall" colorName="textMuted" numberOfLines={1}>
-                  {peerSubtitle}
-                </ThemedText>
-              </>
+              <View style={styles.headerInfoInner}>
+                {peer?.profilePictureUrl ? (
+                  <Image source={{ uri: peer.profilePictureUrl }} style={styles.headerAvatar} />
+                ) : (
+                  <View style={[styles.headerAvatarPlaceholder, { backgroundColor: theme.surfaceVariant }]}>
+                    <ThemedIcon name="account" size={16} colorName="primary" />
+                  </View>
+                )}
+                <View>
+                  <ThemedText variant="titleMedium" style={styles.headerName}>
+                    {peerLabel}
+                  </ThemedText>
+                  <ThemedText variant="labelSmall" colorName="textMuted" numberOfLines={1}>
+                    {peerSubtitle}
+                  </ThemedText>
+                </View>
+              </View>
             )}
           </View>
         }
@@ -284,7 +303,7 @@ export default function ChatScreen() {
                 <View style={styles.avatar}>
                   <Image
                     source={{
-                      uri: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop',
+                      uri: peer?.profilePictureUrl || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop',
                     }}
                     style={styles.avatarImg}
                   />
@@ -353,7 +372,25 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   headerInfo: {
     flex: 1,
+    justifyContent: 'center',
+  },
+  headerInfoInner: {
+    flexDirection: 'row',
     alignItems: 'center',
+  },
+  headerAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    marginRight: Spacing.sm,
+  },
+  headerAvatarPlaceholder: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: Spacing.sm,
   },
   headerName: {
     fontSize: 18,

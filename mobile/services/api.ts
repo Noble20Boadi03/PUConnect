@@ -255,6 +255,8 @@ const MOCK_MESSAGES: ChatMessage[] = [
     {
         id: 'msg-001',
         senderId: 'user-002',
+        senderName: 'Alex Rivera',
+        senderAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
         receiverId: 'mock-user-001',
         listingId: 'listing-001',
         message: 'Hey! I saw your listing. Can you do a logo for my startup?',
@@ -265,6 +267,8 @@ const MOCK_MESSAGES: ChatMessage[] = [
     {
         id: 'msg-002',
         senderId: 'user-003',
+        senderName: 'Jordan Kim',
+        senderAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
         receiverId: 'mock-user-001',
         listingId: 'listing-002',
         message: 'Thanks for the tutoring session yesterday, it was really helpful!',
@@ -275,6 +279,8 @@ const MOCK_MESSAGES: ChatMessage[] = [
     {
         id: 'msg-003',
         senderId: 'user-005',
+        senderName: 'Riley Chen',
+        senderAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
         receiverId: 'mock-user-001',
         listingId: 'listing-004',
         message: 'Your order has been picked up. On my way now!',
@@ -292,11 +298,11 @@ const MOCK_TALENT: User[] = [
 
 /** Synthetic campus users backing listing `ownerId`s (public profiles + chat headers). */
 const MOCK_PEER_USERS: Record<string, User> = {
-    'user-002': { ...MOCK_USER, id: 'user-002', fullName: 'Alex Rivera', email: 'arivera@university.edu', universityId: '2024002', department: 'Graphic Design', graduationYear: 2026, skillTags: ['Logo Design', 'Branding', 'Figma'], bio: 'Design lead for campus clubs and startups.', canOfferServices: true },
-    'user-003': { ...MOCK_USER, id: 'user-003', fullName: 'Jordan Kim', email: 'jkim@university.edu', universityId: '2024003', department: 'Physics', graduationYear: 2025, skillTags: ['STEM Tutoring', 'Calculus'], bio: 'Peer tutor for math and physics courses.', canOfferServices: true },
-    'user-004': { ...MOCK_USER, id: 'user-004', fullName: 'Sam Okoro', email: 'sokoro@university.edu', universityId: '2024004', department: 'Computer Science', graduationYear: 2026, skillTags: ['React Native', 'Expo', 'TypeScript'], bio: 'Mobile and full-stack projects for student orgs.', canOfferServices: true },
-    'user-005': { ...MOCK_USER, id: 'user-005', fullName: 'Riley Chen', email: 'rchen@university.edu', universityId: '2024005', department: 'Business', graduationYear: 2027, skillTags: ['Delivery', 'Logistics'], bio: 'Fast campus delivery and errands.', canOfferServices: true },
-    'user-006': { ...MOCK_USER, id: 'user-006', fullName: 'Morgan Blake', email: 'mblake@university.edu', universityId: '2024006', department: 'Film', graduationYear: 2025, skillTags: ['Photography', 'Video'], bio: 'Events, portraits, and short-form content.', canOfferServices: true },
+    'user-002': { ...MOCK_USER, id: 'user-002', fullName: 'Alex Rivera', email: 'arivera@university.edu', universityId: '2024002', department: 'Graphic Design', graduationYear: 2026, skillTags: ['Logo Design', 'Branding', 'Figma'], bio: 'Design lead for campus clubs and startups.', canOfferServices: true, profilePictureUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop' },
+    'user-003': { ...MOCK_USER, id: 'user-003', fullName: 'Jordan Kim', email: 'jkim@university.edu', universityId: '2024003', department: 'Physics', graduationYear: 2025, skillTags: ['STEM Tutoring', 'Calculus'], bio: 'Peer tutor for math and physics courses.', canOfferServices: true, profilePictureUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop' },
+    'user-004': { ...MOCK_USER, id: 'user-004', fullName: 'Sam Okoro', email: 'sokoro@university.edu', universityId: '2024004', department: 'Computer Science', graduationYear: 2026, skillTags: ['React Native', 'Expo', 'TypeScript'], bio: 'Mobile and full-stack projects for student orgs.', canOfferServices: true, profilePictureUrl: 'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=200&h=200&fit=crop' },
+    'user-005': { ...MOCK_USER, id: 'user-005', fullName: 'Riley Chen', email: 'rchen@university.edu', universityId: '2024005', department: 'Business', graduationYear: 2027, skillTags: ['Delivery', 'Logistics'], bio: 'Fast campus delivery and errands.', canOfferServices: true, profilePictureUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop' },
+    'user-006': { ...MOCK_USER, id: 'user-006', fullName: 'Morgan Blake', email: 'mblake@university.edu', universityId: '2024006', department: 'Film', graduationYear: 2025, skillTags: ['Photography', 'Video'], bio: 'Events, portraits, and short-form content.', canOfferServices: true, profilePictureUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop' },
     'user-007': { ...MOCK_USER, id: 'user-007', fullName: 'Casey Lee', email: 'clee@university.edu', universityId: '2024007', department: 'English', graduationYear: 2026, skillTags: ['Writing', 'Career'], bio: 'Resume reviews and writing help.', canOfferServices: true },
     'user-008': { ...MOCK_USER, id: 'user-008', fullName: 'Taylor Brooks', email: 'tbrooks@university.edu', universityId: '2024008', department: 'Marketing', graduationYear: 2027, skillTags: ['Social Media', 'Growth'], bio: 'Campus campaigns and brand strategy.', canOfferServices: true },
     'user-009': { ...MOCK_USER, id: 'user-009', fullName: 'Jamie Fox', email: 'jfox@university.edu', universityId: '2024009', department: 'Music', graduationYear: 2025, skillTags: ['Production', 'Mixing'], bio: 'Beats and studio sessions.', canOfferServices: true },
@@ -573,16 +579,21 @@ export const api = {
         return MOCK_MESSAGES;
     },
 
-    getConversation: async (_token: string, _userId: string, _listingId?: string): Promise<ChatMessage[]> => {
+    getConversation: async (_token: string, userId: string, listingId?: string): Promise<ChatMessage[]> => {
         await delay();
-        return MOCK_MESSAGES;
+        // Filter messages between me (mock-user-001) and the target user
+        return MOCK_MESSAGES.filter(m => 
+            (m.senderId === userId || m.receiverId === userId) && 
+            (!listingId || m.listingId === listingId)
+        );
     },
 
     sendMessage: async (messageData: { receiver_id: string, listing_id: string, message: string }, _token: string): Promise<ChatMessage> => {
         await delay();
         return {
             id: `msg-new-${Date.now()}`,
-            senderId: 'mock-user-001',
+            senderId: mockSessionUser.id,
+            senderName: mockSessionUser.fullName,
             receiverId: messageData.receiver_id,
             listingId: messageData.listing_id,
             message: messageData.message,

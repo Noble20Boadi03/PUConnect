@@ -106,7 +106,7 @@ export default function ProfileScreen() {
                                     <Image source={{ uri: user.profilePictureUrl }} style={styles.avatarImage} />
                                 ) : (
                                     <ThemedText variant="headlineLarge" colorName="primary" style={styles.avatarPlaceholder}>
-                                        {user?.fullName?.charAt(0)}
+                                        {user?.fullName?.charAt(0) || '?'}
                                     </ThemedText>
                                 )}
                                 {user?.verifiedStudent && (

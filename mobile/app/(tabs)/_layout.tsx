@@ -113,6 +113,7 @@ export default function TabLayout() {
           href: null,
           title: 'Setup',
         }}
+      />
     </Tabs>
   );
 }

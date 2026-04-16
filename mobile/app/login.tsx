@@ -19,7 +19,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedIcon } from "@/components/ui/themed-icon";
 import { ScreenLayout } from "@/components/ui/screen-layout";
 import { AuthBackground } from "@/components/ui/auth-background";
-import { ActionModal } from "@/components/ui/action-modal";
+import { PasswordResetModal } from "@/components/ui/password-reset-modal";
 import { useTheme } from "@/context/theme-context";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { useResponsive } from "@/hooks/use-responsive";
@@ -41,8 +41,6 @@ export default function LoginScreen() {
     
     // Forgot Password Modal State
     const [isForgotModalVisible, setForgotModalVisible] = useState(false);
-    const [isResetSent, setIsResetSent] = useState(false);
-    const [resetEmail, setResetEmail] = useState("");
     
     // Keyboard accessibility reference
     const passwordRef = useRef<TextInput>(null);
@@ -74,18 +72,7 @@ export default function LoginScreen() {
         }
     };
 
-    const handleResetPassword = () => {
-        if (!resetEmail) return;
-        setIsResetSent(true);
-    };
 
-    const handleCloseModal = () => {
-        setForgotModalVisible(false);
-        setTimeout(() => {
-            setIsResetSent(false);
-            setResetEmail("");
-        }, 400); // Wait for modal exit animation before resetting UI state
-    };
 
     return (
         <>
@@ -186,38 +173,11 @@ export default function LoginScreen() {
                 </TouchableWithoutFeedback>
             </ScreenLayout>
 
-            {/* Custom Interactive Forgot Password Modal */}
-            {isResetSent ? (
-                <ActionModal
-                    visible={isForgotModalVisible}
-                    onRequestClose={handleCloseModal}
-                    iconName="check-circle-outline"
-                    title="Link Sent"
-                    subtitle={`If ${resetEmail || 'that email'} matches an account, we've sent a reset link to it.`}
-                    primaryButtonTitle="OK"
-                    onPrimaryPress={handleCloseModal}
-                />
-            ) : (
-                <ActionModal
-                    visible={isForgotModalVisible}
-                    onRequestClose={handleCloseModal}
-                    iconName="email-fast-outline"
-                    title="Reset Password"
-                    subtitle="Enter your university email address. We'll send you a secure link to create a new password."
-                    primaryButtonTitle="Send Reset Link"
-                    onPrimaryPress={handleResetPassword}
-                    secondaryButtonTitle="Cancel"
-                    onSecondaryPress={handleCloseModal}
-                >
-                    <AnimatedInput
-                        placeholder="Email"
-                        value={resetEmail}
-                        onChangeText={setResetEmail}
-                        autoCapitalize="none"
-                        keyboardType="email-address"
-                    />
-                </ActionModal>
-            )}
+            <PasswordResetModal
+                isVisible={isForgotModalVisible}
+                onClose={() => setForgotModalVisible(false)}
+                initialEmail={email}
+            />
         </>
     );
 }
