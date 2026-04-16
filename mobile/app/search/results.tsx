@@ -16,6 +16,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
 import { useResponsive } from '@/hooks/use-responsive';
@@ -30,8 +31,7 @@ export default function SearchResultsScreen() {
   const initialQ = typeof qParam === 'string' ? qParam : Array.isArray(qParam) ? qParam[0] ?? '' : '';
   const section = typeof params.section === 'string' ? params.section : '';
 
-  const { contentPaddingLeft, contentPaddingRight, isTablet, isLandscape } = useResponsive();
-  const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
+  const { horizontalPadding, isTablet, isLandscape } = useResponsive();
   const cardWidth = isTablet ? 240 : isLandscape ? 200 : 160;
 
   const [query, setQuery] = useState(initialQ);
@@ -86,26 +86,25 @@ export default function SearchResultsScreen() {
   return (
     <ScreenLayout padding="none" withSafeArea={false}>
       <Stack.Screen options={{ headerShown: false }} />
-      <ThemedView style={[styles.header, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <ThemedIcon name="chevron-left" size={28} />
-        </Pressable>
-        <ThemedView
-          colorName="surfaceVariant"
-          style={[styles.searchBox, { borderColor: theme.outlineVariant }]}
-        >
-          <ThemedIcon name="magnify" size={20} colorName="textMuted" />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            onSubmitEditing={onSubmit}
-            returnKeyType="search"
-            placeholder="Search services"
-            placeholderTextColor={theme.textMuted}
-            style={[styles.searchInput, { color: theme.text }]}
-          />
-        </ThemedView>
-      </ThemedView>
+      <ScreenHeader 
+        title={
+          <ThemedView
+            colorName="surfaceVariant"
+            style={[styles.searchBox, { borderColor: theme.outlineVariant }]}
+          >
+            <ThemedIcon name="magnify" size={20} colorName="textMuted" />
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              onSubmitEditing={onSubmit}
+              returnKeyType="search"
+              placeholder="Search services"
+              placeholderTextColor={theme.textMuted}
+              style={[styles.searchInput, { color: theme.text }]}
+            />
+          </ThemedView>
+        }
+      />
 
       {headerSubtitle ? (
         <ThemedText variant="labelLarge" colorName="textMuted" style={[horizontalPadding, { marginBottom: Spacing.sm }]}>
@@ -165,13 +164,7 @@ export default function SearchResultsScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingBottom: Spacing.md,
-  },
-  backBtn: { padding: Spacing.xs },
+
   searchBox: {
     flex: 1,
     flexDirection: 'row',

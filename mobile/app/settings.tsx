@@ -6,6 +6,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
 import { useAppAlert } from '@/context/alert-context';
@@ -20,8 +21,7 @@ export default function SettingsScreen() {
   const { showAlert } = useAppAlert();
   const insets = useSafeAreaInsets();
   const { theme, isDark, setMode } = useTheme();
-  const { contentPaddingLeft, contentPaddingRight } = useResponsive();
-  const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
+  const { horizontalPadding } = useResponsive();
 
   const [pushEnabled, setPushEnabled] = useState(true);
   const [emailDigest, setEmailDigest] = useState(false);
@@ -29,15 +29,7 @@ export default function SettingsScreen() {
   return (
     <ScreenLayout padding="none" withSafeArea={false}>
       <Stack.Screen options={{ headerShown: false }} />
-      <ThemedView style={[styles.header, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <ThemedIcon name="chevron-left" size={28} />
-        </Pressable>
-        <ThemedText variant="headlineSmall" style={styles.headerTitle}>
-          Settings
-        </ThemedText>
-        <View style={{ width: 40 }} />
-      </ThemedView>
+      <ScreenHeader title="Settings" />
 
       <ScrollView
         contentContainerStyle={[styles.scroll, horizontalPadding, { paddingBottom: insets.bottom + Spacing.xl }]}
@@ -130,14 +122,7 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingBottom: Spacing.md,
-  },
-  backBtn: { padding: Spacing.xs },
-  headerTitle: { fontWeight: '800' },
+
   scroll: { paddingTop: Spacing.sm },
   section: {
     marginBottom: Spacing.lg,

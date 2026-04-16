@@ -10,6 +10,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
 import { useAppAlert } from '@/context/alert-context';
@@ -21,8 +22,7 @@ export default function MyListingsScreen() {
   const { theme } = useTheme();
   const { token, user } = useAuth();
   const { showAlert } = useAppAlert();
-  const { contentPaddingLeft, contentPaddingRight } = useResponsive();
-  const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
+  const { horizontalPadding } = useResponsive();
 
   const params = useLocalSearchParams<{ tab?: string }>();
   const tabParam = typeof params.tab === 'string' ? params.tab : params.tab?.[0];
@@ -124,17 +124,14 @@ export default function MyListingsScreen() {
   return (
     <ScreenLayout padding="none" withSafeArea={false}>
       <Stack.Screen options={{ headerShown: false }} />
-      <ThemedView style={[styles.header, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <ThemedIcon name="chevron-left" size={28} />
-        </Pressable>
-        <ThemedText variant="headlineSmall" style={styles.headerTitle}>
-          My listings
-        </ThemedText>
-        <Pressable onPress={() => router.push('/listing/create')} style={styles.addBtn}>
-          <ThemedIcon name="plus" size={24} colorName="primary" />
-        </Pressable>
-      </ThemedView>
+      <ScreenHeader
+        title="My listings"
+        right={
+          <Pressable onPress={() => router.push('/listing/create')} style={styles.addBtn}>
+            <ThemedIcon name="plus" size={24} colorName="primary" />
+          </Pressable>
+        }
+      />
 
       <View style={[styles.tabRow, horizontalPadding]}>
         {(['all', 'requests', 'offers'] as const).map((key) => (
@@ -234,14 +231,7 @@ export default function MyListingsScreen() {
 
 const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingBottom: Spacing.md,
-  },
-  backBtn: { padding: Spacing.xs },
-  headerTitle: { fontWeight: '800', flex: 1, textAlign: 'center' },
+
   addBtn: { padding: Spacing.xs, width: 40, alignItems: 'flex-end' },
   tabRow: {
     flexDirection: 'row',

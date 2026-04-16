@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { StyleSheet, View, Pressable, ActivityIndicator, Image, ScrollView } from 'react-native';
 import { Link, router } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
@@ -7,7 +7,6 @@ import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
-import { AnimatedInput } from '@/components/ui/animated-input';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useResponsive } from '@/hooks/use-responsive';
@@ -17,29 +16,14 @@ import { useAppAlert } from '@/context/alert-context';
 import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
 
 export default function ProfileScreen() {
-    const { uiState, handleLogin, handleLogout } = useProfileViewModel();
-    const { theme, isDark, setMode } = useTheme();
+    const { uiState } = useProfileViewModel();
+    const { theme } = useTheme();
     const insets = useSafeAreaInsets();
     const { showAlert } = useAppAlert();
     const { contentPaddingLeft, contentPaddingRight } = useResponsive();
     const tabBarHeight = useTabBarHeight();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [isLoggingIn, setIsLoggingIn] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
-
     const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
 
-    const onLogin = async () => {
-        setIsLoggingIn(true);
-        try {
-            await handleLogin(email, password);
-        } catch {
-            showAlert({ title: 'Login Failed', subtitle: 'Invalid credentials or server error', severity: 'error' });
-        } finally {
-            setIsLoggingIn(false);
-        }
-    };
 
     if (uiState.status === 'loading') {
         return (
@@ -51,13 +35,7 @@ export default function ProfileScreen() {
 
     if (uiState.status === 'guest') {
         return (
-            <ScreenLayout 
-                scrollable={false}
-                padding="none"
-                withSafeArea={false}
-                keyboardAvoiding
-            >
-                {/* Header for Unauthenticated State */}
+            <ScreenLayout padding="none" withSafeArea={false}>
                 <ThemedView 
                     style={[
                         styles.fixedHeader, 
@@ -71,69 +49,17 @@ export default function ProfileScreen() {
                     </View>
                 </ThemedView>
 
-                <ScrollView 
-                    contentContainerStyle={[styles.loginContainer, horizontalPadding]}
-                    showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
-                >
-                    <Animated.View 
-                        entering={FadeInDown.duration(800)}
-                        style={[styles.loginCard, { backgroundColor: theme.surface, borderColor: theme.outlineVariant, borderWidth: 1 }]}
-                    >
-                        <ThemedText variant="headlineLarge" align="center" style={styles.loginHeader}>Welcome Back</ThemedText>
-                        <ThemedText variant="bodyMedium" colorName="textSecondary" align="center" style={styles.loginSub}>The Campus Talent Marketplace</ThemedText>
-
-                        <View style={styles.form}>
-                            <AnimatedInput
-                                label="University Email"
-                                iconName="email-outline"
-                                placeholder="name@university.edu"
-                                value={email}
-                                onChangeText={setEmail}
-                                autoCapitalize="none"
-                                keyboardType="email-address"
-                                delay={200}
-                            />
-
-                            <AnimatedInput
-                                label="Password"
-                                iconName="lock-outline"
-                                placeholder="••••••••"
-                                value={password}
-                                onChangeText={setPassword}
-                                isPassword={true}
-                                showPassword={showPassword}
-                                onTogglePassword={() => setShowPassword(!showPassword)}
-                                delay={300}
-                                marginTop={Spacing.lg}
-                            />
-
-                            <PrimaryButton
-                                title="Sign In"
-                                onPress={onLogin}
-                                isLoading={isLoggingIn}
-                                delay={500}
-                                marginTop={Spacing.xl}
-                            />
-
-                            <Animated.View entering={FadeInDown.delay(600).duration(800)}>
-                                <Pressable
-                                    onPress={() =>
-                                        showAlert({
-                                            title: 'Password reset',
-                                            subtitle: 'If your school email is on file, you will receive reset instructions (demo).',
-                                            severity: 'info'
-                                        })
-                                    }
-                                >
-                                    <ThemedText variant="labelLarge" colorName="primary" align="center" style={styles.forgotPass}>
-                                        Forgot password?
-                                    </ThemedText>
-                                </Pressable>
-                            </Animated.View>
-                        </View>
-                    </Animated.View>
-                </ScrollView>
+                <ThemedView style={styles.centered}>
+                    <ThemedIcon name="account-circle-outline" size={64} colorName="outline" />
+                    <ThemedText variant="bodyLarge" colorName="textSecondary" align="center" style={{ marginTop: Spacing.md, paddingHorizontal: Spacing.xl }}>
+                        Please sign in to view your profile and manage listings.
+                    </ThemedText>
+                    <PrimaryButton
+                        title="Sign In"
+                        onPress={() => router.push('/login')}
+                        style={{ marginTop: Spacing.xl }}
+                    />
+                </ThemedView>
             </ScreenLayout>
         );
     }
@@ -159,16 +85,6 @@ export default function ProfileScreen() {
                             Profile<ThemedText colorName="primary">.</ThemedText>
                         </ThemedText>
                         <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-                            <Pressable 
-                                style={styles.gridBtn}
-                                onPress={() => setMode(isDark ? 'light' : 'dark')}
-                            >
-                                <ThemedIcon 
-                                    name={isDark ? "moon-waning-crescent" : "white-balance-sunny"} 
-                                    size={22} 
-                                    colorName="text"
-                                />
-                            </Pressable>
                             <Pressable style={styles.gridBtn} onPress={() => router.push('/settings')}>
                                 <ThemedIcon name="cog-outline" size={22} colorName="text" />
                             </Pressable>
@@ -354,22 +270,6 @@ export default function ProfileScreen() {
                             <ThemedIcon name="cog-outline" size={20} colorName="onSecondaryContainer" />
                         </View>
                         <ThemedText variant="titleMedium" style={styles.groupText}>Preferences</ThemedText>
-                        <ThemedIcon name="chevron-right" size={18} colorName="textMuted" />
-                    </Pressable>
-                    
-                    <View style={[styles.groupDivider, { backgroundColor: theme.outlineVariant }]} />
-
-                    <Pressable 
-                        style={styles.groupItem} 
-                        onPress={async () => {
-                            await handleLogout();
-                            router.replace("/");
-                        }}
-                    >
-                        <View style={[styles.groupIcon, { backgroundColor: theme.errorContainer }]}>
-                            <ThemedIcon name="logout" size={20} colorName="onErrorContainer" />
-                        </View>
-                        <ThemedText variant="titleMedium" colorName="error" style={styles.groupText}>Log Out</ThemedText>
                     </Pressable>
                 </View>
             </Animated.View>
@@ -386,30 +286,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    loginContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        paddingBottom: 40,
-    },
-    loginCard: {
-        padding: Spacing.xl,
-        borderRadius: BorderRadius.xl,
-        ...Shadows.level2,
-    },
-    loginHeader: {
-        fontWeight: '900',
-        marginBottom: 4,
-    },
-    loginSub: {
-        marginBottom: 32,
-    },
-    form: {
-        gap: 16,
-    },
-    forgotPass: {
-        marginTop: 12,
-        opacity: 0.6,
     },
     fixedHeader: {
         paddingBottom: Spacing.md,

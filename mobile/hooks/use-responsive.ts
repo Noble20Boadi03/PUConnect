@@ -40,6 +40,7 @@ export interface ResponsiveConfig {
    */
   contentPaddingLeft: number;
   contentPaddingRight: number;
+  horizontalPadding: { paddingLeft: number; paddingRight: number };
 
   /**
    * For cases where symmetric padding is preferred.
@@ -136,6 +137,7 @@ export function useResponsive(): ResponsiveConfig {
     contentPaddingLeft,
     contentPaddingRight,
     contentPaddingHorizontal,
+    horizontalPadding: { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight },
     contentMaxWidth,
   };
 }

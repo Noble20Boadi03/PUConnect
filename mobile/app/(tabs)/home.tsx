@@ -11,6 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '@/hooks/use-responsive';
 import { ListingCard } from '@/components/listing-card';
+import { SearchBar } from '@/components/ui/search-bar';
 import { useHomeViewModel } from '@/hooks/view-models/use-home-view-model';
 import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
 import { useAuth } from '@/context/auth-context';
@@ -112,9 +113,8 @@ export default function HomeScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
-  const { isTablet, isLandscape, contentPaddingLeft, contentPaddingRight } = useResponsive();
+  const { isTablet, isLandscape, horizontalPadding } = useResponsive();
   const tabBarHeight = useTabBarHeight();
-  const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
 
   // In landscape, cards can be wider since there's more horizontal space
   const cardWidth = isTablet ? 240 : isLandscape ? 200 : 160;
@@ -178,26 +178,13 @@ export default function HomeScreen() {
         </View>
 
         {/* Search Bar Row */}
-        <ThemedView 
-          colorName="surfaceVariant" 
-          style={[
-            styles.searchContainer, 
-            { marginHorizontal: horizontalPadding.paddingLeft, borderColor: theme.outlineVariant }
-          ]}
-        >
-          <ThemedIcon name="magnify" size={20} colorName="textMuted" />
-          <TextInput
-            placeholder="Search Experts or Gigs"
-            placeholderTextColor={theme.textMuted}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            returnKeyType="search"
-            onSubmitEditing={() =>
-              router.push({ pathname: '/search/results', params: { q: searchQuery.trim() } })
-            }
-            style={[styles.searchInput, { color: theme.text }]}
-          />
-        </ThemedView>
+        <SearchBar
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="Search Experts or Gigs"
+          onSubmit={() => router.push({ pathname: '/search/results', params: { q: searchQuery.trim() } })}
+          containerStyle={{ marginHorizontal: horizontalPadding.paddingLeft }}
+        />
 
         {/* Filters */}
         <HomeFilterPills activeFilter={activeFilter} onFilterChange={setActiveFilter} />
@@ -369,19 +356,7 @@ const styles = StyleSheet.create({
   gridBtn: {
     padding: Spacing.xs,
   },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    height: 48,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: Spacing.sm,
-    fontSize: 14,
-  },
+
   pillsContainer: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,

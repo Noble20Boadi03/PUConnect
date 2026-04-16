@@ -19,6 +19,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { useResponsive } from '@/hooks/use-responsive';
 import { User, ConversationLifecycle } from '@/types';
@@ -47,8 +48,7 @@ export default function ChatScreen() {
   const { showAlert } = useAppAlert();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { contentPaddingLeft, contentPaddingRight } = useResponsive();
-  const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
+  const { horizontalPadding } = useResponsive();
   const [inputText, setInputText] = useState('');
   const [peer, setPeer] = useState<User | null>(null);
   const [lifecycle, setLifecycle] = useState<ConversationLifecycle>('open');
@@ -152,32 +152,31 @@ export default function ChatScreen() {
 
   return (
     <ScreenLayout scrollable={false} keyboardAvoiding padding="none" withSafeArea={false}>
-      <View style={[styles.header, { borderBottomColor: theme.outlineVariant, paddingTop: insets.top + 10, ...horizontalPadding }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <ThemedIcon name="chevron-left" size={28} />
-        </Pressable>
-
-        <View style={styles.headerInfo}>
-          {loadingPeer ? (
-            <ActivityIndicator size="small" color={theme.primary} />
-          ) : (
-            <>
-              <ThemedText variant="titleMedium" style={styles.headerName}>
-                {peerLabel}
-              </ThemedText>
-              <ThemedText variant="labelSmall" colorName="textMuted" numberOfLines={1}>
-                {peerSubtitle}
-              </ThemedText>
-            </>
-          )}
-        </View>
-
-        <Pressable onPress={() => showAlert({ title: 'Mute', subtitle: 'Mute controls will arrive in a later build.', severity: 'info' })}>
-          <ThemedText variant="labelLarge" style={styles.muteBtn}>
-            Mute
-          </ThemedText>
-        </Pressable>
-      </View>
+      <ScreenHeader
+        title={
+          <View style={styles.headerInfo}>
+            {loadingPeer ? (
+              <ActivityIndicator size="small" color={theme.primary} />
+            ) : (
+              <>
+                <ThemedText variant="titleMedium" style={styles.headerName}>
+                  {peerLabel}
+                </ThemedText>
+                <ThemedText variant="labelSmall" colorName="textMuted" numberOfLines={1}>
+                  {peerSubtitle}
+                </ThemedText>
+              </>
+            )}
+          </View>
+        }
+        right={
+          <Pressable onPress={() => showAlert({ title: 'Mute', subtitle: 'Mute controls will arrive in a later build.', severity: 'info' })}>
+            <ThemedText variant="labelLarge" style={styles.muteBtn}>
+              Mute
+            </ThemedText>
+          </Pressable>
+        }
+      />
 
       {user && id && token && listingId ? (
         <ThemedView style={[styles.lifecycleBar, { backgroundColor: theme.surfaceVariant, borderBottomColor: theme.outlineVariant }]}>
@@ -352,16 +351,6 @@ export default function ChatScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-  },
-  backBtn: {
-    marginRight: 10,
-  },
   headerInfo: {
     flex: 1,
     alignItems: 'center',

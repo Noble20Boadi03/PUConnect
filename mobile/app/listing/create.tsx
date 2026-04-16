@@ -19,8 +19,9 @@ import { ThemedView } from '@/components/themed-view';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { ScreenLayout } from '@/components/ui/screen-layout';
-import { Spacing, BorderRadius } from '@/constants/theme';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { useTheme } from '@/context/theme-context';
+import { Spacing, BorderRadius } from '@/constants/theme';
 import { CAMPUS_CATEGORIES } from '@/constants/categories';
 import { ListingType } from '@/types';
 import { useResponsive } from '@/hooks/use-responsive';
@@ -34,8 +35,7 @@ export default function CreateListingScreen() {
   const { token, user } = useAuth();
   const { showAlert } = useAppAlert();
   const canOffer = user?.canOfferServices === true;
-  const { contentPaddingLeft, contentPaddingRight } = useResponsive();
-  const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
+  const { horizontalPadding } = useResponsive();
 
   const [loading, setLoading] = useState(!!editId);
   const [submitting, setSubmitting] = useState(false);
@@ -185,15 +185,7 @@ export default function CreateListingScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={insets.top}
       >
-        <ThemedView style={[styles.header, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
-          <Pressable onPress={() => router.back()} style={styles.backBtn}>
-            <ThemedIcon name="chevron-left" size={28} />
-          </Pressable>
-          <ThemedText variant="headlineSmall" style={styles.headerTitle}>
-            {editId ? 'Edit listing' : 'New listing'}
-          </ThemedText>
-          <View style={{ width: 40 }} />
-        </ThemedView>
+        <ScreenHeader title={editId ? 'Edit listing' : 'New listing'} />
 
         <ScrollView
           contentContainerStyle={[styles.scroll, horizontalPadding, { paddingBottom: insets.bottom + Spacing.xl }]}
@@ -312,14 +304,7 @@ export default function CreateListingScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingBottom: Spacing.md,
-  },
-  backBtn: { padding: Spacing.xs },
-  headerTitle: { fontWeight: '800' },
+
   scroll: { paddingTop: Spacing.sm },
   label: { marginBottom: Spacing.sm, marginTop: Spacing.md },
   row: { flexDirection: 'row', gap: Spacing.sm, flexWrap: 'wrap' },

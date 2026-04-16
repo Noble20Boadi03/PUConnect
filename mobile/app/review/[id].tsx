@@ -9,6 +9,7 @@ import { ThemedView } from '@/components/themed-view';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { ScreenLayout } from '@/components/ui/screen-layout';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
 import { useAppAlert } from '@/context/alert-context';
@@ -23,8 +24,7 @@ export default function ReviewScreen() {
   const { theme } = useTheme();
   const { token } = useAuth();
   const { showAlert } = useAppAlert();
-  const { contentPaddingLeft, contentPaddingRight } = useResponsive();
-  const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
+  const { horizontalPadding } = useResponsive();
 
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
@@ -84,15 +84,7 @@ export default function ReviewScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={insets.top}
       >
-        <View style={[styles.header, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
-          <Pressable onPress={() => router.back()}>
-            <ThemedIcon name="close" size={28} />
-          </Pressable>
-          <ThemedText variant="headlineSmall" style={styles.headerTitle}>
-            Leave a review
-          </ThemedText>
-          <View style={{ width: 28 }} />
-        </View>
+        <ScreenHeader title="Leave a review" backIcon="close" />
 
         <View style={[styles.body, horizontalPadding, { paddingBottom: insets.bottom + Spacing.lg }]}>
           <ThemedView style={[styles.card, { borderColor: theme.outlineVariant }]}>
@@ -153,13 +145,7 @@ export default function ReviewScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingBottom: Spacing.md,
-  },
-  headerTitle: { fontWeight: '800' },
+
   body: { flex: 1, paddingTop: Spacing.md },
   card: {
     padding: Spacing.xl,
