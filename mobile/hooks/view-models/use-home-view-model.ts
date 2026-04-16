@@ -14,9 +14,11 @@ export interface HomeDashboardData {
 }
 
 export type HomeUiState = UiState<HomeDashboardData>;
+export type HomeFilter = 'All' | 'Experts' | 'Gigs';
 
 export function useHomeViewModel() {
     const [uiState, setUiState] = useState<HomeUiState>({ status: 'loading' });
+    const [activeFilter, setActiveFilter] = useState<HomeFilter>('All');
     const lastRefreshTimestamp = useRef(0);
     const lastBackPress = useRef(0);
 
@@ -42,9 +44,13 @@ export function useHomeViewModel() {
     );
 
     // ── Data Fetching ─────────────────────────────────────────────────────
-    const fetchDashboardData = useCallback(async (signal?: AbortSignal) => {
+    const fetchDashboardData = useCallback(async (filter: HomeFilter, signal?: AbortSignal) => {
         try {
-            const data = await api.getListings(0, 10, undefined, signal);
+            let type: 'service_offer' | 'service_request' | undefined = undefined;
+            if (filter === 'Experts') type = 'service_offer';
+            else if (filter === 'Gigs') type = 'service_request';
+
+            const data = await api.getListings(0, 20, { type }, signal);
 
             if (data.length === 0) {
                 setUiState({ status: 'empty' });
@@ -81,12 +87,12 @@ export function useHomeViewModel() {
                         ? { ...prev, isRefreshing: true }
                         : { status: 'loading' }
                 );
-                fetchDashboardData(controller.signal);
+                fetchDashboardData(activeFilter, controller.signal);
                 lastRefreshTimestamp.current = now;
             }
 
             return () => controller.abort();
-        }, [fetchDashboardData])
+        }, [fetchDashboardData, activeFilter])
     );
 
     // ── Pull to Refresh ───────────────────────────────────────────────────
@@ -97,9 +103,9 @@ export function useHomeViewModel() {
                 ? { ...prev, isRefreshing: true }
                 : { status: 'loading' }
         );
-        fetchDashboardData(controller.signal);
+        fetchDashboardData(activeFilter, controller.signal);
         lastRefreshTimestamp.current = Date.now();
-    }, [fetchDashboardData]);
+    }, [fetchDashboardData, activeFilter]);
 
-    return { uiState, onRefresh };
+    return { uiState, onRefresh, activeFilter, setActiveFilter };
 }

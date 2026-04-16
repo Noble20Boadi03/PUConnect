@@ -5,10 +5,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/auth-context';
 import { api } from '@/services/api';
 import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { ScreenLayout } from '@/components/ui/screen-layout';
-import { Spacing, BorderRadius } from '@/constants/theme';
+import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
 import { useAppAlert } from '@/context/alert-context';
 import { useResponsive } from '@/hooks/use-responsive';
@@ -94,38 +95,46 @@ export default function ReviewScreen() {
         </View>
 
         <View style={[styles.body, horizontalPadding, { paddingBottom: insets.bottom + Spacing.lg }]}>
-          <ThemedText variant="bodyLarge" colorName="textSecondary">
-            Rate your experience for this completed engagement.
-          </ThemedText>
+          <ThemedView style={[styles.card, { borderColor: theme.outlineVariant }]}>
+             <ThemedText variant="bodyLarge" colorName="textSecondary" align="center">
+                Rate your experience for this completed engagement.
+             </ThemedText>
 
-          <View style={styles.stars}>
-            {STARS.map((s) => (
-              <Pressable key={s} onPress={() => setRating(s)} style={styles.starBtn}>
-                <ThemedIcon
-                  name={s <= rating ? 'star' : 'star-outline'}
-                  size={36}
-                  lightColor="#fbbf24"
-                  darkColor="#fbbf24"
-                />
-              </Pressable>
-            ))}
+             <View style={styles.stars}>
+                {STARS.map((s) => (
+                   <Pressable key={s} onPress={() => setRating(s)} style={styles.starBtn} accessibilityLabel={`Rate ${s} stars`}>
+                      <ThemedIcon
+                         name={s <= rating ? 'star' : 'star-outline'}
+                         size={42}
+                         lightColor="#fbbf24"
+                         darkColor="#fbbf24"
+                      />
+                   </Pressable>
+                ))}
+             </View>
+
+             <ThemedText variant="labelLarge" align="center" style={{ marginTop: Spacing.md, color: theme.primary }}>
+                {rating === 5 ? 'Excellent!' : rating === 4 ? 'Great' : rating === 3 ? 'Good' : rating === 2 ? 'Fair' : 'Poor'}
+             </ThemedText>
+          </ThemedView>
+
+          <View style={styles.commentSection}>
+             <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.label}>
+                Comment
+             </ThemedText>
+             <TextInput
+                value={comment}
+                onChangeText={setComment}
+                placeholder="What went well? Would you hire them again?"
+                placeholderTextColor={theme.textMuted}
+                multiline
+                textAlignVertical="top"
+                style={[
+                   styles.textArea,
+                   { color: theme.text, borderColor: theme.outlineVariant, backgroundColor: theme.surfaceVariant },
+                ]}
+             />
           </View>
-
-          <ThemedText variant="labelLarge" colorName="textSecondary" style={{ marginTop: Spacing.lg }}>
-            Comment
-          </ThemedText>
-          <TextInput
-            value={comment}
-            onChangeText={setComment}
-            placeholder="What went well? Would you hire them again?"
-            placeholderTextColor={theme.textMuted}
-            multiline
-            textAlignVertical="top"
-            style={[
-              styles.textArea,
-              { color: theme.text, borderColor: theme.outlineVariant, backgroundColor: theme.surfaceVariant },
-            ]}
-          />
 
           <PrimaryButton
             title="Submit review"
@@ -152,14 +161,23 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontWeight: '800' },
   body: { flex: 1, paddingTop: Spacing.md },
-  stars: { flexDirection: 'row', justifyContent: 'center', gap: Spacing.sm, marginTop: Spacing.xl },
+  card: {
+    padding: Spacing.xl,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    ...Shadows.level1,
+  },
+  commentSection: {
+    marginTop: Spacing.xl,
+  },
+  label: { marginBottom: Spacing.sm, fontWeight: '700' },
+  stars: { flexDirection: 'row', justifyContent: 'center', gap: Spacing.xs, marginTop: Spacing.lg },
   starBtn: { padding: Spacing.xs },
   textArea: {
     borderWidth: 1,
     borderRadius: BorderRadius.lg,
     padding: Spacing.md,
-    minHeight: 120,
-    marginTop: Spacing.sm,
+    minHeight: 140,
     fontSize: 16,
   },
 });

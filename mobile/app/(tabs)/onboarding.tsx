@@ -154,7 +154,7 @@ export default function OnboardingScreen() {
           Professional Setup
         </ThemedText>
         <ThemedText variant="bodyLarge" colorName="textSecondary" style={styles.subtitle}>
-          Complete your profile with skills and campus details to become a provider and post service offers. Everyone can post requests for help without this step.
+          Add your skills and campus details to unlock &quot;Provider&quot; status. This lets you post service offers and appear in campus talent searches so peers can discover you.
         </ThemedText>
       </View>
 

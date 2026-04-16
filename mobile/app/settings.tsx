@@ -11,8 +11,12 @@ import { useTheme } from '@/context/theme-context';
 import { useAppAlert } from '@/context/alert-context';
 import { useResponsive } from '@/hooks/use-responsive';
 
+import { useAuth } from '@/context/auth-context';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+
 export default function SettingsScreen() {
   const router = useRouter();
+  const { signOut } = useAuth();
   const { showAlert } = useAppAlert();
   const insets = useSafeAreaInsets();
   const { theme, isDark, setMode } = useTheme();
@@ -39,51 +43,87 @@ export default function SettingsScreen() {
         contentContainerStyle={[styles.scroll, horizontalPadding, { paddingBottom: insets.bottom + Spacing.xl }]}
         showsVerticalScrollIndicator={false}
       >
-        <ThemedText variant="titleMedium" style={styles.sectionLabel}>
-          Appearance
-        </ThemedText>
-        <ThemedView style={[styles.row, { borderColor: theme.outlineVariant, backgroundColor: theme.surface }]}>
-          <ThemedText variant="bodyLarge">Dark mode</ThemedText>
-          <Switch
-            value={isDark}
-            onValueChange={(v) => setMode(v ? 'dark' : 'light')}
-            trackColor={{ false: theme.outlineVariant, true: theme.primaryContainer }}
-          />
-        </ThemedView>
-
-        <ThemedText variant="titleMedium" style={styles.sectionLabel}>
-          Notifications (demo)
-        </ThemedText>
-        <ThemedView style={[styles.row, { borderColor: theme.outlineVariant, backgroundColor: theme.surface }]}>
-          <ThemedText variant="bodyLarge">Push notifications</ThemedText>
-          <Switch value={pushEnabled} onValueChange={setPushEnabled} />
-        </ThemedView>
-        <ThemedView style={[styles.row, { borderColor: theme.outlineVariant, backgroundColor: theme.surface }]}>
-          <ThemedText variant="bodyLarge">Weekly digest email</ThemedText>
-          <Switch value={emailDigest} onValueChange={setEmailDigest} />
-        </ThemedView>
-
-        <ThemedText variant="titleMedium" style={styles.sectionLabel}>
-          Account
-        </ThemedText>
-        <Pressable
-          onPress={() =>
-            showAlert({
-              title: 'Password reset',
-              subtitle: 'If this were production, we would email a reset link to your university address.',
-              severity: 'info'
-            })
-          }
-        >
-          <ThemedView style={[styles.row, { borderColor: theme.outlineVariant, backgroundColor: theme.surface }]}>
-            <ThemedText variant="bodyLarge">Forgot password</ThemedText>
-            <ThemedIcon name="chevron-right" size={20} colorName="textMuted" />
+        <View style={styles.section}>
+          <ThemedText variant="labelLarge" colorName="textMuted" style={styles.sectionLabel}>
+            APPEARANCE
+          </ThemedText>
+          <ThemedView style={[styles.groupedMenu, { backgroundColor: theme.surface, borderColor: theme.outlineVariant }]}>
+            <View style={styles.menuItem}>
+              <View style={[styles.iconBox, { backgroundColor: theme.primaryContainer }]}>
+                <ThemedIcon name={isDark ? "moon-waning-crescent" : "white-balance-sunny"} size={20} colorName="onPrimaryContainer" />
+              </View>
+              <ThemedText variant="titleMedium" style={styles.menuText}>Dark Mode</ThemedText>
+              <Switch
+                value={isDark}
+                onValueChange={(v) => setMode(v ? 'dark' : 'light')}
+                trackColor={{ false: theme.outlineVariant, true: theme.primary }}
+              />
+            </View>
           </ThemedView>
-        </Pressable>
+        </View>
 
-        <ThemedText variant="labelSmall" colorName="textMuted" style={{ marginTop: Spacing.lg }}>
-          PuConnect {Platform.OS} · MVP settings placeholder
-        </ThemedText>
+        <View style={styles.section}>
+          <ThemedText variant="labelLarge" colorName="textMuted" style={styles.sectionLabel}>
+            NOTIFICATIONS (DEMO)
+          </ThemedText>
+          <ThemedView style={[styles.groupedMenu, { backgroundColor: theme.surface, borderColor: theme.outlineVariant }]}>
+            <View style={styles.menuItem}>
+              <View style={[styles.iconBox, { backgroundColor: theme.secondaryContainer }]}>
+                <ThemedIcon name="bell-outline" size={20} colorName="onSecondaryContainer" />
+              </View>
+              <ThemedText variant="titleMedium" style={styles.menuText}>Push Notifications</ThemedText>
+              <Switch value={pushEnabled} onValueChange={setPushEnabled} trackColor={{ false: theme.outlineVariant, true: theme.primary }} />
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.menuItem}>
+              <View style={[styles.iconBox, { backgroundColor: theme.secondaryContainer }]}>
+                <ThemedIcon name="email-outline" size={20} colorName="onSecondaryContainer" />
+              </View>
+              <ThemedText variant="titleMedium" style={styles.menuText}>Weekly Digest</ThemedText>
+              <Switch value={emailDigest} onValueChange={setEmailDigest} trackColor={{ false: theme.outlineVariant, true: theme.primary }} />
+            </View>
+          </ThemedView>
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText variant="labelLarge" colorName="textMuted" style={styles.sectionLabel}>
+            ACCOUNT
+          </ThemedText>
+          <ThemedView style={[styles.groupedMenu, { backgroundColor: theme.surface, borderColor: theme.outlineVariant }]}>
+            <Pressable
+              onPress={() =>
+                showAlert({
+                  title: 'Password reset',
+                  subtitle: 'If this were production, we would email a reset link to your university address.',
+                  severity: 'info'
+                })
+              }
+              style={styles.menuItem}
+            >
+              <View style={[styles.iconBox, { backgroundColor: theme.surfaceVariant }]}>
+                <ThemedIcon name="lock-reset" size={20} colorName="text" />
+              </View>
+              <ThemedText variant="titleMedium" style={styles.menuText}>Reset Password</ThemedText>
+              <ThemedIcon name="chevron-right" size={20} colorName="textMuted" />
+            </Pressable>
+          </ThemedView>
+        </View>
+
+        <Animated.View entering={FadeInDown.delay(300).duration(800)} style={styles.logoutWrapper}>
+           <Pressable
+             style={[styles.logoutBtn, { borderColor: theme.error, backgroundColor: theme.errorContainer + '20' }]}
+             onPress={async () => {
+               await signOut();
+               router.replace('/');
+             }}
+           >
+             <ThemedIcon name="logout" size={20} colorName="error" />
+             <ThemedText variant="titleMedium" colorName="error" style={{ fontWeight: '700' }}>Log Out</ThemedText>
+           </Pressable>
+           <ThemedText variant="labelSmall" colorName="textMuted" align="center" style={{ marginTop: Spacing.lg }}>
+             PuConnect {Platform.OS} · Version 1.0.4 (MVP)
+           </ThemedText>
+        </Animated.View>
       </ScrollView>
     </ScreenLayout>
   );
@@ -99,14 +139,56 @@ const styles = StyleSheet.create({
   backBtn: { padding: Spacing.xs },
   headerTitle: { fontWeight: '800' },
   scroll: { paddingTop: Spacing.sm },
-  sectionLabel: { fontWeight: '700', marginTop: Spacing.lg, marginBottom: Spacing.sm },
-  row: {
+  section: {
+    marginBottom: Spacing.lg,
+  },
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    marginBottom: Spacing.sm,
+    marginLeft: 4,
+    opacity: 0.6,
+  },
+  groupedMenu: {
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     padding: Spacing.lg,
+  },
+  menuText: {
+    flex: 1,
+    fontWeight: '600',
+  },
+  iconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(128,128,128,0.1)',
+    marginHorizontal: Spacing.lg,
+  },
+  logoutWrapper: {
+    marginTop: Spacing.xl,
+    paddingTop: Spacing.xl,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(128,128,128,0.1)',
+  },
+  logoutBtn: {
+    height: 56,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
-    marginBottom: Spacing.sm,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
   },
 });

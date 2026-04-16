@@ -3,7 +3,7 @@ import { StyleSheet, View, FlatList, Pressable, Image, ActivityIndicator, Modal,
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTheme } from '@/context/theme-context';
 import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
-import { Listing } from '@/types';
+import { User } from '@/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/themed-view';
@@ -57,7 +57,7 @@ export default function SubcategoryListingsScreen() {
         );
     }
 
-    const listings = uiState.status === 'content' ? uiState.data.listings : [];
+    const providers = uiState.status === 'content' ? uiState.data.providers : [];
     const filtersConfig = uiState.status === 'content' ? uiState.data.filtersConfig : [];
     const isRefreshing = uiState.status === 'content' && !!uiState.isRefreshing;
 
@@ -143,19 +143,19 @@ export default function SubcategoryListingsScreen() {
         </View>
     );
 
-    const renderItem = ({ item }: { item: Listing }) => (
+    const renderItem = ({ item }: { item: User }) => (
         <Pressable 
             style={[styles.card, { backgroundColor: theme.surface }]}
-        onPress={() => router.push({
-            pathname: "/listing/[id]",
-            params: { id: item.id }
-        })}
+            onPress={() => router.push({
+                pathname: "/profile/[id]",
+                params: { id: item.id }
+            })}
         >
             <View style={styles.cardContent}>
-                {/* Left: Portfoilo/Profile Photo */}
+                {/* Left: Profile Photo */}
                 <View style={styles.imageContainer}>
                     <Image 
-                        source={{ uri: item.media_url || 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=150&auto=format&fit=crop' }} 
+                        source={{ uri: item.profilePictureUrl || 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=150&auto=format&fit=crop' }} 
                         style={styles.cardImage} 
                     />
                 </View>
@@ -166,10 +166,10 @@ export default function SubcategoryListingsScreen() {
                         <View style={styles.ratingRow}>
                             <ThemedIcon name="star" size={14} lightColor="#fbbf24" darkColor="#fbbf24" />
                             <ThemedText variant="labelLarge" style={styles.ratingText}>
-                                {item.average_rating ? item.average_rating.toFixed(1) : '5.0'}
+                                {item.reputationScore ? (item.reputationScore / 20).toFixed(1) : '5.0'}
                             </ThemedText>
                             <ThemedText variant="labelSmall" colorName="textMuted">
-                                ({item.review_count || '0'})
+                                ({item.completedProjects || '0'} projects)
                             </ThemedText>
                         </View>
                         <Pressable>
@@ -177,15 +177,19 @@ export default function SubcategoryListingsScreen() {
                         </Pressable>
                     </View>
                     
-                    <ThemedText variant="titleSmall" numberOfLines={2} style={styles.serviceTitle}>
-                        {item.title}
+                    <ThemedText variant="titleSmall" style={styles.serviceTitle}>
+                        {item.fullName}
+                    </ThemedText>
+                    <ThemedText variant="bodySmall" colorName="textMuted" numberOfLines={1}>
+                        {item.department || 'Independent Provider'}
                     </ThemedText>
                     
-                    <View style={styles.bottomRow}>
-                        <ThemedText variant="labelSmall" colorName="textMuted">From</ThemedText>
-                        <ThemedText variant="titleSmall" colorName="primary">
-                            GH₵ {item.price || item.budget || '0'}
-                        </ThemedText>
+                    <View style={styles.tagRow}>
+                        {(item.skillTags || []).slice(0, 3).map((tag, idx) => (
+                            <View key={idx} style={[styles.skillTag, { backgroundColor: theme.surfaceVariant }]}>
+                                <ThemedText variant="labelSmall">{tag}</ThemedText>
+                            </View>
+                        ))}
                     </View>
                 </View>
             </View>
@@ -205,7 +209,7 @@ export default function SubcategoryListingsScreen() {
             </View>
 
             <FlatList
-                data={listings}
+                data={providers}
                 renderItem={renderItem}
                 ListHeaderComponent={renderHeader}
                 keyExtractor={(item) => item.id}
@@ -214,9 +218,9 @@ export default function SubcategoryListingsScreen() {
                 onRefresh={onRefresh}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
-                        <ThemedIcon name="file-document-outline" size={64} colorName="outline" />
+                        <ThemedIcon name="account-search-outline" size={64} colorName="outline" />
                         <ThemedText variant="bodyLarge" colorName="textMuted" align="center" style={styles.emptyText}>
-                            No students offering this service yet.
+                            No Provider&apos;s Profiles found in this subcategory.
                         </ThemedText>
                     </View>
                 }
@@ -343,16 +347,20 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     serviceTitle: {
-        fontSize: 15,
-        fontWeight: '500',
-        lineHeight: 20,
-        marginTop: 6,
+        fontSize: 16,
+        fontWeight: '700',
+        marginTop: 4,
     },
-    bottomRow: {
+    tagRow: {
         flexDirection: 'row',
-        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 6,
         marginTop: 8,
-        gap: 4,
+    },
+    skillTag: {
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 4,
     },
     emptyContainer: {
         alignItems: 'center',

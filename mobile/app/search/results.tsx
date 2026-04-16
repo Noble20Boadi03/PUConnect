@@ -19,7 +19,7 @@ import { ScreenLayout } from '@/components/ui/screen-layout';
 import { Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
 import { useResponsive } from '@/hooks/use-responsive';
-import { ServiceCard } from '@/components/service-card';
+import { ListingCard } from '@/components/listing-card';
 
 export default function SearchResultsScreen() {
   const router = useRouter();
@@ -151,7 +151,7 @@ export default function SearchResultsScreen() {
           }
           renderItem={({ item }) => (
             <View style={{ marginBottom: Spacing.md, alignItems: 'center' }}>
-              <ServiceCard
+              <ListingCard
                 listing={item}
                 width={Math.min(cardWidth * 1.4, 400)}
                 onPress={() => router.push({ pathname: '/listing/[id]', params: { id: item.id } })}

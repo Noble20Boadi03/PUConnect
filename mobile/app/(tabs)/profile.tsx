@@ -259,11 +259,20 @@ export default function ProfileScreen() {
                         </View>
                     </View>
 
-                    <Link href={{ pathname: "/(tabs)/onboarding" }} asChild>
-                        <Pressable style={[styles.editBtn, { backgroundColor: theme.surfaceVariant, borderColor: theme.outlineVariant }]}>
-                            <ThemedText variant="labelLarge">Edit Talent Profile</ThemedText>
-                        </Pressable>
-                    </Link>
+                    <View style={styles.buttonRow}>
+                        <Link href={{ pathname: "/(tabs)/onboarding" }} asChild>
+                            <Pressable style={[styles.halfBtn, { backgroundColor: theme.surfaceVariant, borderColor: theme.outlineVariant }]}>
+                                <ThemedIcon name="pencil-outline" size={16} colorName="text" style={{ marginRight: 6 }} />
+                                <ThemedText variant="labelLarge">Edit Profile</ThemedText>
+                            </Pressable>
+                        </Link>
+                        <Link href={{ pathname: "/profile/[id]", params: { id: user?.id } }} asChild>
+                            <Pressable style={[styles.halfBtn, { backgroundColor: theme.surfaceVariant, borderColor: theme.outlineVariant }]}>
+                                <ThemedIcon name="eye-outline" size={16} colorName="text" style={{ marginRight: 6 }} />
+                                <ThemedText variant="labelLarge">View Public</ThemedText>
+                            </Pressable>
+                        </Link>
+                    </View>
                 </Animated.View>
 
             {isProfileIncomplete && (
@@ -526,10 +535,16 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         marginBottom: 2,
     },
-    editBtn: {
+    buttonRow: {
+        flexDirection: 'row',
+        gap: Spacing.sm,
+    },
+    halfBtn: {
+        flex: 1,
         height: 48,
         borderWidth: 1,
         borderRadius: BorderRadius.lg,
+        flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
     },

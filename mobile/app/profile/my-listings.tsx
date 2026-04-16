@@ -201,6 +201,15 @@ export default function MyListingsScreen() {
             </Pressable>
             <View style={styles.actions}>
               <Pressable
+                onPress={() => router.push({ pathname: '/listing/[id]', params: { id: item.id } })}
+                style={styles.actionBtn}
+              >
+                <ThemedIcon name="eye-outline" size={20} colorName="textSecondary" />
+                <ThemedText variant="labelLarge" colorName="textSecondary">
+                  View
+                </ThemedText>
+              </Pressable>
+              <Pressable
                 onPress={() => router.push({ pathname: '/listing/create', params: { editId: item.id } })}
                 style={styles.actionBtn}
               >

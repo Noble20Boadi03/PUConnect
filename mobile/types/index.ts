@@ -21,6 +21,7 @@ export interface User {
   // Reputation & Marketplace
   reputationScore?: number; // 0-100 or rating-based
   completedProjects?: number;
+  review_count?: number;
   verifiedStudent?: boolean;
   department?: string;
   graduationYear?: number;

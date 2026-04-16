@@ -6,21 +6,21 @@ PUConnect is a peer-to-peer marketplace designed for university campus communiti
 The platform facilitates the exchange of services and talent between students, enabling peer-to-peer freelancing and collaboration.
 
 ## 2. Key User Personas
-*   **Base / default (Seeker)**: On registration, every user is a **Seeker** first. Seekers browse the marketplace and can post **service requests** and **need-help** ads so that skilled users can discover and respond.
-*   **Provider**: A user who has **upgraded** their account by submitting provider-oriented information—skills they can offer and additional **trust and security**-relevant details required to offer services credibly on campus. Providers can publish **service offerings** (not only respond to requests).
-*   **Dual-role**: A user may act as **Seeker only**, **Provider only**, or **both**. Seeking is always in scope by default; provider capabilities are **additive** after upgrade.
+*   **Base / default (Seeker)**: On registration, every user is a **Seeker** first. Seekers browse the marketplace and can post **Need-help Posts (NP)** on the home page so that skilled users can discover and respond.
+*   **Provider**: A user who has **upgraded** their account by submitting provider-oriented information—skills they can offer and additional **trust and security**-relevant details required to offer services credibly on campus. Providers can publish **Profile Promote Posts (PP)** on the home page (not only respond to NPs). Provider's Profiles are displayed under subcategories on the categories page (seeker-only profiles are never displayed).
+*   **Dual-role**: A user may act as **Seeker only** (can post NPs), **Provider only** (can post PPs and NPs, and appears in category search), or **both**. Seeking is always in scope by default; provider capabilities are **additive** after upgrade.
 
 ## 3. Core Functional Pillars
 
 ### 3.0. User Roles & Permissions
-*   **Seeker by default**: New accounts are Seekers. All signed-in Seekers may create **service requests** (need-help / request listings).
-*   **Provider eligibility**: Publishing **service offerings** requires completing the **provider upgrade** (skills offered, plus trust/security fields as defined by the product). Until then, the user cannot post as a provider.
-*   **Modes**: The same person may remain seeker-only, become provider-only in practice, or use **both** request and offer listing types according to the rules above.
+*   **Seeker by default**: New accounts are Seekers. All signed-in Seekers may create **Need-help Posts (NP)**.
+*   **Provider eligibility**: Publishing **Profile Promote Posts (PP)** requires completing the **provider upgrade** (skills offered, plus trust/security fields as defined by the product). Until then, the user cannot post as a provider.
+*   **Modes**: The same person may remain seeker-only, become provider-only in practice, or use **both** NP (listings) and PP (ads) types according to the rules above. Only upgraded providers will have their Provider's Profile displayed in category searches.
 
 ### 3.1. Unified Discovery Feed
-*   **Mixed Feed**: Both "Service Offerings" and "Service Requests" appear in the same primary feed.
-*   **Tabbed Filtering**: Users can toggle between "Services" and "Requests" using tabs.
-*   **Discovery**: Providers skew toward finding **Requests**; Seekers skew toward finding **Services**—while everyone can use both tabs.
+*   **Mixed Feed**: Both **Profile Promote Posts (PP)** and **Need-help Posts (NP)** appear exclusively in the same primary feed (Home page).
+*   **Tabbed Filtering**: Users can toggle between "PPs" and "NPs" using tabs on the home page.
+*   **Discovery**: Providers skew toward finding **NPs**; Seekers skew toward finding **PPs**—while everyone can use both tabs. Search categories lead exclusively to Provider's Profiles.
 
 ### 3.2. Lifecycle & Trust
 *   **Negotiation Bridge**: Interacting with any ad leads to Chat.
@@ -43,115 +43,219 @@ The platform facilitates the exchange of services and talent between students, e
 
 ---
 
-## 4.1 Requirement Journeys (Plan Layer)
-This section defines user-facing journey flows for delivery planning. It is separate from the screen QA checklist and focuses on end-to-end outcomes.
-### 1) Requirement: Join and access account
-- **Primary actor:** Standard User
-- **Entry page:** `Landing` or `Login`
-- **Page-to-page flow:**
-  1. `Landing` -> `Login`
-  2. `Login` -> `Register` (optional path)
-  3. `Register` -> `Login`
-  4. `Login` -> `Home / Market`
-- **What the user does:**
-  - Starts from landing, then signs in or creates an account.
-  - Completes registration when needed and returns to login.
-  - Signs in and reaches the main marketplace feed.
-- **Success criteria:** User reaches the authenticated home experience.
-- **Fallback path:** `Login` -> `Forgot Password` -> `Login`.
+## 4.1 Screen Redundancy Audit
 
-### 2) Requirement: Discover opportunities
-- **Primary actor:** Standard User
-- **Entry page:** `Home / Market`
-- **Page-to-page flow:**
-  1. `Home / Market` (Services tab) -> provider service ad cards -> `Listing Detail`
-  2. `Home / Market` -> `Search / Categories` -> `Category Detail` -> `Subcategory Listings` (provider profile list) -> `Public Profile`
-  3. `Home / Market` (Gigs/Requests tab for providers) -> seeker need-help post -> `Listing Detail`
-- **What the user does:**
-   - As a seeker, discovers providers from service ads on home or from provider profile lists in subcategories.
-  - As a provider, toggles to gigs/requests on home to discover seeker demand.
-  - Opens listing/profile details to validate fit before deciding to start conversation.
-- **Success criteria:** User finds a relevant provider profile or service/request listing in their target field.
-- **Fallback path:** User switches tabs, categories, or subcategories and retries discovery.
+> **Purpose:** A complete audit of every implemented screen identifying duplicated code, overlapping responsibilities, dead styles, and improvement opportunities. This replaces the former Requirement Journeys section.
 
+---
 
-### 3) Requirement: Start collaboration
-- **Primary actor:** Standard User (Seeker or Provider)
-- **Entry page:** `Listing Detail` or `Public Profile`
-- **Page-to-page flow:**
- 1. Seeker path A: `Subcategory Listings` (provider profile list) -> `Public Profile` -> `Chat`
-  2. Seeker path B: `Home / Market` provider service ad -> `Listing Detail` -> `Chat with Provider of this service` -> `Chat`
-  3. Provider path: `Home / Market` (Gigs/Requests tab) -> seeker request `Listing Detail` -> `Chat with User` -> `Chat`
-  4. `Chat` -> ongoing negotiation and service coordination
-- **What the user does:**
-  - Seeker starts chat either from provider public profile or from provider service listing detail.
-  - Provider starts chat from seeker request detail after reviewing the need-help post.
-  - Both sides agree on scope, terms, timeline, and delivery details in chat.
-- **Success criteria:** A clear active service conversation is established.
-- **Fallback path:** User exits chat and returns to discovery paths.
+### A) Duplicate Login Form — `login.tsx` vs `profile.tsx` (Guest State)
 
-### 4) Requirement: Publish and manage marketplace participation
-- **Primary actor:** Standard User
-- **Entry page:** `Profile`
-- **Page-to-page flow:**
-  1. `Profile` -> `Create Listing`
-  2. `Create Listing` -> `My Listings`
-  3. `My Listings` -> `Create Listing` (edit path)
-  4. `My Listings` -> `Listing Detail` (verification path)
-- **What the user does:**
-  - Creates new request/offer listings.
-  - Reviews own listings and edits/removes existing entries.
-  - Verifies listing output from public listing views.
-- **Success criteria:** User can reliably create, update, and maintain active listings.
-- **Fallback path:** User cancels editing and returns to `My Listings` with no changes.
+| Surface | `login.tsx` | `profile.tsx` (guest) |
+|---|---|---|
+| Email + password fields | ✅ `AnimatedInput` | ✅ `AnimatedInput` |
+| Password eye-toggle | ✅ | ✅ |
+| Loading state on submit | ✅ | ✅ |
+| Error alert on failure | ✅ `showAlert` | ✅ `showAlert` |
+| "Forgot password?" link | ✅ Full modal flow | ✅ Simple alert stub |
+| Navigation on success | `router.replace('/(tabs)/home')` | Implicit (VM state change) |
 
-### 5) Requirement: Build provider profile
-- **Primary actor:** Standard User upgrading capability
-- **Entry page:** `Profile`
-- **Page-to-page flow:**
-  1. `Profile` -> `Onboarding / Professional Setup`
-  2. `Onboarding / Professional Setup` -> `Profile` (updated state)
-  3. `Profile` -> `Public Profile` (validation path)
-- **What the user does:**
-  - Adds professional bio, skills, availability, and links.
-  - Saves profile improvements and confirms how public identity is presented.
-- **Success criteria:** Provider-relevant profile data is complete and visible.
-- **Fallback path:** User defers completion and returns later to onboarding.
+**Redundancy:** Two fully independent login experiences exist side-by-side. `profile.tsx` guest state reimplements the login form without the full-featured password-reset modal, creating a lesser experience. Users who land on the Profile tab see a different (simpler) login than the dedicated login screen.
 
-### 6) Requirement: Complete service and review
-- **Primary actor:** Standard User (both sides)
-- **Entry page:** `Chat`
-- **Page-to-page flow:**
-  1. `Chat` -> completion agreement between participants
-  2. `Chat` -> `Review`
-  3. `Review` -> `Home / Market` or `Public Profile`
-- **What the user does:**
-  - Confirms work completion in the chat context.
-  - Leaves a rating/comment to capture service quality.
-- **Success criteria:** Service closes with a review opportunity and reputation signal.
-- **Fallback path:** If completion is disputed, users continue coordination in `Chat`.
+**Recommendation:** Extract a shared `<LoginForm />` component, or redirect the Profile guest state to `login.tsx` instead of embedding a second form.
 
-### 7) Requirement: Personalize settings and session
-- **Primary actor:** Standard User
-- **Entry page:** `Profile` or `Home / Market`
-- **Page-to-page flow:**
-  1. `Profile`/`Home / Market` -> `Settings`
-  2. `Settings` -> theme/preferences updates
-  3. `Settings` -> logout action -> `Landing`
-- **What the user does:**
-  - Manages app preferences like appearance and notifications.
-  - Ends session when required and returns to entry experience.
-- **Success criteria:** User can control preferences and session lifecycle from one place.
-- **Fallback path:** User exits settings without applying changes.
+---
 
-### End-to-end macro journey
-1. User accesses account and reaches `Home / Market`.
-2. Seeker discovers providers via home service ads or category/subcategory provider profile lists.
-3. Provider discovers seeker demand via `Home / Market` gigs/requests tab.
-4. User opens `Listing Detail` or `Public Profile` and initiates chat from role-specific CTA.
-5. User manages own listings and profile maturity from `Profile`.
-6. Service is completed and reviewed.
-7. User manages preferences and session in `Settings`.
+### B) Duplicate Logout Actions — `profile.tsx` vs `settings.tsx`
+
+| Surface | `profile.tsx` | `settings.tsx` |
+|---|---|---|
+| Log Out button | ✅ Grouped menu item | ✅ Standalone destructive button |
+| Calls `signOut` / `handleLogout` | ✅ | ✅ |
+| Redirects to `/` | ✅ `router.replace("/")` | ✅ `router.replace('/')` |
+
+**Redundancy:** Logout is wired in two places. Changing the logout flow (e.g., adding a confirmation dialog) requires updating both.
+
+**Recommendation:** Keep it only in `settings.tsx` (the canonical location). In `profile.tsx`, the "Log Out" menu item should navigate to the Settings screen instead of duplicating the action.
+
+---
+
+### C) Duplicate Theme Toggle — `index.tsx`, `profile.tsx`, `settings.tsx`
+
+| Surface | `index.tsx` (Landing) | `profile.tsx` | `settings.tsx` |
+|---|---|---|---|
+| Theme toggle | Sun/moon icon button | Sun/moon icon button in header | Switch in grouped menu |
+| Calls `setMode` | ✅ | ✅ | ✅ |
+| Visual style | `surfaceVariant` circle pill | Plain icon button | Inset grouped row with `iconBox` |
+
+**Redundancy:** Three independent theme toggles with three different visual treatments. The landing screen toggle is reasonable (pre-auth). The Profile header toggle and Settings grouped-menu toggle overlap.
+
+**Recommendation:** Profile header should link to Settings for appearance control. Keep the landing-screen toggle as is (it's the only pre-auth option).
+
+---
+
+### D) Duplicate Header Layout Pattern
+
+Nearly every screen rebuilds the same fixed-header pattern inline:
+
+```
+<ThemedView style={[styles.header, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
+  <Pressable onPress={back}><ThemedIcon name="chevron-left" /></Pressable>
+  <ThemedText variant="headlineSmall" style={{ fontWeight: '800' }}>Title</ThemedText>
+  <View style={{ width: 40 }} />  {/* spacer */}
+</ThemedView>
+```
+
+**Screens affected:** `settings.tsx`, `review/[id].tsx`, `profile/[id].tsx`, `search/results.tsx`, `chat/[id].tsx`, `profile/my-listings.tsx`, `listing/create.tsx`
+
+**Each screen** re-declares its own `header`, `backBtn`, `headerTitle` styles with near-identical values.
+
+**Recommendation:** Extract a `<ScreenHeader title="..." onBack={...} right={...} />` component. Eliminates ~15–20 lines of boilerplate per screen.
+
+---
+
+### E) Duplicate `horizontalPadding` Boilerplate
+
+Every single screen repeats this exact pattern:
+
+```ts
+const { contentPaddingLeft, contentPaddingRight } = useResponsive();
+const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
+```
+
+**Screens affected:** All 15+ screens.
+
+**Recommendation:** Add `horizontalPadding` as a direct return value from `useResponsive()`, or build it into `ScreenLayout` as an automatic prop.
+
+---
+
+### F) Duplicate `centered` Style
+
+The following style object is declared independently in at least **7 files**:
+
+```ts
+centered: { flex: 1, justifyContent: 'center', alignItems: 'center' }
+```
+
+**Files:** `home.tsx`, `messages.tsx`, `profile.tsx`, `profile/[id].tsx`, `review/[id].tsx`, `search/results.tsx`, `listing/[id].tsx`
+
+**Recommendation:** Move to a shared `CommonStyles` export in `constants/theme.ts`.
+
+---
+
+### G) Duplicate `cardWidth` Calculation
+
+```ts
+const cardWidth = isTablet ? 240 : isLandscape ? 200 : 160;
+```
+
+**Screens affected:** `home.tsx`, `profile/[id].tsx`, `search/results.tsx`
+
+**Recommendation:** Expose via `useResponsive()` as `cardWidth`.
+
+---
+
+### H) Dead / Unused Styles and Code
+
+| File | Dead Item | Notes |
+|---|---|---|
+| `index.tsx` | `styles.container`, `styles.safeArea` | Declared but never referenced in JSX |
+| `home.tsx` | `styles.container` | Declared but never referenced |
+| `settings.tsx` | `Stack` import | `Stack.Screen` is used, but `Stack` itself isn't used as a navigator |
+| `listing-card.tsx` | Double blank line after function signature (L16-17) | Minor cleanup |
+| `review/[id].tsx` | `Shadows` import | Imported and used in `styles.card` — valid, but `styles.commentSection` and `styles.label` are declared but the card layout is redundant with `ThemedView` elevation |
+
+---
+
+### I) Overlapping "Password Reset" Implementations
+
+| Surface | Location | Behavior |
+|---|---|---|
+| Login screen | Full `ActionModal` with email input → "Link Sent" confirmation | Rich, interactive |
+| Profile guest state | `showAlert` stub → "If your school email is on file…" | Simple info alert |
+| Settings screen | `showAlert` stub → "If this were production…" | Simple info alert |
+
+**Redundancy:** Three places handle "password reset" with three different fidelity levels.
+
+**Recommendation:** Unify under a single `resetPassword()` utility that all screens call, with the interactive modal from `login.tsx` as the canonical experience.
+
+---
+
+### J) Messages Screen — Hardcoded Peer Names
+
+In `messages.tsx` (line 131):
+```tsx
+<ThemedText>Campus Member {item.senderId.slice(0, 4)}</ThemedText>
+```
+
+The sender name is synthesized from the sender ID substring rather than resolving the actual user name from the mock API.
+
+**Recommendation:** Use `api.getUserById()` to resolve peer names, or store resolved names in the conversation data model.
+
+---
+
+### K) Notification Toggles — No Persistence
+
+In `settings.tsx`, `pushEnabled` and `emailDigest` are local `useState` values:
+```ts
+const [pushEnabled, setPushEnabled] = useState(true);
+const [emailDigest, setEmailDigest] = useState(false);
+```
+
+These reset on every mount. They don't persist to `AsyncStorage` or any context.
+
+**Recommendation:** Wire to `AsyncStorage` (similar to theme mode), or remove them entirely if they're purely demo placeholders.
+
+---
+
+### L) Duplicate Search Bar Components
+
+| File | Implementation |
+|---|---|
+| `home.tsx` | `ThemedView` + `TextInput` with `searchContainer` / `searchInput` styles |
+| `search/results.tsx` | `ThemedView` + `TextInput` with `searchBox` / `searchInput` styles |
+
+Both are nearly identical pill-shaped search inputs with magnify icon.
+
+**Recommendation:** Extract a `<SearchBar />` component.
+
+---
+
+### M) `explore.tsx` — Unused Scaffolding Screen
+
+`app/(tabs)/explore.tsx` is the original Expo template's example screen. It is hidden from the tab bar (`href: null`) but still exists in the bundle.
+
+**Recommendation:** Delete the file entirely, or repurpose it for a real feature.
+
+---
+
+### N) `modal.tsx` — Unused Scaffolding Screen
+
+`app/modal.tsx` contains only "This is a modal" text with a link to home. No screen routes to it.
+
+**Recommendation:** Delete the file, or repurpose for a real modal interaction.
+
+---
+
+### Summary Table
+
+| ID | Issue | Severity | Files Affected |
+|---|---|---|---|
+| A | Duplicate login form | 🔴 High | `login.tsx`, `profile.tsx` |
+| B | Duplicate logout action | 🟡 Medium | `profile.tsx`, `settings.tsx` |
+| C | Triple theme toggle | 🟡 Medium | `index.tsx`, `profile.tsx`, `settings.tsx` |
+| D | Duplicate header layout | 🟡 Medium | 7+ screens |
+| E | `horizontalPadding` boilerplate | 🟢 Low | All screens |
+| F | Duplicate `centered` style | 🟢 Low | 7 files |
+| G | Duplicate `cardWidth` calc | 🟢 Low | 3 files |
+| H | Dead styles and imports | 🟢 Low | `index.tsx`, `home.tsx`, `settings.tsx` |
+| I | Overlapping password reset | 🟡 Medium | `login.tsx`, `profile.tsx`, `settings.tsx` |
+| J | Hardcoded peer names | 🟡 Medium | `messages.tsx` |
+| K | Non-persistent notification toggles | 🟢 Low | `settings.tsx` |
+| L | Duplicate search bar | 🟢 Low | `home.tsx`, `search/results.tsx` |
+| M | Dead `explore.tsx` scaffolding | 🟢 Low | `explore.tsx` |
+| N | Dead `modal.tsx` scaffolding | 🟢 Low | `modal.tsx` |
+
 ---
 
 ## 5. Mobile (Android) — Screen QA Checklist

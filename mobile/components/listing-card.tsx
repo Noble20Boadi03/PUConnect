@@ -9,10 +9,11 @@ import { ThemedIcon } from './ui/themed-icon';
 
 interface ListingCardProps {
     listing: Listing;
+    width?: number;
     onPress: () => void;
 }
 
-export function ListingCard({ listing, onPress }: ListingCardProps) {
+export function ListingCard({ listing, width, onPress }: ListingCardProps) {
 
 
     const getBadgeColors = () => {
@@ -34,7 +35,7 @@ export function ListingCard({ listing, onPress }: ListingCardProps) {
         <ThemedView
             elevation={1}
             colorName="surface"
-            style={styles.container}
+            style={[styles.container, width ? { width } : undefined]}
         >
             <Pressable
                 style={({ pressed }) => [

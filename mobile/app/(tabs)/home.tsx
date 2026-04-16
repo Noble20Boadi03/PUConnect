@@ -10,7 +10,7 @@ import { Spacing, BorderRadius } from '@/constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '@/hooks/use-responsive';
-import { ServiceCard } from '@/components/service-card';
+import { ListingCard } from '@/components/listing-card';
 import { useHomeViewModel } from '@/hooks/view-models/use-home-view-model';
 import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
 import { useAuth } from '@/context/auth-context';
@@ -32,6 +32,42 @@ const SectionHeader = ({ title, onSeeAll, horizontalPadding }: SectionHeaderProp
         </Pressable>
       )}
     </View>
+  );
+};
+
+const HomeFilterPills = ({ activeFilter, onFilterChange }: { activeFilter: 'All' | 'Experts' | 'Gigs', onFilterChange: (filter: 'All' | 'Experts' | 'Gigs') => void }) => {
+  const { theme } = useTheme();
+  const filters: ('All' | 'Experts' | 'Gigs')[] = ['All', 'Experts', 'Gigs'];
+
+  return (
+    <ScrollView 
+      horizontal 
+      showsHorizontalScrollIndicator={false} 
+      contentContainerStyle={styles.pillsContainer}
+    >
+      {filters.map((filter) => {
+        const isSelected = activeFilter === filter;
+        return (
+          <Pressable 
+            key={filter}
+            style={[
+              styles.pill, 
+              { borderColor: theme.outlineVariant },
+              isSelected && { backgroundColor: theme.primary, borderColor: theme.primary }
+            ]} 
+            onPress={() => onFilterChange(filter)}
+          >
+            <ThemedText 
+              variant="labelLarge" 
+              style={[styles.pillText, isSelected && { color: theme.onPrimary }]}
+              colorName={isSelected ? undefined : 'textMuted'}
+            >
+              {filter}
+            </ThemedText>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
   );
 };
 
@@ -71,8 +107,8 @@ const PromotionBanner = ({ horizontalPadding }: { horizontalPadding: { paddingLe
 };
 
 export default function HomeScreen() {
-  const { uiState, onRefresh } = useHomeViewModel();
-  const { token, user } = useAuth();
+  const { uiState, onRefresh, activeFilter, setActiveFilter } = useHomeViewModel();
+  const { token } = useAuth();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
@@ -109,8 +145,11 @@ export default function HomeScreen() {
       <ThemedView style={styles.centered}>
         <ThemedIcon name="store-off-outline" size={48} colorName="outline" />
         <ThemedText variant="bodyLarge" colorName="textSecondary" align="center" style={{ marginTop: Spacing.md }}>
-          No listings available yet.
+          No {activeFilter === 'All' ? 'items' : activeFilter} available matching your criteria.
         </ThemedText>
+        <Pressable onPress={onRefresh} style={{ marginTop: Spacing.md }}>
+          <ThemedText colorName="primary">Refresh</ThemedText>
+        </Pressable>
       </ThemedView>
     );
   }
@@ -123,10 +162,10 @@ export default function HomeScreen() {
       <ThemedView 
         style={[
           styles.fixedHeader, 
-          { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }
+          { paddingTop: insets.top + Spacing.sm }
         ]}
       >
-        <View style={styles.topRow}>
+        <View style={[styles.topRow, horizontalPadding]}>
           <ThemedText variant="headlineSmall" style={styles.brandLogo}>
             PuConnect<ThemedText colorName="primary">.</ThemedText>
           </ThemedText>
@@ -143,13 +182,12 @@ export default function HomeScreen() {
           colorName="surfaceVariant" 
           style={[
             styles.searchContainer, 
-            horizontalPadding,
-            { borderColor: theme.outlineVariant }
+            { marginHorizontal: horizontalPadding.paddingLeft, borderColor: theme.outlineVariant }
           ]}
         >
           <ThemedIcon name="magnify" size={20} colorName="textMuted" />
           <TextInput
-            placeholder="Search services"
+            placeholder="Search Experts or Gigs"
             placeholderTextColor={theme.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -160,10 +198,16 @@ export default function HomeScreen() {
             style={[styles.searchInput, { color: theme.text }]}
           />
         </ThemedView>
+
+        {/* Filters */}
+        <HomeFilterPills activeFilter={activeFilter} onFilterChange={setActiveFilter} />
+
         <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.discoveryTip, horizontalPadding]}>
-          {token && user?.canOfferServices
-            ? 'Tip: Check the Requests tab to find students who need your skills.'
-            : 'Tip: Browse Services for help; use the + menu to post a request when you need something done.'}
+          {activeFilter === 'All' 
+            ? 'Tip: Browse Experts for professional help or Gigs to find students who need your skills.' 
+            : activeFilter === 'Experts'
+            ? 'Tip: Experts are students offering professional services. Hire them to get your tasks done.'
+            : 'Tip: Gigs are requests from students who need help. Apply to these to earn and build your portfolio.'}
         </ThemedText>
       </ThemedView>
 
@@ -177,9 +221,9 @@ export default function HomeScreen() {
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={theme.primary} />
         }
       >
-        {/* Popular Services Section */}
+        {/* Popular Section */}
         <SectionHeader
-          title="Popular Services"
+          title="Popular"
           horizontalPadding={horizontalPadding}
           onSeeAll={() => router.push({ pathname: '/search/results', params: { q: '', section: 'popular' } })}
         />
@@ -190,7 +234,7 @@ export default function HomeScreen() {
           style={styles.horizontalSection}
         >
           {popular.map((item) => (
-            <ServiceCard 
+            <ListingCard 
               key={`popular-${item.id}`} 
               listing={item} 
               width={cardWidth}
@@ -206,7 +250,7 @@ export default function HomeScreen() {
           onSeeAll={() => router.push({ pathname: '/search/results', params: { q: '', section: 'recommended' } })}
         />
         <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.sectionSub, horizontalPadding]}>
-          Personalized based on your interests
+          Handpicked based on your interests
         </ThemedText>
         <ScrollView 
           horizontal 
@@ -215,7 +259,7 @@ export default function HomeScreen() {
           style={styles.horizontalSection}
         >
           {recommended.map((item) => (
-            <ServiceCard 
+            <ListingCard 
               key={`rec-${item.id}`} 
               listing={item} 
               width={cardWidth}
@@ -240,7 +284,7 @@ export default function HomeScreen() {
           style={styles.horizontalSection}
         >
           {recent.map((item) => (
-            <ServiceCard 
+            <ListingCard 
               key={`recent-${item.id}`} 
               listing={item} 
               width={cardWidth}
@@ -251,12 +295,12 @@ export default function HomeScreen() {
 
         {/* Based on Last Order Section */}
         <SectionHeader
-          title="Based on your last order"
+          title="You might also like"
           horizontalPadding={horizontalPadding}
           onSeeAll={() => router.push({ pathname: '/search/results', params: { q: '', section: 'lastOrder' } })}
         />
         <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.sectionSub, horizontalPadding]}>
-          You hired a designer, you might also need...
+          Based on your previous interactions
         </ThemedText>
         <ScrollView 
           horizontal 
@@ -265,7 +309,7 @@ export default function HomeScreen() {
           style={styles.horizontalSection}
         >
           {lastOrderRecs.map((item) => (
-            <ServiceCard 
+            <ListingCard 
               key={`last-${item.id}`} 
               listing={item} 
               width={cardWidth}
@@ -274,7 +318,7 @@ export default function HomeScreen() {
           ))}
         </ScrollView>
 
-        {/* Trending This Week Section */}
+        {/* Trending Section */}
         <SectionHeader
           title="Trending this week"
           horizontalPadding={horizontalPadding}
@@ -287,7 +331,7 @@ export default function HomeScreen() {
           style={styles.horizontalSection}
         >
           {trending.map((item) => (
-            <ServiceCard 
+            <ListingCard 
               key={`trend-${item.id}`} 
               listing={item} 
               width={cardWidth}
@@ -338,12 +382,27 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.sm,
     fontSize: 14,
   },
+  pillsContainer: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    gap: Spacing.sm,
+  },
+  pill: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    backgroundColor: 'transparent',
+  },
+  pillText: {
+    fontWeight: '600',
+  },
   discoveryTip: {
-    marginTop: Spacing.sm,
+    marginTop: Spacing.xs,
     lineHeight: 18,
   },
   scrollContent: {
-    paddingTop: Spacing.sm,
+    paddingTop: Spacing.xs,
   },
   sectionHeader: {
     flexDirection: 'row',

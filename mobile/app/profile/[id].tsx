@@ -12,7 +12,7 @@ import { ScreenLayout } from '@/components/ui/screen-layout';
 import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
 import { useResponsive } from '@/hooks/use-responsive';
-import { ServiceCard } from '@/components/service-card';
+import { ListingCard } from '@/components/listing-card';
 
 export default function PublicProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -148,7 +148,7 @@ export default function PublicProfileScreen() {
             contentContainerStyle={{ gap: Spacing.md, paddingVertical: Spacing.sm }}
           >
             {listings.map((item) => (
-              <ServiceCard
+              <ListingCard
                 key={item.id}
                 listing={item}
                 width={cardWidth}

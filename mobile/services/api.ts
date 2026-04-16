@@ -12,22 +12,22 @@ import { AuthTokens, Listing, User, ChatMessage, Review, ConversationLifecycle }
 /** Template for mock data; live session user is `mockSessionUser` (Seeker by default). */
 const MOCK_USER: User = {
     id: 'mock-user-001',
-    email: 'test@university.edu',
-    fullName: 'Test User',
-    universityId: '20270001',
+    email: 'jac@university.edu',
+    fullName: 'JAC User',
+    universityId: '20275892',
     role: 'student',
     isActive: true,
-    bio: 'Creative developer passionate about building campus tools. Experienced in React Native, UI/UX design, and full-stack projects.',
-    skillTags: ['React Native', 'UI/UX Design', 'TypeScript', 'Graphic Design'],
-    experienceLevel: 'intermediate',
-    portfolioLinks: ['https://github.com/testuser', 'https://linkedin.com/in/testuser'],
+    bio: '',
+    skillTags: [],
+    experienceLevel: 'beginner',
+    portfolioLinks: [],
     isAvailable: true,
     profilePictureUrl: undefined,
-    reputationScore: 4.8,
-    completedProjects: 12,
+    reputationScore: 0.0,
+    completedProjects: 0,
     verifiedStudent: true,
-    department: 'Computer Science',
-    graduationYear: 2027,
+    department: 'Business & Economics',
+    graduationYear: 2026,
     canOfferServices: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -206,6 +206,49 @@ const MOCK_LISTINGS: Listing[] = [
         createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
         updatedAt: new Date().toISOString(),
     },
+    // --- Need-help Posts (NPs / Seeker Listings) ---
+    {
+        id: 'np-001',
+        title: 'Need Help with Calc II Homework',
+        description: 'I am struggling with integration by parts and differential equations. Need a 1-hour session.',
+        budget: 15,
+        category: 'Tutoring & Academics',
+        subcategory: 'STEM Tutoring',
+        type: 'service_request',
+        ownerId: 'mock-user-001',
+        isActive: true,
+        tags: ['calculus', 'math', 'homework'],
+        createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+        updatedAt: new Date().toISOString(),
+    },
+    {
+        id: 'np-002',
+        title: 'Looking for a Guitarist for Band',
+        description: 'Our campus band needs a lead guitarist for the upcoming talent show. Rehearsals twice a week.',
+        budget: 0,
+        category: 'Events & Entertainment',
+        subcategory: 'Music',
+        type: 'service_request',
+        ownerId: 'user-009',
+        isActive: true,
+        tags: ['music', 'band', 'guitar'],
+        createdAt: new Date(Date.now() - 86400000).toISOString(),
+        updatedAt: new Date().toISOString(),
+    },
+    {
+        id: 'np-003',
+        title: 'Website Bug Fix - Urgently Needed',
+        description: 'My portfolio website has some CSS issues on mobile. Need a dev to fix it tonight.',
+        budget: 30,
+        category: 'Tech & Development',
+        subcategory: 'App Development',
+        type: 'service_request',
+        ownerId: 'user-007',
+        isActive: true,
+        tags: ['web', 'css', 'bug'],
+        createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+        updatedAt: new Date().toISOString(),
+    },
 ];
 
 const MOCK_MESSAGES: ChatMessage[] = [
@@ -249,16 +292,16 @@ const MOCK_TALENT: User[] = [
 
 /** Synthetic campus users backing listing `ownerId`s (public profiles + chat headers). */
 const MOCK_PEER_USERS: Record<string, User> = {
-    'user-002': { ...MOCK_USER, id: 'user-002', fullName: 'Alex Rivera', email: 'arivera@university.edu', universityId: '2024002', department: 'Graphic Design', graduationYear: 2026, skillTags: ['Logo Design', 'Branding', 'Figma'], bio: 'Design lead for campus clubs and startups.' },
-    'user-003': { ...MOCK_USER, id: 'user-003', fullName: 'Jordan Kim', email: 'jkim@university.edu', universityId: '2024003', department: 'Physics', graduationYear: 2025, skillTags: ['STEM Tutoring', 'Calculus'], bio: 'Peer tutor for math and physics courses.' },
-    'user-004': { ...MOCK_USER, id: 'user-004', fullName: 'Sam Okoro', email: 'sokoro@university.edu', universityId: '2024004', department: 'Computer Science', graduationYear: 2026, skillTags: ['React Native', 'Expo', 'TypeScript'], bio: 'Mobile and full-stack projects for student orgs.' },
-    'user-005': { ...MOCK_USER, id: 'user-005', fullName: 'Riley Chen', email: 'rchen@university.edu', universityId: '2024005', department: 'Business', graduationYear: 2027, skillTags: ['Delivery', 'Logistics'], bio: 'Fast campus delivery and errands.' },
-    'user-006': { ...MOCK_USER, id: 'user-006', fullName: 'Morgan Blake', email: 'mblake@university.edu', universityId: '2024006', department: 'Film', graduationYear: 2025, skillTags: ['Photography', 'Video'], bio: 'Events, portraits, and short-form content.' },
-    'user-007': { ...MOCK_USER, id: 'user-007', fullName: 'Casey Lee', email: 'clee@university.edu', universityId: '2024007', department: 'English', graduationYear: 2026, skillTags: ['Writing', 'Career'], bio: 'Resume reviews and writing help.' },
-    'user-008': { ...MOCK_USER, id: 'user-008', fullName: 'Taylor Brooks', email: 'tbrooks@university.edu', universityId: '2024008', department: 'Marketing', graduationYear: 2027, skillTags: ['Social Media', 'Growth'], bio: 'Campus campaigns and brand strategy.' },
-    'user-009': { ...MOCK_USER, id: 'user-009', fullName: 'Jamie Fox', email: 'jfox@university.edu', universityId: '2024009', department: 'Music', graduationYear: 2025, skillTags: ['Production', 'Mixing'], bio: 'Beats and studio sessions.' },
-    'user-010': { ...MOCK_USER, id: 'user-010', fullName: 'Riley Nguyen', email: 'rnguyen@university.edu', universityId: '2024010', department: 'Hospitality', graduationYear: 2026, skillTags: ['Events', 'Planning'], bio: 'Student org events and logistics.' },
-    'user-011': { ...MOCK_USER, id: 'user-011', fullName: 'Quinn Patel', email: 'qpatel@university.edu', universityId: '2024011', department: 'Linguistics', graduationYear: 2027, skillTags: ['Translation', 'Editing'], bio: 'Multilingual editing and translation.' },
+    'user-002': { ...MOCK_USER, id: 'user-002', fullName: 'Alex Rivera', email: 'arivera@university.edu', universityId: '2024002', department: 'Graphic Design', graduationYear: 2026, skillTags: ['Logo Design', 'Branding', 'Figma'], bio: 'Design lead for campus clubs and startups.', canOfferServices: true },
+    'user-003': { ...MOCK_USER, id: 'user-003', fullName: 'Jordan Kim', email: 'jkim@university.edu', universityId: '2024003', department: 'Physics', graduationYear: 2025, skillTags: ['STEM Tutoring', 'Calculus'], bio: 'Peer tutor for math and physics courses.', canOfferServices: true },
+    'user-004': { ...MOCK_USER, id: 'user-004', fullName: 'Sam Okoro', email: 'sokoro@university.edu', universityId: '2024004', department: 'Computer Science', graduationYear: 2026, skillTags: ['React Native', 'Expo', 'TypeScript'], bio: 'Mobile and full-stack projects for student orgs.', canOfferServices: true },
+    'user-005': { ...MOCK_USER, id: 'user-005', fullName: 'Riley Chen', email: 'rchen@university.edu', universityId: '2024005', department: 'Business', graduationYear: 2027, skillTags: ['Delivery', 'Logistics'], bio: 'Fast campus delivery and errands.', canOfferServices: true },
+    'user-006': { ...MOCK_USER, id: 'user-006', fullName: 'Morgan Blake', email: 'mblake@university.edu', universityId: '2024006', department: 'Film', graduationYear: 2025, skillTags: ['Photography', 'Video'], bio: 'Events, portraits, and short-form content.', canOfferServices: true },
+    'user-007': { ...MOCK_USER, id: 'user-007', fullName: 'Casey Lee', email: 'clee@university.edu', universityId: '2024007', department: 'English', graduationYear: 2026, skillTags: ['Writing', 'Career'], bio: 'Resume reviews and writing help.', canOfferServices: true },
+    'user-008': { ...MOCK_USER, id: 'user-008', fullName: 'Taylor Brooks', email: 'tbrooks@university.edu', universityId: '2024008', department: 'Marketing', graduationYear: 2027, skillTags: ['Social Media', 'Growth'], bio: 'Campus campaigns and brand strategy.', canOfferServices: true },
+    'user-009': { ...MOCK_USER, id: 'user-009', fullName: 'Jamie Fox', email: 'jfox@university.edu', universityId: '2024009', department: 'Music', graduationYear: 2025, skillTags: ['Production', 'Mixing'], bio: 'Beats and studio sessions.', canOfferServices: true },
+    'user-010': { ...MOCK_USER, id: 'user-010', fullName: 'Riley Nguyen', email: 'rnguyen@university.edu', universityId: '2024010', department: 'Hospitality', graduationYear: 2026, skillTags: ['Events', 'Planning'], bio: 'Student org events and logistics.', canOfferServices: true },
+    'user-011': { ...MOCK_USER, id: 'user-011', fullName: 'Quinn Patel', email: 'qpatel@university.edu', universityId: '2024011', department: 'Linguistics', graduationYear: 2027, skillTags: ['Translation', 'Editing'], bio: 'Multilingual editing and translation.', canOfferServices: true },
 };
 
 let extraListings: Listing[] = [];
@@ -336,6 +379,20 @@ export const api = {
         return { gaps: ['Data Analysis', 'UI/UX Research', 'Cloud DevOps'] };
     },
 
+    getProvidersBySubcategory: async (subcategory: string, signal?: AbortSignal): Promise<User[]> => {
+        await delay(350, signal);
+        // Map of subcategories to popular talent in those fields
+        const talentPool = Object.values(MOCK_PEER_USERS).filter(u => u.canOfferServices);
+        
+        // Return talent that matches the subcategory or has relevant tags
+        // In this mock, we just return a slice of providers for any subcategory requested
+        return talentPool.filter(u => 
+            u.department?.toLowerCase().includes(subcategory.toLowerCase()) || 
+            u.skillTags?.some(t => t.toLowerCase().includes(subcategory.toLowerCase())) ||
+            talentPool.indexOf(u) % 2 === 0 // Fallback mix
+        ).slice(0, 10);
+    },
+
     // Listings
     getListings: async (
         _skip = 0,
@@ -345,6 +402,7 @@ export const api = {
             subcategory?: string;
             tag?: string;
             level?: string;
+            type?: 'service_offer' | 'service_request';
             department?: string;
             minPrice?: number;
             maxPrice?: number;
@@ -366,6 +424,9 @@ export const api = {
         }
         if (_filters?.level) {
             rows = rows.filter((l) => l.level === _filters.level);
+        }
+        if (_filters?.type) {
+            rows = rows.filter((l) => l.type === _filters.type);
         }
         if (_filters?.department) {
             rows = rows.filter((l) => l.department === _filters.department);
@@ -398,7 +459,7 @@ export const api = {
             ...MOCK_LISTINGS[0],
             ...listingData,
             id: `listing-new-${Date.now()}`,
-            ownerId: MOCK_USER.id,
+            ownerId: mockSessionUser.id,
             isActive: true,
             createdAt: now,
             updatedAt: now,
@@ -482,13 +543,27 @@ export const api = {
         const r: Review = {
             id: `review-${Date.now()}`,
             listingId: payload.listingId,
-            authorUserId: MOCK_USER.id,
+            authorUserId: mockSessionUser.id,
             targetUserId: payload.targetUserId,
             rating: payload.rating,
             comment: payload.comment,
             createdAt: new Date().toISOString(),
         };
         submittedReviews.push(r);
+        
+        // Simulate reputation impact
+        const peer = MOCK_PEER_USERS[payload.targetUserId];
+        if (peer) {
+            const currentTotal = (peer.reputationScore ?? 4.5) * (peer.review_count ?? 10);
+            const newCount = (peer.review_count ?? 10) + 1;
+            const newRating = (currentTotal + payload.rating) / newCount;
+            MOCK_PEER_USERS[payload.targetUserId] = {
+                ...peer,
+                reputationScore: parseFloat(newRating.toFixed(1)),
+                review_count: newCount
+            };
+        }
+
         return r;
     },
 

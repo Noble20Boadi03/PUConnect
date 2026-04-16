@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/services/api';
-import { Listing, SubcategoryFilter } from '@/types';
+import { User, SubcategoryFilter } from '@/types';
 import { UiState } from '@/types/ui-state';
 
 export interface SubcategoryData {
-    listings: Listing[];
+    providers: User[];
     filtersConfig: SubcategoryFilter[];
 }
 
@@ -43,23 +43,23 @@ export function useSubcategoryViewModel({ subcategoryTitle, category }: Subcateg
                     else apiFilters.tag = value;
                 });
 
-                const listings = await api.getListings(0, 20, apiFilters, controller.signal);
+                const providers = await api.getProvidersBySubcategory(subcategoryTitle, controller.signal);
 
                 setUiState(prev => ({
                     status: 'content',
                     isRefreshing: false,
                     data: {
-                        listings,
+                        providers,
                         filtersConfig: prev.status === 'content' ? prev.data.filtersConfig : [],
                     },
                 }));
 
-                if (listings.length === 0) {
+                if (providers.length === 0) {
                     setUiState(prev => ({
                         status: 'content',
                         isRefreshing: false,
                         data: {
-                            listings: [],
+                            providers: [],
                             filtersConfig: prev.status === 'content' ? prev.data.filtersConfig : [],
                         },
                     }));

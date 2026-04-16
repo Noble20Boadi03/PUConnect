@@ -7,6 +7,7 @@ import {
   Pressable,
   Image,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +16,7 @@ import { useAuth } from '@/context/auth-context';
 import { useAppAlert } from '@/context/alert-context';
 import { api } from '@/services/api';
 import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
@@ -177,39 +179,48 @@ export default function ChatScreen() {
         </Pressable>
       </View>
 
-      {user && id && token ? (
-        <View style={[styles.lifecycleBar, { backgroundColor: theme.surfaceVariant, borderBottomColor: theme.outlineVariant }]}>
-          <ThemedText variant="labelSmall" colorName="textSecondary" style={{ marginBottom: Spacing.sm }}>
-            Engagement: {lifecycle === 'open' ? 'In discussion' : lifecycle === 'hired' ? 'Hired' : 'Completed'}
+      {user && id && token && listingId ? (
+        <ThemedView style={[styles.lifecycleBar, { backgroundColor: theme.surfaceVariant, borderBottomColor: theme.outlineVariant }]}>
+          <ThemedText variant="labelSmall" colorName="textSecondary" style={{ marginBottom: Spacing.xs }}>
+            SERVICE STATUS
           </ThemedText>
-          <View style={styles.lifecycleActions}>
-            {lifecycle === 'open' ? (
-              <Pressable
-                onPress={markHired}
-                style={[styles.lifecycleBtn, { backgroundColor: theme.primary }]}
-              >
-                <ThemedText variant="labelLarge" lightColor="#fff" darkColor="#fff">
-                  Mark as hired
+          <View style={styles.lifecycleRow}>
+             <View style={styles.lifecycleStatus}>
+                <View style={[styles.statusIndicator, { backgroundColor: lifecycle === 'completed' ? '#22c55e' : lifecycle === 'hired' ? theme.primary : theme.outline }]} />
+                <ThemedText variant="titleSmall" style={{ fontWeight: '700' }}>
+                  {lifecycle === 'open' ? 'In Negotiation' : lifecycle === 'hired' ? 'Work in Progress' : 'Service Completed'}
                 </ThemedText>
-              </Pressable>
-            ) : null}
-            {lifecycle === 'hired' ? (
-              <Pressable
-                onPress={markComplete}
-                style={[styles.lifecycleBtn, { backgroundColor: theme.secondaryContainer }]}
-              >
-                <ThemedText variant="labelLarge" colorName="onSecondaryContainer">
-                  Complete service
-                </ThemedText>
-              </Pressable>
-            ) : null}
-            {lifecycle === 'completed' ? (
-              <ThemedText variant="labelSmall" colorName="primary">
-                You can leave a review from the prompt after completion.
-              </ThemedText>
-            ) : null}
+             </View>
+
+            <View style={styles.lifecycleActions}>
+              {lifecycle === 'open' && (
+                <Pressable
+                  onPress={markHired}
+                  style={[styles.lifecycleBtn, { backgroundColor: theme.primary }]}
+                >
+                  <ThemedText variant="labelLarge" lightColor="#fff" darkColor="#fff">
+                    Hired
+                  </ThemedText>
+                </Pressable>
+              )}
+              {lifecycle === 'hired' && (
+                <Pressable
+                  onPress={markComplete}
+                  style={[styles.lifecycleBtn, { backgroundColor: theme.primary }]}
+                >
+                  <ThemedText variant="labelLarge" lightColor="#fff" darkColor="#fff">
+                    Complete Work
+                  </ThemedText>
+                </Pressable>
+              )}
+              {lifecycle === 'completed' && (
+                <View style={[styles.lifecycleBtn, { backgroundColor: theme.surfaceVariant, borderWidth: 1, borderColor: theme.outlineVariant }]}>
+                   <ThemedText variant="labelLarge" colorName="textMuted">Finished</ThemedText>
+                </View>
+              )}
+            </View>
           </View>
-        </View>
+        </ThemedView>
       ) : null}
 
       <ScrollView
@@ -365,20 +376,39 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   lifecycleBar: {
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
+    ...Platform.select({
+        ios: { ...Shadows.level1 },
+        android: { elevation: 2 }
+    })
+  },
+  lifecycleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  lifecycleStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  statusIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   lifecycleActions: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
     alignItems: 'center',
   },
   lifecycleBtn: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.full,
+    minWidth: 80,
+    alignItems: 'center',
   },
   chatList: {
     flex: 1,
