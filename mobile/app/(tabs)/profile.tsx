@@ -12,14 +12,12 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useResponsive } from '@/hooks/use-responsive';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useProfileViewModel } from '@/hooks/view-models/use-profile-view-model';
-import { useAppAlert } from '@/context/alert-context';
 import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
 
 export default function ProfileScreen() {
     const { uiState } = useProfileViewModel();
     const { theme } = useTheme();
     const insets = useSafeAreaInsets();
-    const { showAlert } = useAppAlert();
     const { contentPaddingLeft, contentPaddingRight } = useResponsive();
     const tabBarHeight = useTabBarHeight();
     const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };

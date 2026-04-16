@@ -15,8 +15,6 @@ import { useAuth } from '@/context/auth-context';
 import { api } from '@/services/api';
 import { ThemedText } from '@/components/themed-text';
 import { useAppAlert } from '@/context/alert-context';
-import { ThemedView } from '@/components/themed-view';
-import { ThemedIcon } from '@/components/ui/themed-icon';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { ScreenHeader } from '@/components/ui/screen-header';

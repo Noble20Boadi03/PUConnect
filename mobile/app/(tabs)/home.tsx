@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, ActivityIndicator, RefreshControl, ScrollView, Pressable, TextInput } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, RefreshControl, ScrollView, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';

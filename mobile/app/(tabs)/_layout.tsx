@@ -113,13 +113,6 @@ export default function TabLayout() {
           href: null,
           title: 'Setup',
         }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          href: null,
-        }}
-      />
     </Tabs>
   );
 }
