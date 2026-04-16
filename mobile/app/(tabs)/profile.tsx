@@ -10,7 +10,6 @@ import { useTheme } from '@/context/theme-context';
 import { AnimatedInput } from '@/components/ui/animated-input';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useResponsive } from '@/hooks/use-responsive';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useProfileViewModel } from '@/hooks/view-models/use-profile-view-model';
@@ -22,7 +21,7 @@ export default function ProfileScreen() {
     const { theme, isDark, setMode } = useTheme();
     const insets = useSafeAreaInsets();
     const { showAlert } = useAppAlert();
-    const { spacingMultiplier, contentPaddingLeft, contentPaddingRight } = useResponsive();
+    const { contentPaddingLeft, contentPaddingRight } = useResponsive();
     const tabBarHeight = useTabBarHeight();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -35,7 +34,7 @@ export default function ProfileScreen() {
         setIsLoggingIn(true);
         try {
             await handleLogin(email, password);
-        } catch (error) {
+        } catch {
             showAlert({ title: 'Login Failed', subtitle: 'Invalid credentials or server error', severity: 'error' });
         } finally {
             setIsLoggingIn(false);

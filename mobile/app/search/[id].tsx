@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTheme } from '@/context/theme-context';
-import { Spacing, BorderRadius } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { CAMPUS_CATEGORIES } from '@/constants/categories';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -16,7 +16,7 @@ export default function CategoryDetailScreen() {
     const router = useRouter();
     const { theme } = useTheme();
     const insets = useSafeAreaInsets();
-    const { contentPaddingLeft, contentPaddingRight, spacingMultiplier } = useResponsive();
+    const { contentPaddingLeft, contentPaddingRight } = useResponsive();
     const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
     const category = CAMPUS_CATEGORIES.find(c => c.id === id);
 

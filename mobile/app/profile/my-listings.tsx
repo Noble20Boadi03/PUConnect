@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View, FlatList, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
+
 import { useAuth } from '@/context/auth-context';
 import { api } from '@/services/api';
 import { Listing } from '@/types';
@@ -58,7 +58,7 @@ export default function MyListingsScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user?.id, token]);
+  }, [user?.id, token, showAlert]);
 
   useFocusEffect(
     useCallback(() => {

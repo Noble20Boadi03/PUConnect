@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, TextInput, TextInputProps, View, Pressable } from "react-native";
+import { StyleSheet, TextInput, TextInputProps, Pressable } from "react-native";
 import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedIcon, IconName } from "@/components/ui/themed-icon";
@@ -67,6 +67,8 @@ export const AnimatedInput = React.forwardRef<TextInput, AnimatedInputProps>(({
         </Animated.View>
     );
 });
+
+AnimatedInput.displayName = 'AnimatedInput';
 
 const styles = StyleSheet.create({
     inputLabel: {

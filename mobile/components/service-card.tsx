@@ -3,7 +3,7 @@ import { View, StyleSheet, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { Listing } from '@/types';
 import { Spacing, BorderRadius } from '@/constants/theme';
-import { useTheme } from '@/context/theme-context';
+
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 import { ThemedIcon } from './ui/themed-icon';
@@ -15,7 +15,7 @@ interface ServiceCardProps {
 }
 
 export function ServiceCard({ listing, onPress, width = 160 }: ServiceCardProps) {
-    const { theme } = useTheme();
+
 
     // Placeholder image if listing has no image
     const imageUrl = listing.media_url || 'https://images.unsplash.com/photo-1626785774573-4b799315345d?q=80&w=400&auto=format&fit=crop';

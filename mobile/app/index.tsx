@@ -59,7 +59,7 @@ export default function LandingScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
 
-  const { width, height, isTablet, contentPaddingLeft, contentPaddingRight } = useResponsive();
+  const { width, height, contentPaddingLeft, contentPaddingRight } = useResponsive();
   const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
   const { theme, isDark, setMode } = useTheme();
 

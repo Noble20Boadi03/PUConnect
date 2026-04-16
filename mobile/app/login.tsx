@@ -1,14 +1,13 @@
 import React, { useState, useRef } from "react";
-import { TextInput } from "react-native";
 import {
+    TextInput,
     StyleSheet,
     View,
     Pressable,
     TouchableWithoutFeedback,
     Keyboard,
-    ActivityIndicator,
-    Image,
 } from "react-native";
+
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -16,7 +15,6 @@ import { useAuth } from "@/context/auth-context";
 import { useAppAlert } from "@/context/alert-context";
 import { AnimatedInput } from "@/components/ui/animated-input";
 import { PrimaryButton } from "@/components/ui/primary-button";
-import { ThemedView } from "@/components/themed-view";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedIcon } from "@/components/ui/themed-icon";
 import { ScreenLayout } from "@/components/ui/screen-layout";
@@ -33,7 +31,7 @@ export default function LoginScreen() {
     const { signIn } = useAuth();
     const { showAlert } = useAppAlert();
     const insets = useSafeAreaInsets();
-    const { spacingMultiplier, contentPaddingLeft, contentPaddingRight } = useResponsive();
+    const { contentPaddingLeft, contentPaddingRight } = useResponsive();
     const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
 
     const [email, setEmail] = useState("");
@@ -116,7 +114,7 @@ export default function LoginScreen() {
                             Login here
                         </AnimatedThemedText>
                         <AnimatedThemedText entering={FadeInDown.delay(300).duration(800)} variant="titleLarge" style={styles.subtitle}>
-                            Welcome back you've{"\n"}been missed!
+                            Welcome back you&apos;ve{"\n"}been missed!
                         </AnimatedThemedText>
                     </View>
 

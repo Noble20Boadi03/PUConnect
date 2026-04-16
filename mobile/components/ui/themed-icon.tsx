@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { Colors } from '@/constants/theme';
-import { ComponentProps } from 'react';
+
 
 export type IconName = keyof typeof MaterialCommunityIcons.glyphMap;
 export type IconSize = 'small' | 'medium' | 'large' | number;

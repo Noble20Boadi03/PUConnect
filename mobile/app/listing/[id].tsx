@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, ScrollView, ActivityIndicator, Pressable, View, Image } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuth } from '@/context/auth-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { PrimaryButton } from '@/components/ui/primary-button';
@@ -21,7 +20,7 @@ export default function ListingDetailsScreen() {
   const router = useRouter();
 
   const { uiState } = useListingViewModel(id as string);
-  const { contentPaddingLeft, contentPaddingRight, spacingMultiplier } = useResponsive();
+  const { contentPaddingLeft, contentPaddingRight } = useResponsive();
   const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
 
   const [owner, setOwner] = useState<User | null>(null);

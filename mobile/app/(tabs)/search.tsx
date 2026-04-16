@@ -15,7 +15,7 @@ import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
 export default function SearchScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const { spacingMultiplier, contentPaddingLeft, contentPaddingRight } = useResponsive();
+  const { contentPaddingLeft, contentPaddingRight } = useResponsive();
   const tabBarHeight = useTabBarHeight();
   const [activeTab, setActiveTab] = useState<'categories' | 'interests'>('categories');
 

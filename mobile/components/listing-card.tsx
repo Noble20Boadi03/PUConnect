@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Listing } from '@/types';
 import { Spacing, BorderRadius } from '@/constants/theme';
-import { useTheme } from '@/context/theme-context';
+
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 import { ThemedIcon } from './ui/themed-icon';
@@ -13,7 +13,7 @@ interface ListingCardProps {
 }
 
 export function ListingCard({ listing, onPress }: ListingCardProps) {
-    const { theme } = useTheme();
+
 
     const getBadgeColors = () => {
         switch (listing.type) {

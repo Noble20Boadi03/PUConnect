@@ -72,7 +72,7 @@ export default function CreateListingScreen() {
     } finally {
       setLoading(false);
     }
-  }, [editId, token, router, user?.canOfferServices]);
+  }, [editId, token, router, user?.canOfferServices, showAlert]);
 
   useEffect(() => {
     load();

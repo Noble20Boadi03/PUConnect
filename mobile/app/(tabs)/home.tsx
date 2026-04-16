@@ -73,10 +73,10 @@ const PromotionBanner = ({ horizontalPadding }: { horizontalPadding: { paddingLe
 export default function HomeScreen() {
   const { uiState, onRefresh } = useHomeViewModel();
   const { token, user } = useAuth();
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
-  const { isTablet, isLandscape, spacingMultiplier, contentPaddingLeft, contentPaddingRight } = useResponsive();
+  const { isTablet, isLandscape, contentPaddingLeft, contentPaddingRight } = useResponsive();
   const tabBarHeight = useTabBarHeight();
   const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
 

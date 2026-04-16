@@ -23,7 +23,7 @@ export default function SubcategoryListingsScreen() {
     const router = useRouter();
     const { theme } = useTheme();
     const insets = useSafeAreaInsets();
-    const { contentPaddingLeft, contentPaddingRight, spacingMultiplier } = useResponsive();
+    const { contentPaddingLeft, contentPaddingRight } = useResponsive();
     const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
 
     const {

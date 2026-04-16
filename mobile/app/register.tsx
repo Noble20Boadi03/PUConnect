@@ -1,13 +1,13 @@
 import React, { useState, useRef } from "react";
-import { TextInput } from "react-native";
 import {
+    TextInput,
     StyleSheet,
     View,
     Pressable,
     TouchableWithoutFeedback,
     Keyboard,
-    Image,
 } from "react-native";
+
 import { router } from "expo-router";
 import Animated, { FadeInDown, SlideInRight, SlideOutLeft, SlideInLeft, SlideOutRight } from "react-native-reanimated";
 import { useAuth } from "@/context/auth-context";
@@ -29,7 +29,7 @@ export default function RegisterScreen() {
     const { theme, isDark } = useTheme();
     const { register } = useAuth();
     const { showAlert } = useAppAlert();
-    const { spacingMultiplier, contentPaddingLeft, contentPaddingRight } = useResponsive();
+    const { contentPaddingLeft, contentPaddingRight } = useResponsive();
     const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
 
     const [formData, setFormData] = useState({

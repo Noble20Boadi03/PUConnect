@@ -3,27 +3,11 @@ import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useTheme } from '@/context/theme-context';
 
 export const AuthBackground = memo(function AuthBackground() {
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
   const { width, height } = useWindowDimensions();
 
   // Create topographical looking intersecting rings dynamically
-  const BaseRing = ({ size, top, left, right, bottom, opacity = 0.05 }: any) => (
-    <View
-      style={{
-        position: 'absolute',
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        borderWidth: 1.5,
-        borderColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.4)',
-        top,
-        left,
-        right,
-        bottom,
-        opacity,
-      }}
-    />
-  );
+
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>

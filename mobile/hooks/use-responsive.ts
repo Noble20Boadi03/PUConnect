@@ -24,7 +24,6 @@ export interface ResponsiveConfig {
 
   // Orientation
   isLandscape: boolean;
-  isPortrait: boolean;
 
   // Layout helpers
   layoutMode: LayoutMode;
@@ -75,7 +74,7 @@ export function useResponsive(): ResponsiveConfig {
   const insets = useSafeAreaInsets();
 
   const isLandscape = width > height;
-  const isPortrait = !isLandscape;
+
 
   const shortestAxis = Math.min(width, height);
 
@@ -130,7 +129,7 @@ export function useResponsive(): ResponsiveConfig {
     isTablet,
     isDesktop,
     isLandscape,
-    isPortrait,
+
     layoutMode,
     columns,
     spacingMultiplier,

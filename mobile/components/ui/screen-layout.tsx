@@ -48,7 +48,7 @@ export function ScreenLayout({
   ...props
 }: ScreenLayoutProps) {
   const insets = useSafeAreaInsets();
-  const { isPhone, isLandscape, spacingMultiplier, contentMaxWidth, width } = useResponsive();
+  const { isLandscape, spacingMultiplier, contentMaxWidth, width } = useResponsive();
 
   const getPadding = () => {
     switch (padding) {
