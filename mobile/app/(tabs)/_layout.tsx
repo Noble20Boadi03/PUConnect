@@ -82,10 +82,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="search"
         options={{
-          title: 'Search',
+          title: 'Explore',
           tabBarIcon: ({ color, focused }) => (
             <ThemedIcon 
-              name={focused ? "magnify" : "magnify"} 
+              name={focused ? "compass" : "compass-outline"} 
               size={26} 
               lightColor={color} 
               darkColor={color} 

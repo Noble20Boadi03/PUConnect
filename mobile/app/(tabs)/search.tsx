@@ -26,7 +26,7 @@ export default function SearchScreen() {
       {/* Fixed Header & Tabs */}
       <ThemedView elevation={1} style={{ zIndex: 10 }}>
         <View style={[styles.header, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
-          <ThemedText variant="headlineSmall" style={styles.headerTitle}>Categories</ThemedText>
+          <ThemedText variant="headlineSmall" style={styles.headerTitle}>Explore</ThemedText>
           <Pressable
             style={styles.iconBtn}
             onPress={() => router.push({ pathname: '/search/results', params: { q: '' } })}
