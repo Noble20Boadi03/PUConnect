@@ -3,14 +3,13 @@ import { BackHandler, Platform, ToastAndroid } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { api } from '@/services/api';
 import { Listing } from '@/types';
+import { CAMPUS_CATEGORIES, DetailedCategory } from '@/constants/categories';
 import { UiState } from '@/types/ui-state';
+import { Gradients } from '@/constants/theme';
 
 export interface HomeDashboardData {
-    popular: Listing[];
-    recommended: Listing[];
-    recent: Listing[];
+    popular: { category: DetailedCategory; colors: readonly [string, string, ...string[]] }[];
     trending: Listing[];
-    lastOrderRecs: Listing[];
 }
 
 export type HomeUiState = UiState<HomeDashboardData>;
@@ -57,14 +56,19 @@ export function useHomeViewModel() {
                 return;
             }
 
+            const popularCats = [
+                { category: CAMPUS_CATEGORIES.find(c => c.id === 'tutoring')!, colors: Gradients.primary },
+                { category: CAMPUS_CATEGORIES.find(c => c.id === 'tech')!, colors: Gradients.secondary },
+                { category: CAMPUS_CATEGORIES.find(c => c.id === 'design')!, colors: Gradients.tertiary },
+                { category: CAMPUS_CATEGORIES.find(c => c.id === 'career')!, colors: ['#047857', '#065f46'] as const }, // Forest Green
+                { category: CAMPUS_CATEGORIES.find(c => c.id === 'photo')!, colors: ['#0891b2', '#0e7490'] as const }, // Deep Teal
+            ].filter(item => item.category);
+
             setUiState({
                 status: 'content',
                 data: {
-                    popular: data.slice(0, 5),
-                    recommended: data.slice(2, 7),
-                    trending: data.slice(5, 10),
-                    recent: data.slice(1, 4),
-                    lastOrderRecs: data.slice(4, 9),
+                    popular: popularCats,
+                    trending: data.slice(0, 10),
                 },
                 isRefreshing: false,
             });

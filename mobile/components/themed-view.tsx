@@ -7,6 +7,7 @@ export type ThemedViewProps = ViewProps & {
   darkColor?: string;
   colorName?: keyof typeof Colors.light;
   elevation?: 0 | 1 | 2 | 3;
+  glass?: boolean;
 };
 
 export function ThemedView({ 
@@ -15,14 +16,23 @@ export function ThemedView({
   darkColor, 
   colorName = 'background',
   elevation = 0,
+  glass = false,
   ...otherProps 
 }: ThemedViewProps) {
-  const backgroundColor = useThemeColor({ light: lightColor, dark: darkColor }, colorName);
+  const themedBgColor = useThemeColor({ light: lightColor, dark: darkColor }, colorName);
+  const glassColor = useThemeColor({}, 'glass');
+  const glassBorderColor = useThemeColor({}, 'glassBorder');
+
+  const backgroundColor = glass ? glassColor : themedBgColor;
 
   return (
     <View 
       style={[
         { backgroundColor }, 
+        glass && {
+          borderWidth: 1,
+          borderColor: glassBorderColor,
+        },
         elevation > 0 ? getShadowStyle(elevation as 1 | 2 | 3) : undefined,
         style
       ]} 

@@ -1,9 +1,10 @@
 import React from "react";
-import { StyleSheet, Pressable, PressableProps, ActivityIndicator, ViewStyle, StyleProp } from "react-native";
+import { StyleSheet, Pressable, PressableProps, ActivityIndicator, ViewStyle, StyleProp, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { ThemedText } from "@/components/themed-text";
 import { useTheme } from "@/context/theme-context";
-import { BorderRadius, Spacing } from "@/constants/theme";
+import { BorderRadius, Spacing, Gradients } from "@/constants/theme";
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface PrimaryButtonProps extends PressableProps {
     title: string;
@@ -75,15 +76,31 @@ export function PrimaryButton({
     const variantStyles = getVariantStyles();
     const sizeStyles = getSizeStyles();
 
+    const content = (
+        <>
+            {isLoading ? (
+                <ActivityIndicator color={variant === 'primary' ? theme.onPrimary : theme.primary} />
+            ) : (
+                <ThemedText 
+                    variant={sizeStyles.text.variant} 
+                    colorName={variantStyles.text.colorName}
+                    style={styles.buttonText}
+                >
+                    {title}
+                </ThemedText>
+            )}
+        </>
+    );
+
     return (
         <Animated.View entering={FadeInDown.delay(delay).duration(800)} style={{ marginTop }}>
             <Pressable
                 style={(state) => [
                     styles.button,
-                    variantStyles.button,
+                    variant !== 'primary' && variantStyles.button,
                     sizeStyles.button,
                     {
-                        opacity: isLoading || state.pressed || props.disabled ? 0.8 : 1,
+                        opacity: isLoading || props.disabled ? 0.8 : 1,
                         transform: [{ scale: state.pressed ? 0.98 : 1 }],
                     },
                     style as ViewStyle,
@@ -91,16 +108,21 @@ export function PrimaryButton({
                 disabled={isLoading || props.disabled}
                 {...props}
             >
-                {isLoading ? (
-                    <ActivityIndicator color={variant === 'primary' ? theme.onPrimary : theme.primary} />
-                ) : (
-                    <ThemedText 
-                        variant={sizeStyles.text.variant} 
-                        colorName={variantStyles.text.colorName}
-                        style={styles.buttonText}
-                    >
-                        {title}
-                    </ThemedText>
+                {({ pressed }) => (
+                    variant === 'primary' ? (
+                        <LinearGradient
+                            colors={Gradients.primary}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={[styles.gradient, sizeStyles.button, { opacity: pressed ? 0.9 : 1 }]}
+                        >
+                            {content}
+                        </LinearGradient>
+                    ) : (
+                        <View style={[styles.inner, { opacity: pressed ? 0.9 : 1 }]}>
+                            {content}
+                        </View>
+                    )
                 )}
             </Pressable>
         </Animated.View>
@@ -109,6 +131,20 @@ export function PrimaryButton({
 
 const styles = StyleSheet.create({
     button: {
+        justifyContent: "center",
+        alignItems: "center",
+        overflow: 'hidden',
+    },
+    gradient: {
+        flex: 1,
+        width: '100%',
+        justifyContent: "center",
+        alignItems: "center",
+        flexDirection: 'row',
+    },
+    inner: {
+        flex: 1,
+        width: '100%',
         justifyContent: "center",
         alignItems: "center",
         flexDirection: 'row',

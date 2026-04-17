@@ -3,7 +3,7 @@ import { StyleSheet, TextInput, ViewStyle, StyleProp } from 'react-native';
 import { ThemedView } from '../themed-view';
 import { ThemedIcon } from './themed-icon';
 import { useTheme } from '@/context/theme-context';
-import { Spacing, BorderRadius } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 
 interface SearchBarProps {
   value: string;
@@ -24,14 +24,14 @@ export function SearchBar({
 
   return (
     <ThemedView
-      colorName="surface"
       elevation={2}
+      colorName="surface"
       style={[
         styles.searchContainer,
         containerStyle,
       ]}
     >
-      <ThemedIcon name="magnify" size={20} colorName="textMuted" />
+      <ThemedIcon name="magnify" size={20} colorName="textSecondary" />
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -49,10 +49,9 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: 8,
-    borderRadius: BorderRadius.sm, // Matching the more rectangular but rounded Fiverr look
-    marginVertical: Spacing.sm, // Also reduce margin
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 12,
+    borderRadius: 8,
   },
   searchInput: {
     flex: 1,

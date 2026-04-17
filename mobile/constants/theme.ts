@@ -6,48 +6,51 @@ import { Platform } from 'react-native';
  */
 const palette = {
   primary: {
-    40: '#4f46e5', // Primary
-    90: '#e0e0ff', // Primary Container (Light)
-    10: '#00006e', // On Primary (Dark)
-    80: '#c0c1ff', // Primary (Dark)
-    20: '#1a00a0', // Primary Container (Dark)
+    40: '#10b981', // Electric Emerald
+    90: '#d1fae5', // Light Container
+    10: '#064e3b', // Dark Contrast
+    80: '#6ee7b7', // Dark Mode Primary
+    20: '#065f46', // Dark Mode Container
   },
   secondary: {
-    40: '#5e5e72', // Secondary
-    90: '#e3e0f9', // Secondary Container (Light)
-    10: '#1a1b2c', // On Secondary (Dark)
-    80: '#c7c4e0', // Secondary (Dark)
-    20: '#2b2c3e', // Secondary Container (Dark)
+    40: '#0284c7', // Deep Sky
+    90: '#e0f2fe', 
+    10: '#082f49', 
+    80: '#7dd3fc', 
+    20: '#075985', 
   },
   tertiary: {
-    40: '#7e5264', // Tertiary
-    90: '#ffd8e4', // Tertiary Container (Light)
-    10: '#311021', // On Tertiary (Dark)
-    80: '#efb8ce', // Tertiary (Dark)
-    20: '#4a2537', // Tertiary Container (Dark)
+    40: '#f59e0b', // Sunset Amber
+    90: '#fef3c7', 
+    10: '#78350f', 
+    80: '#fcd34d', 
+    20: '#92400e', 
   },
   error: {
-    40: '#ba1a1a', // Error
-    90: '#ffdad6', // Error Container (Light)
-    10: '#410002', // On Error (Dark)
-    80: '#ffb4ab', // Error (Dark)
-    20: '#93000a', // Error Container (Dark)
+    40: '#ef4444', 
+    90: '#fee2e2', 
+    10: '#450a0a', 
+    80: '#fca5a5', 
+    20: '#7f1d1d', 
   },
   neutral: {
-    0: '#000000',
-    10: '#1a1c1e',
-    20: '#2f3033',
-    90: '#e2e2e6',
-    95: '#f1f0f4',
-    98: '#fdfbff',
-    99: '#fefbff',
+    0:  '#000000',
+    10: '#0f172a', // Slate 900
+    20: '#1e293b', // Slate 800
+    30: '#334155', // Slate 700
+    50: '#64748b', // Slate 500
+    80: '#94a3b8', // Slate 400 (Improved from Slate 300 for better visibility in dark)
+    90: '#cbd5e1', // Slate 300
+    95: '#f1f5f9', // Slate 100
+    98: '#f8fafc', // Slate 50
+    99: '#fafafa',
     100: '#ffffff',
   },
   neutralVariant: {
-    30: '#44474e',
-    50: '#74777f',
-    80: '#c4c6d0',
-    90: '#e1e2ec',
+    30: '#1e293b', // Slate 800 (Much darker for light mode visibility)
+    50: '#475569', // Slate 600 (Darker for light mode visibility)
+    80: '#cbd5e1', 
+    90: '#e2e8f0', 
   },
 };
 
@@ -76,75 +79,79 @@ export const Colors = {
     background: palette.neutral[98],
     onBackground: palette.neutral[10],
     
-    surface: palette.neutral[98],
+    surface: palette.neutral[100],
     onSurface: palette.neutral[10],
-    surfaceVariant: palette.neutralVariant[90],
+    surfaceVariant: palette.neutral[95],
     onSurfaceVariant: palette.neutralVariant[30],
     
-    outline: palette.neutralVariant[50],
-    outlineVariant: palette.neutralVariant[80],
+    outline: palette.neutralVariant[80],
+    outlineVariant: palette.neutral[90],
     
-    inverseSurface: palette.neutral[20],
+    inverseSurface: palette.neutral[10],
     inverseOnSurface: palette.neutral[95],
     inversePrimary: palette.primary[80],
     
-    // Legacy mapping (to avoid breaking things immediately)
+    // Legacy mapping (Improved contrast)
     text: palette.neutral[10],
-    textSecondary: palette.neutralVariant[30],
-    textMuted: palette.neutralVariant[50],
+    textSecondary: '#1e293b', // Slate 800
+    textMuted: '#475569', // Slate 600
     tint: palette.primary[40],
-    discoveryPrimary: '#1dbf73', // Keep Fiverr green for discovery
-    icon: palette.neutralVariant[30],
-    tabIconDefault: palette.neutralVariant[50],
+    discoveryPrimary: '#10b981',
+    icon: '#334155',
+    tabIconDefault: '#64748b',
     tabIconSelected: palette.primary[40],
-    border: palette.neutralVariant[80],
+    border: palette.neutral[90],
+    glass: 'rgba(255, 255, 255, 0.75)',
+    glassBorder: 'rgba(255, 255, 255, 0.5)',
   },
   dark: {
     primary: palette.primary[80],
-    onPrimary: palette.primary[20],
+    onPrimary: palette.primary[10],
     primaryContainer: palette.primary[20],
     onPrimaryContainer: palette.primary[90],
     
     secondary: palette.secondary[80],
-    onSecondary: palette.secondary[20],
+    onSecondary: palette.secondary[10],
     secondaryContainer: palette.secondary[20],
     onSecondaryContainer: palette.secondary[90],
     
     tertiary: palette.tertiary[80],
-    onTertiary: palette.tertiary[20],
+    onTertiary: palette.tertiary[10],
     tertiaryContainer: palette.tertiary[20],
     onTertiaryContainer: palette.tertiary[90],
     
     error: palette.error[80],
-    onError: palette.error[20],
+    onError: palette.error[10],
     errorContainer: palette.error[20],
     onErrorContainer: palette.error[90],
     
-    background: '#121212',
-    onBackground: '#ffffff',
+    background: '#020617', // Deepest Slate
+    onBackground: palette.neutral[100],
     
-    surface: '#121212',
-    onSurface: '#ffffff',
-    surfaceVariant: '#282828',
-    onSurfaceVariant: '#a3a3a3',
+    surface: '#0f172a', // Slate 900
+    onSurface: palette.neutral[100],
+    surfaceVariant: '#1e293b', // Slate 800
+    onSurfaceVariant: palette.neutral[80],
     
-    outline: '#3f3f3f',
-    outlineVariant: '#282828',
+    outline: '#334155', // Slate 700
+    outlineVariant: '#1e293b', // Slate 800
     
-    inverseSurface: '#ffffff',
-    inverseOnSurface: '#121212',
+    inverseSurface: palette.neutral[100],
+    inverseOnSurface: '#020617',
     inversePrimary: palette.primary[40],
     
-    // Legacy mapping
-    text: '#ffffff',
-    textSecondary: '#a3a3a3',
-    textMuted: '#666666',
+    // Legacy mapping (Improved contrast)
+    text: palette.neutral[100],
+    textSecondary: '#cbd5e1', // Slate 300
+    textMuted: '#94a3b8', // Slate 400
     tint: palette.primary[80],
-    discoveryPrimary: '#1dbf73',
-    icon: '#a3a3a3',
-    tabIconDefault: '#666666',
-    tabIconSelected: '#ffffff',
-    border: '#282828',
+    discoveryPrimary: '#10b981',
+    icon: palette.neutral[80],
+    tabIconDefault: '#64748b',
+    tabIconSelected: palette.neutral[100],
+    border: '#1e293b',
+    glass: 'rgba(15, 23, 42, 0.75)',
+    glassBorder: 'rgba(33, 47, 71, 0.5)',
   },
 };
 
@@ -208,25 +215,34 @@ export const Typography = {
 export const Shadows = {
   level1: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  level2: {
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
   },
-  level3: {
+  level2: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 4,
   },
+  level3: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+};
+
+export const Gradients = {
+  primary: ['#10b981', '#059669'] as const,
+  secondary: ['#0ea5e9', '#3b82f6'] as const,
+  tertiary: ['#f59e0b', '#d97706'] as const,
+  glass: (isDark: boolean) => isDark 
+    ? ['rgba(15, 23, 42, 0.75)', 'rgba(2, 6, 23, 0.85)'] as const
+    : ['rgba(255, 255, 255, 0.85)', 'rgba(241, 245, 249, 0.75)'] as const,
 };
 
 export const Fonts = Platform.select({

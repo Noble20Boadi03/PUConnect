@@ -7,17 +7,14 @@ import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { useTheme } from '@/context/theme-context';
 import { Spacing, BorderRadius } from '@/constants/theme';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '@/hooks/use-responsive';
 import { ListingCard } from '@/components/listing-card';
-import { CategoryCard } from '@/components/category-card';
+import { PopularCategoryCard } from '@/components/popular-category-card';
 import { SearchBar } from '@/components/ui/search-bar';
 import { useHomeViewModel } from '@/hooks/view-models/use-home-view-model';
 import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
 import { useAuth } from '@/context/auth-context';
-import { useAppAlert } from '@/context/alert-context';
-import { CAMPUS_CATEGORIES } from '@/constants/categories';
 
 interface SectionHeaderProps {
   title: string;
@@ -43,25 +40,25 @@ const HomeFilterPills = ({ activeFilter, onFilterChange }: { activeFilter: 'All'
   const filters: ('All' | 'Experts' | 'Gigs')[] = ['All', 'Experts', 'Gigs'];
 
   return (
-    <ScrollView 
-      horizontal 
-      showsHorizontalScrollIndicator={false} 
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.pillsContainer}
     >
       {filters.map((filter) => {
         const isSelected = activeFilter === filter;
         return (
-          <Pressable 
+          <Pressable
             key={filter}
             style={[
-              styles.pill, 
+              styles.pill,
               { borderColor: theme.outlineVariant },
               isSelected && { backgroundColor: theme.primary, borderColor: theme.primary }
-            ]} 
+            ]}
             onPress={() => onFilterChange(filter)}
           >
-            <ThemedText 
-              variant="labelLarge" 
+            <ThemedText
+              variant="labelLarge"
               style={[styles.pillText, isSelected && { color: theme.onPrimary }]}
               colorName={isSelected ? undefined : 'textMuted'}
             >
@@ -74,41 +71,6 @@ const HomeFilterPills = ({ activeFilter, onFilterChange }: { activeFilter: 'All'
   );
 };
 
-const PromotionBanner = ({ horizontalPadding }: { horizontalPadding: { paddingLeft: number; paddingRight: number } }) => {
-  const { theme } = useTheme();
-  const { showAlert } = useAppAlert();
-  return (
-    <View style={{ ...horizontalPadding, marginVertical: Spacing.xl }}>
-      <LinearGradient
-        colors={[theme.primary, theme.primaryContainer]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.promoBanner}
-      >
-        <View style={styles.promoContent}>
-          <ThemedText variant="titleMedium" lightColor="#ffffff" darkColor={theme.onPrimaryContainer} style={styles.promoTitle}>
-            Invite friends & get rewards
-          </ThemedText>
-          <ThemedText variant="bodySmall" lightColor="#ffffff" darkColor={theme.onPrimaryContainer} style={styles.promoSub}>
-            Spread the word and help your campus community build together.
-          </ThemedText>
-          <Pressable
-            onPress={() =>
-              showAlert({ title: 'Invite friends', subtitle: 'Referral rewards will be available in a future update.', severity: 'info' })
-            }
-            style={[styles.promoBtn, { backgroundColor: theme.background }]}
-          >
-            <ThemedText variant="labelLarge" colorName="primary">Invite now →</ThemedText>
-          </Pressable>
-        </View>
-        <View style={styles.promoIcon}>
-          <ThemedIcon name="gift-outline" size={60} lightColor="rgba(255,255,255,0.2)" darkColor="rgba(0,0,0,0.1)" />
-        </View>
-      </LinearGradient>
-    </View>
-  );
-};
-
 export default function HomeScreen() {
   const { uiState, onRefresh, activeFilter, setActiveFilter } = useHomeViewModel();
   const { token } = useAuth();
@@ -118,8 +80,8 @@ export default function HomeScreen() {
   const { isTablet, isLandscape, horizontalPadding } = useResponsive();
   const tabBarHeight = useTabBarHeight();
 
-  // In landscape, cards can be wider since there's more horizontal space
   const cardWidth = isTablet ? 240 : isLandscape ? 200 : 160;
+  const categoryCardWidth = isTablet ? 180 : isLandscape ? 160 : 130;
 
   const isRefreshing = uiState.status === 'content' && !!uiState.isRefreshing;
 
@@ -156,20 +118,20 @@ export default function HomeScreen() {
     );
   }
 
-  const { popular, recommended, recent, trending, lastOrderRecs } = uiState.data;
+  const { popular, trending } = uiState.data;
 
   return (
     <ScreenLayout padding="none" withSafeArea={false}>
       {/* Fixed Sticky Header */}
-      <ThemedView 
+      <ThemedView
         style={[
-          styles.fixedHeader, 
+          styles.fixedHeader,
           { paddingTop: insets.top + Spacing.sm }
         ]}
       >
         <View style={[styles.topRow, horizontalPadding]}>
-          <ThemedText variant="headlineSmall" style={styles.brandLogo}>
-            PuConnect<ThemedText colorName="primary">.</ThemedText>
+          <ThemedText variant="headlineSmall" style={[styles.brandLogo, { fontWeight: '900' }]}>
+            PuConnect<ThemedText colorName="primary" style={{ fontWeight: '900' }}>.</ThemedText>
           </ThemedText>
           <Pressable
             style={styles.gridBtn}
@@ -179,145 +141,87 @@ export default function HomeScreen() {
           </Pressable>
         </View>
 
-        {/* Search Bar Row (Floating style) */}
+        {/* Search Bar */}
         <SearchBar
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder="Search services"
+          placeholder="Search Experts or Gigs"
           onSubmit={() => router.push({ pathname: '/search/results', params: { q: searchQuery.trim() } })}
           containerStyle={{ marginHorizontal: horizontalPadding.paddingLeft }}
         />
 
-        {/* Filters (Sticky) */}
+        {/* Filters */}
         <HomeFilterPills activeFilter={activeFilter} onFilterChange={setActiveFilter} />
+
+        <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.discoveryTip, horizontalPadding]}>
+          {activeFilter === 'All'
+            ? 'Tip: Browse Experts for professional help or Gigs to find students who need your skills.'
+            : activeFilter === 'Experts'
+            ? 'Tip: Experts are students offering professional services. Hire them to get your tasks done.'
+            : 'Tip: Gigs are requests from students who need help. Apply to these to earn and build your portfolio.'}
+        </ThemedText>
       </ThemedView>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
-          styles.scrollContent, 
-          { paddingBottom: tabBarHeight }
+          styles.scrollContent,
+          { paddingBottom: tabBarHeight + Spacing.xl }
         ]}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={theme.primary} />
         }
       >
-
-        {/* Popular Categories Section */}
+        {/* Popular Services Section */}
         <SectionHeader
           title="Popular Services"
           horizontalPadding={horizontalPadding}
-          onSeeAll={() => router.push({ pathname: '/search' })}
+          onSeeAll={() => router.push({ pathname: '/search/results', params: { q: '', section: 'popular' } })}
         />
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          contentContainerStyle={{ paddingLeft: horizontalPadding.paddingLeft, paddingRight: horizontalPadding.paddingRight - Spacing.md }}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingLeft: horizontalPadding.paddingLeft,
+            paddingRight: horizontalPadding.paddingRight,
+            gap: Spacing.md,
+          }}
           style={styles.horizontalSection}
         >
-          {CAMPUS_CATEGORIES.slice(0, 6).map((cat) => (
-            <CategoryCard 
-              key={cat.id} 
-              title={cat.title} 
-              width={160}
-              onPress={() => router.push({ pathname: "/search/[id]", params: { id: cat.id } })} 
+          {popular.map((item) => (
+            <PopularCategoryCard
+              key={`cat-${item.category.id}`}
+              title={item.category.title}
+              icon={item.category.icon}
+              colors={item.colors}
+              width={categoryCardWidth}
+              onPress={() => router.push({ pathname: '/search/[id]', params: { id: item.category.id } })}
             />
           ))}
         </ScrollView>
 
-        {/* Recommended For You Section */}
-        <SectionHeader
-          title="Related to items you’ve viewed"
-          horizontalPadding={horizontalPadding}
-          onSeeAll={() => router.push({ pathname: '/search/results', params: { q: '', section: 'recommended' } })}
-        />
-        <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.sectionSub, horizontalPadding]}>
-          Handpicked based on your interests
-        </ThemedText>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          contentContainerStyle={{ paddingLeft: horizontalPadding.paddingLeft, paddingRight: horizontalPadding.paddingRight - Spacing.md }}
-          style={styles.horizontalSection}
-        >
-          {recommended.map((item) => (
-            <ListingCard 
-              key={`rec-${item.id}`} 
-              listing={item} 
-              width={cardWidth}
-              onPress={() => router.push({ pathname: "/listing/[id]", params: { id: item.id } })} 
-            />
-          ))}
-        </ScrollView>
-
-        {/* Promotion Banner */}
-        <PromotionBanner horizontalPadding={horizontalPadding} />
-
-        {/* Recently Viewed Section */}
-        <SectionHeader
-          title="Recently viewed"
-          horizontalPadding={horizontalPadding}
-          onSeeAll={() => router.push({ pathname: '/search/results', params: { q: '', section: 'recent' } })}
-        />
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          contentContainerStyle={{ paddingLeft: horizontalPadding.paddingLeft, paddingRight: horizontalPadding.paddingRight - Spacing.md }}
-          style={styles.horizontalSection}
-        >
-          {recent.map((item) => (
-            <ListingCard 
-              key={`recent-${item.id}`} 
-              listing={item} 
-              width={cardWidth}
-              onPress={() => router.push({ pathname: "/listing/[id]", params: { id: item.id } })} 
-            />
-          ))}
-        </ScrollView>
-
-        {/* Based on Last Order Section */}
-        <SectionHeader
-          title="You might also like"
-          horizontalPadding={horizontalPadding}
-          onSeeAll={() => router.push({ pathname: '/search/results', params: { q: '', section: 'lastOrder' } })}
-        />
-        <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.sectionSub, horizontalPadding]}>
-          Based on your previous interactions
-        </ThemedText>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          contentContainerStyle={{ paddingLeft: horizontalPadding.paddingLeft, paddingRight: horizontalPadding.paddingRight - Spacing.md }}
-          style={styles.horizontalSection}
-        >
-          {lastOrderRecs.map((item) => (
-            <ListingCard 
-              key={`last-${item.id}`} 
-              listing={item} 
-              width={cardWidth}
-              onPress={() => router.push({ pathname: "/listing/[id]", params: { id: item.id } })} 
-            />
-          ))}
-        </ScrollView>
-
-        {/* Trending Section */}
+        {/* Trending This Week Section */}
         <SectionHeader
           title="Trending this week"
           horizontalPadding={horizontalPadding}
           onSeeAll={() => router.push({ pathname: '/search/results', params: { q: '', section: 'trending' } })}
         />
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          contentContainerStyle={{ paddingLeft: horizontalPadding.paddingLeft, paddingRight: horizontalPadding.paddingRight - Spacing.md }}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingLeft: horizontalPadding.paddingLeft,
+            paddingRight: horizontalPadding.paddingRight,
+            gap: Spacing.md,
+          }}
           style={styles.horizontalSection}
         >
           {trending.map((item) => (
-            <ListingCard 
-              key={`trend-${item.id}`} 
-              listing={item} 
+            <ListingCard
+              key={`trend-${item.id}`}
+              listing={item}
               width={cardWidth}
-              onPress={() => router.push({ pathname: "/listing/[id]", params: { id: item.id } })} 
+              onPress={() => router.push({ pathname: '/listing/[id]', params: { id: item.id } })}
             />
           ))}
         </ScrollView>
@@ -333,9 +237,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   fixedHeader: {
-    paddingBottom: Spacing.sm,
+    paddingBottom: Spacing.md,
     zIndex: 10,
-    backgroundColor: '#fff', // Solid white header like Fiverr
   },
   topRow: {
     flexDirection: 'row',
@@ -349,10 +252,9 @@ const styles = StyleSheet.create({
   gridBtn: {
     padding: Spacing.xs,
   },
-
   pillsContainer: {
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
     gap: Spacing.sm,
   },
   pill: {
@@ -382,41 +284,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontWeight: '700',
   },
-  sectionSub: {
-    marginBottom: Spacing.md,
-  },
   horizontalSection: {
     marginBottom: Spacing.sm,
   },
-  promoBanner: {
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.xl,
-    flexDirection: 'row',
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  promoContent: {
-    flex: 1,
-    zIndex: 1,
-  },
-  promoTitle: {
-    fontWeight: '800',
-    marginBottom: Spacing.xs,
-  },
-  promoSub: {
-    marginBottom: Spacing.lg,
-    opacity: 0.9,
-  },
-  promoBtn: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
-  },
-  promoIcon: {
-    position: 'absolute',
-    right: -10,
-    bottom: -10,
-  },
 });
-
