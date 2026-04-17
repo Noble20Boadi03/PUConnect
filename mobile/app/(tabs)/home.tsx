@@ -11,11 +11,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '@/hooks/use-responsive';
 import { ListingCard } from '@/components/listing-card';
+import { CategoryCard } from '@/components/category-card';
 import { SearchBar } from '@/components/ui/search-bar';
 import { useHomeViewModel } from '@/hooks/view-models/use-home-view-model';
 import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
 import { useAuth } from '@/context/auth-context';
 import { useAppAlert } from '@/context/alert-context';
+import { CAMPUS_CATEGORIES } from '@/constants/categories';
 
 interface SectionHeaderProps {
   title: string;
@@ -177,25 +179,17 @@ export default function HomeScreen() {
           </Pressable>
         </View>
 
-        {/* Search Bar Row */}
+        {/* Search Bar Row (Floating style) */}
         <SearchBar
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder="Search Experts or Gigs"
+          placeholder="Search services"
           onSubmit={() => router.push({ pathname: '/search/results', params: { q: searchQuery.trim() } })}
           containerStyle={{ marginHorizontal: horizontalPadding.paddingLeft }}
         />
 
-        {/* Filters */}
+        {/* Filters (Sticky) */}
         <HomeFilterPills activeFilter={activeFilter} onFilterChange={setActiveFilter} />
-
-        <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.discoveryTip, horizontalPadding]}>
-          {activeFilter === 'All' 
-            ? 'Tip: Browse Experts for professional help or Gigs to find students who need your skills.' 
-            : activeFilter === 'Experts'
-            ? 'Tip: Experts are students offering professional services. Hire them to get your tasks done.'
-            : 'Tip: Gigs are requests from students who need help. Apply to these to earn and build your portfolio.'}
-        </ThemedText>
       </ThemedView>
 
       <ScrollView
@@ -208,11 +202,12 @@ export default function HomeScreen() {
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={theme.primary} />
         }
       >
-        {/* Popular Section */}
+
+        {/* Popular Categories Section */}
         <SectionHeader
-          title="Popular"
+          title="Popular Services"
           horizontalPadding={horizontalPadding}
-          onSeeAll={() => router.push({ pathname: '/search/results', params: { q: '', section: 'popular' } })}
+          onSeeAll={() => router.push({ pathname: '/search' })}
         />
         <ScrollView 
           horizontal 
@@ -220,19 +215,19 @@ export default function HomeScreen() {
           contentContainerStyle={{ paddingLeft: horizontalPadding.paddingLeft, paddingRight: horizontalPadding.paddingRight - Spacing.md }}
           style={styles.horizontalSection}
         >
-          {popular.map((item) => (
-            <ListingCard 
-              key={`popular-${item.id}`} 
-              listing={item} 
-              width={cardWidth}
-              onPress={() => router.push({ pathname: "/listing/[id]", params: { id: item.id } })} 
+          {CAMPUS_CATEGORIES.slice(0, 6).map((cat) => (
+            <CategoryCard 
+              key={cat.id} 
+              title={cat.title} 
+              width={160}
+              onPress={() => router.push({ pathname: "/search/[id]", params: { id: cat.id } })} 
             />
           ))}
         </ScrollView>
 
         {/* Recommended For You Section */}
         <SectionHeader
-          title="Recommended for you"
+          title="Related to items you’ve viewed"
           horizontalPadding={horizontalPadding}
           onSeeAll={() => router.push({ pathname: '/search/results', params: { q: '', section: 'recommended' } })}
         />
@@ -338,8 +333,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   fixedHeader: {
-    paddingBottom: Spacing.md,
+    paddingBottom: Spacing.sm,
     zIndex: 10,
+    backgroundColor: '#fff', // Solid white header like Fiverr
   },
   topRow: {
     flexDirection: 'row',
@@ -356,7 +352,7 @@ const styles = StyleSheet.create({
 
   pillsContainer: {
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.sm,
     gap: Spacing.sm,
   },
   pill: {

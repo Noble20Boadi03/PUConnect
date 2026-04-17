@@ -6,6 +6,9 @@ import { Spacing, BorderRadius } from '@/constants/theme';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 import { ThemedIcon } from './ui/themed-icon';
+import { useTheme } from '@/context/theme-context';
+
+import { Image } from 'expo-image';
 
 interface ListingCardProps {
     listing: Listing;
@@ -14,21 +17,7 @@ interface ListingCardProps {
 }
 
 export function ListingCard({ listing, width, onPress }: ListingCardProps) {
-
-    const getBadgeColors = () => {
-        switch (listing.type) {
-            case 'service_offer':
-                return { colorName: 'primary' as const, bgName: 'primaryContainer' as const, label: 'Offer' };
-            case 'service_request':
-                return { colorName: 'tertiary' as const, bgName: 'tertiaryContainer' as const, label: 'Request' };
-            case 'project_team':
-                return { colorName: 'secondary' as const, bgName: 'secondaryContainer' as const, label: 'Team' };
-            default:
-                return { colorName: 'textSecondary' as const, bgName: 'surfaceVariant' as const, label: 'Other' };
-        }
-    };
-
-    const badge = getBadgeColors();
+    const { theme } = useTheme();
 
     return (
         <ThemedView
@@ -43,60 +32,48 @@ export function ListingCard({ listing, width, onPress }: ListingCardProps) {
                 ]}
                 onPress={onPress}
             >
+                {/* Featured Image */}
+                <View style={[styles.imageContainer, { backgroundColor: theme.surfaceVariant }]}>
+                    <Image
+                        source={listing.media_url || 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=400&auto=format&fit=crop'}
+                        style={styles.image}
+                        contentFit="cover"
+                        transition={200}
+                    />
+                    {/* Optional Badge Overlay */}
+                    <ThemedView colorName="primaryContainer" style={styles.badgeOverlay}>
+                        <ThemedText variant="labelSmall" colorName="primary" style={styles.badgeText}>
+                            {listing.type === 'service_offer' ? 'PRO' : 'NEW'}
+                        </ThemedText>
+                    </ThemedView>
+                </View>
+
                 <View style={styles.content}>
-                    <View style={styles.header}>
-                        <ThemedView colorName={badge.bgName} style={styles.badge}>
-                            <ThemedText variant="labelSmall" colorName={badge.colorName} style={styles.badgeText}>
-                                {badge.label}
-                            </ThemedText>
-                        </ThemedView>
-                        {listing.price ? (
-                            <ThemedText variant="titleMedium" colorName="primary">
-                                ${listing.price}
-                            </ThemedText>
-                        ) : listing.budget ? (
-                            <ThemedText variant="titleMedium" colorName="secondary">
-                                Budget: ${listing.budget}
-                            </ThemedText>
-                        ) : (
-                            <ThemedText variant="titleMedium" colorName="tertiary">
-                                Project
-                            </ThemedText>
-                        )}
+                    {/* Rating Row */}
+                    <View style={styles.ratingRow}>
+                        <ThemedIcon name="star" size={14} colorName="primary" />
+                        <ThemedText variant="labelMedium" style={styles.ratingText}>
+                            {listing.average_rating || '5.0'}
+                        </ThemedText>
+                        <ThemedText variant="labelMedium" colorName="textMuted">
+                            ({listing.review_count || '0'})
+                        </ThemedText>
                     </View>
 
+                    {/* Title */}
                     <ThemedText variant="titleMedium" numberOfLines={2} style={styles.title}>
                         {listing.title}
                     </ThemedText>
 
-                    <ThemedText variant="bodyMedium" colorName="textSecondary" numberOfLines={2} style={styles.description}>
-                        {listing.description}
-                    </ThemedText>
-
+                    {/* Footer: Price and Favorite */}
                     <View style={styles.footer}>
-                        <View style={styles.metaInfo}>
-                            <ThemedIcon name="school-outline" size={14} colorName="textMuted" />
-                            <ThemedText variant="labelMedium" colorName="textMuted" style={styles.metaText}>
-                                {listing.category}
+                        <View style={styles.priceContainer}>
+                            <ThemedText variant="labelSmall" colorName="textMuted">FROM</ThemedText>
+                            <ThemedText variant="titleMedium" style={styles.price}>
+                                ${listing.price || listing.budget || '25'}
                             </ThemedText>
                         </View>
-
-                        {listing.requiredSkills && listing.requiredSkills.length > 0 && (
-                            <View style={styles.skillsContainer}>
-                                {listing.requiredSkills.slice(0, 2).map((skill, idx) => (
-                                    <ThemedView key={idx} colorName="surfaceVariant" style={styles.skillTag}>
-                                        <ThemedText variant="labelSmall" colorName="onSurfaceVariant">
-                                            {skill}
-                                        </ThemedText>
-                                    </ThemedView>
-                                ))}
-                                {listing.requiredSkills.length > 2 && (
-                                    <ThemedText variant="labelSmall" colorName="textMuted" style={styles.moreText}>
-                                        +{listing.requiredSkills.length - 2}
-                                    </ThemedText>
-                                )}
-                            </View>
-                        )}
+                        <ThemedIcon name="heart-outline" size={20} colorName="textMuted" />
                     </View>
                 </View>
             </Pressable>
@@ -106,62 +83,68 @@ export function ListingCard({ listing, width, onPress }: ListingCardProps) {
 
 const styles = StyleSheet.create({
     container: {
-        borderRadius: BorderRadius.lg,
-        marginBottom: Spacing.md,
+        borderRadius: BorderRadius.md,
+        marginRight: Spacing.md,
+        marginBottom: Spacing.xs, // Small bottom margin for list spacing
         overflow: 'hidden',
     },
     pressable: {
         flex: 1,
     },
-    content: {
-        padding: Spacing.md,
+    imageContainer: {
+        aspectRatio: 1.5,
+        width: '100%',
+        position: 'relative',
     },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: Spacing.sm,
+    image: {
+        flex: 1,
     },
-    badge: {
-        paddingHorizontal: Spacing.sm,
+    badgeOverlay: {
+        position: 'absolute',
+        top: Spacing.xs,
+        left: Spacing.xs,
+        paddingHorizontal: Spacing.xs,
         paddingVertical: 2,
-        borderRadius: BorderRadius.sm,
+        borderRadius: BorderRadius.xs,
     },
     badgeText: {
-        fontWeight: '700',
-        textTransform: 'uppercase',
+        fontWeight: '800',
+        fontSize: 10,
     },
-    title: {
-        fontWeight: '700',
+    content: {
+        padding: Spacing.sm,
+    },
+    ratingRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
         marginBottom: Spacing.xs,
     },
-    description: {
-        marginBottom: Spacing.md,
+    ratingText: {
+        fontWeight: '700',
+        marginLeft: 2,
+        marginRight: 2,
+    },
+    title: {
+        fontSize: 14,
+        fontWeight: '500',
+        lineHeight: 20,
+        height: 40, // Fixed height for 2 lines to align cards
+        marginBottom: Spacing.sm,
     },
     footer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingTop: Spacing.sm,
+        paddingTop: Spacing.xs,
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: 'rgba(0,0,0,0.05)',
     },
-    metaInfo: {
+    priceContainer: {
         flexDirection: 'row',
         alignItems: 'center',
     },
-    metaText: {
-        marginLeft: 4,
-    },
-    skillsContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    skillTag: {
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: BorderRadius.xs,
-        marginLeft: 4,
-    },
-    moreText: {
+    price: {
+        fontWeight: '800',
         marginLeft: 4,
     },
 });

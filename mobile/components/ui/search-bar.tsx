@@ -24,10 +24,10 @@ export function SearchBar({
 
   return (
     <ThemedView
-      colorName="surfaceVariant"
+      colorName="surface"
+      elevation={2}
       style={[
         styles.searchContainer,
-        { borderColor: theme.outlineVariant },
         containerStyle,
       ]}
     >
@@ -49,10 +49,10 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 10,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 8,
+    borderRadius: BorderRadius.sm, // Matching the more rectangular but rounded Fiverr look
+    marginVertical: Spacing.sm, // Also reduce margin
   },
   searchInput: {
     flex: 1,
