@@ -74,13 +74,6 @@ export function ListingCard({ listing, width, onPress }: ListingCardProps) {
                                 ({listing.review_count || 12})
                             </ThemedText>
                         </View>
-
-                        <View style={styles.priceRow}>
-                            <ThemedText variant="labelSmall" colorName="textMuted">FROM</ThemedText>
-                            <ThemedText variant="titleMedium" colorName="text" style={styles.priceText}>
-                                ${listing.price || listing.budget || 25}
-                            </ThemedText>
-                        </View>
                     </View>
                 </View>
             </Pressable>
@@ -147,14 +140,5 @@ const styles = StyleSheet.create({
     ratingText: {
         fontWeight: '800',
         fontSize: 14,
-    },
-    priceRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-    },
-    priceText: {
-        fontWeight: '900',
-        fontSize: 18,
     },
 });

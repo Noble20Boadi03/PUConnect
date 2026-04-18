@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, ActivityIndicator, RefreshControl, ScrollView, Pressable } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { StyleSheet, View, ActivityIndicator, RefreshControl, ScrollView, Pressable, Dimensions } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '@/hooks/use-responsive';
 import { ListingCard } from '@/components/listing-card';
 import { PopularCategoryCard } from '@/components/popular-category-card';
+import { GigSpotlightRow } from '@/components/gig-spotlight-row';
 import { SearchBar } from '@/components/ui/search-bar';
 import { useHomeViewModel } from '@/hooks/view-models/use-home-view-model';
 import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
@@ -82,6 +83,7 @@ export default function HomeScreen() {
 
   const cardWidth = isTablet ? 240 : isLandscape ? 200 : 160;
   const categoryCardWidth = isTablet ? 180 : isLandscape ? 160 : 130;
+  const gridCardWidth = (Dimensions.get('window').width - (horizontalPadding.paddingLeft + horizontalPadding.paddingRight) - Spacing.md) / 2;
 
   const isRefreshing = uiState.status === 'content' && !!uiState.isRefreshing;
 
@@ -118,7 +120,35 @@ export default function HomeScreen() {
     );
   }
 
-  const { popular, trending } = uiState.data;
+  const { popular, trending, featuredOffers, featuredGigs } = uiState.data;
+
+  // Build the featured feed based on the active filter
+  const featuredFeed = useMemo(() => {
+    if (activeFilter === 'Experts') {
+      // Only offers, displayed vertically
+      return featuredOffers.map(item => ({ type: 'offer' as const, data: item }));
+    }
+    if (activeFilter === 'Gigs') {
+      // Only gigs, displayed vertically (standard layout)
+      return featuredGigs.map(item => ({ type: 'offer' as const, data: item }));
+    }
+    // "All" filter: offers vertically, with gig spotlight rows interspersed
+    const feed: { type: 'offer' | 'gigRow'; data: any }[] = [];
+    let gigInserted = false;
+    featuredOffers.forEach((item, index) => {
+      feed.push({ type: 'offer', data: item });
+      // Insert a gig spotlight row after every 3 offers
+      if ((index + 1) % 3 === 0 && featuredGigs.length > 0 && !gigInserted) {
+        feed.push({ type: 'gigRow', data: featuredGigs });
+        gigInserted = true;
+      }
+    });
+    // If we never inserted gigs (fewer than 3 offers), add them at the end
+    if (!gigInserted && featuredGigs.length > 0) {
+      feed.push({ type: 'gigRow', data: featuredGigs });
+    }
+    return feed;
+  }, [activeFilter, featuredOffers, featuredGigs]);
 
   return (
     <ScreenLayout padding="none" withSafeArea={false}>
@@ -225,6 +255,34 @@ export default function HomeScreen() {
             />
           ))}
         </ScrollView>
+
+        {/* Featured Posts Section */}
+        <SectionHeader
+          title="Featured posts"
+          horizontalPadding={horizontalPadding}
+        />
+        <View style={[styles.featuredFeed, horizontalPadding]}>
+          {featuredFeed.map((entry, index) => {
+            if (entry.type === 'gigRow') {
+              return (
+                <GigSpotlightRow
+                  key={`gig-row-${index}`}
+                  gigs={entry.data as any[]}
+                  cardWidth={cardWidth}
+                  horizontalPadding={horizontalPadding}
+                />
+              );
+            }
+            return (
+              <ListingCard
+                key={`feat-${entry.data.id}`}
+                listing={entry.data}
+                width={gridCardWidth}
+                onPress={() => router.push({ pathname: '/listing/[id]', params: { id: entry.data.id } })}
+              />
+            );
+          })}
+        </View>
       </ScrollView>
     </ScreenLayout>
   );
@@ -286,5 +344,12 @@ const styles = StyleSheet.create({
   },
   horizontalSection: {
     marginBottom: Spacing.sm,
+  },
+  featuredFeed: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
+    marginTop: Spacing.sm,
   },
 });

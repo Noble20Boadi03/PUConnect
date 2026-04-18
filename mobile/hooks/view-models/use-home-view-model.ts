@@ -10,6 +10,8 @@ import { Gradients } from '@/constants/theme';
 export interface HomeDashboardData {
     popular: { category: DetailedCategory; colors: readonly [string, string, ...string[]] }[];
     trending: Listing[];
+    featuredOffers: Listing[];
+    featuredGigs: Listing[];
 }
 
 export type HomeUiState = UiState<HomeDashboardData>;
@@ -64,11 +66,16 @@ export function useHomeViewModel() {
                 { category: CAMPUS_CATEGORIES.find(c => c.id === 'photo')!, colors: ['#0891b2', '#0e7490'] as const }, // Deep Teal
             ].filter(item => item.category);
 
+            const offers = data.filter(l => l.type === 'service_offer');
+            const gigs = data.filter(l => l.type === 'service_request');
+
             setUiState({
                 status: 'content',
                 data: {
                     popular: popularCats,
                     trending: data.slice(0, 10),
+                    featuredOffers: offers,
+                    featuredGigs: gigs,
                 },
                 isRefreshing: false,
             });

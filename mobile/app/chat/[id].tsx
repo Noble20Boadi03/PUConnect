@@ -22,7 +22,7 @@ import { ScreenLayout } from '@/components/ui/screen-layout';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { useResponsive } from '@/hooks/use-responsive';
-import { User, ConversationLifecycle } from '@/types';
+import { User, Listing, ConversationLifecycle } from '@/types';
 
 type Message = {
   id: string;
@@ -55,6 +55,22 @@ export default function ChatScreen() {
   const [loadingPeer, setLoadingPeer] = useState(true);
 
   const [messages, setMessages] = useState<Message[]>([]);
+  const [contextListing, setContextListing] = useState<Listing | null>(null);
+
+  // Fetch listing context when listingId is present
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!listingId) return;
+      try {
+        const listing = await api.getListing(listingId as string);
+        if (!cancelled) setContextListing(listing);
+      } catch (e) {
+        console.error('Failed to fetch listing context:', e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [listingId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -163,6 +179,7 @@ export default function ChatScreen() {
   return (
     <ScreenLayout scrollable={false} keyboardAvoiding padding="none" withSafeArea={false}>
       <ScreenHeader
+        onBack={() => router.replace('/(tabs)/messages')}
         title={
           <View style={styles.headerInfo}>
              {loadingPeer ? (
@@ -196,6 +213,41 @@ export default function ChatScreen() {
           </Pressable>
         }
       />
+
+      {/* Listing Context Card */}
+      {contextListing && (
+        <Pressable
+          onPress={() => router.push({ pathname: '/listing/[id]', params: { id: contextListing.id, fromChat: 'true' } })}
+          style={[styles.contextCard, { backgroundColor: theme.surfaceVariant, borderBottomColor: theme.outlineVariant }]}
+        >
+          <Image
+            source={{ uri: contextListing.media_url || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=200&auto=format&fit=crop' }}
+            style={styles.contextImage}
+          />
+          <View style={styles.contextInfo}>
+            <ThemedText variant="labelSmall" colorName="textMuted">Discussing</ThemedText>
+            <ThemedText variant="titleSmall" numberOfLines={1} style={{ fontWeight: '700' }}>
+              {contextListing.title}
+            </ThemedText>
+            <View style={styles.contextMeta}>
+              <ThemedIcon name="folder-outline" size={12} colorName="primary" />
+              <ThemedText variant="labelSmall" colorName="primary">
+                {contextListing.category}
+              </ThemedText>
+            </View>
+          </View>
+          <View style={[styles.contextBadge, { backgroundColor: contextListing.type === 'service_offer' ? theme.primaryContainer : theme.tertiaryContainer }]}>
+            <ThemedText
+              variant="labelSmall"
+              colorName={contextListing.type === 'service_offer' ? 'primary' : 'tertiary'}
+              style={{ fontWeight: '800', fontSize: 9, textTransform: 'uppercase' }}
+            >
+              {contextListing.type === 'service_offer' ? 'Offer' : 'Need'}
+            </ThemedText>
+          </View>
+          <ThemedIcon name="chevron-right" size={18} colorName="textMuted" />
+        </Pressable>
+      )}
 
       {user && id && token && listingId ? (
         <ThemedView style={[styles.lifecycleBar, { backgroundColor: theme.surfaceVariant, borderBottomColor: theme.outlineVariant }]}>
@@ -409,6 +461,33 @@ const styles = StyleSheet.create({
         ios: { ...Shadows.level1 },
         android: { elevation: 2 }
     })
+  },
+  contextCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderBottomWidth: 1,
+    gap: Spacing.sm,
+  },
+  contextImage: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.sm,
+  },
+  contextInfo: {
+    flex: 1,
+  },
+  contextMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  contextBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.xs,
   },
   lifecycleRow: {
     flexDirection: 'row',

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, ScrollView, ActivityIndicator, Pressable, View, Image } from 'react-native';
+import { StyleSheet, ScrollView, ActivityIndicator, Pressable, View, Image, StatusBar, Dimensions } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedIcon } from '@/components/ui/themed-icon';
+import { ThemedView } from '@/components/themed-view';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
@@ -13,9 +14,12 @@ import { useResponsive } from '@/hooks/use-responsive';
 import { api } from '@/services/api';
 import { User } from '@/types';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const IMAGE_HEIGHT = 320;
+
 export default function ListingDetailsScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const { theme } = useTheme();
+  const { id, fromChat } = useLocalSearchParams<{ id: string; fromChat?: string }>();
+  const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -24,6 +28,9 @@ export default function ListingDetailsScreen() {
   const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
 
   const [owner, setOwner] = useState<User | null>(null);
+  const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
+
+  const THRESHOLD = IMAGE_HEIGHT - (insets.top + 24);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,9 +45,20 @@ export default function ListingDetailsScreen() {
     };
   }, [uiState]);
 
+  const handleScroll = (e: any) => {
+    const scrollY = e.nativeEvent.contentOffset.y;
+    if (scrollY > THRESHOLD && !isHeaderScrolled) {
+      setIsHeaderScrolled(true);
+    } else if (scrollY <= THRESHOLD && isHeaderScrolled) {
+      setIsHeaderScrolled(false);
+    }
+  };
+
+  // --- Loading / Error states ---
   if (uiState.status === 'loading') {
     return (
       <ScreenLayout>
+        <Stack.Screen options={{ headerShown: false }} />
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={theme.primary} />
         </View>
@@ -51,6 +69,7 @@ export default function ListingDetailsScreen() {
   if (uiState.status === 'error') {
     return (
       <ScreenLayout>
+        <Stack.Screen options={{ headerShown: false }} />
         <View style={styles.centered}>
           <ThemedIcon name="alert-circle-outline" size={48} colorName="error" />
           <ThemedText variant="titleMedium" style={{ marginTop: 10 }}>
@@ -64,6 +83,7 @@ export default function ListingDetailsScreen() {
   if (uiState.status !== 'content') {
     return (
       <ScreenLayout>
+        <Stack.Screen options={{ headerShown: false }} />
         <View style={styles.centered}>
           <ThemedIcon name="alert-circle-outline" size={48} colorName="error" />
           <ThemedText variant="titleMedium" style={{ marginTop: 10 }}>
@@ -76,72 +96,107 @@ export default function ListingDetailsScreen() {
 
   const { listing, isOwner } = uiState.data;
 
+  const getBadge = () => {
+    switch (listing.type) {
+      case 'service_offer':
+        return { colorName: 'primary' as const, bgName: 'primaryContainer' as const, label: 'Service Offer' };
+      case 'service_request':
+        return { colorName: 'tertiary' as const, bgName: 'tertiaryContainer' as const, label: 'Need Help' };
+      default:
+        return { colorName: 'textSecondary' as const, bgName: 'surfaceVariant' as const, label: 'Post' };
+    }
+  };
+  const badge = getBadge();
+
   return (
-    <ScreenLayout padding="none" withSafeArea={false}>
+    <View style={[styles.root, { backgroundColor: theme.background }]}>
+      <StatusBar 
+        barStyle={isHeaderScrolled ? (isDark ? 'light-content' : 'dark-content') : 'light-content'} 
+        translucent 
+        backgroundColor="transparent"
+        animated={true}
+      />
       <Stack.Screen options={{ headerShown: false }} />
+
+      {/* Fixed Background Image — stays completely still */}
+      <View style={styles.imageBackground}>
+        <Image
+          source={{
+            uri: listing.media_url || "https://images.unsplash.com/photo-1626785774573-4b799315345d?q=80&w=800&auto=format&fit=crop",
+          }}
+          style={styles.mainImage}
+          resizeMode="cover"
+        />
+      </View>
+
+      {/* Sticky Back Button */}
+      <Pressable
+        onPress={() => router.back()}
+        style={[
+          styles.backBtn,
+          { top: insets.top + Spacing.sm },
+        ]}
+      >
+        <ThemedIcon name="chevron-left" size={26} lightColor="#fff" darkColor="#fff" />
+      </Pressable>
+
+      {/* Scrollable Content */}
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
       >
-        {/* Image Header */}
-        <View style={styles.imageHeader}>
-          <Image
-            source={{
-              uri: "https://images.unsplash.com/photo-1626785774573-4b799315345d?q=80&w=800&auto=format&fit=crop",
-            }}
-            style={styles.mainImage}
-          />
-          <Pressable
-            onPress={() => router.back()}
-            style={[styles.backBtn, { top: insets.top + Spacing.sm, left: Math.max(insets.left, Spacing.lg), backgroundColor: "rgba(0,0,0,0.3)" }]}
-          >
-            <ThemedIcon name="chevron-left" size={28} lightColor="#fff" darkColor="#fff" />
-          </Pressable>
-        </View>
+        {/* Transparent spacer to reveal the image behind */}
+        <View style={styles.imageSpacer} />
 
-        <View style={[styles.content, horizontalPadding]}>
-          {/* Title and Price */}
-          <View style={styles.headerRow}>
-            <View style={{ flex: 1 }}>
-              <ThemedText variant="headlineSmall" style={styles.title}>
-                {listing.title}
-              </ThemedText>
-              <View style={styles.categoryRow}>
-                <ThemedIcon name="folder-outline" size={16} colorName="primary" />
-                <ThemedText
-                  variant="labelLarge"
-                  colorName="primary"
-                  style={{ marginLeft: 6 }}
-                >
-                  {listing.category}
-                </ThemedText>
-              </View>
-            </View>
-            <ThemedText variant="headlineSmall" colorName="primary" style={styles.price}>
-              ${listing.price || listing.budget || "25"}
+        {/* Content Card slides up over the image */}
+        <ThemedView
+          colorName="background"
+          style={[styles.contentCard, horizontalPadding]}
+        >
+          {/* Type Badge */}
+          <ThemedView colorName={badge.bgName} style={styles.typeBadge}>
+            <ThemedText variant="labelSmall" colorName={badge.colorName} style={styles.typeBadgeText}>
+              {badge.label}
+            </ThemedText>
+          </ThemedView>
+
+          {/* Title */}
+          <ThemedText variant="headlineSmall" style={styles.title}>
+            {listing.title}
+          </ThemedText>
+
+          {/* Category */}
+          <View style={styles.categoryRow}>
+            <ThemedIcon name="folder-outline" size={16} colorName="primary" />
+            <ThemedText variant="labelLarge" colorName="primary" style={{ marginLeft: 6 }}>
+              {listing.category}
             </ThemedText>
           </View>
 
           {/* Meta info */}
-          <View style={[styles.metaRow, { borderColor: theme.border }]}>
+          <View style={[styles.metaRow, { borderColor: theme.outlineVariant }]}>
             <View style={styles.metaItem}>
-              <ThemedIcon name="calendar-outline" size={20} colorName="textMuted" />
-              <ThemedText variant="labelSmall" colorName="textMuted" style={{ marginTop: 4 }}>
-                Posted {new Date(listing.createdAt).toLocaleDateString()}
+              <ThemedIcon name="calendar-outline" size={18} colorName="textMuted" />
+              <ThemedText variant="labelSmall" colorName="textMuted">
+                {new Date(listing.createdAt).toLocaleDateString()}
               </ThemedText>
             </View>
             <View style={styles.metaItem}>
-              <ThemedIcon name="star" size={20} lightColor="#fbbf24" darkColor="#fbbf24" />
-              <ThemedText variant="labelSmall" colorName="textMuted" style={{ marginTop: 4 }}>
-                4.9 Rating
+              <ThemedIcon name="star" size={18} lightColor="#fbbf24" darkColor="#fbbf24" />
+              <ThemedText variant="labelSmall" colorName="textMuted">
+                {listing.average_rating || '5.0'} ({listing.review_count || 0})
               </ThemedText>
             </View>
-            <View style={styles.metaItem}>
-              <ThemedIcon name="account" size={20} colorName="textMuted" />
-              <ThemedText variant="labelSmall" colorName="textMuted" style={{ marginTop: 4 }}>
-                Verified Pro
-              </ThemedText>
-            </View>
+            {listing.level && (
+              <View style={styles.metaItem}>
+                <ThemedIcon name="shield-check-outline" size={18} colorName="textMuted" />
+                <ThemedText variant="labelSmall" colorName="textMuted" style={{ textTransform: 'capitalize' }}>
+                  {listing.level}
+                </ThemedText>
+              </View>
+            )}
           </View>
 
           {/* Description */}
@@ -153,6 +208,28 @@ export default function ListingDetailsScreen() {
               {listing.description}
             </ThemedText>
           </View>
+
+          {/* Tags */}
+          {listing.tags && listing.tags.length > 0 && (
+            <View style={styles.section}>
+              <ThemedText variant="titleMedium" style={styles.sectionTitle}>
+                Tags
+              </ThemedText>
+              <View style={styles.tagGrid}>
+                {listing.tags.map((tag) => (
+                  <View
+                    key={tag}
+                    style={[
+                      styles.skillTag,
+                      { backgroundColor: theme.surfaceVariant || theme.surface },
+                    ]}
+                  >
+                    <ThemedText variant="labelLarge">#{tag}</ThemedText>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
 
           {/* Skills */}
           {listing.requiredSkills && listing.requiredSkills.length > 0 && (
@@ -176,31 +253,55 @@ export default function ListingDetailsScreen() {
             </View>
           )}
 
-          {/* Seller Info */}
-          <View style={[styles.sellerCard, { backgroundColor: theme.surfaceVariant || theme.surface }]}>
-            <View style={styles.sellerInfo}>
-              <View style={[styles.avatar, { backgroundColor: theme.primary + "15" }]}>
-                <ThemedIcon name="account" size={32} colorName="primary" />
-              </View>
-              <View style={{ marginLeft: 12, flex: 1 }}>
-                <ThemedText variant="titleMedium">{owner?.fullName ?? 'Campus member'}</ThemedText>
-                <ThemedText variant="bodySmall" colorName="textMuted">
-                  {owner
-                    ? `${owner.department ?? 'Student'} · Class of ${owner.graduationYear ?? '—'}`
-                    : 'Loading…'}
-                </ThemedText>
-              </View>
+          {/* Provider Info - Hidden when coming from chat to avoid redundancy and loops */}
+          {fromChat !== 'true' && (
+            <View style={styles.section}>
+              <ThemedText variant="titleMedium" style={styles.sectionTitle}>
+                {listing.type === 'service_offer' ? 'About the provider' : 'Posted by'}
+              </ThemedText>
+              <ThemedView
+                colorName="surfaceVariant"
+                style={styles.providerCard}
+              >
+                <View style={styles.providerRow}>
+                  {owner?.profilePictureUrl ? (
+                    <Image source={{ uri: owner.profilePictureUrl }} style={styles.providerAvatar} />
+                  ) : (
+                    <View style={[styles.providerAvatar, { backgroundColor: theme.primary + '20' }]}>
+                      <ThemedIcon name="account" size={28} colorName="primary" />
+                    </View>
+                  )}
+                  <View style={styles.providerInfo}>
+                    <ThemedText variant="titleMedium" style={{ fontWeight: '700' }}>
+                      {owner?.fullName ?? 'Campus Member'}
+                    </ThemedText>
+                    <ThemedText variant="bodySmall" colorName="textMuted">
+                      {owner
+                        ? `${owner.department ?? 'Student'} · Class of ${owner.graduationYear ?? '—'}`
+                        : 'Loading…'}
+                    </ThemedText>
+                    {owner?.reputationScore !== undefined && owner.reputationScore > 0 && (
+                      <View style={styles.providerStats}>
+                        <ThemedIcon name="star" size={14} lightColor="#fbbf24" darkColor="#fbbf24" />
+                        <ThemedText variant="labelSmall" colorName="textMuted">
+                          {owner.reputationScore.toFixed(1)} · {owner.completedProjects ?? 0} completed
+                        </ThemedText>
+                      </View>
+                    )}
+                  </View>
+                </View>
+                <PrimaryButton
+                  title="View Profile"
+                  variant="ghost"
+                  onPress={() =>
+                    router.push({ pathname: '/profile/[id]', params: { id: listing.ownerId } })
+                  }
+                  size="small"
+                />
+              </ThemedView>
             </View>
-            <PrimaryButton
-              title="View Profile"
-              variant="ghost"
-              onPress={() =>
-                router.push({ pathname: '/profile/[id]', params: { id: listing.ownerId } })
-              }
-              size="small"
-            />
-          </View>
-        </View>
+          )}
+        </ThemedView>
       </ScrollView>
 
       {/* Bottom Action Bar */}
@@ -208,222 +309,182 @@ export default function ListingDetailsScreen() {
         <View
           style={[
             styles.bottomBar,
-            { paddingBottom: Math.max(insets.bottom, 20), backgroundColor: theme.surface, ...horizontalPadding },
+            {
+              paddingBottom: Math.max(insets.bottom, Spacing.lg),
+              backgroundColor: theme.surface,
+              borderTopColor: theme.outlineVariant,
+            },
           ]}
         >
-          <PrimaryButton
-            title="Send Message"
-            onPress={() => router.push({
-              pathname: "/chat/[id]",
-              params: { id: listing.ownerId, listingId: listing.id }
-            })}
-            style={{ flex: 1 }}
-          />
-          <Pressable
-            onPress={() => router.push({
-              pathname: "/chat/[id]",
-              params: { id: listing.ownerId, listingId: listing.id }
-            })}
-            style={[
-              styles.chatBtn,
-              { backgroundColor: theme.primary + "15" },
-            ]}
-          >
-            <ThemedIcon name="chat-processing" size={24} colorName="primary" />
-          </Pressable>
+          <View style={[styles.bottomBarInner, horizontalPadding]}>
+            {fromChat === 'true' ? (
+              <PrimaryButton
+                title="Back to Chat"
+                onPress={() => router.back()}
+                style={styles.messageBtn}
+              />
+            ) : (
+              <PrimaryButton
+                title="Send Message"
+                onPress={() => router.replace({
+                  pathname: "/chat/[id]",
+                  params: { id: listing.ownerId, listingId: listing.id }
+                })}
+                style={styles.messageBtn}
+              />
+            )}
+          </View>
         </View>
       )}
-    </ScreenLayout>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    centered: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    imageHeader: {
-        height: 250,
-        position: 'relative',
-    },
-    mainImage: {
-        width: '100%',
-        height: '100%',
-    },
-    backBtn: {
-        position: 'absolute',
-        left: Spacing.md,
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    content: {
-        paddingVertical: Spacing.xl,
-    },
-    headerRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: Spacing.lg,
-    },
-    categoryRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: Spacing.xs,
-    },
-    price: {
-        fontWeight: '700',
-    },
-    section: {
-        marginTop: Spacing.xl,
-    },
-    tagGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: Spacing.sm,
-        marginTop: Spacing.sm,
-    },
-    sellerCard: {
-        marginTop: Spacing.xl,
-        padding: Spacing.lg,
-        borderRadius: BorderRadius.lg,
-        ...Shadows.level1,
-    },
-    sellerInfo: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: Spacing.md,
-    },
-    chatBtn: {
-        width: 54,
-        height: 54,
-        borderRadius: BorderRadius.lg,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginLeft: Spacing.md,
-    },
-    scrollContent: {
-        padding: Spacing.md,
-        paddingBottom: 100,
-    },
-    header: {
-        marginBottom: Spacing.lg,
-    },
-    typeBadge: {
-        alignSelf: 'flex-start',
-        paddingHorizontal: Spacing.sm,
-        paddingVertical: 4,
-        borderRadius: BorderRadius.sm,
-        backgroundColor: '#e0e7ff',
-        marginBottom: Spacing.sm,
-    },
-    typeBadgeText: {
-        fontSize: 10,
-        fontWeight: '800',
-        letterSpacing: 1,
-    },
-    title: {
-        fontWeight: '800',
-        marginBottom: Spacing.xs,
-    },
-    priceInfo: {
-        fontSize: 20,
-        fontWeight: '700',
-    },
-    card: {
-        padding: Spacing.lg,
-        borderRadius: BorderRadius.xl,
-        marginBottom: Spacing.md,
-        ...Shadows.level1,
-    },
-    sectionTitle: {
-        fontWeight: '700',
-        marginBottom: Spacing.sm,
-    },
-    description: {
-        marginTop: Spacing.xs,
-    },
-    metaRow: {
-        flexDirection: 'row',
-        gap: Spacing.lg,
-        marginTop: Spacing.sm,
-        paddingTop: Spacing.lg,
-        borderTopWidth: 1,
-    },
-    metaItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-    },
-    metaText: {
-        fontSize: 13,
-        fontWeight: '500',
-    },
-    skillsContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-    },
-    skillTag: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: BorderRadius.full,
-    },
-    skillText: {
-        fontSize: 13,
-        fontWeight: '500',
-    },
-    ownerRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    avatar: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    ownerInfo: {
-        marginLeft: Spacing.md,
-    },
-    ownerName: {
-        fontSize: 16,
-        fontWeight: '700',
-    },
-    ownerSubtitle: {
-        fontSize: 13,
-        marginTop: 2,
-    },
-    bottomBar: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        padding: Spacing.md,
-        borderTopWidth: 1,
-        borderTopColor: 'rgba(0,0,0,0.05)',
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    messageButton: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: 54,
-        borderRadius: BorderRadius.lg,
-        gap: 8,
-        ...Shadows.level2,
-    },
-    messageButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '700',
-    },
+  root: {
+    flex: 1,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // Fixed background image layer
+  imageBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: IMAGE_HEIGHT,
+    zIndex: 0,
+  },
+  mainImage: {
+    width: '100%',
+    height: '100%',
+  },
+  // Sticky back button
+  backBtn: {
+    position: 'absolute',
+    left: Spacing.lg,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    zIndex: 100,
+    ...Shadows.level2,
+  },
+  // Transparent spacer so the image is visible before scrolling
+  imageSpacer: {
+    height: IMAGE_HEIGHT - 28, // leave room for the overlap
+  },
+  // Content card that slides over the image
+  contentCard: {
+    borderTopLeftRadius: BorderRadius.xxl,
+    borderTopRightRadius: BorderRadius.xxl,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.xl,
+    minHeight: 500,
+  },
+  typeBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.full,
+    marginBottom: Spacing.md,
+  },
+  typeBadgeText: {
+    fontWeight: '800',
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  title: {
+    fontWeight: '800',
+    marginBottom: Spacing.xs,
+  },
+  categoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: Spacing.xs,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.lg,
+    marginTop: Spacing.lg,
+    paddingTop: Spacing.lg,
+    borderTopWidth: 1,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  section: {
+    marginTop: Spacing.xl,
+  },
+  sectionTitle: {
+    fontWeight: '700',
+    marginBottom: Spacing.sm,
+  },
+  description: {
+    lineHeight: 24,
+  },
+  tagGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    marginTop: Spacing.xs,
+  },
+  skillTag: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.full,
+  },
+  providerCard: {
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+  },
+  providerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  providerAvatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  providerInfo: {
+    marginLeft: Spacing.md,
+    flex: 1,
+  },
+  providerStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  // Bottom action bar
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopWidth: 1,
+    ...Shadows.level3,
+  },
+  bottomBarInner: {
+    paddingTop: Spacing.md,
+  },
+  messageBtn: {
+    width: '100%',
+    height: 52,
+    borderRadius: BorderRadius.lg,
+  },
 });
