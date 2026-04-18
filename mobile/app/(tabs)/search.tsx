@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, ScrollView, Pressable } from 'react-native';
+import { StyleSheet, View, ScrollView, Pressable, Dimensions, ImageBackground } from 'react-native';
 import { useTheme } from '@/context/theme-context';
-import { Spacing, BorderRadius } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { router } from 'expo-router';
 import { CAMPUS_CATEGORIES } from '@/constants/categories';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,6 +20,7 @@ export default function SearchScreen() {
   const [activeTab, setActiveTab] = useState<'categories' | 'interests'>('categories');
 
   const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
+  const gridCardWidth = (Dimensions.get('window').width - (contentPaddingLeft + contentPaddingRight) - Spacing.md) / 2;
 
   return (
     <ScreenLayout padding="none" withSafeArea={false}>
@@ -72,25 +73,38 @@ export default function SearchScreen() {
         ]}
       >
         {activeTab === 'categories' ? (
-          CAMPUS_CATEGORIES.map((cat) => (
-            <Pressable 
-              key={cat.id} 
-              style={[styles.categoryItem, { borderBottomColor: theme.outlineVariant, ...horizontalPadding }]} 
-              onPress={() => router.push({
-                pathname: "/search/[id]",
-                params: { id: cat.id }
-              })}
-            >
-              <ThemedView colorName="surfaceVariant" style={styles.iconContainer}>
-                <ThemedIcon name={cat.icon as any} size={32} colorName="primary" />
+          <View style={[styles.grid, horizontalPadding]}>
+            {CAMPUS_CATEGORIES.map((cat) => (
+              <ThemedView 
+                key={cat.id} 
+                elevation={2}
+                style={[styles.categoryCard, { width: gridCardWidth }]}
+              >
+                <Pressable 
+                  style={({ pressed }) => [styles.cardPressable, pressed && { opacity: 0.95 }]}
+                  onPress={() => router.push({
+                    pathname: "/search/[id]",
+                    params: { id: cat.id }
+                  })}
+                >
+                  <ImageBackground 
+                    source={{ uri: cat.image }} 
+                    style={styles.cardImage}
+                    imageStyle={styles.cardImageInner}
+                  >
+                    <View style={styles.cardOverlay}>
+                        <ThemedText variant="titleMedium" style={styles.cardTitle} numberOfLines={1}>
+                          {cat.title}
+                        </ThemedText>
+                        <ThemedText variant="labelSmall" style={styles.cardSubtitle} numberOfLines={1}>
+                          {cat.subtitle}
+                        </ThemedText>
+                    </View>
+                  </ImageBackground>
+                </Pressable>
               </ThemedView>
-              <View style={styles.textContainer}>
-                <ThemedText variant="titleMedium">{cat.title}</ThemedText>
-                <ThemedText variant="bodySmall" colorName="textMuted">{cat.subtitle}</ThemedText>
-              </View>
-              <ThemedIcon name="chevron-right" size={20} colorName="outline" />
-            </Pressable>
-          ))
+            ))}
+          </View>
         ) : (
           <View style={styles.emptyContainer}>
              <ThemedIcon name="creation" size={48} colorName="outline" />
@@ -122,29 +136,55 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   tab: {
-    paddingHorizontal: Spacing.md,
+    flex: 1, // Equally fit the screen
+    alignItems: 'center',
     paddingVertical: Spacing.md,
-    marginRight: Spacing.lg,
   },
   activeTabText: {
     fontWeight: '800',
   },
   listContent: {
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.lg,
   },
-  categoryItem: {
+  grid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Spacing.xl,
-    borderBottomWidth: 1,
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
   },
-  iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: BorderRadius.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: Spacing.lg,
+  categoryCard: {
+    borderRadius: 24,
+    overflow: 'hidden',
+    marginBottom: Spacing.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+    backgroundColor: '#2c3e50', // Fallback for missing images
+  },
+  cardPressable: {
+    height: 180,
+  },
+  cardImage: {
+    flex: 1,
+  },
+  cardImageInner: {
+    borderRadius: 24,
+  },
+  cardOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'flex-end',
+    padding: Spacing.md,
+  },
+  cardTitle: {
+    color: '#fff',
+    fontWeight: '800',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  cardSubtitle: {
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 2,
   },
   textContainer: {
     flex: 1,

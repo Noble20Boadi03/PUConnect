@@ -1,5 +1,4 @@
-import React from 'react';
-import { StyleSheet, View, Pressable } from 'react-native';
+import { StyleSheet, View, Pressable, ImageBackground } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTheme } from '@/context/theme-context';
 import { Spacing } from '@/constants/theme';
@@ -46,11 +45,18 @@ export default function CategoryDetailScreen() {
             </View>
 
             {/* Hero section */}
-            <View style={[styles.heroSection, horizontalPadding]}>
-                <ThemedIcon name={category.icon as any} size={80} colorName="primary" />
-                <ThemedText variant="headlineLarge" style={styles.title}>{category.title}</ThemedText>
-                <ThemedText variant="bodyLarge" colorName="textMuted" style={styles.tagline}>{category.tagline}</ThemedText>
-            </View>
+            <ImageBackground 
+                source={{ uri: category.image }} 
+                style={styles.heroSection}
+            >
+                <View style={styles.heroOverlay}>
+                    <View style={styles.heroContent}>
+                        <ThemedIcon name={category.icon as any} size={60} lightColor="#fff" darkColor="#fff" />
+                        <ThemedText variant="headlineLarge" style={styles.title}>{category.title}</ThemedText>
+                        <ThemedText variant="bodyLarge" style={styles.tagline}>{category.tagline}</ThemedText>
+                    </View>
+                </View>
+            </ImageBackground>
 
             {/* Subcategories */}
             <View style={{ paddingBottom: insets.bottom + Spacing.xl }}>
@@ -104,21 +110,34 @@ const styles = StyleSheet.create({
         padding: 8,
     },
     heroSection: {
-        alignItems: 'center',
-        paddingVertical: 32,
+        height: 300,
+    },
+    heroOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        justifyContent: 'center',
         paddingHorizontal: Spacing.xl,
     },
+    heroContent: {
+        alignItems: 'center',
+        marginTop: 20,
+    },
     title: {
-        fontSize: 28,
-        fontWeight: '800',
+        fontSize: 32,
+        fontWeight: '900',
         marginTop: 16,
         textAlign: 'center',
+        color: '#fff',
+        textShadowColor: 'rgba(0,0,0,0.5)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 6,
     },
     tagline: {
-        fontSize: 15,
+        fontSize: 16,
         fontStyle: 'italic',
         marginTop: 8,
         textAlign: 'center',
+        color: 'rgba(255,255,255,0.9)',
     },
     groupContainer: {
         marginTop: 16,

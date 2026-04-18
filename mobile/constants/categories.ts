@@ -14,17 +14,19 @@ export interface DetailedCategory {
     title: string;
     subtitle: string;
     tagline: string;
-    icon: string; // Ionicons name
+    image: string; // Unsplash URL or local image
+    icon: string; // MaterialCommunityIcons name for fallback/detail page
     groups: SubCategoryGroup[];
 }
 
 export const CAMPUS_CATEGORIES: DetailedCategory[] = [
     {
-        id: 'tutoring',
-        title: 'Tutoring & Peer Learning',
-        subtitle: 'Subject Tutoring, Exam Preparation',
-        tagline: '"Learn from those who\'ve been there"',
-        icon: 'book-open-variant',
+        id: 'academics',
+        title: 'Academics & Language',
+        subtitle: 'Tutoring, Exam Prep, Translation',
+        tagline: '"Master your courses with peer support"',
+        image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=800&auto=format&fit=crop',
+        icon: 'book-open-page-variant-outline',
         groups: [
             {
                 header: 'ACADEMIC SUPPORT',
@@ -35,236 +37,115 @@ export const CAMPUS_CATEGORIES: DetailedCategory[] = [
                 ]
             },
             {
-                header: 'SKILL BUILDING',
+                header: 'LANGUAGE & COMM',
                 items: [
-                    { title: 'Language Practice', description: "Conversational fluency with native speakers" },
-                    { title: 'Coding Bootcamp', description: "Master the stack for your next internship" },
-                    { title: 'Math & Sciences', description: "Expert help in STEM fundamentals" }
+                    { title: 'Translation', description: "Document and subtitle services" },
+                    { title: 'Speech Writing', description: "Professional scripts for your next presentation" },
+                    { title: 'Proofreading', description: "Ensure your essays are mistake-free" }
                 ]
             }
         ]
     },
     {
-        id: 'tech',
-        title: 'Tech & Development',
-        subtitle: 'Portfolio Websites, Campus Tools',
-        tagline: '"Build something that matters"',
-        icon: 'code-tags',
+        id: 'tech_design',
+        title: 'Tech & Creative',
+        subtitle: 'Web, Apps, Graphic Design',
+        tagline: '"Build and design the future"',
+        image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800&auto=format&fit=crop',
+        icon: 'code-json',
         groups: [
             {
-                header: 'PERSONAL PROJECTS',
+                header: 'DEVELOPMENT',
                 items: [
-                    { title: 'Portfolio Websites', description: "Get a professional online presence for your career" },
-                    { title: 'Campus Tools', description: "Software solutions for daily campus life" },
+                    { title: 'Portfolio Websites', description: "Professional online presence for your career" },
+                    { title: 'App Design', description: "Modern UI/UX for your mobile concepts" },
                     { title: 'Automation Scripts', description: "Scripts to handle repetitive tasks easily" }
                 ]
             },
             {
-                header: 'MOBILE & WEB',
+                header: 'CREATIVE DESIGN',
                 items: [
-                    { title: 'App Design', description: "Modern UI/UX for your mobile concepts" },
-                    { title: 'Web Development', description: "Custom sites from landing pages to full-apps" },
-                    { title: 'Database Setup', description: "Secure and optimized data management" }
+                    { title: 'Poster & Flyer Design', description: "Eye-catching designs for campus events" },
+                    { title: 'Logo & Branding', description: "Complete visual identity for your club or startup" },
+                    { title: 'Digital Illustration', description: "Custom graphics and artwork" }
                 ]
             }
         ]
     },
     {
-        id: 'design',
-        title: 'Creative Design',
-        subtitle: 'Event Posters, Club Flyers',
-        tagline: '"Make your ideas look as good as they are"',
-        icon: 'palette-outline',
+        id: 'media_music',
+        title: 'Media & Music',
+        subtitle: 'Photo, Video, Arts, Audio',
+        tagline: '"Capture and create campus culture"',
+        image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=800&auto=format&fit=crop',
+        icon: 'camera-iris',
         groups: [
             {
-                header: 'EVENT & CAMPUS',
+                header: 'PHOTO & VIDEO',
                 items: [
-                    { title: 'Event Posters', description: "Eye-catching designs for campus clubs and events" },
-                    { title: 'Club Flyers', description: "Hand out flyers that folks actually keep" },
-                    { title: 'Banners', description: "Large-scale branding for campus festivals", isNew: true }
+                    { title: 'Event Coverage', description: "High-quality campus event photography" },
+                    { title: 'Graduation Portraits', description: "Professional shots for your big milestone" },
+                    { title: 'Video Recaps', description: "Dynamic video content for clubs and festivals" }
                 ]
             },
             {
-                header: 'PERSONAL BRANDING',
+                header: 'MUSIC & AUDIO',
                 items: [
-                    { title: 'Logo Design' },
-                    { title: 'Business Cards' },
-                    { title: 'Brand Identity' }
+                    { title: 'Audio Mixing', description: "Master your tracks or podcast episodes" },
+                    { title: 'Podcast Production', description: "Complete setup and editing aid" },
+                    { title: 'Live Performance', description: "DJs and musicians for campus parties" }
                 ]
             }
         ]
     },
     {
-        id: 'career',
-        title: 'Career Development',
-        subtitle: 'CV Writing, Cover Letters',
-        tagline: '"Your career starts on campus"',
-        icon: 'briefcase-variant-outline',
+        id: 'biz_career',
+        title: 'Business & Career',
+        subtitle: 'CVs, Startups, Job Prep',
+        tagline: '"Launch your career on campus"',
+        image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=800&auto=format&fit=crop',
+        icon: 'briefcase-check-outline',
         groups: [
             {
-                header: 'JOB READINESS',
+                header: 'CAREER READINESS',
                 items: [
-                    { title: 'CV Writing' },
-                    { title: 'Cover Letters' },
-                    { title: 'LinkedIn Optimization' }
+                    { title: 'CV & Cover Letters', description: "Stand out to recruiters with polished docs" },
+                    { title: 'Mock Interviews', description: "Practice for internships with experienced peers" },
+                    { title: 'LinkedIn Optimization', description: "Professionalize your online profile" }
                 ]
             },
             {
-                header: 'INTERVIEW PREP',
+                header: 'BUSINESS TOOLS',
                 items: [
-                    { title: 'Mock Interviews' },
-                    { title: 'Career Coaching' },
-                    { title: 'Portfolio Review' }
+                    { title: 'Market Research', description: "Data-driven insights for your student startup" },
+                    { title: 'Pitch Deck Aid', description: "Design and strategy for your business pitch" },
+                    { title: 'Club Finances', description: "Managing budget and sponsorship outreach" }
                 ]
             }
         ]
     },
     {
-        id: 'photo',
-        title: 'Photography & Media',
-        subtitle: 'Campus Events, Graduation Portraits',
-        tagline: '"Capture every campus moment"',
-        icon: 'camera-outline',
-        groups: [
-            {
-                header: 'EVENTS',
-                items: [
-                    { title: 'Campus Event Coverage' },
-                    { title: 'Club Photography' },
-                    { title: 'Graduation Portraits' }
-                ]
-            },
-            {
-                header: 'CONTENT',
-                items: [
-                    { title: 'Product Shots' },
-                    { title: 'Lifestyle Photography' },
-                    { title: 'Headshots' }
-                ]
-            }
-        ]
-    },
-    {
-        id: 'video',
-        title: 'Video & Content Creation',
-        subtitle: 'Club Highlights, Event Recaps',
-        tagline: '"Tell your story, your way"',
-        icon: 'video-outline',
-        groups: [
-            {
-                header: 'PERSONAL PROJECTS',
-                items: [
-                    { title: 'YouTube Videos' },
-                    { title: 'Short Films' },
-                    { title: 'Documentaries' }
-                ]
-            },
-            {
-                header: 'CAMPUS CONTENT',
-                items: [
-                    { title: 'Club Highlight Videos' },
-                    { title: 'Event Recaps' },
-                    { title: 'Intro & Outro' }
-                ]
-            }
-        ]
-    },
-    {
-        id: 'music',
-        title: 'Music & Performing Arts',
-        subtitle: 'Audio Mixing, Voiceover',
-        tagline: '"Campus has talent — let it show"',
-        icon: 'music-note-outline',
-        groups: [
-            {
-                header: 'AUDIO',
-                items: [
-                    { title: 'Music Composition' },
-                    { title: 'Podcast Production' },
-                    { title: 'Voiceover' }
-                ]
-            },
-            {
-                header: 'LIVE',
-                items: [
-                    { title: 'Event Performance' },
-                    { title: 'DJ Services' },
-                    { title: 'Session Musicians' }
-                ]
-            }
-        ]
-    },
-    {
-        id: 'language',
-        title: 'Language & Communication',
-        subtitle: 'Translation, Proofreading',
-        tagline: '"Break barriers, connect better"',
-        icon: 'text-recognition',
-        groups: [
-            {
-                header: 'TRANSLATION',
-                items: [
-                    { title: 'Document Translation' },
-                    { title: 'Subtitles' },
-                    { title: 'Transcription' }
-                ]
-            },
-            {
-                header: 'COMMUNICATION',
-                items: [
-                    { title: 'Speech Writing' },
-                    { title: 'Presentation Coaching' },
-                    { title: 'Proofreading' }
-                ]
-            }
-        ]
-    },
-    {
-        id: 'biz',
-        title: 'Business & Entrepreneurship',
-        subtitle: 'Startups, Market Research',
-        tagline: '"From student to founder"',
-        icon: 'trending-up',
-        groups: [
-            {
-                header: 'STARTUPS',
-                items: [
-                    { title: 'Business Plan' },
-                    { title: 'Market Research' },
-                    { title: 'Branding' }
-                ]
-            },
-            {
-                header: 'CAMPUS BUSINESS',
-                items: [
-                    { title: 'Club Finances' },
-                    { title: 'Event Budgeting' },
-                    { title: 'Sponsorship Outreach' }
-                ]
-            }
-        ]
-    },
-    {
-        id: 'campus',
-        title: 'Campus Services',
-        subtitle: 'Logistics, Delivery',
-        tagline: '"Everyday help, right on campus"',
-        icon: 'storefront-outline',
+        id: 'campus_life',
+        title: 'Campus & Lifestyle',
+        subtitle: 'Logistics, Delivery, Daily Help',
+        tagline: '"Everyday help, right where you are"',
+        image: 'https://images.pexels.com/photos/256490/pexels-photo-256490.jpeg?auto=compress&cs=tinysrgb&w=800',
+        icon: 'store-outline',
         groups: [
             {
                 header: 'LOGISTICS',
                 items: [
-                    { title: 'Printing & Binding' },
-                    { title: 'Campus Delivery' },
-                    { title: 'Equipment Rental' }
+                    { title: 'Campus Delivery', description: "Quick delivery across campus buildings" },
+                    { title: 'Printing & Binding', description: "Last-minute project prints delivered" },
+                    { title: 'Equipment Rental', description: "Find cameras, mics, or tools to borrow" }
                 ]
             },
             {
-                header: 'EVENTS',
+                header: 'EVENT HELP',
                 items: [
-                    { title: 'Event Setup' },
-                    { title: 'Decoration' },
-                    { title: 'Photography Booth' }
+                    { title: 'Event Set-up', description: "Extra hands for club event logistics" },
+                    { title: 'Decoration', description: "Creative set-up for your next campus party" },
+                    { title: 'Catering Support', description: "Helping manage food and drinks for crowds" }
                 ]
             }
         ]
