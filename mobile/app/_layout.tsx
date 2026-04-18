@@ -11,6 +11,7 @@ import { AuthProvider } from '@/context/auth-context';
 import { ThemeProvider, useTheme } from '@/context/theme-context';
 import { AppAlertProvider } from '@/context/alert-context';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ActionSheetProvider } from '@expo/react-native-action-sheet';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -70,7 +71,9 @@ export default function RootLayout() {
       <AuthProvider>
         <ThemeProvider>
           <AppAlertProvider>
-            <RootLayoutContent />
+            <ActionSheetProvider>
+              <RootLayoutContent />
+            </ActionSheetProvider>
           </AppAlertProvider>
         </ThemeProvider>
       </AuthProvider>

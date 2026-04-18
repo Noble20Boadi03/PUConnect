@@ -265,6 +265,7 @@ const MOCK_LISTINGS: Listing[] = [
 ];
 
 const MOCK_MESSAGES: ChatMessage[] = [
+    // ── Conversation with Alex Rivera (Listing: Premium Logo Design) ────
     {
         id: 'msg-001',
         senderId: 'user-002',
@@ -275,10 +276,87 @@ const MOCK_MESSAGES: ChatMessage[] = [
         listingTitle: 'Premium Logo Design',
         listingThumbnail: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?w=200&auto=format&fit=crop',
         message: 'Hey! I saw your listing. Can you do a logo for my startup?',
-        isRead: false,
+        isRead: true,
+        createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
+        updatedAt: new Date().toISOString(),
+    },
+    {
+        id: 'msg-001-reply-1',
+        senderId: 'mock-user-001',
+        senderName: 'Me',
+        receiverId: 'user-002',
+        listingId: 'listing-001',
+        listingTitle: 'Premium Logo Design',
+        message: 'Sure! I specialize in startup branding. What kind of vibe are you going for?',
+        isRead: true,
+        createdAt: new Date(Date.now() - 3600000 * 2.5).toISOString(),
+        updatedAt: new Date().toISOString(),
+    },
+    {
+        id: 'msg-001-reply-2',
+        senderId: 'user-002',
+        senderName: 'Alex Rivera',
+        senderAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
+        receiverId: 'mock-user-001',
+        listingId: 'listing-001',
+        listingTitle: 'Premium Logo Design',
+        message: 'Something modern and minimalist. It is an AI-powered fintech app.',
+        isRead: true,
+        createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+        updatedAt: new Date().toISOString(),
+    },
+    {
+        id: 'msg-001-reply-3',
+        senderId: 'mock-user-001',
+        senderName: 'Me',
+        receiverId: 'user-002',
+        listingId: 'listing-001',
+        listingTitle: 'Premium Logo Design',
+        message: 'Got it. I can definitely work with that. Does my standard $50 rate work for you?',
+        isRead: true,
+        createdAt: new Date(Date.now() - 3600000 * 1.5).toISOString(),
+        updatedAt: new Date().toISOString(),
+    },
+    {
+        id: 'msg-001-reply-4',
+        senderId: 'user-002',
+        senderName: 'Alex Rivera',
+        senderAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
+        receiverId: 'mock-user-001',
+        listingId: 'listing-001',
+        listingTitle: 'Premium Logo Design',
+        message: 'Yes, that is perfect. Just let me know when you can start!',
+        isRead: true,
         createdAt: new Date(Date.now() - 3600000).toISOString(),
         updatedAt: new Date().toISOString(),
     },
+    {
+        id: 'msg-001-reply-5',
+        senderId: 'mock-user-001',
+        senderName: 'Me',
+        receiverId: 'user-002',
+        listingId: 'listing-001',
+        listingTitle: 'Premium Logo Design',
+        message: 'I can start today! I will send over the first set of concepts by tomorrow evening.',
+        isRead: true,
+        createdAt: new Date(Date.now() - 1800000).toISOString(),
+        updatedAt: new Date().toISOString(),
+    },
+    {
+        id: 'msg-001-reply-6',
+        senderId: 'user-002',
+        senderName: 'Alex Rivera',
+        senderAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
+        receiverId: 'mock-user-001',
+        listingId: 'listing-001',
+        listingTitle: 'Premium Logo Design',
+        message: 'Great, sounds like a plan. Looking forward to it!',
+        isRead: false,
+        createdAt: new Date(Date.now() - 600000).toISOString(),
+        updatedAt: new Date().toISOString(),
+    },
+
+    // ── Conversation with Jordan Kim (Listing: Calc II Tutoring) ───────
     {
         id: 'msg-002',
         senderId: 'user-003',
@@ -294,6 +372,32 @@ const MOCK_MESSAGES: ChatMessage[] = [
         updatedAt: new Date().toISOString(),
     },
     {
+        id: 'msg-002-reply-1',
+        senderId: 'mock-user-001',
+        senderName: 'Me',
+        receiverId: 'user-003',
+        listingId: 'listing-002',
+        listingTitle: 'Calc II Tutoring',
+        message: 'You are very welcome, Jordan! Happy I could help clarify those integrals.',
+        isRead: true,
+        createdAt: new Date(Date.now() - 86400000 + 3600000).toISOString(),
+        updatedAt: new Date().toISOString(),
+    },
+    {
+        id: 'msg-002-reply-2',
+        senderId: 'mock-user-001',
+        senderName: 'Me',
+        receiverId: 'user-003',
+        listingId: 'listing-002',
+        listingTitle: 'Calc II Tutoring',
+        message: 'Let me know if you want to go over the practice exam before Monday.',
+        isRead: true,
+        createdAt: new Date(Date.now() - 43200000).toISOString(),
+        updatedAt: new Date().toISOString(),
+    },
+
+    // ── Conversation with Riley Chen (Listing: Food Delivery) ──────────
+    {
         id: 'msg-003',
         senderId: 'user-005',
         senderName: 'Riley Chen',
@@ -304,7 +408,19 @@ const MOCK_MESSAGES: ChatMessage[] = [
         listingThumbnail: 'https://images.unsplash.com/photo-1526367790999-015078648402?w=200&auto=format&fit=crop',
         message: 'Your order has been picked up. On my way now!',
         isRead: true,
-        createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+        createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
+        updatedAt: new Date().toISOString(),
+    },
+    {
+        id: 'msg-003-reply-1',
+        senderId: 'mock-user-001',
+        senderName: 'Me',
+        receiverId: 'user-005',
+        listingId: 'listing-004',
+        listingTitle: 'Campus Food Delivery',
+        message: 'Awesome, thanks Riley! I will be outside the library in 5 minutes.',
+        isRead: true,
+        createdAt: new Date(Date.now() - 3600000 * 23.5).toISOString(),
         updatedAt: new Date().toISOString(),
     },
 ];
@@ -595,14 +711,44 @@ export const api = {
     // Chat
     getMessages: async (_token: string, signal?: AbortSignal): Promise<ChatMessage[]> => {
         await delay(300, signal);
-        return MOCK_MESSAGES;
+        
+        // Group by conversation (other person + listing)
+        const groups: Record<string, ChatMessage> = {};
+        const myId = mockSessionUser.id;
+
+        MOCK_MESSAGES.forEach(m => {
+            const peerId = m.senderId === myId ? m.receiverId : m.senderId;
+            const key = `${peerId}-${m.listingId || 'no-listing'}`;
+            
+            // Note: In a real app we'd also pull the peer's info (name/avatar) 
+            // if we are the sender. For this mock, we'll just ensure if sender is 'Me',
+            // we attach the correct peer metadata for the UI.
+            const messageWithPeer: ChatMessage = {
+                ...m,
+                // Ensure senderName/Avatar always represent the OTHER person for the Inbox Row UI
+                senderName: m.senderId === myId ? (MOCK_PEER_USERS[peerId]?.fullName || 'Me') : m.senderName,
+                senderAvatar: m.senderId === myId ? MOCK_PEER_USERS[peerId]?.profilePictureUrl : m.senderAvatar,
+                // Custom prop for UI navigation
+                peerId: peerId 
+            } as any;
+
+            if (!groups[key] || new Date(m.createdAt) > new Date(groups[key].createdAt)) {
+                groups[key] = messageWithPeer;
+            }
+        });
+
+        return Object.values(groups).sort((a, b) => 
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
     },
 
     getConversation: async (_token: string, userId: string, listingId?: string): Promise<ChatMessage[]> => {
         await delay();
+        const myId = mockSessionUser.id;
         // Filter messages between me (mock-user-001) and the target user
         return MOCK_MESSAGES.filter(m => 
-            (m.senderId === userId || m.receiverId === userId) && 
+            ((m.senderId === userId && m.receiverId === myId) || 
+             (m.senderId === myId && m.receiverId === userId)) && 
             (!listingId || m.listingId === listingId)
         );
     },

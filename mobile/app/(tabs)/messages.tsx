@@ -1,11 +1,11 @@
 import React from 'react';
-import { StyleSheet, FlatList, View, ActivityIndicator, Pressable, RefreshControl, Image, Platform } from 'react-native';
+import { StyleSheet, FlatList, View, ActivityIndicator, Pressable, RefreshControl, Image } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
-import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '@/hooks/use-responsive';
@@ -14,10 +14,10 @@ import { useMessagesViewModel } from '@/hooks/view-models/use-messages-view-mode
 import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
 
 export default function MessagesScreen() {
-    const { uiState, user, onRefresh } = useMessagesViewModel();
-    const { theme, isDark } = useTheme();
+    const { uiState, onRefresh } = useMessagesViewModel();
+    const { theme } = useTheme();
     const insets = useSafeAreaInsets();
-    const { horizontalPadding, contentPaddingLeft, contentPaddingRight } = useResponsive();
+    const { horizontalPadding, contentPaddingLeft } = useResponsive();
     const tabBarHeight = useTabBarHeight();
 
     if (uiState.status === 'guest') {
@@ -64,7 +64,7 @@ export default function MessagesScreen() {
     return (
         <ScreenLayout padding="none" withSafeArea={false}>
             {/* Header */}
-            <View style={[styles.header, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding, borderBottomColor: theme.outlineVariant }]}>
+            <View style={[styles.header, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
                 <ThemedText variant="headlineMedium" style={styles.title}>Messages</ThemedText>
             </View>
 
@@ -91,65 +91,69 @@ export default function MessagesScreen() {
                     refreshControl={
                         <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={theme.primary} />
                     }
-                    contentContainerStyle={[
-                        styles.listContent,
-                        { 
-                            paddingBottom: tabBarHeight + Spacing.xl,
-                            paddingHorizontal: contentPaddingLeft 
-                        }
-                    ]}
-                    ItemSeparatorComponent={() => <View style={{ height: Spacing.sm }} />}
+                    contentContainerStyle={{
+                        paddingBottom: tabBarHeight + Spacing.xl,
+                    }}
+                    ItemSeparatorComponent={() => (
+                        <View style={{ marginLeft: contentPaddingLeft + 60 + Spacing.md }}>
+                            <View style={[styles.divider, { backgroundColor: theme.outlineVariant }]} />
+                        </View>
+                    )}
                     renderItem={({ item }) => (
                         <Pressable
                             style={({ pressed }) => [
-                                styles.chatCard,
-                                { 
-                                    backgroundColor: pressed ? theme.surfaceVariant : theme.surface,
-                                    borderColor: theme.outlineVariant,
-                                    shadowColor: '#000',
-                                },
+                                styles.chatRow,
+                                { paddingHorizontal: contentPaddingLeft },
+                                pressed && { backgroundColor: theme.surfaceVariant },
                             ]}
                             onPress={() =>
                                 router.push({
                                     pathname: '/chat/[id]',
-                                    params: { id: item.senderId, listingId: item.listingId },
+                                    params: { id: (item as any).peerId || item.senderId, listingId: item.listingId },
                                 })
                             }
                         >
-                            {/* User Avatar */}
-                            <ThemedView colorName="surfaceVariant" style={styles.avatarContainer}>
+                            {/* Avatar */}
+                            <View style={[styles.avatar, { backgroundColor: theme.surfaceVariant }]}>
                                 {item.senderAvatar ? (
                                     <Image source={{ uri: item.senderAvatar }} style={styles.avatarImage} />
                                 ) : (
-                                    <ThemedIcon name="account" size={32} colorName="primary" />
+                                    <ThemedIcon name="account" size={28} colorName="primary" />
                                 )}
-                            </ThemedView>
+                            </View>
 
-                            {/* Message Content */}
-                            <View style={styles.chatInfo}>
-                                <View style={styles.chatTopRow}>
-                                    <ThemedText variant="titleMedium" numberOfLines={1} style={styles.senderName}>
+                            {/* Content */}
+                            <View style={styles.chatContent}>
+                                {/* Top row: Name + Time */}
+                                <View style={styles.topRow}>
+                                    <ThemedText
+                                        variant="titleMedium"
+                                        numberOfLines={1}
+                                        style={[styles.senderName, !item.isRead && { fontWeight: '800' }]}
+                                    >
                                         {item.senderName || 'Anonymous'}
                                     </ThemedText>
-                                    <ThemedText variant="labelSmall" colorName="textMuted">
+                                    <ThemedText variant="labelSmall" colorName="textMuted" style={styles.timestamp}>
                                         {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </ThemedText>
                                 </View>
 
+                                {/* Middle row: Listing context */}
                                 {item.listingTitle && (
                                     <View style={styles.contextRow}>
-                                        <ThemedIcon name="bookmark-outline" size={12} colorName="primary" />
-                                        <ThemedText variant="labelSmall" colorName="primary" numberOfLines={1} style={{ fontWeight: '700' }}>
+                                        <ThemedIcon name="bookmark-outline" size={11} colorName="primary" />
+                                        <ThemedText variant="labelSmall" colorName="primary" numberOfLines={1} style={styles.contextLabel}>
                                             {item.listingTitle}
                                         </ThemedText>
                                     </View>
                                 )}
 
+                                {/* Bottom row: Message snippet */}
                                 <ThemedText
                                     variant="bodyMedium"
-                                    colorName={item.isRead ? 'textSecondary' : 'text'}
+                                    colorName={item.isRead ? 'textMuted' : 'textSecondary'}
                                     numberOfLines={1}
-                                    style={[styles.messageSnippet, !item.isRead && { fontWeight: '600' }]}
+                                    style={[!item.isRead && { fontWeight: '600' }]}
                                 >
                                     {item.message}
                                 </ThemedText>
@@ -166,63 +170,58 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
     header: {
         paddingBottom: Spacing.md,
-        borderBottomWidth: 1,
     },
     title: {
         fontWeight: '900',
         letterSpacing: -0.5,
     },
-    listContent: {
-        paddingTop: Spacing.lg,
-    },
-    chatCard: {
+    chatRow: {
         flexDirection: 'row',
-        padding: Spacing.md,
-        borderRadius: BorderRadius.xl,
-        borderWidth: 1,
         alignItems: 'center',
-        ...Platform.select({
-            ios: { ...Shadows.level1 },
-            android: { elevation: 2 }
-        })
+        paddingVertical: Spacing.md,
     },
-    avatarContainer: {
-        width: 60,
-        height: 60,
-        borderRadius: BorderRadius.full,
+    avatar: {
+        width: 52,
+        height: 52,
+        borderRadius: 26,
         justifyContent: 'center',
         alignItems: 'center',
-        position: 'relative',
+        overflow: 'hidden',
     },
     avatarImage: {
         width: '100%',
         height: '100%',
-        borderRadius: BorderRadius.full,
+        borderRadius: 26,
     },
-    chatInfo: {
+    chatContent: {
         flex: 1,
         marginLeft: Spacing.md,
         justifyContent: 'center',
     },
-    chatTopRow: {
+    topRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 2,
     },
     senderName: {
-        fontWeight: '700',
+        fontWeight: '600',
         flex: 1,
         marginRight: Spacing.sm,
+    },
+    timestamp: {
+        flexShrink: 0,
     },
     contextRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
-        marginBottom: 4,
+        gap: 3,
+        marginTop: 1,
     },
-    messageSnippet: {
-        marginTop: 2,
+    contextLabel: {
+        fontWeight: '700',
+    },
+    divider: {
+        height: StyleSheet.hairlineWidth,
     },
     centered: {
         flex: 1,

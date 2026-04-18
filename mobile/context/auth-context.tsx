@@ -71,6 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // await SecureStore.setItemAsync('userToken', dummyToken);
         setToken(dummyToken);
         setUser(normalizeUser({ 
+            id: 'mock-user-001',
             fullName: 'Test User', 
             email: email || 'test@domain.edu',
             universityId: '20270000',
