@@ -55,19 +55,19 @@ export const CAMPUS_CATEGORIES: DetailedCategory[] = [
         icon: 'code-json',
         groups: [
             {
-                header: 'DEVELOPMENT',
+                header: 'DEVELOPMENT & CODE',
                 items: [
-                    { title: 'Portfolio Websites', description: "Professional online presence for your career" },
-                    { title: 'App Design', description: "Modern UI/UX for your mobile concepts" },
-                    { title: 'Automation Scripts', description: "Scripts to handle repetitive tasks easily" }
+                    { title: 'Website & App Development', description: "Build portals for startups, ministries, or clubs" },
+                    { title: 'Software Engineering Support', description: "Coding help and academic engineering projects" },
+                    { title: 'Data Analysis & Power BI', description: "Expertise for logistics and business students" }
                 ]
             },
             {
-                header: 'CREATIVE DESIGN',
+                header: 'IT & CREATIVE DESIGN',
                 items: [
-                    { title: 'Poster & Flyer Design', description: "Eye-catching designs for campus events" },
-                    { title: 'Logo & Branding', description: "Complete visual identity for your club or startup" },
-                    { title: 'Digital Illustration', description: "Custom graphics and artwork" }
+                    { title: 'Graphic Design for Events', description: "Posters and flyers for SRC week and church services" },
+                    { title: 'UI/UX Design', description: "Modern interfaces for entrepreneurial projects" },
+                    { title: 'IT Support & Troubleshooting', description: "Help with campus devices and system portals" }
                 ]
             }
         ]
@@ -83,17 +83,17 @@ export const CAMPUS_CATEGORIES: DetailedCategory[] = [
             {
                 header: 'PHOTO & VIDEO',
                 items: [
-                    { title: 'Event Coverage', description: "High-quality campus event photography" },
-                    { title: 'Graduation Portraits', description: "Professional shots for your big milestone" },
-                    { title: 'Video Recaps', description: "Dynamic video content for clubs and festivals" }
+                    { title: 'Event Photography/Video', description: "SRC celebrations, forums, and graduations" },
+                    { title: 'Video Editing & Content', description: "Ministry outreach and club social media" },
+                    { title: 'Live Streaming Setup', description: "Forums, church services, and campus events" }
                 ]
             },
             {
-                header: 'MUSIC & AUDIO',
+                header: 'MUSIC & ARTS',
                 items: [
-                    { title: 'Audio Mixing', description: "Master your tracks or podcast episodes" },
-                    { title: 'Podcast Production', description: "Complete setup and editing aid" },
-                    { title: 'Live Performance', description: "DJs and musicians for campus parties" }
+                    { title: 'Audio Recording & Mixing', description: "Sermons, worship sessions, and performances" },
+                    { title: 'Graphic Arts & Illustration', description: "Album covers and tailored creative assets" },
+                    { title: 'Innovation Hub Content', description: "Media assets for student-led projects" }
                 ]
             }
         ]

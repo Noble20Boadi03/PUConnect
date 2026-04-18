@@ -1,11 +1,10 @@
 import React from 'react';
 import { StyleSheet, View, FlatList, Pressable, Image, ActivityIndicator, Modal, ScrollView } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTheme } from '@/context/theme-context';
-import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
+import { Spacing, BorderRadius } from '@/constants/theme';
 import { User } from '@/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedIcon } from '@/components/ui/themed-icon';
@@ -14,14 +13,14 @@ import { useSubcategoryViewModel } from '@/hooks/view-models/use-subcategory-vie
 import { useResponsive } from '@/hooks/use-responsive';
 
 export default function SubcategoryListingsScreen() {
-    const { subcategory: subcategoryTitle, category, description } = useLocalSearchParams<{ 
+    const { subcategory: subcategoryTitle, description, category } = useLocalSearchParams<{ 
         subcategory: string, 
         category?: string, 
         description?: string 
     }>();
     
     const router = useRouter();
-    const { theme } = useTheme();
+    const { theme, isDark } = useTheme();
     const insets = useSafeAreaInsets();
     const { contentPaddingLeft, contentPaddingRight } = useResponsive();
     const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
@@ -72,37 +71,38 @@ export default function SubcategoryListingsScreen() {
     const isAllSelected = Object.keys(activeFilters).length === 0;
 
     const renderHeader = () => (
-        <View style={[styles.headerContent, horizontalPadding]}>
-            <ThemedText variant="headlineSmall" style={[styles.title, { paddingHorizontal: Spacing.md }]}>{subcategoryTitle}</ThemedText>
-            {description && (
-                <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.description]}>{description}</ThemedText>
-            )}
-            
+        <View style={styles.headerSpacer}>
+            <View style={[styles.heroSection, horizontalPadding]}>
+                <ThemedText variant="headlineSmall" style={styles.heroTitle}>{subcategoryTitle}</ThemedText>
+                {description && (
+                    <ThemedText variant="bodyMedium" colorName="textMuted" style={styles.description}>
+                        {description}
+                    </ThemedText>
+                )}
+            </View>
+
             <ScrollView 
                 horizontal 
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ ...horizontalPadding, paddingBottom: 4 }}
+                contentContainerStyle={[styles.pillsContainer, { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight }]}
             >
-                {/* 'All' Filter Pill */}
                 <Pressable 
                     style={[
                         styles.filterPill, 
                         { borderColor: theme.outlineVariant },
-                        isAllSelected && { borderColor: theme.primary, borderWidth: 1.5, backgroundColor: theme.primary }
+                        isAllSelected && { backgroundColor: theme.primary, borderColor: theme.primary }
                     ]}
                     onPress={() => clearFilter('__all__')}
                 >
                     <ThemedText 
                         variant="labelLarge"
-                        lightColor={isAllSelected ? theme.onPrimary : theme.textMuted}
-                        darkColor={isAllSelected ? theme.onPrimary : theme.textMuted}
-                        style={isAllSelected && { fontWeight: '800' }}
+                        style={[styles.pillText, isAllSelected && { color: theme.onPrimary, fontWeight: '800' }]}
+                        colorName={isAllSelected ? undefined : "textMuted"}
                     >
                         All
                     </ThemedText>
                 </Pressable>
 
-                {/* Dynamic Filters */}
                 {filtersConfig.map((filter) => {
                     const selectedVal = activeFilters[filter.filter_label];
                     const isSelected = !!selectedVal;
@@ -113,25 +113,21 @@ export default function SubcategoryListingsScreen() {
                             style={[
                                 styles.filterPill, 
                                 { borderColor: theme.outlineVariant },
-                                isSelected && { borderColor: theme.primary, borderWidth: 1.5, backgroundColor: theme.surfaceVariant }
+                                isSelected && { backgroundColor: theme.primary, borderColor: theme.primary }
                             ]}
                             onPress={() => isSelected ? handleClearFilter(filter.filter_label) : setActiveModalFilter(filter)}
                         >
                             <ThemedText 
                                 variant="labelLarge"
-                                colorName={isSelected ? "primary" : "textMuted"}
-                                style={isSelected && { fontWeight: '800' }}
+                                style={[styles.pillText, isSelected && { color: theme.onPrimary, fontWeight: '800' }]}
+                                colorName={isSelected ? undefined : "textMuted"}
                             >
                                 {isSelected ? selectedVal : filter.filter_label}
                             </ThemedText>
-                            {isSelected ? (
-                                <View style={styles.clearIconWrapper}>
-                                    <ThemedIcon name="close" size={14} colorName="primary" />
-                                </View>
-                            ) : (
+                            {!isSelected && (
                                 <ThemedIcon 
                                     name="chevron-down" 
-                                    size={12} 
+                                    size={14} 
                                     colorName="textMuted" 
                                     style={{ marginLeft: 4 }}
                                 />
@@ -144,89 +140,56 @@ export default function SubcategoryListingsScreen() {
     );
 
     const renderItem = ({ item }: { item: User }) => (
-        <Pressable 
-            style={[styles.card, { backgroundColor: theme.surface }]}
+       <ProviderCard 
+            item={item} 
+            theme={theme} 
+            isDark={isDark}
+            subcategory={subcategoryTitle}
             onPress={() => router.push({
                 pathname: "/profile/[id]",
                 params: { id: item.id }
-            })}
-        >
-            <View style={styles.cardContent}>
-                {/* Left: Profile Photo */}
-                <View style={styles.imageContainer}>
-                    <Image 
-                        source={{ uri: item.profilePictureUrl || 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=150&auto=format&fit=crop' }} 
-                        style={styles.cardImage} 
-                    />
-                </View>
-                
-                {/* Right: Info */}
-                <View style={styles.infoContainer}>
-                    <View style={styles.topRow}>
-                        <View style={styles.ratingRow}>
-                            <ThemedIcon name="star" size={14} lightColor="#fbbf24" darkColor="#fbbf24" />
-                            <ThemedText variant="labelLarge" style={styles.ratingText}>
-                                {item.reputationScore ? (item.reputationScore / 20).toFixed(1) : '5.0'}
-                            </ThemedText>
-                            <ThemedText variant="labelSmall" colorName="textMuted">
-                                ({item.completedProjects || '0'} projects)
-                            </ThemedText>
-                        </View>
-                        <Pressable>
-                            <ThemedIcon name="heart-outline" size={20} colorName="textMuted" />
-                        </Pressable>
-                    </View>
-                    
-                    <ThemedText variant="titleSmall" style={styles.serviceTitle}>
-                        {item.fullName}
-                    </ThemedText>
-                    <ThemedText variant="bodySmall" colorName="textMuted" numberOfLines={1}>
-                        {item.department || 'Independent Provider'}
-                    </ThemedText>
-                    
-                    <View style={styles.tagRow}>
-                        {(item.skillTags || []).slice(0, 3).map((tag, idx) => (
-                            <View key={idx} style={[styles.skillTag, { backgroundColor: theme.surfaceVariant }]}>
-                                <ThemedText variant="labelSmall">{tag}</ThemedText>
-                            </View>
-                        ))}
-                    </View>
-                </View>
-            </View>
-        </Pressable>
+            })} 
+       />
     );
 
     return (
-        <ScreenLayout scrollable={false} padding="none" withSafeArea={false}>
-            {/* Nav Header */}
-            <View style={[styles.navHeader, { paddingTop: insets.top + 5, ...horizontalPadding }]}>
-                <Pressable onPress={() => router.back()} style={styles.iconBtn}>
-                    <ThemedIcon name="chevron-left" size={24} />
-                </Pressable>
-                <Pressable style={styles.iconBtn}>
-                    <ThemedIcon name="magnify" size={24} />
-                </Pressable>
-            </View>
+        <ScreenLayout padding="none" withSafeArea={false}>
+            <Stack.Screen options={{ headerShown: false }} />
+            
+            <ThemedView style={[styles.fixedHeader, { paddingTop: insets.top + Spacing.sm }]}>
+                <View style={[styles.navRow, horizontalPadding]}>
+                    <Pressable onPress={() => router.back()} style={styles.iconBtn}>
+                        <ThemedIcon name="chevron-left" size={26} />
+                    </Pressable>
+                    <View />
+                    <Pressable style={styles.iconBtn}>
+                        <ThemedIcon name="magnify" size={24} />
+                    </Pressable>
+                </View>
+            </ThemedView>
 
             <FlatList
                 data={providers}
                 renderItem={renderItem}
                 ListHeaderComponent={renderHeader}
                 keyExtractor={(item) => item.id}
-                contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + Spacing.xl }]}
+                contentContainerStyle={[
+                    styles.listContent, 
+                    { paddingBottom: insets.bottom + Spacing.xl, paddingTop: 100 }
+                ]}
                 refreshing={isRefreshing}
                 onRefresh={onRefresh}
+                showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
                         <ThemedIcon name="account-search-outline" size={64} colorName="outline" />
                         <ThemedText variant="bodyLarge" colorName="textMuted" align="center" style={styles.emptyText}>
-                            No Provider&apos;s Profiles found in this subcategory.
+                            No Providers matching this criteria.
                         </ThemedText>
                     </View>
                 }
             />
 
-            {/* Filter Options Modal */}
             <Modal
                 visible={!!activeModalFilter}
                 transparent={true}
@@ -236,7 +199,7 @@ export default function SubcategoryListingsScreen() {
                 <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
                     <ThemedView style={[styles.modalContent, { paddingBottom: insets.bottom + 20 }]}>
                         <View style={[styles.modalHeader, { borderBottomColor: theme.outlineVariant }]}>
-                            <ThemedText variant="titleLarge">
+                            <ThemedText variant="titleLarge" style={{ fontWeight: '800' }}>
                                 Select {activeModalFilter?.filter_label}
                             </ThemedText>
                             <Pressable onPress={() => setActiveModalFilter(null)} style={styles.iconBtn}>
@@ -262,139 +225,182 @@ export default function SubcategoryListingsScreen() {
     );
 }
 
+/**
+ * Original Style Horizontal Provider Card
+ */
+function ProviderCard({ item, theme, isDark, subcategory, onPress }: any) {
+    return (
+        <View style={styles.cardWrapper}>
+            <Pressable 
+                onPress={onPress}
+                style={[
+                    styles.card, 
+                    { 
+                        backgroundColor: theme.surface,
+                        borderColor: theme.outlineVariant,
+                        borderWidth: 1,
+                    }
+                ]}
+            >
+                <View style={styles.cardLayout}>
+                    {/* Left: Profile Image Box */}
+                    <View style={[styles.leftSection, { borderRightColor: theme.outlineVariant }]}>
+                        <Image 
+                            source={{ uri: item.profilePictureUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200' }} 
+                            style={styles.profileImage} 
+                        />
+                    </View>
+                    
+                    {/* Right: Name & Skills */}
+                    <View style={styles.rightSection}>
+                        <ThemedText variant="titleMedium" style={styles.providerName}>
+                            {item.fullName}
+                        </ThemedText>
+                        
+                        <ThemedText variant="labelMedium" colorName="textMuted" style={styles.departmentText}>
+                            {item.department || 'Expert'}
+                        </ThemedText>
+
+                        <View style={styles.tagsRow}>
+                            {item.skillTags?.slice(0, 3).map((tag: string, idx: number) => (
+                                <View key={idx} style={[styles.tagPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#f0f0f0' }]}>
+                                    <ThemedText variant="labelSmall" colorName="textMuted">{tag}</ThemedText>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+                </View>
+            </Pressable>
+        </View>
+    );
+}
+
 const styles = StyleSheet.create({
-    navHeader: {
+    fixedHeader: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 100,
+        paddingBottom: Spacing.sm,
+    },
+    navRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingBottom: 8,
-    },
-    iconBtn: {
-        padding: 8,
-    },
-    headerContent: {
-        paddingVertical: 12,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: '800',
-        letterSpacing: -0.5,
-    },
-    description: {
-        fontSize: 15,
-        marginTop: 4,
-        lineHeight: 20,
-    },
-    filterContainer: {
-        marginTop: 16,
-        paddingBottom: 4,
-    },
-    filterPill: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: BorderRadius.full,
-        borderWidth: 1,
-        marginRight: 8,
-    },
-    clearIconWrapper: {
-        marginLeft: 6,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    listContent: {
-        paddingBottom: 40,
-    },
-    card: {
-        marginHorizontal: Spacing.lg,
-        marginTop: 16,
-        borderRadius: BorderRadius.lg,
-        ...Shadows.level2,
-        overflow: 'hidden',
-    },
-    cardContent: {
-        flexDirection: 'row',
-        padding: 12,
-    },
-    imageContainer: {
-        width: 100,
-        height: 100,
-        borderRadius: BorderRadius.md,
-        overflow: 'hidden',
-    },
-    cardImage: {
-        width: '100%',
-        height: '100%',
-    },
-    infoContainer: {
-        flex: 1,
-        marginLeft: 14,
-        justifyContent: 'space-between',
-    },
-    topRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    ratingRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 3,
-    },
-    ratingText: {
-        fontSize: 14,
-        fontWeight: '700',
-    },
-    serviceTitle: {
-        fontSize: 16,
-        fontWeight: '700',
-        marginTop: 4,
-    },
-    tagRow: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 6,
-        marginTop: 8,
-    },
-    skillTag: {
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 4,
-    },
-    emptyContainer: {
-        alignItems: 'center',
-        marginTop: 80,
-    },
-    emptyText: {
-        marginTop: 16,
-        fontSize: 15,
-        textAlign: 'center',
-    },
-    loadingContainer: {
-        marginTop: 80,
     },
     centered: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
     },
+    iconBtn: {
+        padding: 8,
+    },
+    headerSpacer: {
+        paddingBottom: Spacing.md,
+    },
+    heroSection: {
+        marginTop: Spacing.lg,
+        paddingVertical: Spacing.md,
+    },
+    heroTitle: {
+        fontSize: 28,
+        fontWeight: '900',
+        letterSpacing: -0.5,
+    },
+    description: {
+        fontSize: 15,
+        marginTop: 6,
+        lineHeight: 20,
+    },
+    pillsContainer: {
+        paddingVertical: Spacing.md,
+        gap: Spacing.sm,
+    },
+    filterPill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: BorderRadius.full,
+        borderWidth: 1,
+        marginRight: Spacing.sm,
+        backgroundColor: 'transparent',
+    },
+    pillText: {
+        fontWeight: '600',
+    },
+    listContent: {
+        paddingBottom: 40,
+    },
+    cardWrapper: {
+        marginHorizontal: Spacing.lg,
+        marginTop: Spacing.md,
+    },
+    card: {
+        borderRadius: 16,
+        overflow: 'hidden',
+    },
+    cardLayout: {
+        flexDirection: 'row',
+        height: 120,
+    },
+    leftSection: {
+        width: 110,
+        borderRightWidth: 1,
+    },
+    rightSection: {
+        flex: 1,
+        paddingHorizontal: 14,
+        justifyContent: 'center',
+    },
+    profileImage: {
+        width: '100%',
+        height: '100%',
+    },
+    providerName: {
+        fontWeight: '700',
+        fontSize: 17,
+    },
+    departmentText: {
+        marginTop: 2,
+        fontSize: 13,
+    },
+    tagsRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 6,
+        marginTop: 10,
+    },
+    tagPill: {
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 4,
+    },
+    emptyContainer: {
+        alignItems: 'center',
+        marginTop: 100,
+    },
+    emptyText: {
+        marginTop: 16,
+        fontSize: 16,
+    },
     modalOverlay: {
         flex: 1,
         justifyContent: 'flex-end',
     },
     modalContent: {
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
         minHeight: '40%',
-        maxHeight: '80%',
     },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: Spacing.xl,
-        paddingVertical: 16,
+        paddingVertical: 20,
         borderBottomWidth: 1,
     },
     modalScroll: {
@@ -405,7 +411,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 16,
+        paddingVertical: 18,
         borderBottomWidth: 1,
     },
 });

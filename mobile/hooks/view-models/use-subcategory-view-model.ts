@@ -4,7 +4,7 @@ import { User, SubcategoryFilter } from '@/types';
 import { UiState } from '@/types/ui-state';
 
 export interface SubcategoryData {
-    providers: User[];
+    providers: (User & { startingPrice?: number })[];
     filtersConfig: SubcategoryFilter[];
 }
 

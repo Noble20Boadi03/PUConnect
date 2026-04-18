@@ -262,6 +262,60 @@ const MOCK_LISTINGS: Listing[] = [
         createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
         updatedAt: new Date().toISOString(),
     },
+    {
+        id: 'listing-011',
+        title: 'Professional Graphic Design for Events',
+        description: 'Posters and flyers for SRC week and church services. High quality creative assets.',
+        price: 50,
+        category: 'Tech & Creative',
+        subcategory: 'Graphic Design for Events',
+        type: 'service_offer',
+        ownerId: 'user-002',
+        media_url: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?w=800&auto=format&fit=crop',
+        isActive: true,
+        tags: ['design', 'events', 'poster'],
+        level: 'expert',
+        average_rating: 5.0,
+        review_count: 12,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+    },
+    {
+        id: 'listing-012',
+        title: 'Event Graphics & Brand Identity',
+        description: 'Tailored graphic design for campus events and organizations.',
+        price: 45,
+        category: 'Tech & Creative',
+        subcategory: 'Graphic Design for Events',
+        type: 'service_offer',
+        ownerId: 'user-004',
+        media_url: 'https://images.unsplash.com/photo-1572044162444-ad60f128bde2?w=800&auto=format&fit=crop',
+        isActive: true,
+        tags: ['design', 'branding'],
+        level: 'intermediate',
+        average_rating: 4.8,
+        review_count: 5,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+    },
+    {
+        id: 'listing-013',
+        title: 'Creative Event Posters',
+        description: 'Vibrant and professional posters for all university events.',
+        price: 60,
+        category: 'Tech & Creative',
+        subcategory: 'Graphic Design for Events',
+        type: 'service_offer',
+        ownerId: 'user-006',
+        media_url: 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=800&auto=format&fit=crop',
+        isActive: true,
+        tags: ['creative', 'design', 'posters'],
+        level: 'expert',
+        average_rating: 4.9,
+        review_count: 8,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+    },
 ];
 
 const MOCK_MESSAGES: ChatMessage[] = [
@@ -520,18 +574,44 @@ export const api = {
         return { gaps: ['Data Analysis', 'UI/UX Research', 'Cloud DevOps'] };
     },
 
-    getProvidersBySubcategory: async (subcategory: string, signal?: AbortSignal): Promise<User[]> => {
+    getProvidersBySubcategory: async (subcategory: string, signal?: AbortSignal): Promise<any[]> => {
         await delay(350, signal);
-        // Map of subcategories to popular talent in those fields
-        const talentPool = Object.values(MOCK_PEER_USERS).filter(u => u.canOfferServices);
         
-        // Return talent that matches the subcategory or has relevant tags
-        // In this mock, we just return a slice of providers for any subcategory requested
-        return talentPool.filter(u => 
-            u.department?.toLowerCase().includes(subcategory.toLowerCase()) || 
-            u.skillTags?.some(t => t.toLowerCase().includes(subcategory.toLowerCase())) ||
-            talentPool.indexOf(u) % 2 === 0 // Fallback mix
-        ).slice(0, 10);
+        // 1. Find all listings in this subcategory
+        const listings = allListingsMerged().filter(l => 
+            l.isActive && 
+            l.subcategory?.toLowerCase() === subcategory.toLowerCase()
+        );
+
+        if (listings.length === 0) {
+            // Fallback for demo: return a few random providers if no listings exist for this subcategory
+            const talentPool = Object.values(MOCK_PEER_USERS).filter(u => u.canOfferServices);
+            return talentPool.slice(0, 3).map(u => ({
+                ...u,
+                startingPrice: 50 // Default mock price
+            }));
+        }
+
+        // 2. Group by owner and find minimum price
+        const providerMap: Record<string, { user: User, minPrice: number }> = {};
+        
+        listings.forEach(l => {
+            const currentMin = providerMap[l.ownerId]?.minPrice ?? Infinity;
+            const price = l.price ?? l.budget ?? 0;
+            const user = MOCK_PEER_USERS[l.ownerId] || MOCK_USER;
+            
+            if (price < currentMin) {
+                providerMap[l.ownerId] = { user, minPrice: price };
+            } else if (!providerMap[l.ownerId]) {
+                 providerMap[l.ownerId] = { user, minPrice: price };
+            }
+        });
+
+        // 3. Return as flat array with startingPrice attached
+        return Object.values(providerMap).map(p => ({
+            ...p.user,
+            startingPrice: p.minPrice
+        }));
     },
 
     // Listings
