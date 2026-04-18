@@ -1,11 +1,11 @@
 import React from 'react';
-import { StyleSheet, FlatList, View, ActivityIndicator, Pressable, RefreshControl, Image } from 'react-native';
+import { StyleSheet, FlatList, View, ActivityIndicator, Pressable, RefreshControl, Image, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
-import { Spacing, BorderRadius } from '@/constants/theme';
+import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '@/hooks/use-responsive';
@@ -15,54 +15,27 @@ import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
 
 export default function MessagesScreen() {
     const { uiState, user, onRefresh } = useMessagesViewModel();
-    const { theme } = useTheme();
+    const { theme, isDark } = useTheme();
     const insets = useSafeAreaInsets();
-    const { contentPaddingLeft, contentPaddingRight } = useResponsive();
+    const { horizontalPadding, contentPaddingLeft, contentPaddingRight } = useResponsive();
     const tabBarHeight = useTabBarHeight();
-    const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
 
     if (uiState.status === 'guest') {
         return (
             <ThemedView style={styles.centered}>
-                <ThemedIcon name="lock" size={48} colorName="outline" />
+                <ThemedIcon name="lock-outline" size={64} colorName="outline" />
+                <ThemedText variant="headlineSmall" style={{ marginTop: Spacing.lg, fontWeight: '800' }}>
+                    Sign in required
+                </ThemedText>
                 <ThemedText variant="bodyLarge" colorName="textSecondary" align="center" style={styles.emptyText}>
-                    Please sign in to view your collaborations.
+                    Please sign in to view your collaborations and messages.
                 </ThemedText>
                 <PrimaryButton
                     title="Sign In"
                     onPress={() => router.push('/login')}
-                    style={{ marginTop: Spacing.xl }}
+                    style={{ marginTop: Spacing.xl, width: '100%' }}
                 />
             </ThemedView>
-        );
-    }
-
-    if (uiState.status === 'empty_inbox') {
-        return (
-            <ScreenLayout padding="none" withSafeArea={false}>
-                <View style={[styles.header, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
-                    <ThemedText variant="headlineSmall" style={styles.title}>Messages</ThemedText>
-                    <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel="Start a conversation"
-                        onPress={() => router.push({ pathname: '/search/results', params: { q: '' } })}
-                        style={[styles.newChatBtn, { backgroundColor: theme.primaryContainer }]}
-                    >
-                        <ThemedIcon name="pencil-outline" size={20} colorName="onPrimaryContainer" />
-                    </Pressable>
-                </View>
-                <ThemedView style={styles.centered}>
-                    <ThemedIcon name="chat-outline" size={64} colorName="outline" />
-                    <ThemedText variant="bodyLarge" colorName="textMuted" align="center" style={styles.emptyText}>
-                        No messages yet. Browse listings and send a message to connect.
-                    </ThemedText>
-                    <PrimaryButton
-                        title="Explore Market"
-                        onPress={() => router.push('/(tabs)/home')}
-                        style={{ marginTop: Spacing.xl }}
-                    />
-                </ThemedView>
-            </ScreenLayout>
         );
     }
 
@@ -81,76 +54,111 @@ export default function MessagesScreen() {
                 <ThemedText variant="bodyLarge" colorName="textSecondary" align="center" style={styles.emptyText}>
                     {uiState.message}
                 </ThemedText>
+                <PrimaryButton title="Try Again" onPress={onRefresh} style={{ marginTop: Spacing.lg }} />
             </ThemedView>
         );
     }
 
-    const isRefreshing = uiState.isRefreshing;
+    const isRefreshing = uiState.status === 'content' && !!uiState.isRefreshing;
 
     return (
         <ScreenLayout padding="none" withSafeArea={false}>
-            <View style={[styles.header, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
-                <ThemedText variant="headlineSmall" style={styles.title}>Messages</ThemedText>
-                <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Start a conversation"
-                    onPress={() => router.push({ pathname: '/search/results', params: { q: '' } })}
-                    style={[styles.newChatBtn, { backgroundColor: theme.primaryContainer }]}
-                >
-                    <ThemedIcon name="pencil-outline" size={20} colorName="onPrimaryContainer" />
-                </Pressable>
+            {/* Header */}
+            <View style={[styles.header, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding, borderBottomColor: theme.outlineVariant }]}>
+                <ThemedText variant="headlineMedium" style={styles.title}>Messages</ThemedText>
             </View>
 
-            <FlatList
-                data={uiState.data}
-                refreshControl={
-                    <RefreshControl refreshing={!!isRefreshing} onRefresh={onRefresh} tintColor={theme.primary} />
-                }
-                renderItem={({ item }) => (
-                    <Pressable
-                        style={({ pressed }) => [
-                            styles.chatItem,
-                            { backgroundColor: pressed ? theme.surfaceVariant : 'transparent', ...horizontalPadding },
-                        ]}
-                        onPress={() =>
-                            router.push({
-                                pathname: '/chat/[id]',
-                                params: { id: item.senderId, listingId: item.listingId },
-                            })
+            {uiState.status === 'empty_inbox' ? (
+                <ThemedView style={styles.centered}>
+                    <View style={[styles.illustrationContainer, { backgroundColor: theme.primaryContainer + '20' }]}>
+                        <ThemedIcon name="chat-processing-outline" size={80} colorName="primary" />
+                    </View>
+                    <ThemedText variant="titleLarge" style={{ marginTop: Spacing.xl, fontWeight: '800' }}>
+                        No messages yet
+                    </ThemedText>
+                    <ThemedText variant="bodyLarge" colorName="textMuted" align="center" style={styles.emptyDescription}>
+                        Your collaborations will appear here. Start by exploring services or gigs in the marketplace.
+                    </ThemedText>
+                    <PrimaryButton
+                        title="Explore Marketplace"
+                        onPress={() => router.push('/(tabs)/home')}
+                        style={{ marginTop: Spacing.xxl, width: '100%' }}
+                    />
+                </ThemedView>
+            ) : (
+                <FlatList
+                    data={uiState.data}
+                    refreshControl={
+                        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={theme.primary} />
+                    }
+                    contentContainerStyle={[
+                        styles.listContent,
+                        { 
+                            paddingBottom: tabBarHeight + Spacing.xl,
+                            paddingHorizontal: contentPaddingLeft 
                         }
-                    >
-                        <ThemedView colorName="primaryContainer" style={styles.avatar}>
-                            {item.senderAvatar ? (
-                                <Image source={{ uri: item.senderAvatar }} style={styles.avatarImage} />
-                            ) : (
-                                <ThemedIcon name="account" size={24} colorName="onPrimaryContainer" />
-                            )}
-                            {!item.isRead && item.senderId !== user?.id && (
-                                <View style={[styles.unreadDot, { backgroundColor: theme.primary, borderColor: theme.background }]} />
-                            )}
-                        </ThemedView>
+                    ]}
+                    ItemSeparatorComponent={() => <View style={{ height: Spacing.sm }} />}
+                    renderItem={({ item }) => (
+                        <Pressable
+                            style={({ pressed }) => [
+                                styles.chatCard,
+                                { 
+                                    backgroundColor: pressed ? theme.surfaceVariant : theme.surface,
+                                    borderColor: theme.outlineVariant,
+                                    shadowColor: '#000',
+                                },
+                            ]}
+                            onPress={() =>
+                                router.push({
+                                    pathname: '/chat/[id]',
+                                    params: { id: item.senderId, listingId: item.listingId },
+                                })
+                            }
+                        >
+                            {/* User Avatar */}
+                            <ThemedView colorName="surfaceVariant" style={styles.avatarContainer}>
+                                {item.senderAvatar ? (
+                                    <Image source={{ uri: item.senderAvatar }} style={styles.avatarImage} />
+                                ) : (
+                                    <ThemedIcon name="account" size={32} colorName="primary" />
+                                )}
+                            </ThemedView>
 
-                        <View style={[styles.chatContent, { borderBottomColor: theme.outlineVariant }]}>
-                            <View style={styles.chatHeader}>
-                                <ThemedText variant="titleMedium">{item.senderName || `Campus Member ${item.senderId.slice(0, 4)}`}</ThemedText>
-                                <ThemedText variant="labelSmall" colorName="textMuted">
-                                    {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {/* Message Content */}
+                            <View style={styles.chatInfo}>
+                                <View style={styles.chatTopRow}>
+                                    <ThemedText variant="titleMedium" numberOfLines={1} style={styles.senderName}>
+                                        {item.senderName || 'Anonymous'}
+                                    </ThemedText>
+                                    <ThemedText variant="labelSmall" colorName="textMuted">
+                                        {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </ThemedText>
+                                </View>
+
+                                {item.listingTitle && (
+                                    <View style={styles.contextRow}>
+                                        <ThemedIcon name="bookmark-outline" size={12} colorName="primary" />
+                                        <ThemedText variant="labelSmall" colorName="primary" numberOfLines={1} style={{ fontWeight: '700' }}>
+                                            {item.listingTitle}
+                                        </ThemedText>
+                                    </View>
+                                )}
+
+                                <ThemedText
+                                    variant="bodyMedium"
+                                    colorName={item.isRead ? 'textSecondary' : 'text'}
+                                    numberOfLines={1}
+                                    style={[styles.messageSnippet, !item.isRead && { fontWeight: '600' }]}
+                                >
+                                    {item.message}
                                 </ThemedText>
                             </View>
-                            <ThemedText
-                                variant="bodyMedium"
-                                colorName={item.isRead ? 'textSecondary' : 'text'}
-                                numberOfLines={1}
-                                style={{ fontWeight: item.isRead ? '400' : '600' }}
-                            >
-                                {item.message}
-                            </ThemedText>
-                        </View>
-                    </Pressable>
-                )}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={{ paddingBottom: tabBarHeight }}
-            />
+                        </Pressable>
+                    )}
+                    keyExtractor={(item) => item.id}
+                />
+            )}
         </ScreenLayout>
     );
 }
@@ -158,67 +166,83 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
     header: {
         paddingBottom: Spacing.md,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        zIndex: 10,
+        borderBottomWidth: 1,
     },
     title: {
-        fontWeight: '800',
+        fontWeight: '900',
+        letterSpacing: -0.5,
     },
-    newChatBtn: {
-        width: 40,
-        height: 40,
-        borderRadius: BorderRadius.full,
-        justifyContent: 'center',
-        alignItems: 'center',
+    listContent: {
+        paddingTop: Spacing.lg,
     },
-    chatItem: {
+    chatCard: {
         flexDirection: 'row',
-        paddingVertical: Spacing.md,
+        padding: Spacing.md,
+        borderRadius: BorderRadius.xl,
+        borderWidth: 1,
         alignItems: 'center',
+        ...Platform.select({
+            ios: { ...Shadows.level1 },
+            android: { elevation: 2 }
+        })
     },
-    avatar: {
-        width: 56,
-        height: 56,
+    avatarContainer: {
+        width: 60,
+        height: 60,
         borderRadius: BorderRadius.full,
         justifyContent: 'center',
         alignItems: 'center',
         position: 'relative',
-        overflow: 'hidden',
     },
     avatarImage: {
         width: '100%',
         height: '100%',
         borderRadius: BorderRadius.full,
     },
-    unreadDot: {
-        position: 'absolute',
-        top: 0,
-        right: 0,
-        width: 14,
-        height: 14,
-        borderRadius: 7,
-        borderWidth: 2,
-    },
-    chatContent: {
+    chatInfo: {
         flex: 1,
         marginLeft: Spacing.md,
-        borderBottomWidth: 1,
-        paddingBottom: Spacing.md,
+        justifyContent: 'center',
     },
-    chatHeader: {
+    chatTopRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 2,
+    },
+    senderName: {
+        fontWeight: '700',
+        flex: 1,
+        marginRight: Spacing.sm,
+    },
+    contextRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
         marginBottom: 4,
+    },
+    messageSnippet: {
+        marginTop: 2,
     },
     centered: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: Spacing.xl,
+        padding: Spacing.xxl,
+    },
+    illustrationContainer: {
+        width: 160,
+        height: 160,
+        borderRadius: 80,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    emptyDescription: {
+        marginTop: Spacing.md,
+        lineHeight: 22,
     },
     emptyText: {
         marginTop: Spacing.md,
+        lineHeight: 22,
     },
 });
