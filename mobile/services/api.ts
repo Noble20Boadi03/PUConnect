@@ -503,7 +503,53 @@ let extraListings: Listing[] = [];
 
 const conversationLifecycle: Record<string, ConversationLifecycle> = {};
 
-const submittedReviews: Review[] = [];
+const submittedReviews: Review[] = [
+    {
+        id: 'review-seed-001',
+        listingId: 'listing-001',
+        authorUserId: 'mock-user-001',
+        targetUserId: 'user-002',
+        rating: 5,
+        comment: 'Alex delivered an incredible logo design. Clean, modern, and exactly what I envisioned. Highly recommend!',
+        createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+    },
+    {
+        id: 'review-seed-002',
+        listingId: 'listing-001',
+        authorUserId: 'user-005',
+        targetUserId: 'user-002',
+        rating: 4,
+        comment: 'Good work on the branding package. Took a bit longer than expected but the quality was worth the wait.',
+        createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
+    },
+    {
+        id: 'review-seed-003',
+        listingId: 'listing-011',
+        authorUserId: 'user-003',
+        targetUserId: 'user-002',
+        rating: 5,
+        comment: 'The event poster Alex made for our department fundraiser was stunning. Everyone loved it!',
+        createdAt: new Date(Date.now() - 86400000 * 18).toISOString(),
+    },
+    {
+        id: 'review-seed-004',
+        listingId: 'listing-002',
+        authorUserId: 'mock-user-001',
+        targetUserId: 'user-003',
+        rating: 5,
+        comment: 'Jordan is an exceptional tutor. Made complex calculus concepts easy to understand. Will definitely book again.',
+        createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
+    },
+    {
+        id: 'review-seed-005',
+        listingId: 'listing-002',
+        authorUserId: 'user-007',
+        targetUserId: 'user-003',
+        rating: 4,
+        comment: 'Very patient and knowledgeable. Helped me pass my midterm exam.',
+        createdAt: new Date(Date.now() - 86400000 * 14).toISOString(),
+    },
+];
 
 function convKey(me: string, peer: string, listingId?: string): string {
     const [a, b] = [me, peer].sort();
@@ -856,6 +902,13 @@ export const api = {
     getSubcategoryFilters: async (_subcategory: string): Promise<any[]> => {
         await delay();
         return [];
+    },
+
+    getReviewsByTargetUser: async (targetUserId: string, signal?: AbortSignal): Promise<Review[]> => {
+        await delay(250, signal);
+        return submittedReviews
+            .filter(r => r.targetUserId === targetUserId)
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     },
 
     getApiUrl,

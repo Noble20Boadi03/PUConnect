@@ -17,7 +17,7 @@ import { User } from '@/types';
 const IMAGE_HEIGHT = 320;
 
 export default function ListingDetailsScreen() {
-  const { id, fromChat } = useLocalSearchParams<{ id: string; fromChat?: string }>();
+  const { id, fromChat, fromProfile } = useLocalSearchParams<{ id: string; fromChat?: string; fromProfile?: string }>();
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -252,8 +252,8 @@ export default function ListingDetailsScreen() {
             </View>
           )}
 
-          {/* Provider Info - Hidden when coming from chat to avoid redundancy and loops */}
-          {fromChat !== 'true' && (
+          {/* Provider Info - Hidden when coming from chat or profile to avoid redundancy and loops */}
+          {fromChat !== 'true' && fromProfile !== 'true' && (
             <View style={styles.section}>
               <ThemedText variant="titleMedium" style={styles.sectionTitle}>
                 {listing.type === 'service_offer' ? 'About the provider' : 'Posted by'}
