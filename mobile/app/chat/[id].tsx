@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Platform,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useNavigation, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/context/theme-context';
 import { useAuth } from '@/context/auth-context';
@@ -56,6 +56,25 @@ export default function ChatScreen() {
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [contextListing, setContextListing] = useState<Listing | null>(null);
+  const navigation = useNavigation();
+
+  // Intercept all back navigation (Hardware back, Swipe back, UI back)
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+      // If we're already redirecting, don't intercept again
+      if (e.data.action.type === 'REPLACE' || e.data.action.type === 'NAVIGATE') {
+        return;
+      }
+
+      // Prevent default back behavior
+      e.preventDefault();
+
+      // Force navigation to the Messages tab
+      router.replace('/(tabs)/messages');
+    });
+
+    return unsubscribe;
+  }, [navigation, router]);
 
   // Fetch listing context when listingId is present
   useEffect(() => {
@@ -178,6 +197,7 @@ export default function ChatScreen() {
 
   return (
     <ScreenLayout scrollable={false} keyboardAvoiding padding="none" withSafeArea={false}>
+      <Stack.Screen options={{ headerShown: false, gestureEnabled: false }} />
       <ScreenHeader
         onBack={() => router.replace('/(tabs)/messages')}
         title={

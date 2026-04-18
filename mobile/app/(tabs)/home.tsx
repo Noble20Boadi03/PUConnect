@@ -87,6 +87,36 @@ export default function HomeScreen() {
 
   const isRefreshing = uiState.status === 'content' && !!uiState.isRefreshing;
 
+  // Build the featured feed based on the active filter
+  // This hook is moved here to follow the rules of hooks (no early returns before hooks)
+  const featuredFeed = useMemo(() => {
+    if (uiState.status !== 'content') return [];
+    
+    const { featuredOffers, featuredGigs } = uiState.data;
+
+    if (activeFilter === 'Experts') {
+      return featuredOffers.map(item => ({ type: 'offer' as const, data: item }));
+    }
+    if (activeFilter === 'Gigs') {
+      return featuredGigs.map(item => ({ type: 'offer' as const, data: item }));
+    }
+    
+    const feed: { type: 'offer' | 'gigRow'; data: any }[] = [];
+    let gigInserted = false;
+    featuredOffers.forEach((item, index) => {
+      feed.push({ type: 'offer', data: item });
+      if (index === 2 && featuredGigs.length > 0) {
+        feed.push({ type: 'gigRow', data: featuredGigs });
+        gigInserted = true;
+      }
+    });
+
+    if (!gigInserted && featuredGigs.length > 0) {
+      feed.push({ type: 'gigRow', data: featuredGigs });
+    }
+    return feed;
+  }, [uiState, activeFilter]);
+
   if (uiState.status === 'loading') {
     return (
       <ThemedView style={styles.centered}>
@@ -120,35 +150,8 @@ export default function HomeScreen() {
     );
   }
 
-  const { popular, trending, featuredOffers, featuredGigs } = uiState.data;
-
-  // Build the featured feed based on the active filter
-  const featuredFeed = useMemo(() => {
-    if (activeFilter === 'Experts') {
-      // Only offers, displayed vertically
-      return featuredOffers.map(item => ({ type: 'offer' as const, data: item }));
-    }
-    if (activeFilter === 'Gigs') {
-      // Only gigs, displayed vertically (standard layout)
-      return featuredGigs.map(item => ({ type: 'offer' as const, data: item }));
-    }
-    // "All" filter: offers vertically, with gig spotlight rows interspersed
-    const feed: { type: 'offer' | 'gigRow'; data: any }[] = [];
-    let gigInserted = false;
-    featuredOffers.forEach((item, index) => {
-      feed.push({ type: 'offer', data: item });
-      // Insert a gig spotlight row after every 3 offers
-      if ((index + 1) % 3 === 0 && featuredGigs.length > 0 && !gigInserted) {
-        feed.push({ type: 'gigRow', data: featuredGigs });
-        gigInserted = true;
-      }
-    });
-    // If we never inserted gigs (fewer than 3 offers), add them at the end
-    if (!gigInserted && featuredGigs.length > 0) {
-      feed.push({ type: 'gigRow', data: featuredGigs });
-    }
-    return feed;
-  }, [activeFilter, featuredOffers, featuredGigs]);
+  if (uiState.status !== 'content') return null;
+  const { popular, trending } = uiState.data;
 
   return (
     <ScreenLayout padding="none" withSafeArea={false}>

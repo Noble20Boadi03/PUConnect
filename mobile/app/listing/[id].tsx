@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, ScrollView, ActivityIndicator, Pressable, View, Image, StatusBar, Dimensions } from 'react-native';
+import { StyleSheet, ScrollView, ActivityIndicator, Pressable, View, Image, StatusBar } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
@@ -14,7 +14,6 @@ import { useResponsive } from '@/hooks/use-responsive';
 import { api } from '@/services/api';
 import { User } from '@/types';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IMAGE_HEIGHT = 320;
 
 export default function ListingDetailsScreen() {
