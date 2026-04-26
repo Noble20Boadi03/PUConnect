@@ -24,6 +24,19 @@ import { CAMPUS_CATEGORIES } from '@/constants/categories';
 import { ListingType } from '@/types';
 import { useResponsive } from '@/hooks/use-responsive';
 
+const SUBJECT_OPTIONS = [
+  'Mathematics',
+  'Physics',
+  'Chemistry',
+  'Biology',
+  'Computer Science',
+  'Engineering',
+  'Business / Economics',
+  'Languages',
+  'Literature',
+  'Other'
+];
+
 export default function CreateListingScreen() {
   const params = useLocalSearchParams<{ editId?: string }>();
   const editId = typeof params.editId === 'string' ? params.editId : params.editId?.[0];
@@ -42,6 +55,9 @@ export default function CreateListingScreen() {
   const [price, setPrice] = useState('');
   const [listingType, setListingType] = useState<ListingType>('service_request');
   const [categoryTitle, setCategoryTitle] = useState(CAMPUS_CATEGORIES[0]?.title ?? '');
+  const [subcategoryTitle, setSubcategoryTitle] = useState('');
+  const [subject, setSubject] = useState('');
+  const [customSubject, setCustomSubject] = useState('');
 
   const load = useCallback(async () => {
     if (!editId || !token) return;
@@ -60,6 +76,19 @@ export default function CreateListingScreen() {
       }
       setListingType(offerNeedsProvider ? 'service_request' : listing.type);
       setCategoryTitle(listing.category);
+      setSubcategoryTitle(listing.subcategory ?? '');
+      if (listing.tags) {
+        const foundSub = SUBJECT_OPTIONS.find(so => listing.tags!.includes(so.toLowerCase()));
+        if (foundSub) {
+          setSubject(foundSub);
+        } else if (listing.subcategory?.toLowerCase().includes('tutoring') || listing.subcategory?.toLowerCase().includes('subject')) {
+          const customSubTag = listing.tags.find(t => !title.toLowerCase().includes(t));
+          if (customSubTag) {
+            setSubject('Other');
+            setCustomSubject(customSubTag);
+          }
+        }
+      }
     } catch {
       showAlert({
         title: 'Error',
@@ -81,6 +110,16 @@ export default function CreateListingScreen() {
       setListingType('service_request');
     }
   }, [canOffer, listingType]);
+
+  useEffect(() => {
+    const currentCat = CAMPUS_CATEGORIES.find((c) => c.title === categoryTitle);
+    if (currentCat) {
+      const allSubtitles = currentCat.groups.flatMap(g => g.items.map(i => i.title));
+      if (!allSubtitles.includes(subcategoryTitle)) {
+        setSubcategoryTitle('');
+      }
+    }
+  }, [categoryTitle]);
 
   const onSubmit = async () => {
     if (!token) {
@@ -112,8 +151,25 @@ export default function CreateListingScreen() {
       return;
     }
     const cat = CAMPUS_CATEGORIES.find((c) => c.title === categoryTitle) ?? CAMPUS_CATEGORIES[0];
-    const sub =
-      cat.groups[0]?.items[0]?.title ?? 'General';
+    const sub = subcategoryTitle || (cat.groups[0]?.items[0]?.title ?? 'General');
+
+    if (!subcategoryTitle) {
+      showAlert({ title: 'Validation', subtitle: 'Please select a subcategory.', severity: 'warning' });
+      return;
+    }
+
+    const baseTags = title.split(/\s+/).slice(0, 5).map((s) => s.toLowerCase());
+    const needsSubject = sub.toLowerCase().includes('tutoring') || sub.toLowerCase().includes('subject');
+    if (needsSubject) {
+      const selectedSubject = subject === 'Other' ? customSubject.trim() : subject;
+      if (!selectedSubject) {
+        showAlert({ title: 'Validation', subtitle: 'Please specify the subject.', severity: 'warning' });
+        return;
+      }
+      if (!baseTags.includes(selectedSubject.toLowerCase())) {
+        baseTags.push(selectedSubject.toLowerCase());
+      }
+    }
 
     setSubmitting(true);
     try {
@@ -127,7 +183,7 @@ export default function CreateListingScreen() {
             subcategory: sub,
             type: listingType,
             ...(listingType === 'service_request' ? { budget: p, price: undefined } : { price: p, budget: undefined }),
-            tags: title.split(/\s+/).slice(0, 5).map((s) => s.toLowerCase()),
+            tags: baseTags,
           },
           token
         );
@@ -147,7 +203,7 @@ export default function CreateListingScreen() {
             type: listingType,
             ...(listingType === 'service_request' ? { budget: p } : { price: p }),
             level: 'intermediate',
-            tags: title.split(/\s+/).slice(0, 5).map((s) => s.toLowerCase()),
+            tags: baseTags,
           },
           token
         );
@@ -245,6 +301,70 @@ export default function CreateListingScreen() {
               </Pressable>
             ))}
           </ScrollView>
+
+          {categoryTitle ? (
+            <>
+              <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.label}>
+                Subcategory
+              </ThemedText>
+              <View style={styles.row}>
+                {CAMPUS_CATEGORIES.find((c) => c.title === categoryTitle)?.groups.flatMap(g => g.items).map((subItem) => (
+                  <Pressable
+                    key={subItem.title}
+                    onPress={() => setSubcategoryTitle(subItem.title)}
+                    style={[
+                      styles.chipSm,
+                      {
+                        borderColor: subcategoryTitle === subItem.title ? theme.primary : theme.outlineVariant,
+                        backgroundColor: subcategoryTitle === subItem.title ? theme.primaryContainer : theme.surface,
+                      },
+                    ]}
+                  >
+                    <ThemedText variant="labelSmall" numberOfLines={1}>
+                      {subItem.title}
+                    </ThemedText>
+                  </Pressable>
+                ))}
+              </View>
+            </>
+          ) : null}
+
+          {subcategoryTitle.toLowerCase().includes('tutoring') || subcategoryTitle.toLowerCase().includes('subject') ? (
+            <>
+              <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.label}>
+                Subject
+              </ThemedText>
+              <View style={styles.row}>
+                {SUBJECT_OPTIONS.map((subOpt) => (
+                  <Pressable
+                    key={subOpt}
+                    onPress={() => setSubject(subOpt)}
+                    style={[
+                      styles.chipSm,
+                      {
+                        borderColor: subject === subOpt ? theme.primary : theme.outlineVariant,
+                        backgroundColor: subject === subOpt ? theme.primaryContainer : theme.surface,
+                      },
+                    ]}
+                  >
+                    <ThemedText variant="labelSmall" numberOfLines={1}>
+                      {subOpt}
+                    </ThemedText>
+                  </Pressable>
+                ))}
+              </View>
+
+              {subject === 'Other' ? (
+                <TextInput
+                  value={customSubject}
+                  onChangeText={setCustomSubject}
+                  placeholder="Specify subject..."
+                  placeholderTextColor={theme.textMuted}
+                  style={[styles.input, { marginTop: Spacing.sm, color: theme.text, borderColor: theme.outlineVariant, backgroundColor: theme.surfaceVariant }]}
+                />
+              ) : null}
+            </>
+          ) : null}
 
           <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.label}>
             Title
