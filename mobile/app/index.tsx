@@ -110,10 +110,8 @@ export default function LandingScreen() {
           source={require("../assets/images/puconnect_logo.png")}
           style={[
             styles.splashLogo, 
-            { 
-              width: width * 0.6,
-              tintColor: isDark ? '#ffffff' : theme.primary 
-            }
+            { width: width * 0.6 },
+            isDark && { tintColor: '#ffffff' }
           ]}
           resizeMode="contain"
         />
@@ -127,7 +125,7 @@ export default function LandingScreen() {
       <View style={[styles.header, horizontalPadding]}>
         <Image
           source={require("../assets/images/puconnect_logo.png")}
-          style={[styles.headerLogo, { tintColor: isDark ? '#ffffff' : theme.primary }]}
+          style={[styles.headerLogo, isDark && { tintColor: '#ffffff' }]}
           resizeMode="contain"
           accessible={true}
           accessibilityLabel="PuConnect logo"

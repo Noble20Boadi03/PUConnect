@@ -32,16 +32,13 @@ export const CAMPUS_CATEGORIES: DetailedCategory[] = [
                 header: 'ACADEMIC SUPPORT',
                 items: [
                     { title: 'Subject Tutoring', description: "Find a peer who's already aced the course" },
-                    { title: 'Exam Preparation', description: "Drill key concepts before the big day" },
                     { title: 'Study Group Facilitation', description: "Organized learning for complex topics" }
                 ]
             },
             {
                 header: 'LANGUAGE & COMM',
                 items: [
-                    { title: 'Translation', description: "Document and subtitle services" },
-                    { title: 'Speech Writing', description: "Professional scripts for your next presentation" },
-                    { title: 'Proofreading', description: "Ensure your essays are mistake-free" }
+                    { title: 'Translation', description: "Document and subtitle services" }
                 ]
             }
         ]
@@ -58,15 +55,12 @@ export const CAMPUS_CATEGORIES: DetailedCategory[] = [
                 header: 'DEVELOPMENT & CODE',
                 items: [
                     { title: 'Website & App Development', description: "Build portals for startups, ministries, or clubs" },
-                    { title: 'Software Engineering Support', description: "Coding help and academic engineering projects" },
-                    { title: 'Data Analysis & Power BI', description: "Expertise for logistics and business students" }
+                    { title: 'Software Engineering Support', description: "Coding help and academic engineering projects" }
                 ]
             },
             {
                 header: 'IT & CREATIVE DESIGN',
                 items: [
-                    { title: 'Graphic Design for Events', description: "Posters and flyers for SRC week and church services" },
-                    { title: 'UI/UX Design', description: "Modern interfaces for entrepreneurial projects" },
                     { title: 'IT Support & Troubleshooting', description: "Help with campus devices and system portals" }
                 ]
             }
@@ -84,16 +78,13 @@ export const CAMPUS_CATEGORIES: DetailedCategory[] = [
                 header: 'PHOTO & VIDEO',
                 items: [
                     { title: 'Event Photography/Video', description: "SRC celebrations, forums, and graduations" },
-                    { title: 'Video Editing & Content', description: "Ministry outreach and club social media" },
-                    { title: 'Live Streaming Setup', description: "Forums, church services, and campus events" }
+                    { title: 'Video Editing & Content', description: "Ministry outreach and club social media" }
                 ]
             },
             {
                 header: 'MUSIC & ARTS',
                 items: [
-                    { title: 'Audio Recording & Mixing', description: "Sermons, worship sessions, and performances" },
-                    { title: 'Graphic Arts & Illustration', description: "Album covers and tailored creative assets" },
-                    { title: 'Innovation Hub Content', description: "Media assets for student-led projects" }
+                    { title: 'Graphic Design', description: "Album covers and tailored creative assets" }
                 ]
             }
         ]
@@ -110,17 +101,13 @@ export const CAMPUS_CATEGORIES: DetailedCategory[] = [
                 header: 'CAREER READINESS',
                 items: [
                     { title: 'CV & Cover Letters', description: "Stand out to recruiters with polished docs" },
-                    { title: 'Mock Interviews', description: "Practice for internships with experienced peers" },
+                    { title: 'Career/Internship Support', description: "Practice for internships with experienced peers" },
                     { title: 'LinkedIn Optimization', description: "Professionalize your online profile" }
                 ]
             },
             {
                 header: 'BUSINESS TOOLS',
-                items: [
-                    { title: 'Market Research', description: "Data-driven insights for your student startup" },
-                    { title: 'Pitch Deck Aid', description: "Design and strategy for your business pitch" },
-                    { title: 'Club Finances', description: "Managing budget and sponsorship outreach" }
-                ]
+                items: []
             }
         ]
     },
@@ -136,16 +123,13 @@ export const CAMPUS_CATEGORIES: DetailedCategory[] = [
                 header: 'LOGISTICS',
                 items: [
                     { title: 'Campus Delivery', description: "Quick delivery across campus buildings" },
-                    { title: 'Printing & Binding', description: "Last-minute project prints delivered" },
                     { title: 'Equipment Rental', description: "Find cameras, mics, or tools to borrow" }
                 ]
             },
             {
                 header: 'EVENT HELP',
                 items: [
-                    { title: 'Event Set-up', description: "Extra hands for club event logistics" },
-                    { title: 'Decoration', description: "Creative set-up for your next campus party" },
-                    { title: 'Catering Support', description: "Helping manage food and drinks for crowds" }
+                    { title: 'Beauty & Personal Care', description: "Hair, makeup, and styling services" }
                 ]
             }
         ]
