@@ -901,6 +901,277 @@ export const api = {
 
     getSubcategoryFilters: async (_subcategory: string): Promise<any[]> => {
         await delay();
+        const MOCK_SUBCATEGORY_FILTERS: Record<string, any[]> = {
+            'Subject Tutoring': [
+                {
+                    id: 'f-st-1',
+                    subcategory: 'Subject Tutoring',
+                    filter_label: 'Subject',
+                    filter_type: 'dropdown',
+                    filter_options: ['Math', 'Physics', 'Chemistry', 'Biology', 'Computer Science', 'Literature', 'History', 'Economics'],
+                    display_order: 1,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                }
+            ],
+            'Study Group Facilitation': [
+                {
+                    id: 'f-sg-1',
+                    subcategory: 'Study Group Facilitation',
+                    filter_label: 'Subject / Course',
+                    filter_type: 'dropdown',
+                    filter_options: ['Math', 'Physics', 'Computer Science', 'Business', 'Engineering'],
+                    display_order: 1,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                },
+                {
+                    id: 'f-sg-2',
+                    subcategory: 'Study Group Facilitation',
+                    filter_label: 'Group size',
+                    filter_type: 'dropdown',
+                    filter_options: ['2-3 students', '4-5 students', '6+ students'],
+                    display_order: 2,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                }
+            ],
+            'Translation': [
+                {
+                    id: 'f-tr-1',
+                    subcategory: 'Translation',
+                    filter_label: 'Language Pair',
+                    filter_type: 'dropdown',
+                    filter_options: ['French → English', 'English → French', 'Spanish → English', 'English → Spanish', 'Spanish → Twi', 'Twi → English'],
+                    display_order: 1,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                },
+                {
+                    id: 'f-tr-2',
+                    subcategory: 'Translation',
+                    filter_label: 'Document type',
+                    filter_type: 'dropdown',
+                    filter_options: ['academic', 'casual', 'legal'],
+                    display_order: 2,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                }
+            ],
+            'Website & App Development': [
+                {
+                    id: 'f-wd-1',
+                    subcategory: 'Website & App Development',
+                    filter_label: 'Service Type',
+                    filter_type: 'dropdown',
+                    filter_options: ['Landing page', 'Portfolio', 'E-commerce', 'Mobile app', 'Full-stack Web App'],
+                    display_order: 1,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                }
+            ],
+            'Software Engineering Support': [
+                {
+                    id: 'f-se-1',
+                    subcategory: 'Software Engineering Support',
+                    filter_label: 'Programming Language / Tech',
+                    filter_type: 'dropdown',
+                    filter_options: ['Python', 'Java', 'JavaScript', 'TypeScript', 'C++', 'SQL', 'Go'],
+                    display_order: 1,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                },
+                {
+                    id: 'f-se-2',
+                    subcategory: 'Software Engineering Support',
+                    filter_label: 'Task type',
+                    filter_type: 'dropdown',
+                    filter_options: ['debugging', 'code review', 'tutoring', 'architecture design'],
+                    display_order: 2,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                }
+            ],
+            'IT Support & Troubleshooting': [
+                {
+                    id: 'f-it-1',
+                    subcategory: 'IT Support & Troubleshooting',
+                    filter_label: 'Issue/Device Type',
+                    filter_type: 'dropdown',
+                    filter_options: ['Laptop', 'Network', 'Software install', 'Printer', 'Data Recovery'],
+                    display_order: 1,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                },
+                {
+                    id: 'f-it-2',
+                    subcategory: 'IT Support & Troubleshooting',
+                    filter_label: 'OS',
+                    filter_type: 'dropdown',
+                    filter_options: ['Windows', 'Mac', 'Linux'],
+                    display_order: 2,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                }
+            ],
+            'Event Photography/Video': [
+                {
+                    id: 'f-ep-1',
+                    subcategory: 'Event Photography/Video',
+                    filter_label: 'Event Type',
+                    filter_type: 'dropdown',
+                    filter_options: ['Birthday', 'Graduation', 'Conference', 'Sports', 'Party/Social'],
+                    display_order: 1,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                }
+            ],
+            'Video Editing & Content': [
+                {
+                    id: 'f-ve-1',
+                    subcategory: 'Video Editing & Content',
+                    filter_label: 'Content Type',
+                    filter_type: 'dropdown',
+                    filter_options: ['YouTube', 'Reels/TikTok', 'Documentary', 'Podcast', 'Music Video'],
+                    display_order: 1,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                }
+            ],
+            'Graphic Design': [
+                {
+                    id: 'f-gd-1',
+                    subcategory: 'Graphic Design',
+                    filter_label: 'Design Type',
+                    filter_type: 'dropdown',
+                    filter_options: ['Logo', 'Flyer', 'Social media post', 'Branding', 'Poster', 'UI/UX'],
+                    display_order: 1,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                }
+            ],
+            'CV & Cover Letters': [
+                {
+                    id: 'f-cv-1',
+                    subcategory: 'CV & Cover Letters',
+                    filter_label: 'Service Type',
+                    filter_type: 'dropdown',
+                    filter_options: ['CV writing', 'Cover letter', 'Review/edit', 'LinkedIn alignment'],
+                    display_order: 1,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                }
+            ],
+            'Career / Internship Support': [
+                {
+                    id: 'f-ci-1',
+                    subcategory: 'Career / Internship Support',
+                    filter_label: 'Support Type',
+                    filter_type: 'dropdown',
+                    filter_options: ['Interview prep', 'Job search strategy', 'Application review', 'Mock Interviews'],
+                    display_order: 1,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                }
+            ],
+            'LinkedIn Optimization': [
+                {
+                    id: 'f-lo-1',
+                    subcategory: 'LinkedIn Optimization',
+                    filter_label: 'Service Type',
+                    filter_type: 'dropdown',
+                    filter_options: ['Profile rewrite', 'Headline only', 'Full audit', 'Networking strategy'],
+                    display_order: 1,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                }
+            ],
+            'Equipment Rental': [
+                {
+                    id: 'f-er-1',
+                    subcategory: 'Equipment Rental',
+                    filter_label: 'Equipment Category',
+                    filter_type: 'dropdown',
+                    filter_options: ['Camera', 'Lighting', 'Audio', 'Projector', 'Sports gear'],
+                    display_order: 1,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                },
+                {
+                    id: 'f-er-2',
+                    subcategory: 'Equipment Rental',
+                    filter_label: 'Rental duration',
+                    filter_type: 'dropdown',
+                    filter_options: ['1 day', '2-3 days', '1 week', '2+ weeks'],
+                    display_order: 2,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                },
+                {
+                    id: 'f-er-3',
+                    subcategory: 'Equipment Rental',
+                    filter_label: 'Availability',
+                    filter_type: 'dropdown',
+                    filter_options: ['Available Now', 'Next Week', 'Pre-book'],
+                    display_order: 3,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                }
+            ],
+            'Beauty & Personal Care': [
+                {
+                    id: 'f-bp-1',
+                    subcategory: 'Beauty & Personal Care',
+                    filter_label: 'Service Type',
+                    filter_type: 'dropdown',
+                    filter_options: ['Hair', 'Makeup', 'Nails', 'Skincare', 'Braiding', 'Barbering'],
+                    display_order: 1,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                }
+            ]
+        };
+
+        // Try exact match first
+        const cleanSubcategory = _subcategory?.trim() || '';
+        if (MOCK_SUBCATEGORY_FILTERS[cleanSubcategory]) {
+            console.log(`[API] Found exact filters for: ${cleanSubcategory}`);
+            return MOCK_SUBCATEGORY_FILTERS[cleanSubcategory];
+        }
+
+        // Try case-insensitive and partial match
+        const matchingKey = Object.keys(MOCK_SUBCATEGORY_FILTERS).find(k => {
+            const cleanK = k.toLowerCase().trim();
+            const cleanS = cleanSubcategory.toLowerCase();
+            return cleanK === cleanS || cleanK.includes(cleanS) || cleanS.includes(cleanK);
+        });
+        
+        if (matchingKey) {
+            console.log(`[API] Found partial match filters for: ${cleanSubcategory} (matched with ${matchingKey})`);
+            return MOCK_SUBCATEGORY_FILTERS[matchingKey];
+        }
+
+        console.log(`[API] No filters found for: "${_subcategory}"`);
         return [];
     },
 

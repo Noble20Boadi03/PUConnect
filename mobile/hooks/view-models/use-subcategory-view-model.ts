@@ -43,14 +43,17 @@ export function useSubcategoryViewModel({ subcategoryTitle, category }: Subcateg
                     else apiFilters.tag = value;
                 });
 
-                const providers = await api.getProvidersBySubcategory(subcategoryTitle, controller.signal);
+                const [providers, filters] = await Promise.all([
+                    api.getProvidersBySubcategory(subcategoryTitle, controller.signal),
+                    api.getSubcategoryFilters(subcategoryTitle)
+                ]);
 
                 setUiState(prev => ({
                     status: 'content',
                     isRefreshing: false,
                     data: {
                         providers,
-                        filtersConfig: prev.status === 'content' ? prev.data.filtersConfig : [],
+                        filtersConfig: filters,
                     },
                 }));
 
@@ -60,7 +63,7 @@ export function useSubcategoryViewModel({ subcategoryTitle, category }: Subcateg
                         isRefreshing: false,
                         data: {
                             providers: [],
-                            filtersConfig: prev.status === 'content' ? prev.data.filtersConfig : [],
+                            filtersConfig: filters,
                         },
                     }));
                 }
@@ -73,30 +76,6 @@ export function useSubcategoryViewModel({ subcategoryTitle, category }: Subcateg
         fetchListings();
         return () => controller.abort();
     }, [subcategoryTitle, activeFilters, category]);
-
-    // ── Load dynamic filter config (independent of filter selection) ──────
-    useEffect(() => {
-        const controller = new AbortController();
-
-        const loadFilters = async () => {
-            try {
-                const filters = await api.getSubcategoryFilters(subcategoryTitle);
-                setUiState(prev => {
-                    if (prev.status !== 'content') return prev;
-                    return {
-                        ...prev,
-                        data: { ...prev.data, filtersConfig: filters },
-                    };
-                });
-            } catch (err: any) {
-                if (err.message === 'Aborted') return;
-                console.error('Failed to load subcategory filters', err);
-            }
-        };
-
-        loadFilters();
-        return () => controller.abort();
-    }, [subcategoryTitle]);
 
     // ── Actions ───────────────────────────────────────────────────────────
     const selectFilter = useCallback((filterLabel: string, optionValue: string) => {

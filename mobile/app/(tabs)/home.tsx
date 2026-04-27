@@ -10,8 +10,6 @@ import { Spacing, BorderRadius } from '@/constants/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '@/hooks/use-responsive';
 import { ListingCard } from '@/components/listing-card';
-import { PopularCategoryCard } from '@/components/popular-category-card';
-import { GigSpotlightRow } from '@/components/gig-spotlight-row';
 import { SearchBar } from '@/components/ui/search-bar';
 import { useHomeViewModel } from '@/hooks/view-models/use-home-view-model';
 import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
@@ -102,18 +100,10 @@ export default function HomeScreen() {
     }
     
     const feed: { type: 'offer' | 'gigRow'; data: any }[] = [];
-    let gigInserted = false;
-    featuredOffers.forEach((item, index) => {
+    featuredOffers.forEach((item) => {
       feed.push({ type: 'offer', data: item });
-      if (index === 2 && featuredGigs.length > 0) {
-        feed.push({ type: 'gigRow', data: featuredGigs });
-        gigInserted = true;
-      }
     });
 
-    if (!gigInserted && featuredGigs.length > 0) {
-      feed.push({ type: 'gigRow', data: featuredGigs });
-    }
     return feed;
   }, [uiState, activeFilter]);
 
@@ -205,34 +195,6 @@ export default function HomeScreen() {
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={theme.primary} />
         }
       >
-        {/* Popular Services Section */}
-        <SectionHeader
-          title="Popular Services"
-          horizontalPadding={horizontalPadding}
-          onSeeAll={() => router.push({ pathname: '/search/results', params: { q: '', section: 'popular' } })}
-        />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingLeft: horizontalPadding.paddingLeft,
-            paddingRight: horizontalPadding.paddingRight,
-            gap: Spacing.md,
-          }}
-          style={styles.horizontalSection}
-        >
-          {popular.map((item) => (
-            <PopularCategoryCard
-              key={`cat-${item.category.id}`}
-              title={item.category.title}
-              icon={item.category.icon}
-              colors={item.colors}
-              width={categoryCardWidth}
-              onPress={() => router.push({ pathname: '/search/[id]', params: { id: item.category.id } })}
-            />
-          ))}
-        </ScrollView>
-
         {/* Trending This Week Section */}
         <SectionHeader
           title="Trending this week"
@@ -254,7 +216,13 @@ export default function HomeScreen() {
               key={`trend-${item.id}`}
               listing={item}
               width={cardWidth}
-              onPress={() => router.push({ pathname: '/listing/[id]', params: { id: item.id } })}
+              onPress={() => router.push({ 
+                  pathname: '/search/listings/[subcategory]', 
+                  params: { 
+                      subcategory: item.subcategory || 'Subject Tutoring', 
+                      category: item.category || 'Academics & Language' 
+                  } 
+              })}
             />
           ))}
         </ScrollView>
@@ -266,22 +234,18 @@ export default function HomeScreen() {
         />
         <View style={[styles.featuredFeed, horizontalPadding]}>
           {featuredFeed.map((entry, index) => {
-            if (entry.type === 'gigRow') {
-              return (
-                <GigSpotlightRow
-                  key={`gig-row-${index}`}
-                  gigs={entry.data as any[]}
-                  cardWidth={cardWidth}
-                  horizontalPadding={horizontalPadding}
-                />
-              );
-            }
             return (
               <ListingCard
                 key={`feat-${entry.data.id}`}
                 listing={entry.data}
                 width={gridCardWidth}
-                onPress={() => router.push({ pathname: '/listing/[id]', params: { id: entry.data.id } })}
+                onPress={() => router.push({ 
+                    pathname: '/search/listings/[subcategory]', 
+                    params: { 
+                        subcategory: entry.data.subcategory || 'Subject Tutoring', 
+                        category: entry.data.category || 'Academics & Language' 
+                    } 
+                })}
               />
             );
           })}
