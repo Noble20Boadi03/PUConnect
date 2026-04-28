@@ -34,41 +34,6 @@ const SectionHeader = ({ title, onSeeAll, horizontalPadding }: SectionHeaderProp
   );
 };
 
-const HomeFilterPills = ({ activeFilter, onFilterChange }: { activeFilter: 'All' | 'Experts' | 'Gigs', onFilterChange: (filter: 'All' | 'Experts' | 'Gigs') => void }) => {
-  const { theme } = useTheme();
-  const filters: ('All' | 'Experts' | 'Gigs')[] = ['All', 'Experts', 'Gigs'];
-
-  return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.pillsContainer}
-    >
-      {filters.map((filter) => {
-        const isSelected = activeFilter === filter;
-        return (
-          <Pressable
-            key={filter}
-            style={[
-              styles.pill,
-              { borderColor: theme.outlineVariant },
-              isSelected && { backgroundColor: theme.primary, borderColor: theme.primary }
-            ]}
-            onPress={() => onFilterChange(filter)}
-          >
-            <ThemedText
-              variant="labelLarge"
-              style={[styles.pillText, isSelected && { color: theme.onPrimary }]}
-              colorName={isSelected ? undefined : 'textMuted'}
-            >
-              {filter}
-            </ThemedText>
-          </Pressable>
-        );
-      })}
-    </ScrollView>
-  );
-};
 
 export default function HomeScreen() {
   const { uiState, onRefresh, activeFilter, setActiveFilter } = useHomeViewModel();
@@ -156,12 +121,6 @@ export default function HomeScreen() {
           <ThemedText variant="headlineSmall" style={[styles.brandLogo, { fontWeight: '900' }]}>
             PuConnect<ThemedText colorName="primary" style={{ fontWeight: '900' }}>.</ThemedText>
           </ThemedText>
-          <Pressable
-            style={styles.gridBtn}
-            onPress={() => (token ? router.push('/listing/create') : router.push('/login'))}
-          >
-            <ThemedIcon name="apps" size={24} />
-          </Pressable>
         </View>
 
         {/* Search Bar */}
@@ -173,16 +132,6 @@ export default function HomeScreen() {
           containerStyle={{ marginHorizontal: horizontalPadding.paddingLeft }}
         />
 
-        {/* Filters */}
-        <HomeFilterPills activeFilter={activeFilter} onFilterChange={setActiveFilter} />
-
-        <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.discoveryTip, horizontalPadding]}>
-          {activeFilter === 'All'
-            ? 'Tip: Browse Experts for professional help or Gigs to find students who need your skills.'
-            : activeFilter === 'Experts'
-            ? 'Tip: Experts are students offering professional services. Hire them to get your tasks done.'
-            : 'Tip: Gigs are requests from students who need help. Apply to these to earn and build your portfolio.'}
-        </ThemedText>
       </ThemedView>
 
       <ScrollView

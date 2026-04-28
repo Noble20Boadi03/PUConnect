@@ -104,18 +104,17 @@ export default function LandingScreen() {
 
   if (showSplash) {
     return (
-      <AnimatedThemedView exiting={FadeOut.duration(500)} style={styles.splashContainer}>
+      <Animated.View exiting={FadeOut.duration(500)} style={[styles.splashContainer, { backgroundColor: '#e8f0fb' }]}>
         <Animated.Image
           entering={FadeIn.duration(800)}
           source={require("../assets/images/puconnect_logo.png")}
           style={[
             styles.splashLogo, 
-            { width: width * 0.6 },
-            isDark && { tintColor: '#ffffff' }
+            { width: width * 0.6 }
           ]}
           resizeMode="contain"
         />
-      </AnimatedThemedView>
+      </Animated.View>
     );
   }
 

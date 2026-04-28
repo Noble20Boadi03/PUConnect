@@ -11,6 +11,7 @@ import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { useSubcategoryViewModel } from '@/hooks/view-models/use-subcategory-view-model';
 import { useResponsive } from '@/hooks/use-responsive';
+import { BlurView } from 'expo-blur';
 
 export default function SubcategoryListingsScreen() {
     const { subcategory: subcategoryTitle, description, category } = useLocalSearchParams<{ 
@@ -193,33 +194,53 @@ export default function SubcategoryListingsScreen() {
             <Modal
                 visible={!!activeModalFilter}
                 transparent={true}
-                animationType="slide"
+                animationType="fade"
                 onRequestClose={() => setActiveModalFilter(null)}
             >
-                <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
-                    <ThemedView style={[styles.modalContent, { paddingBottom: insets.bottom + 20 }]}>
-                        <View style={[styles.modalHeader, { borderBottomColor: theme.outlineVariant }]}>
-                            <ThemedText variant="titleLarge" style={{ fontWeight: '800' }}>
-                                Select {activeModalFilter?.filter_label}
-                            </ThemedText>
-                            <Pressable onPress={() => setActiveModalFilter(null)} style={styles.iconBtn}>
-                                <ThemedIcon name="close" size={24} />
-                            </Pressable>
-                        </View>
-                        <ScrollView style={styles.modalScroll}>
-                            {activeModalFilter?.filter_options?.map((option: string, idx: number) => (
-                                <Pressable 
-                                    key={idx}
-                                    style={[styles.modalOption, { borderBottomColor: theme.outlineVariant }]}
-                                    onPress={() => handleSelectOption(activeModalFilter.filter_label, option)}
-                                >
-                                    <ThemedText variant="bodyLarge">{option}</ThemedText>
-                                    <ThemedIcon name="chevron-right" colorName="textMuted" size={20} />
-                                </Pressable>
-                            ))}
-                        </ScrollView>
-                    </ThemedView>
-                </View>
+                <Pressable 
+                    style={styles.dropdownOverlay}
+                    onPress={() => setActiveModalFilter(null)}
+                >
+                    <Pressable style={styles.dropdownWrapper}>
+                        <BlurView 
+                            intensity={isDark ? 80 : 100} 
+                            tint={isDark ? "dark" : "light"}
+                            style={[
+                                styles.dropdownContainer, 
+                                { 
+                                    borderColor: theme.outlineVariant,
+                                    backgroundColor: isDark ? 'rgba(20, 20, 20, 0.6)' : 'rgba(255, 255, 255, 0.65)'
+                                }
+                            ]}
+                        >
+                            <ScrollView style={styles.dropdownScroll} showsVerticalScrollIndicator={false}>
+                                {activeModalFilter?.filter_options?.map((option: string, idx: number) => {
+                                    const isSelected = activeFilters[activeModalFilter.filter_label] === option;
+                                    return (
+                                        <Pressable 
+                                            key={idx}
+                                            style={[styles.dropdownOption, { borderBottomColor: theme.outlineVariant }]}
+                                            onPress={() => {
+                                                handleSelectOption(activeModalFilter.filter_label, option);
+                                                setActiveModalFilter(null);
+                                            }}
+                                        >
+                                            <ThemedText 
+                                                variant="bodyMedium" 
+                                                style={[isSelected && { fontWeight: '700', color: theme.primary }]}
+                                            >
+                                                {option}
+                                            </ThemedText>
+                                            {isSelected && (
+                                                <ThemedIcon name="check" colorName="primary" size={20} />
+                                            )}
+                                        </Pressable>
+                                    );
+                                })}
+                            </ScrollView>
+                        </BlurView>
+                    </Pressable>
+                </Pressable>
             </Modal>
         </ScreenLayout>
     );
@@ -386,32 +407,39 @@ const styles = StyleSheet.create({
         marginTop: 16,
         fontSize: 16,
     },
-    modalOverlay: {
+    dropdownOverlay: {
         flex: 1,
-        justifyContent: 'flex-end',
-    },
-    modalContent: {
-        borderTopLeftRadius: 32,
-        borderTopRightRadius: 32,
-        minHeight: '40%',
-    },
-    modalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+        backgroundColor: 'transparent',
         alignItems: 'center',
-        paddingHorizontal: Spacing.xl,
-        paddingVertical: 20,
-        borderBottomWidth: 1,
+        paddingTop: 230,
     },
-    modalScroll: {
+    dropdownWrapper: {
+        width: '85%',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.15,
+        shadowRadius: 24,
+        elevation: 10,
+    },
+    dropdownContainer: {
+        borderRadius: 20,
+        overflow: 'hidden',
+        borderWidth: 1,
+        maxHeight: 380,
+    },
+    dropdownHeader: {
         paddingHorizontal: Spacing.lg,
-        paddingTop: 10,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
     },
-    modalOption: {
+    dropdownScroll: {
+        paddingHorizontal: Spacing.lg,
+    },
+    dropdownOption: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 18,
-        borderBottomWidth: 1,
+        paddingVertical: 16,
+        borderBottomWidth: StyleSheet.hairlineWidth,
     },
 });

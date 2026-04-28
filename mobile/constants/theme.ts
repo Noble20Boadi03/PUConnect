@@ -6,11 +6,11 @@ import { Platform } from 'react-native';
  */
 const palette = {
   primary: {
-    40: '#10b981', // Electric Emerald
-    90: '#d1fae5', // Light Container
-    10: '#064e3b', // Dark Contrast
-    80: '#6ee7b7', // Dark Mode Primary
-    20: '#065f46', // Dark Mode Container
+    40: '#2e4482', // Primary Brand Color (Buttons, etc.)
+    90: '#e2eafc', // Light Container
+    10: '#1e2d5a', // Dark Contrast (Logo color)
+    80: '#8ca8d1', // Dark Mode Primary
+    20: '#2c4270', // Dark Mode Container
   },
   secondary: {
     40: '#0284c7', // Deep Sky
@@ -237,7 +237,7 @@ export const Shadows = {
 };
 
 export const Gradients = {
-  primary: ['#10b981', '#059669'] as const,
+  primary: ['#2e4482', '#1e2d5a'] as const,
   secondary: ['#0ea5e9', '#3b82f6'] as const,
   tertiary: ['#f59e0b', '#d97706'] as const,
   glass: (isDark: boolean) => isDark 
