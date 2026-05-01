@@ -79,10 +79,9 @@ export default function RegisterScreen() {
         setIsLoading(true);
         try {
             await register({
-                fullName,
+                full_name: fullName,
                 email,
                 password,
-                role: 'student',
             });
 
             showAlert({

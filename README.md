@@ -1,87 +1,48 @@
 # PuConnect
 
-PuConnect is a comprehensive platform designed to connect users through various features such as chat, listings, payments, recommendations, and reviews. It integrates a robust backend, a dynamic frontend, and machine learning services to deliver a seamless user experience.
+PuConnect is a university student marketplace designed to connect students for peer-to-peer services, item sales, and project collaborations.
 
-## Installation Instructions
+## Architecture
 
-### Backend
+The platform uses a modern, serverless architecture:
+- **Frontend**: Expo (React Native) mobile application.
+- **Backend**: Supabase (PostgreSQL, Auth, Storage, and Realtime).
+- **Database**: PostgreSQL with Row Level Security (RLS) for data protection.
 
-1. Navigate to the `backend` directory:
-   ```bash
-   cd backend
-   ```
-2. Create a virtual environment and activate it:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate # On Windows: venv\Scripts\activate
-   ```
-3. Install the required dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Run the backend server:
-   ```bash
-   uvicorn app.main:app --reload
-   ```
+## Getting Started (Mobile App)
 
-### Frontend
+1.  Navigate to the `mobile` directory:
+    ```bash
+    cd mobile
+    ```
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Configure environment variables:
+    Create a `.env` file in the `mobile` directory with your Supabase credentials:
+    ```env
+    EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
+    EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+    ```
+4.  Start the app:
+    ```bash
+    npx expo start
+    ```
 
-1. Navigate to the `frontend` directory:
-   ```bash
-   cd frontend
-   ```
-2. Install the required dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
+## Features
 
-### Machine Learning Service
+- **Realtime Chat**: Instant peer-to-peer messaging powered by Supabase Realtime.
+- **Marketplace**: Browse, search, and filter service offers and requests.
+- **Profile Management**: Professional profiles with skill tags and verification.
+- **Secure Media**: Profile pictures and listing images hosted on Supabase Storage.
+- **Unread Notifications**: Live unread message badges.
 
-1. Navigate to the `ml-service` directory:
-   ```bash
-   cd ml-service
-   ```
-2. Install the required dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. Run the ML service:
-   ```bash
-   python inference.py
-   ```
+## Contributing
 
-## Usage Guide
+1.  Fork the repository.
+2.  Create a feature branch.
+3.  Submit a pull request.
 
-1. Access the frontend application at the URL provided by the development server.
-2. Register or log in to your account.
-3. Explore features such as:
-   - Chat with other users.
-   - Browse and manage listings.
-   - Make secure payments.
-   - Receive personalized recommendations.
-   - Leave and view reviews.
-
-## Contribution Guidelines
-
-We welcome contributions to PuConnect! To contribute:
-
-1. Fork the repository.
-2. Create a new branch for your feature or bug fix:
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-3. Commit your changes:
-   ```bash
-   git commit -m "Add your message here"
-   ```
-4. Push your branch:
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-5. Open a pull request and describe your changes.
-
-Thank you for contributing to PuConnect!
+---
+© 2026 PuConnect

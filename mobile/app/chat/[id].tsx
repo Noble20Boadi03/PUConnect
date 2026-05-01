@@ -24,6 +24,7 @@ import { useTheme } from '@/context/theme-context';
 import { useAuth } from '@/context/auth-context';
 import { useAppAlert } from '@/context/alert-context';
 import { api } from '@/services/api';
+import { supabase } from '@/lib/supabase';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { Spacing } from '@/constants/theme';
@@ -105,6 +106,7 @@ export default function ChatScreen() {
     return () => { cancelled = true; };
   }, [listingId]);
 
+  // ── Initial message load ──────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -120,7 +122,6 @@ export default function ChatScreen() {
             type: 'text',
           }));
           if (mapped.length > 0) {
-            // Grouping logic (simplified for UI)
             const firstDate = new Date(data[0].createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' });
             setMessages([
               { id: 'time-sep', text: '', senderId: 'time-separator', timestamp: firstDate, type: 'text' },
@@ -136,6 +137,55 @@ export default function ChatScreen() {
     })();
     return () => { cancelled = true; };
   }, [id, token, listingId]);
+
+  // ── Supabase Realtime subscription ───────────────────────────────
+  useEffect(() => {
+    if (!id || !user?.id) return;
+
+    const channel = supabase
+      .channel(`chat-${user.id}-${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          // Only messages in THIS conversation (either direction)
+          filter: `receiver_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const row = payload.new as any;
+          // Ignore messages not in this specific conversation thread
+          if (row.sender_id !== id) return;
+          if (listingId && row.listing_id !== listingId) return;
+
+          const incoming: Message = {
+            id: row.id,
+            text: row.message,
+            senderId: row.sender_id,
+            timestamp: new Date(row.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            type: 'text',
+          };
+
+          // Append only if not already present (guard against duplicates)
+          setMessages(prev => {
+            if (prev.some(m => m.id === incoming.id)) return prev;
+            return [...prev, incoming];
+          });
+
+          // Mark as read immediately
+          supabase
+            .from('messages')
+            .update({ is_read: true })
+            .eq('id', row.id)
+            .then(() => {});
+        }
+      )
+      .subscribe();
+
+    return () => { channel.unsubscribe(); };
+  }, [id, user?.id, listingId]);
+
 
   useEffect(() => {
     let cancelled = false;
@@ -183,7 +233,7 @@ export default function ChatScreen() {
       const asset = result.assets[0];
       const newMessage: Message = {
         id: `msg-img-${Date.now()}`,
-        senderId: user?.id ?? 'mock-user-001',
+        senderId: user?.id ?? '',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         type: 'image',
         attachmentUri: asset.uri,
@@ -203,7 +253,7 @@ export default function ChatScreen() {
         const asset = result.assets[0];
         const newMessage: Message = {
           id: `msg-doc-${Date.now()}`,
-          senderId: user?.id ?? 'mock-user-001',
+          senderId: user?.id ?? '',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           type: 'document',
           attachmentUri: asset.uri,
@@ -295,17 +345,29 @@ export default function ChatScreen() {
   };
 
   // ── Actions ───────────────────────────────────────────────────────
-  const handleSendMessage = () => {
-    if (!inputText.trim()) return;
-    const newMessage: Message = {
-      id: `msg-sent-${Date.now()}`,
-      text: inputText,
-      senderId: user?.id ?? 'mock-user-001', // Fallback to current mock user if state hasn't updated
+  const handleSendMessage = async () => {
+    if (!inputText.trim() || !user?.id) return;
+    const text = inputText;
+    setInputText('');
+
+    // Optimistic update
+    const optimistic: Message = {
+      id: `optimistic-${Date.now()}`,
+      text,
+      senderId: user.id,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       type: 'text',
     };
-    setMessages(prev => [...prev, newMessage]);
-    setInputText('');
+    setMessages(prev => [...prev, optimistic]);
+
+    try {
+      await api.sendMessage(
+        { receiver_id: id as string, listing_id: listingId as string ?? '', message: text },
+        token ?? ''
+      );
+    } catch (e) {
+      console.error('Failed to send message:', e);
+    }
   };
 
   const requestService = async () => {
@@ -493,7 +555,7 @@ export default function ChatScreen() {
             );
           }
 
-          const isMe = item.senderId === user?.id || item.senderId === 'mock-user-001';
+          const isMe = item.senderId === user?.id;
           
           // Determine if bubble needs a "tail" (only the last message in a consecutive group)
           const nextMessage = messages[index + 1];

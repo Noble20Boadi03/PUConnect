@@ -2,15 +2,17 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { useTheme } from '@/context/theme-context';
 import { BlurView } from 'expo-blur';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, View, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { useResponsive } from '@/hooks/use-responsive';
+import { useUnreadCount } from '@/hooks/use-unread-count';
 
 export default function TabLayout() {
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { isLandscape } = useResponsive();
+  const unreadCount = useUnreadCount();
 
   // In landscape, reduce tab bar height to preserve vertical screen space.
   // The tab bar also needs side (left/right) inset padding on phones in landscape.
@@ -70,12 +72,21 @@ export default function TabLayout() {
         options={{
           title: 'Messages',
           tabBarIcon: ({ color, focused }) => (
-            <ThemedIcon 
-              name={focused ? "chat" : "chat-outline"} 
-              size={24} 
-              lightColor={color} 
-              darkColor={color} 
-            />
+            <View style={{ width: 28, height: 28, alignItems: 'center', justifyContent: 'center' }}>
+              <ThemedIcon
+                name={focused ? 'chat' : 'chat-outline'}
+                size={24}
+                lightColor={color}
+                darkColor={color}
+              />
+              {unreadCount > 0 && (
+                <View style={[styles.badge, { backgroundColor: theme.error }]}>
+                  <Text style={styles.badgeText}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Text>
+                </View>
+              )}
+            </View>
           ),
         }}
       />
@@ -117,3 +128,23 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -6,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '800',
+    lineHeight: 12,
+  },
+});

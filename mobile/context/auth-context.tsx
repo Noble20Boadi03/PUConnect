@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import * as SecureStore from 'expo-secure-store';
-import { User, AuthTokens } from '../types';
-import { api } from '../services/api';
+import { supabase } from '../lib/supabase';
+import { User } from '../types';
+import type { Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
     user: User | null;
@@ -9,11 +9,53 @@ interface AuthContextType {
     isLoading: boolean;
     signIn: (email: string, password: string) => Promise<void>;
     signOut: () => Promise<void>;
-    register: (userData: any) => Promise<void>;
+    register: (userData: { email: string; password: string; full_name: string }) => Promise<void>;
     refreshUser: (signal?: AbortSignal) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+/** Maps a Supabase profiles row (snake_case) to the app's User type (camelCase). */
+function mapProfile(row: any): User {
+    return {
+        id: row.id,
+        email: row.email,
+        fullName: row.full_name ?? '',
+        universityId: row.university_id ?? '',
+        role: row.role ?? 'student',
+        isActive: row.is_active ?? true,
+        bio: row.bio,
+        skillTags: row.skill_tags ?? [],
+        experienceLevel: row.experience_level ?? 'beginner',
+        portfolioLinks: row.portfolio_links ?? [],
+        isAvailable: row.is_available ?? true,
+        profilePictureUrl: row.profile_picture_url,
+        reputationScore: row.reputation_score,
+        completedProjects: row.completed_projects ?? 0,
+        review_count: row.review_count ?? 0,
+        verifiedStudent: row.verified_student ?? false,
+        department: row.department,
+        graduationYear: row.graduation_year,
+        canOfferServices: row.can_offer_services ?? false,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+    };
+}
+
+/** Fetches the authenticated user's profile row from the profiles table. */
+async function fetchProfile(userId: string): Promise<User | null> {
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+    if (error) {
+        console.error('[Auth] Failed to fetch profile:', error.message);
+        return null;
+    }
+    return mapProfile(data);
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
@@ -21,96 +63,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        loadStorageData();
+        // 1. Load the existing session on app start (handles persisted sessions)
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
+            await applySession(session);
+            setIsLoading(false);
+        });
+
+        // 2. Listen for auth state changes (sign in, sign out, token refresh)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            await applySession(session);
+        });
+
+        return () => subscription.unsubscribe();
     }, []);
 
-    const normalizeUser = (response: any): User => {
-        let profilePictureUrl = response.profilePictureUrl ?? response.profile_picture_url;
-
-        // Make URL absolute if it's relative
-        if (profilePictureUrl && profilePictureUrl.startsWith('/')) {
-            const baseUrl = api.getApiUrl().replace('/api/v1', '');
-            profilePictureUrl = `${baseUrl}${profilePictureUrl}`;
-        }
-
-        return {
-            ...response,
-            fullName: response.fullName ?? response.full_name,
-            universityId: response.universityId ?? response.university_id,
-            skillTags: response.skillTags ?? response.skill_tags,
-            experienceLevel: response.experienceLevel ?? response.experience_level,
-            portfolioLinks: response.portfolioLinks ?? response.portfolio_links,
-            isAvailable: response.isAvailable ?? response.is_available,
-            profilePictureUrl,
-            reputationScore: response.reputationScore ?? response.reputation_score,
-            completedProjects: response.completedProjects ?? response.completed_projects,
-            verifiedStudent: response.verifiedStudent ?? response.verified_student,
-            canOfferServices: response.canOfferServices ?? response.can_offer_services,
-        };
-    };
-
-    async function loadStorageData() {
-        try {
-            const storedToken = await SecureStore.getItemAsync('userToken');
-            if (storedToken) {
-                setToken(storedToken);
-                const response = await api.getMe(storedToken) as any;
-
-                setUser(normalizeUser(response));
-            }
-        } catch (e) {
-            console.error('Failed to load auth data', e);
-        } finally {
-            setIsLoading(false);
+    async function applySession(session: Session | null) {
+        if (session?.user) {
+            setToken(session.access_token);
+            const profile = await fetchProfile(session.user.id);
+            setUser(profile);
+        } else {
+            setToken(null);
+            setUser(null);
         }
     }
 
     async function signIn(email: string, password: string) {
-        // BYPASS AUTH CHECKS FOR TESTING
-        const dummyToken = 'dev_dummy_token';
-        // await SecureStore.setItemAsync('userToken', dummyToken);
-        setToken(dummyToken);
-        setUser(normalizeUser({ 
-            id: 'mock-user-001',
-            fullName: 'Test User', 
-            email: email || 'test@domain.edu',
-            universityId: '20270000',
-            skillTags: ['React Native', 'Expo'],
-            isAvailable: true,
-            verifiedStudent: true,
-            canOfferServices: false,
-        }));
-        /*
-        const tokens = await api.login(email, password);
-        await SecureStore.setItemAsync('userToken', tokens.access_token);
-        setToken(tokens.access_token);
-
-        const userDataResponse = await api.getMe(tokens.access_token) as any;
-        setUser(normalizeUser(userDataResponse));
-        */
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw new Error(error.message);
+        // applySession is called automatically via onAuthStateChange
     }
 
-    async function register(userData: any) {
-        // BYPASS AUTH CHECKS FOR TESTING
-        // await api.register(userData);
-        console.log("Mock Registration:", userData);
+    async function register({ email, password, full_name }: { email: string; password: string; full_name: string }) {
+        const { error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: { full_name }, // saved to profiles via handle_new_user trigger
+            },
+        });
+        if (error) throw new Error(error.message);
     }
 
     async function signOut() {
-        await SecureStore.deleteItemAsync('userToken');
-        setToken(null);
-        setUser(null);
+        await supabase.auth.signOut();
+        // applySession(null) is called automatically via onAuthStateChange
     }
 
-    async function refreshUser(signal?: AbortSignal) {
-        if (token) {
-            try {
-                const response = await api.getMe(token, signal) as any;
-                setUser(normalizeUser(response));
-            } catch (error: any) {
-                if (error.message === 'Aborted') return;
-                console.error('Failed to refresh user', error);
-            }
+    async function refreshUser(_signal?: AbortSignal) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+            const profile = await fetchProfile(session.user.id);
+            setUser(profile);
         }
     }
 

@@ -16,6 +16,7 @@ import { useTheme } from "@/context/theme-context";
 import { useAuth } from "@/context/auth-context";
 import { useAppAlert } from "@/context/alert-context";
 import { api } from "@/services/api";
+import { supabase } from "@/lib/supabase";
 import * as ImagePicker from 'expo-image-picker';
 import { Spacing, BorderRadius } from "@/constants/theme";
 
@@ -90,16 +91,29 @@ export default function OnboardingScreen() {
 
   const handleSave = async () => {
     if (!token) return;
+    if (!token || !user) return;
 
     setIsSubmitting(true);
     try {
       let finalImageUrl = profilePictureUrl;
       
-      // Upload if it's a local file
+      // Upload profile picture to Supabase Storage if a new local file was chosen
       if (profilePictureUrl && profilePictureUrl.startsWith("file://")) {
-        const uploadResult = await api.uploadImage(profilePictureUrl, token);
-        const baseUrl = api.getApiUrl().replace('/api/v1', '');
-        finalImageUrl = `${baseUrl}${uploadResult.url}`;
+        const fileName = `${user.id}-${Date.now()}.jpg`;
+        const response = await fetch(profilePictureUrl);
+        const fileBlob = await response.blob();
+
+        const { error: uploadError } = await supabase.storage
+          .from('profile-pictures')
+          .upload(fileName, fileBlob, { contentType: 'image/jpeg', upsert: true });
+
+        if (uploadError) throw new Error(uploadError.message);
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('profile-pictures')
+          .getPublicUrl(fileName);
+
+        finalImageUrl = publicUrl;
       }
 
       const yearNum = parseInt(graduationYear, 10);

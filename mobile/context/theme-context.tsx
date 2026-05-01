@@ -31,7 +31,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const setMode = async (newMode: ThemeMode) => {
     setModeState(newMode);
-    await AsyncStorage.getItem('theme_mode');
     await AsyncStorage.setItem('theme_mode', newMode);
   };
 

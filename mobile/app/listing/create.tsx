@@ -8,12 +8,15 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/auth-context';
 import { api } from '@/services/api';
+import { supabase } from '@/lib/supabase';
 import { ThemedText } from '@/components/themed-text';
+import { ThemedIcon } from '@/components/ui/themed-icon';
 import { useAppAlert } from '@/context/alert-context';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { ScreenLayout } from '@/components/ui/screen-layout';
@@ -23,6 +26,7 @@ import { Spacing, BorderRadius } from '@/constants/theme';
 import { CAMPUS_CATEGORIES } from '@/constants/categories';
 import { ListingType } from '@/types';
 import { useResponsive } from '@/hooks/use-responsive';
+import * as ImagePicker from 'expo-image-picker';
 
 const SUBJECT_OPTIONS = [
   'Mathematics',
@@ -58,6 +62,8 @@ export default function CreateListingScreen() {
   const [subcategoryTitle, setSubcategoryTitle] = useState('');
   const [subject, setSubject] = useState('');
   const [customSubject, setCustomSubject] = useState('');
+  const [mediaUri, setMediaUri] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const load = useCallback(async () => {
     if (!editId || !token) return;
@@ -77,6 +83,7 @@ export default function CreateListingScreen() {
       setListingType(offerNeedsProvider ? 'service_request' : listing.type);
       setCategoryTitle(listing.category);
       setSubcategoryTitle(listing.subcategory ?? '');
+      if (listing.media_url) setMediaUri(listing.media_url);
       if (listing.tags) {
         const foundSub = SUBJECT_OPTIONS.find(so => listing.tags!.includes(so.toLowerCase()));
         if (foundSub) {
@@ -120,6 +127,42 @@ export default function CreateListingScreen() {
       }
     }
   }, [categoryTitle]);
+
+  const pickListingImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setMediaUri(result.assets[0].uri);
+    }
+  };
+
+  const uploadListingImage = async (): Promise<string | null> => {
+    if (!mediaUri || !mediaUri.startsWith('file://') || !user?.id) return mediaUri;
+    setUploadingImage(true);
+    try {
+      const fileName = `${user.id}/${Date.now()}.jpg`;
+      const response = await fetch(mediaUri);
+      const fileBlob = await response.blob();
+
+      const { error: uploadError } = await supabase.storage
+        .from('listing-media')
+        .upload(fileName, fileBlob, { contentType: 'image/jpeg', upsert: true });
+
+      if (uploadError) throw new Error(uploadError.message);
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('listing-media')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const onSubmit = async () => {
     if (!token) {
@@ -173,6 +216,8 @@ export default function CreateListingScreen() {
 
     setSubmitting(true);
     try {
+      const uploadedMediaUrl = await uploadListingImage();
+
       if (editId) {
         await api.updateListing(
           editId as string,
@@ -184,6 +229,7 @@ export default function CreateListingScreen() {
             type: listingType,
             ...(listingType === 'service_request' ? { budget: p, price: undefined } : { price: p, budget: undefined }),
             tags: baseTags,
+            media_url: uploadedMediaUrl ?? undefined,
           },
           token
         );
@@ -204,6 +250,7 @@ export default function CreateListingScreen() {
             ...(listingType === 'service_request' ? { budget: p } : { price: p }),
             level: 'intermediate',
             tags: baseTags,
+            media_url: uploadedMediaUrl ?? undefined,
           },
           token
         );
@@ -405,11 +452,36 @@ export default function CreateListingScreen() {
             ]}
           />
 
+          {/* ── Listing Image Picker ─────────────────────────────── */}
+          <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.label}>
+            Cover Image (optional)
+          </ThemedText>
+          <Pressable
+            onPress={pickListingImage}
+            style={[styles.imagePicker, { borderColor: theme.outlineVariant, backgroundColor: theme.surfaceVariant }]}
+          >
+            {mediaUri ? (
+              <>
+                <Image source={{ uri: mediaUri }} style={styles.imagePreview} resizeMode="cover" />
+                <View style={[styles.imageEditBadge, { backgroundColor: theme.primary }]}>
+                  <ThemedIcon name="pencil" size={14} lightColor="#fff" darkColor="#fff" />
+                </View>
+              </>
+            ) : (
+              <View style={styles.imagePlaceholder}>
+                <ThemedIcon name="image-plus" size={32} colorName="textMuted" />
+                <ThemedText variant="labelSmall" colorName="textMuted" style={{ marginTop: Spacing.xs }}>
+                  Tap to add a cover image
+                </ThemedText>
+              </View>
+            )}
+          </Pressable>
+
           <PrimaryButton
             title={editId ? 'Save changes' : 'Publish listing'}
             onPress={onSubmit}
-            isLoading={submitting}
-            disabled={submitting}
+            isLoading={submitting || uploadingImage}
+            disabled={submitting || uploadingImage}
             size="large"
             marginTop={Spacing.xl}
           />
@@ -454,5 +526,31 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     minHeight: 120,
     fontSize: 16,
+  },
+  imagePicker: {
+    borderWidth: 1,
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+    height: 160,
+  },
+  imagePreview: {
+    width: '100%',
+    height: '100%',
+  },
+  imageEditBadge: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imagePlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 4,
   },
 });

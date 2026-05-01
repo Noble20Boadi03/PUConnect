@@ -85,7 +85,7 @@ export interface LoginResponse extends AuthTokens { }
 
 export interface UserResponse extends User { }
 
-/** Negotiation state between two users for a listing thread (mock API). */
+/** Negotiation state between two users for a listing thread. */
 export type ConversationLifecycle = 'open' | 'hired' | 'completed';
 
 export interface Review {
