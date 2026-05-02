@@ -10,6 +10,8 @@ import { Spacing, BorderRadius } from '@/constants/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '@/hooks/use-responsive';
 import { ListingCard } from '@/components/listing-card';
+import { PopularCategoryCard } from '@/components/popular-category-card';
+import { GigSpotlightRow } from '@/components/gig-spotlight-row';
 import { SearchBar } from '@/components/ui/search-bar';
 import { useHomeViewModel } from '@/hooks/view-models/use-home-view-model';
 import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
@@ -34,6 +36,41 @@ const SectionHeader = ({ title, onSeeAll, horizontalPadding }: SectionHeaderProp
   );
 };
 
+const HomeFilterPills = ({ activeFilter, onFilterChange }: { activeFilter: 'All' | 'Experts' | 'Gigs', onFilterChange: (filter: 'All' | 'Experts' | 'Gigs') => void }) => {
+  const { theme } = useTheme();
+  const filters: ('All' | 'Experts' | 'Gigs')[] = ['All', 'Experts', 'Gigs'];
+
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.pillsContainer}
+    >
+      {filters.map((filter) => {
+        const isSelected = activeFilter === filter;
+        return (
+          <Pressable
+            key={filter}
+            style={[
+              styles.pill,
+              { borderColor: theme.outlineVariant },
+              isSelected && { backgroundColor: theme.primary, borderColor: theme.primary }
+            ]}
+            onPress={() => onFilterChange(filter)}
+          >
+            <ThemedText
+              variant="labelLarge"
+              style={[styles.pillText, isSelected && { color: theme.onPrimary }]}
+              colorName={isSelected ? undefined : 'textMuted'}
+            >
+              {filter}
+            </ThemedText>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
+  );
+};
 
 export default function HomeScreen() {
   const { uiState, onRefresh, activeFilter, setActiveFilter } = useHomeViewModel();
@@ -65,10 +102,18 @@ export default function HomeScreen() {
     }
     
     const feed: { type: 'offer' | 'gigRow'; data: any }[] = [];
-    featuredOffers.forEach((item) => {
+    let gigInserted = false;
+    featuredOffers.forEach((item, index) => {
       feed.push({ type: 'offer', data: item });
+      if (index === 2 && featuredGigs.length > 0) {
+        feed.push({ type: 'gigRow', data: featuredGigs });
+        gigInserted = true;
+      }
     });
 
+    if (!gigInserted && featuredGigs.length > 0) {
+      feed.push({ type: 'gigRow', data: featuredGigs });
+    }
     return feed;
   }, [uiState, activeFilter]);
 
@@ -121,6 +166,12 @@ export default function HomeScreen() {
           <ThemedText variant="headlineSmall" style={[styles.brandLogo, { fontWeight: '900' }]}>
             PuConnect<ThemedText colorName="primary" style={{ fontWeight: '900' }}>.</ThemedText>
           </ThemedText>
+          <Pressable
+            style={styles.gridBtn}
+            onPress={() => (token ? router.push('/listing/create') : router.push('/login'))}
+          >
+            <ThemedIcon name="apps" size={24} />
+          </Pressable>
         </View>
 
         {/* Search Bar */}
@@ -132,6 +183,16 @@ export default function HomeScreen() {
           containerStyle={{ marginHorizontal: horizontalPadding.paddingLeft }}
         />
 
+        {/* Filters */}
+        <HomeFilterPills activeFilter={activeFilter} onFilterChange={setActiveFilter} />
+
+        <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.discoveryTip, horizontalPadding]}>
+          {activeFilter === 'All'
+            ? 'Tip: Browse Experts for professional help or Gigs to find students who need your skills.'
+            : activeFilter === 'Experts'
+            ? 'Tip: Experts are students offering professional services. Hire them to get your tasks done.'
+            : 'Tip: Gigs are requests from students who need help. Apply to these to earn and build your portfolio.'}
+        </ThemedText>
       </ThemedView>
 
       <ScrollView
@@ -144,6 +205,34 @@ export default function HomeScreen() {
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={theme.primary} />
         }
       >
+        {/* Popular Services Section */}
+        <SectionHeader
+          title="Popular Services"
+          horizontalPadding={horizontalPadding}
+          onSeeAll={() => router.push({ pathname: '/search/results', params: { q: '', section: 'popular' } })}
+        />
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingLeft: horizontalPadding.paddingLeft,
+            paddingRight: horizontalPadding.paddingRight,
+            gap: Spacing.md,
+          }}
+          style={styles.horizontalSection}
+        >
+          {popular.map((item) => (
+            <PopularCategoryCard
+              key={`cat-${item.category.id}`}
+              title={item.category.title}
+              icon={item.category.icon}
+              colors={item.colors}
+              width={categoryCardWidth}
+              onPress={() => router.push({ pathname: '/search/[id]', params: { id: item.category.id } })}
+            />
+          ))}
+        </ScrollView>
+
         {/* Trending This Week Section */}
         <SectionHeader
           title="Trending this week"
@@ -165,13 +254,7 @@ export default function HomeScreen() {
               key={`trend-${item.id}`}
               listing={item}
               width={cardWidth}
-              onPress={() => router.push({ 
-                  pathname: '/search/listings/[subcategory]', 
-                  params: { 
-                      subcategory: item.subcategory || 'Subject Tutoring', 
-                      category: item.category || 'Academics & Language' 
-                  } 
-              })}
+              onPress={() => router.push({ pathname: '/listing/[id]', params: { id: item.id } })}
             />
           ))}
         </ScrollView>
@@ -183,18 +266,22 @@ export default function HomeScreen() {
         />
         <View style={[styles.featuredFeed, horizontalPadding]}>
           {featuredFeed.map((entry, index) => {
+            if (entry.type === 'gigRow') {
+              return (
+                <GigSpotlightRow
+                  key={`gig-row-${index}`}
+                  gigs={entry.data as any[]}
+                  cardWidth={cardWidth}
+                  horizontalPadding={horizontalPadding}
+                />
+              );
+            }
             return (
               <ListingCard
                 key={`feat-${entry.data.id}`}
                 listing={entry.data}
                 width={gridCardWidth}
-                onPress={() => router.push({ 
-                    pathname: '/search/listings/[subcategory]', 
-                    params: { 
-                        subcategory: entry.data.subcategory || 'Subject Tutoring', 
-                        category: entry.data.category || 'Academics & Language' 
-                    } 
-                })}
+                onPress={() => router.push({ pathname: '/listing/[id]', params: { id: entry.data.id } })}
               />
             );
           })}
