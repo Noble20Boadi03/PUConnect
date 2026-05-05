@@ -61,9 +61,9 @@ export default function EditProfileScreen() {
       
       // Upload if it's a local file
       if (profilePictureUrl && profilePictureUrl.startsWith("file://")) {
-        const uploadResult = await api.uploadImage(profilePictureUrl, token);
-        const baseUrl = api.getApiUrl().replace('/api/v1', '');
-        finalImageUrl = `${baseUrl}${uploadResult.url}`;
+        // Simulate upload but keep local file URI for mock UI rendering
+        await api.uploadImage(profilePictureUrl, token);
+        finalImageUrl = profilePictureUrl;
       }
 
       const yearNum = parseInt(graduationYear, 10);

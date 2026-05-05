@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Pressable, ActivityIndicator, Image, ScrollView, Dimensions } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { StyleSheet, View, Pressable, ActivityIndicator, Image, ScrollView, Dimensions, Modal } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import * as ImagePicker from 'expo-image-picker';
+import { useActionSheet } from '@expo/react-native-action-sheet';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -16,19 +19,106 @@ import { useResponsive } from '@/hooks/use-responsive';
 import { useProfileViewModel } from '@/hooks/view-models/use-profile-view-model';
 import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
 import { useAuth } from '@/context/auth-context';
+import { useAppAlert } from '@/context/alert-context';
+import { api } from '@/services/api';
 import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function ProfileScreen() {
     const { uiState } = useProfileViewModel();
-    const { signOut } = useAuth();
+    const { signOut, token, refreshUser } = useAuth();
     const { theme, isDark } = useTheme();
+    const { showAlert } = useAppAlert();
+    const { showActionSheetWithOptions } = useActionSheet();
     const insets = useSafeAreaInsets();
     const { horizontalPadding } = useResponsive();
     const tabBarHeight = useTabBarHeight();
 
-    const [activeTab, setActiveTab] = useState<'posts' | 'archived'>('posts');
+    const [activeTab, setActiveTab] = useState<'posts' | 'skills'>('posts');
+    const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+
+    // ── SET PHOTO: Pick from library ────────────────────────────────────────
+    const pickFromLibrary = useCallback(async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            showAlert({ title: 'Permission Required', subtitle: 'Please allow access to your photo library to set a profile picture.', severity: 'warning' });
+            return;
+        }
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+        });
+        if (!result.canceled) {
+            setPendingPhoto(result.assets[0].uri);
+        }
+    }, [showAlert]);
+
+    // ── SET PHOTO: Take a photo ─────────────────────────────────────────────
+    const takePhoto = useCallback(async () => {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+            showAlert({ title: 'Permission Required', subtitle: 'Please allow camera access to take a profile picture.', severity: 'warning' });
+            return;
+        }
+        const result = await ImagePicker.launchCameraAsync({
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+        });
+        if (!result.canceled) {
+            setPendingPhoto(result.assets[0].uri);
+        }
+    }, [showAlert]);
+
+    // ── SET PHOTO: Action sheet ──────────────────────────────────────────────
+    const handleSetPhoto = useCallback(() => {
+        const options = ['Choose from Library', 'Take a Photo', 'Cancel'];
+        const cancelButtonIndex = 2;
+
+        showActionSheetWithOptions(
+            {
+                options,
+                cancelButtonIndex,
+                title: 'Set Profile Photo',
+                message: 'Choose a source for your new profile picture',
+            },
+            (buttonIndex) => {
+                if (buttonIndex === 0) pickFromLibrary();
+                else if (buttonIndex === 1) takePhoto();
+            }
+        );
+    }, [showActionSheetWithOptions, pickFromLibrary, takePhoto]);
+
+    // ── SET PHOTO: Confirm & upload ─────────────────────────────────────────
+    const confirmPhoto = useCallback(async () => {
+        if (!pendingPhoto || !token) return;
+        setIsUploading(true);
+        try {
+            let finalImageUrl = pendingPhoto;
+
+            // Upload if it's a local file
+            if (pendingPhoto.startsWith('file://')) {
+                // Simulate upload but keep local file URI for mock UI rendering
+                await api.uploadImage(pendingPhoto, token);
+                finalImageUrl = pendingPhoto;
+            }
+
+            await api.updateProfile({ profilePictureUrl: finalImageUrl }, token);
+            await refreshUser();
+
+            setPendingPhoto(null);
+            showAlert({ title: 'Photo Updated', subtitle: 'Your profile picture has been updated successfully!', severity: 'success' });
+        } catch (error) {
+            console.error('Set photo error:', error);
+            showAlert({ title: 'Upload Failed', subtitle: 'Could not update your profile picture. Please try again.', severity: 'error' });
+        } finally {
+            setIsUploading(false);
+        }
+    }, [pendingPhoto, token, refreshUser, showAlert]);
 
     // ── LOADING STATE ───────────────────────────────────────────────────────
     if (uiState.status === 'loading') {
@@ -83,12 +173,9 @@ export default function ProfileScreen() {
             {/* ─── HEADER BAR ────────────────────────────────── */}
             <ThemedView style={[styles.fixedHeader, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
                 <View style={styles.topRow}>
-                    <Pressable style={styles.headerIconBtn} hitSlop={8}>
-                        <ThemedIcon name="view-grid-outline" size={24} colorName="text" />
-                    </Pressable>
-                    <Pressable style={styles.headerIconBtn} hitSlop={8}>
-                        <ThemedIcon name="dots-vertical" size={24} colorName="text" />
-                    </Pressable>
+                    <ThemedText variant="headlineSmall" style={[styles.brandLogo, { fontWeight: '900' }]}>
+                        Profile<ThemedText colorName="primary" style={{ fontWeight: '900' }}></ThemedText>
+                    </ThemedText>
                 </View>
             </ThemedView>
 
@@ -137,9 +224,6 @@ export default function ProfileScreen() {
                     <ThemedText variant="headlineSmall" style={styles.displayName}>
                         {user?.fullName || 'User'}
                     </ThemedText>
-                    <ThemedText variant="bodyMedium" style={styles.onlineStatus}>
-                        online
-                    </ThemedText>
                 </Animated.View>
 
                 {/* ─── ACTION BUTTONS ROW ─────────────────────── */}
@@ -154,7 +238,7 @@ export default function ProfileScreen() {
                                 borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
                             },
                         ]}
-                        onPress={() => router.push('/profile/edit-profile')}
+                        onPress={handleSetPhoto}
                     >
                         <View style={[styles.actionBtnIcon, { backgroundColor: theme.primaryContainer }]}>
                             <ThemedIcon name="camera-plus-outline" size={22} colorName="onPrimaryContainer" />
@@ -249,7 +333,7 @@ export default function ProfileScreen() {
                     </View>
                 </Animated.View>
 
-                {/* ─── TABS: Posts / Archived Posts ───────────── */}
+                {/* ─── TABS: Posts / Skill Ads ───────────── */}
                 <Animated.View entering={FadeInDown.delay(300).duration(600)} style={styles.tabSection}>
                     <View style={styles.tabBar}>
                         <Pressable
@@ -273,27 +357,34 @@ export default function ProfileScreen() {
                                 Posts
                             </ThemedText>
                         </Pressable>
-                        <Pressable
-                            style={[
-                                styles.tab,
-                                activeTab === 'archived' && {
-                                    backgroundColor: isDark ? 'rgba(165,180,252,0.15)' : 'rgba(79,70,229,0.1)',
-                                    borderColor: theme.primary,
-                                },
-                                activeTab !== 'archived' && {
-                                    borderColor: 'transparent',
-                                },
-                            ]}
-                            onPress={() => setActiveTab('archived')}
-                        >
-                            <ThemedText
-                                variant="labelLarge"
-                                colorName={activeTab === 'archived' ? 'primary' : 'textMuted'}
-                                style={styles.tabLabel}
+
+                        {/* 
+                          * Skill Ads Tab: Hidden by default. 
+                          * Only visible after account upgrade to provider status (canOfferServices: true).
+                          */}
+                        {user?.canOfferServices && (
+                            <Pressable
+                                style={[
+                                    styles.tab,
+                                    activeTab === 'skills' && {
+                                        backgroundColor: isDark ? 'rgba(165,180,252,0.15)' : 'rgba(79,70,229,0.1)',
+                                        borderColor: theme.primary,
+                                    },
+                                    activeTab !== 'skills' && {
+                                        borderColor: 'transparent',
+                                    },
+                                ]}
+                                onPress={() => setActiveTab('skills')}
                             >
-                                Archived Posts
-                            </ThemedText>
-                        </Pressable>
+                                <ThemedText
+                                    variant="labelLarge"
+                                    colorName={activeTab === 'skills' ? 'primary' : 'textMuted'}
+                                    style={styles.tabLabel}
+                                >
+                                    Skill Ads
+                                </ThemedText>
+                            </Pressable>
+                        )}
                     </View>
 
                     {/* Empty state */}
@@ -302,7 +393,7 @@ export default function ProfileScreen() {
                             No posts yet...
                         </ThemedText>
                         <ThemedText variant="bodyMedium" colorName="textMuted" align="center" style={styles.emptySubtitle}>
-                            Publish photos and videos to display on{'\n'}your profile page
+                            Post about anything you need help with so that providers can assist you when they see your request.
                         </ThemedText>
 
                         <PrimaryButton
@@ -313,6 +404,63 @@ export default function ProfileScreen() {
                     </View>
                 </Animated.View>
             </ScrollView>
+
+            {/* ─── PHOTO CONFIRMATION MODAL ─────────────────── */}
+            <Modal
+                visible={!!pendingPhoto}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setPendingPhoto(null)}
+            >
+                <BlurView intensity={isDark ? 50 : 25} tint={isDark ? 'dark' : 'light'} style={styles.photoModalOverlay}>
+                    <Animated.View entering={FadeInDown.duration(400)} style={[styles.photoModalContent, { backgroundColor: theme.surface }]}>
+                        <ThemedText variant="headlineSmall" style={styles.photoModalTitle}>
+                            Confirm Profile Photo
+                        </ThemedText>
+                        <ThemedText variant="bodyMedium" colorName="textMuted" style={styles.photoModalSubtitle}>
+                            This will be your new profile picture
+                        </ThemedText>
+
+                        {/* Preview */}
+                        <View style={styles.photoPreviewWrapper}>
+                            <LinearGradient
+                                colors={isDark
+                                    ? ['#c084fc', '#7c3aed', '#4c1d95'] as const
+                                    : ['#e9d5ff', '#8b5cf6', '#5b21b6'] as const
+                                }
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={styles.photoPreviewRing}
+                            >
+                                <View style={[styles.photoPreviewInner, { backgroundColor: theme.surface }]}>
+                                    {pendingPhoto && (
+                                        <Image source={{ uri: pendingPhoto }} style={styles.photoPreviewImage} />
+                                    )}
+                                </View>
+                            </LinearGradient>
+                        </View>
+
+                        {/* Action buttons */}
+                        <View style={styles.photoModalActions}>
+                            <PrimaryButton
+                                title={isUploading ? 'Uploading...' : 'Use This Photo'}
+                                onPress={confirmPhoto}
+                                isLoading={isUploading}
+                                style={{ width: '100%' }}
+                            />
+                        </View>
+                        <Pressable
+                            onPress={() => setPendingPhoto(null)}
+                            style={styles.photoModalCancel}
+                            disabled={isUploading}
+                        >
+                            <ThemedText variant="labelLarge" colorName="textMuted" style={{ fontWeight: '600' }}>
+                                Cancel
+                            </ThemedText>
+                        </Pressable>
+                    </Animated.View>
+                </BlurView>
+            </Modal>
         </ScreenLayout>
     );
 }
@@ -330,13 +478,6 @@ const styles = StyleSheet.create({
     topRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    headerIconBtn: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        justifyContent: 'center',
         alignItems: 'center',
     },
     brandLogo: {
@@ -414,12 +555,6 @@ const styles = StyleSheet.create({
         letterSpacing: -0.3,
         marginBottom: 2,
     },
-    onlineStatus: {
-        color: '#22c55e',
-        fontWeight: '500',
-        fontSize: 14,
-    },
-
     // Action Buttons Row
     actionRow: {
         flexDirection: 'row',
@@ -509,5 +644,63 @@ const styles = StyleSheet.create({
     addPostBtn: {
         paddingHorizontal: Spacing.xxl,
         height: 48,
+    },
+
+    // Photo Confirmation Modal
+    photoModalOverlay: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: Spacing.xl,
+    },
+    photoModalContent: {
+        width: '100%',
+        padding: Spacing.xl,
+        borderRadius: BorderRadius.xl,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.15,
+        shadowRadius: 24,
+        elevation: 12,
+    },
+    photoModalTitle: {
+        fontWeight: '800',
+        marginBottom: Spacing.xs,
+        textAlign: 'center',
+    },
+    photoModalSubtitle: {
+        textAlign: 'center',
+        marginBottom: Spacing.xl,
+    },
+    photoPreviewWrapper: {
+        marginBottom: Spacing.xl,
+    },
+    photoPreviewRing: {
+        width: 200,
+        height: 200,
+        borderRadius: 100,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    photoPreviewInner: {
+        width: 188,
+        height: 188,
+        borderRadius: 94,
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+    },
+    photoPreviewImage: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 92,
+    },
+    photoModalActions: {
+        width: '100%',
+    },
+    photoModalCancel: {
+        marginTop: Spacing.lg,
+        padding: Spacing.sm,
     },
 });
