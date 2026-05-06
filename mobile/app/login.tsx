@@ -72,6 +72,18 @@ export default function LoginScreen() {
         }
     };
 
+    const handleAdminTestLogin = async () => {
+        setIsLoading(true);
+        try {
+            await signIn("admin@puconnect.edu", "admin123");
+            router.replace({ pathname: "/(tabs)/home" });
+        } catch (error) {
+            console.error("Admin login failed:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
 
 
     return (
@@ -168,6 +180,16 @@ export default function LoginScreen() {
                         <Pressable onPress={() => router.push({ pathname: "/register" })}>
                             <ThemedText variant="labelLarge" colorName="primary" style={styles.footerText}>Create new account</ThemedText>
                         </Pressable>
+
+                        <Pressable 
+                            onPress={handleAdminTestLogin}
+                            style={({ pressed }) => [
+                                styles.adminBtn,
+                                { opacity: pressed ? 0.6 : 0.8 }
+                            ]}
+                        >
+                            <ThemedText variant="labelSmall" colorName="textMuted">Admin Login (Testing)</ThemedText>
+                        </Pressable>
                     </Animated.View>
                     </View>
                 </TouchableWithoutFeedback>
@@ -226,14 +248,15 @@ const styles = StyleSheet.create({
         fontSize: 13,
     },
     footer: {
-        flexDirection: "row",
-        justifyContent: "center",
+        marginTop: Spacing.xl,
         alignItems: "center",
         paddingBottom: Spacing.xl,
-        marginTop: Spacing.lg,
     },
     footerText: {
-        fontWeight: "600",
-        textDecorationLine: "underline",
+        fontWeight: "700",
     },
+    adminBtn: {
+        marginTop: Spacing.massive,
+        padding: Spacing.sm,
+    }
 });

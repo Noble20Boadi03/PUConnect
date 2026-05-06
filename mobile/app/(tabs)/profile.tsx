@@ -167,6 +167,7 @@ export default function ProfileScreen() {
 
     // ── CONTENT STATE ───────────────────────────────────────────────────────
     const { data: user } = uiState;
+    const isAdmin = user?.role === 'admin';
 
     return (
         <ScreenLayout padding="none" withSafeArea={false}>
@@ -176,6 +177,22 @@ export default function ProfileScreen() {
                     <ThemedText variant="headlineSmall" style={[styles.brandLogo, { fontWeight: '900' }]}>
                         Profile<ThemedText colorName="primary" style={{ fontWeight: '900' }}></ThemedText>
                     </ThemedText>
+                    <View style={styles.headerActions}>
+                        {isAdmin && (
+                            <Pressable
+                                style={styles.iconBtn}
+                                onPress={() => router.push('/(tabs)/admin')}
+                            >
+                                <ThemedIcon name="shield-check-outline" size={24} />
+                            </Pressable>
+                        )}
+                        <Pressable
+                            style={styles.iconBtn}
+                            onPress={() => (token ? router.push('/notifications') : router.push('/login'))}
+                        >
+                            <ThemedIcon name="bell-outline" size={24} />
+                        </Pressable>
+                    </View>
                 </View>
             </ThemedView>
 
@@ -491,9 +508,17 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
     },
+    headerActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+    },
     brandLogo: {
         fontWeight: '800',
         letterSpacing: -0.5,
+    },
+    iconBtn: {
+        padding: Spacing.xs,
     },
 
     // Guest

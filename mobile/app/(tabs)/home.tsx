@@ -74,7 +74,7 @@ const HomeFilterPills = ({ activeFilter, onFilterChange }: { activeFilter: 'All'
 
 export default function HomeScreen() {
   const { uiState, onRefresh, activeFilter, setActiveFilter } = useHomeViewModel();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
@@ -86,6 +86,7 @@ export default function HomeScreen() {
   const gridCardWidth = (Dimensions.get('window').width - (horizontalPadding.paddingLeft + horizontalPadding.paddingRight) - Spacing.md) / 2;
 
   const isRefreshing = uiState.status === 'content' && !!uiState.isRefreshing;
+  const isAdmin = user?.role === 'admin';
 
   // Build the featured feed based on the active filter
   // This hook is moved here to follow the rules of hooks (no early returns before hooks)
@@ -166,12 +167,22 @@ export default function HomeScreen() {
           <ThemedText variant="headlineSmall" style={[styles.brandLogo, { fontWeight: '900' }]}>
             PuConnect<ThemedText colorName="primary" style={{ fontWeight: '900' }}>.</ThemedText>
           </ThemedText>
-          <Pressable
-            style={styles.gridBtn}
-            onPress={() => (token ? router.push('/listing/create') : router.push('/login'))}
-          >
-            <ThemedIcon name="apps" size={24} />
-          </Pressable>
+          <View style={styles.headerActions}>
+            {isAdmin && (
+              <Pressable
+                style={styles.iconBtn}
+                onPress={() => router.push('/(tabs)/admin')}
+              >
+                <ThemedIcon name="shield-check-outline" size={24} />
+              </Pressable>
+            )}
+            <Pressable
+              style={styles.iconBtn}
+              onPress={() => (token ? router.push('/notifications') : router.push('/login'))}
+            >
+              <ThemedIcon name="bell-outline" size={24} />
+            </Pressable>
+          </View>
         </View>
 
         {/* Search Bar */}
@@ -307,11 +318,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.md,
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
   brandLogo: {
     fontWeight: '800',
+    letterSpacing: -0.5,
   },
-  gridBtn: {
-    padding: Spacing.xs,
+  iconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center', 
   },
   pillsContainer: {
     paddingHorizontal: Spacing.lg,

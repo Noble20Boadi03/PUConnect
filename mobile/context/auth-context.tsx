@@ -70,11 +70,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const dummyToken = 'dev_dummy_token';
         // await SecureStore.setItemAsync('userToken', dummyToken);
         setToken(dummyToken);
+        
+        // Check for admin bypass
+        const isAdmin = email === 'admin@puconnect.edu';
+
         setUser(normalizeUser({ 
-            id: 'mock-user-001',
-            fullName: 'Test User', 
+            id: isAdmin ? 'admin-001' : 'mock-user-001',
+            fullName: isAdmin ? 'Admin User' : 'Test User', 
             email: email || 'test@domain.edu',
-            universityId: '20270000',
+            universityId: isAdmin ? '00000000' : '20270000',
+            role: isAdmin ? 'admin' : 'student',
             skillTags: ['React Native', 'Expo'],
             isAvailable: true,
             verifiedStudent: true,

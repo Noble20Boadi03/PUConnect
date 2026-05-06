@@ -11,9 +11,11 @@ import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { useResponsive } from '@/hooks/use-responsive';
 import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
+import { useAuth } from '@/context/auth-context';
 
 export default function SearchScreen() {
   const { theme } = useTheme();
+  const { token, user } = useAuth();
   const insets = useSafeAreaInsets();
   const { contentPaddingLeft, contentPaddingRight } = useResponsive();
   const tabBarHeight = useTabBarHeight();
@@ -22,18 +24,30 @@ export default function SearchScreen() {
   const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
   const gridCardWidth = (Dimensions.get('window').width - (contentPaddingLeft + contentPaddingRight) - Spacing.md) / 2;
 
+  const isAdmin = user?.role === 'admin';
+
   return (
     <ScreenLayout padding="none" withSafeArea={false}>
       {/* Fixed Header & Tabs */}
       <ThemedView elevation={1} style={{ zIndex: 10 }}>
         <View style={[styles.header, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
           <ThemedText variant="headlineSmall" style={styles.headerTitle}>Explore</ThemedText>
-          <Pressable
-            style={styles.iconBtn}
-            onPress={() => router.push({ pathname: '/search/results', params: { q: '' } })}
-          >
-            <ThemedIcon name="magnify" size={24} />
-          </Pressable>
+          <View style={styles.headerActions}>
+            {isAdmin && (
+              <Pressable
+                style={styles.iconBtn}
+                onPress={() => router.push('/(tabs)/admin')}
+              >
+                <ThemedIcon name="shield-check-outline" size={24} />
+              </Pressable>
+            )}
+            <Pressable
+              style={styles.iconBtn}
+              onPress={() => (token ? router.push('/notifications') : router.push('/login'))}
+            >
+              <ThemedIcon name="bell-outline" size={24} />
+            </Pressable>
+          </View>
         </View>
 
         <View style={[styles.tabBar, horizontalPadding]}>
@@ -124,6 +138,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingBottom: Spacing.sm,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
   },
   headerTitle: {
     fontWeight: '800',

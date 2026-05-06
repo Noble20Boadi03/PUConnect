@@ -142,14 +142,6 @@ export default function LandingScreen() {
               colorName="textSecondary" 
             />
           </Pressable>
-          <Pressable 
-            style={[styles.languageButton, { backgroundColor: theme.surfaceVariant }]}
-            accessibilityRole="button"
-            accessibilityLabel="Select language, currently English"
-          >
-            <ThemedIcon name="translate" size={16} colorName="textSecondary" />
-            <ThemedText variant="labelMedium" colorName="textSecondary">English</ThemedText>
-          </Pressable>
         </View>
       </View>
 
@@ -316,14 +308,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  languageButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.full,
-    gap: 4,
-  },
+
   carouselContainer: {
     flex: 1,
   },

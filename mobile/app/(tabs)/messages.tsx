@@ -12,13 +12,17 @@ import { useResponsive } from '@/hooks/use-responsive';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { useMessagesViewModel } from '@/hooks/view-models/use-messages-view-model';
 import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
+import { useAuth } from '@/context/auth-context';
 
 export default function MessagesScreen() {
     const { uiState, onRefresh } = useMessagesViewModel();
     const { theme } = useTheme();
     const insets = useSafeAreaInsets();
     const { horizontalPadding, contentPaddingLeft } = useResponsive();
+    const { token, user } = useAuth();
     const tabBarHeight = useTabBarHeight();
+
+    const isAdmin = user?.role === 'admin';
 
     if (uiState.status === 'guest') {
         return (
@@ -66,6 +70,22 @@ export default function MessagesScreen() {
             {/* Header */}
             <View style={[styles.header, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
                 <ThemedText variant="headlineMedium" style={styles.title}>Messages</ThemedText>
+                <View style={styles.headerActions}>
+                    {isAdmin && (
+                        <Pressable
+                            style={styles.iconBtn}
+                            onPress={() => router.push('/(tabs)/admin')}
+                        >
+                            <ThemedIcon name="shield-check-outline" size={24} />
+                        </Pressable>
+                    )}
+                    <Pressable
+                        style={styles.iconBtn}
+                        onPress={() => (token ? router.push('/notifications') : router.push('/login'))}
+                    >
+                        <ThemedIcon name="bell-outline" size={24} />
+                    </Pressable>
+                </View>
             </View>
 
             {uiState.status === 'empty_inbox' ? (
@@ -169,11 +189,22 @@ export default function MessagesScreen() {
 
 const styles = StyleSheet.create({
     header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         paddingBottom: Spacing.md,
+    },
+    headerActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
     },
     title: {
         fontWeight: '900',
         letterSpacing: -0.5,
+    },
+    iconBtn: {
+        padding: Spacing.xs,
     },
     chatRow: {
         flexDirection: 'row',
