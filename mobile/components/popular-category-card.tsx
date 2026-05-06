@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Spacing } from '@/constants/theme';
 import { ThemedText } from './themed-text';
@@ -14,7 +14,7 @@ interface PopularCategoryCardProps {
   width?: number;
 }
 
-export function PopularCategoryCard({ title, icon, colors, onPress, width = 140 }: PopularCategoryCardProps) {
+export const PopularCategoryCard = memo(function PopularCategoryCard({ title, icon, colors, onPress, width = 140 }: PopularCategoryCardProps) {
   return (
     <ThemedView
       elevation={1}
@@ -44,7 +44,7 @@ export function PopularCategoryCard({ title, icon, colors, onPress, width = 140 
       </Pressable>
     </ThemedView>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

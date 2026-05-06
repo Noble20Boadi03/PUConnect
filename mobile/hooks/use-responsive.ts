@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -74,70 +75,70 @@ export function useResponsive(): ResponsiveConfig {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
-  const isLandscape = width > height;
+  return useMemo(() => {
+    const isLandscape = width > height;
+    const shortestAxis = Math.min(width, height);
 
+    let screenType: ScreenType = 'phone';
+    if (shortestAxis >= BREAKPOINTS.tablet) {
+      screenType = 'desktop';
+    } else if (shortestAxis >= BREAKPOINTS.phone) {
+      screenType = 'tablet';
+    }
 
-  const shortestAxis = Math.min(width, height);
+    const isPhone = screenType === 'phone';
+    const isTablet = screenType === 'tablet';
+    const isDesktop = screenType === 'desktop';
 
-  let screenType: ScreenType = 'phone';
-  if (shortestAxis >= BREAKPOINTS.tablet) {
-    screenType = 'desktop';
-  } else if (shortestAxis >= BREAKPOINTS.phone) {
-    screenType = 'tablet';
-  }
+    let layoutMode: LayoutMode = 'single';
+    if (isDesktop) {
+      layoutMode = 'multi-column';
+    } else if (isTablet || (isPhone && isLandscape)) {
+      layoutMode = 'side-by-side';
+    }
 
-  const isPhone = screenType === 'phone';
-  const isTablet = screenType === 'tablet';
-  const isDesktop = screenType === 'desktop';
+    const columns =
+      layoutMode === 'multi-column' ? 3 :
+      layoutMode === 'side-by-side' ? 2 :
+      1;
 
-  let layoutMode: LayoutMode = 'single';
-  if (isDesktop) {
-    layoutMode = 'multi-column';
-  } else if (isTablet || (isPhone && isLandscape)) {
-    layoutMode = 'side-by-side';
-  }
+    const spacingMultiplier = isPhone ? 1 : isTablet ? 1.5 : 2;
 
-  const columns =
-    layoutMode === 'multi-column' ? 3 :
-    layoutMode === 'side-by-side' ? 2 :
-    1;
+    const basePaddingH = isDesktop
+      ? BASE_PADDING.desktop
+      : isTablet
+      ? BASE_PADDING.tablet
+      : BASE_PADDING.phone;
 
-  const spacingMultiplier = isPhone ? 1 : isTablet ? 1.5 : 2;
+    // Provide precise padding for each side
+    const contentPaddingLeft = basePaddingH + insets.left;
+    const contentPaddingRight = basePaddingH + insets.right;
 
-  const basePaddingH = isDesktop
-    ? BASE_PADDING.desktop
-    : isTablet
-    ? BASE_PADDING.tablet
-    : BASE_PADDING.phone;
+    // Symmetric version for legacy/centered components
+    const contentPaddingHorizontal = basePaddingH + Math.max(insets.left, insets.right);
 
-  // Provide precise padding for each side
-  const contentPaddingLeft = basePaddingH + insets.left;
-  const contentPaddingRight = basePaddingH + insets.right;
+    const contentMaxWidth =
+      layoutMode === 'multi-column' ? 1200 :
+      layoutMode === 'side-by-side' ? 840 :
+      width;
 
-  // Symmetric version for legacy/centered components
-  const contentPaddingHorizontal = basePaddingH + Math.max(insets.left, insets.right);
+    return {
+      width,
+      height,
+      screenType,
+      isPhone,
+      isTablet,
+      isDesktop,
+      isLandscape,
 
-  const contentMaxWidth =
-    layoutMode === 'multi-column' ? 1200 :
-    layoutMode === 'side-by-side' ? 840 :
-    width;
-
-  return {
-    width,
-    height,
-    screenType,
-    isPhone,
-    isTablet,
-    isDesktop,
-    isLandscape,
-
-    layoutMode,
-    columns,
-    spacingMultiplier,
-    contentPaddingLeft,
-    contentPaddingRight,
-    contentPaddingHorizontal,
-    horizontalPadding: { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight },
-    contentMaxWidth,
-  };
+      layoutMode,
+      columns,
+      spacingMultiplier,
+      contentPaddingLeft,
+      contentPaddingRight,
+      contentPaddingHorizontal,
+      horizontalPadding: { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight },
+      contentMaxWidth,
+    };
+  }, [width, height, insets]);
 }

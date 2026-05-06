@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { InteractionManager } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { api } from '@/services/api';
 import { ChatMessage } from '@/types';
@@ -49,17 +50,22 @@ export function useMessagesViewModel() {
             const now = Date.now();
             const throttleMs = 5 * 60 * 1000;
 
-            if (now - lastRefreshTimestamp.current > throttleMs) {
-                setUiState((prev) =>
-                    prev.status === 'content'
-                        ? { ...prev, isRefreshing: true }
-                        : { status: 'loading' }
-                );
-                fetchMessages(controller.signal);
-                lastRefreshTimestamp.current = now;
-            }
+            const interactionTask = InteractionManager.runAfterInteractions(() => {
+                if (now - lastRefreshTimestamp.current > throttleMs) {
+                    setUiState((prev) =>
+                        prev.status === 'content'
+                            ? { ...prev, isRefreshing: true }
+                            : { status: 'loading' }
+                    );
+                    fetchMessages(controller.signal);
+                    lastRefreshTimestamp.current = now;
+                }
+            });
 
-            return () => controller.abort();
+            return () => {
+                controller.abort();
+                interactionTask.cancel();
+            };
         }, [token, fetchMessages])
     );
 

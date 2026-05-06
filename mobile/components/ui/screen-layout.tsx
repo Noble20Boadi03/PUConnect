@@ -98,6 +98,7 @@ export function ScreenLayout({
     Content = (
       <ScrollView
         showsVerticalScrollIndicator={false}
+        removeClippedSubviews={Platform.OS === 'android'}
         contentContainerStyle={[
           { flexGrow: 1 },
           innerContentStyle
@@ -105,6 +106,7 @@ export function ScreenLayout({
         style={styles.container}
         // In landscape, horizontal scroll indicator also not needed
         showsHorizontalScrollIndicator={false}
+        scrollEventThrottle={32}
         {...scrollViewProps}
       >
         {children}

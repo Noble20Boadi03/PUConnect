@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, ScrollView, ActivityIndicator, Pressable, View, Image, StatusBar } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { StyleSheet, ScrollView, ActivityIndicator, Pressable, View, StatusBar } from 'react-native';
+import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
@@ -36,22 +37,26 @@ export default function ListingDetailsScreen() {
     (async () => {
       if (uiState.status !== 'content') return;
       const oid = uiState.data.listing.ownerId;
-      const u = await api.getUserById(oid);
-      if (!cancelled) setOwner(u);
+      try {
+        const u = await api.getUserById(oid);
+        if (!cancelled) setOwner(u);
+      } catch (err) {
+        console.error('Failed to fetch owner:', err);
+      }
     })();
     return () => {
       cancelled = true;
     };
   }, [uiState]);
 
-  const handleScroll = (e: any) => {
+  const handleScroll = useCallback((e: any) => {
     const scrollY = e.nativeEvent.contentOffset.y;
     if (scrollY > THRESHOLD && !isHeaderScrolled) {
       setIsHeaderScrolled(true);
     } else if (scrollY <= THRESHOLD && isHeaderScrolled) {
       setIsHeaderScrolled(false);
     }
-  };
+  }, [isHeaderScrolled, THRESHOLD]);
 
   // --- Loading / Error states ---
   if (uiState.status === 'loading') {
@@ -120,11 +125,11 @@ export default function ListingDetailsScreen() {
       {/* Fixed Background Image — stays completely still */}
       <View style={styles.imageBackground}>
         <Image
-          source={{
-            uri: listing.media_url || "https://images.unsplash.com/photo-1626785774573-4b799315345d?q=80&w=800&auto=format&fit=crop",
-          }}
+          source={listing.media_url || "https://images.unsplash.com/photo-1626785774573-4b799315345d?q=80&w=800&auto=format&fit=crop"}
           style={styles.mainImage}
-          resizeMode="cover"
+          contentFit="cover"
+          cachePolicy="disk"
+          transition={200}
         />
       </View>
 
@@ -142,9 +147,10 @@ export default function ListingDetailsScreen() {
       {/* Scrollable Content */}
       <ScrollView
         showsVerticalScrollIndicator={false}
+        removeClippedSubviews={true}
         contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
         onScroll={handleScroll}
-        scrollEventThrottle={16}
+        scrollEventThrottle={32}
       >
         {/* Transparent spacer to reveal the image behind */}
         <View style={styles.imageSpacer} />

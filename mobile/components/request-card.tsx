@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Listing } from '@/types';
 import { Spacing, BorderRadius } from '@/constants/theme';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
+import { ThemedIcon } from './ui/themed-icon';
 
 import { useTheme } from '@/context/theme-context';
 
@@ -13,7 +14,7 @@ interface RequestCardProps {
     onPress: () => void;
 }
 
-export function RequestCard({ listing, width, onPress }: RequestCardProps) {
+export const RequestCard = memo(function RequestCard({ listing, width, onPress }: RequestCardProps) {
     const { theme } = useTheme();
 
     // Use tags which now contain the official subcategory titles
@@ -58,7 +59,7 @@ export function RequestCard({ listing, width, onPress }: RequestCardProps) {
             </Pressable>
         </ThemedView>
     );
-}
+});
 
 const styles = StyleSheet.create({
     container: {

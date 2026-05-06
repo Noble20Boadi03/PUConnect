@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, StyleSheet, Pressable, Image } from 'react-native';
+import React, { memo } from 'react';
+import { View, StyleSheet, Pressable } from 'react-native';
+import { Image } from 'expo-image';
 import { Listing } from '@/types';
 import { Spacing } from '@/constants/theme';
 
@@ -15,9 +16,7 @@ interface ListingCardProps {
 
 const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800&auto=format&fit=crop";
 
-export function ListingCard({ listing, width, onPress }: ListingCardProps) {
-
-
+export const ListingCard = memo(function ListingCard({ listing, width, onPress }: ListingCardProps) {
     return (
         <ThemedView
             elevation={2}
@@ -34,16 +33,22 @@ export function ListingCard({ listing, width, onPress }: ListingCardProps) {
                 {/* Image Section */}
                 <View style={styles.imageContainer}>
                     <Image 
-                        source={{ uri: listing.media_url || PLACEHOLDER_IMAGE }} 
+                        source={listing.media_url || PLACEHOLDER_IMAGE} 
                         style={styles.image}
-                        resizeMode="cover"
+                        contentFit="cover"
+                        transition={200}
+                        cachePolicy="disk"
                     />
                 </View>
 
                 <View style={styles.content}>
                     <View style={styles.userRow}>
                         {listing.ownerAvatar ? (
-                            <Image source={{ uri: listing.ownerAvatar }} style={styles.avatarImage} />
+                            <Image 
+                                source={listing.ownerAvatar} 
+                                style={styles.avatarImage} 
+                                cachePolicy="disk"
+                            />
                         ) : (
                             <View style={[styles.avatarImage, { backgroundColor: '#e2e8f0', justifyContent: 'center', alignItems: 'center' }]}>
                                 <ThemedIcon name="account" size={16} colorName="textSecondary" />
@@ -68,7 +73,7 @@ export function ListingCard({ listing, width, onPress }: ListingCardProps) {
             </Pressable>
         </ThemedView>
     );
-}
+});
 
 const styles = StyleSheet.create({
     container: {

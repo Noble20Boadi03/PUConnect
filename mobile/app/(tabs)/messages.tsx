@@ -1,5 +1,6 @@
-import React from 'react';
-import { StyleSheet, FlatList, View, ActivityIndicator, Pressable, RefreshControl, Image } from 'react-native';
+import React, { useCallback } from 'react';
+import { StyleSheet, FlatList, View, ActivityIndicator, Pressable, RefreshControl } from 'react-native';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
@@ -23,6 +24,75 @@ export default function MessagesScreen() {
     const tabBarHeight = useTabBarHeight();
 
     const isAdmin = user?.role === 'admin';
+
+    const handleChatPress = useCallback((item: any) => {
+        router.push({
+            pathname: '/chat/[id]',
+            params: { id: item.peerId || item.senderId, listingId: item.listingId },
+        });
+    }, []);
+
+    const renderChatItem = useCallback(({ item }: { item: any }) => (
+        <Pressable
+            style={({ pressed }) => [
+                styles.chatRow,
+                { paddingHorizontal: contentPaddingLeft },
+                pressed && { backgroundColor: theme.surfaceVariant },
+            ]}
+            onPress={() => handleChatPress(item)}
+        >
+            {/* Avatar */}
+            <View style={[styles.avatar, { backgroundColor: theme.surfaceVariant }]}>
+                {item.senderAvatar ? (
+                    <Image 
+                        source={item.senderAvatar} 
+                        style={styles.avatarImage} 
+                        cachePolicy="disk"
+                        transition={200}
+                    />
+                ) : (
+                    <ThemedIcon name="account" size={28} colorName="primary" />
+                )}
+            </View>
+
+            {/* Content */}
+            <View style={styles.chatContent}>
+                {/* Top row: Name + Time */}
+                <View style={styles.topRow}>
+                    <ThemedText
+                        variant="titleMedium"
+                        numberOfLines={1}
+                        style={[styles.senderName, !item.isRead && { fontWeight: '800' }]}
+                    >
+                        {item.senderName || 'Anonymous'}
+                    </ThemedText>
+                    <ThemedText variant="labelSmall" colorName="textMuted" style={styles.timestamp}>
+                        {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </ThemedText>
+                </View>
+
+                {/* Middle row: Listing context */}
+                {item.listingTitle && (
+                    <View style={styles.contextRow}>
+                        <ThemedIcon name="bookmark-outline" size={11} colorName="primary" />
+                        <ThemedText variant="labelSmall" colorName="primary" numberOfLines={1} style={styles.contextLabel}>
+                            {item.listingTitle}
+                        </ThemedText>
+                    </View>
+                )}
+
+                {/* Bottom row: Message snippet */}
+                <ThemedText
+                    variant="bodyMedium"
+                    colorName={item.isRead ? 'textMuted' : 'textSecondary'}
+                    numberOfLines={1}
+                    style={[!item.isRead && { fontWeight: '600' }]}
+                >
+                    {item.message}
+                </ThemedText>
+            </View>
+        </Pressable>
+    ), [contentPaddingLeft, theme.surfaceVariant, handleChatPress]);
 
     if (uiState.status === 'guest') {
         return (
@@ -119,68 +189,11 @@ export default function MessagesScreen() {
                             <View style={[styles.divider, { backgroundColor: theme.outlineVariant }]} />
                         </View>
                     )}
-                    renderItem={({ item }) => (
-                        <Pressable
-                            style={({ pressed }) => [
-                                styles.chatRow,
-                                { paddingHorizontal: contentPaddingLeft },
-                                pressed && { backgroundColor: theme.surfaceVariant },
-                            ]}
-                            onPress={() =>
-                                router.push({
-                                    pathname: '/chat/[id]',
-                                    params: { id: (item as any).peerId || item.senderId, listingId: item.listingId },
-                                })
-                            }
-                        >
-                            {/* Avatar */}
-                            <View style={[styles.avatar, { backgroundColor: theme.surfaceVariant }]}>
-                                {item.senderAvatar ? (
-                                    <Image source={{ uri: item.senderAvatar }} style={styles.avatarImage} />
-                                ) : (
-                                    <ThemedIcon name="account" size={28} colorName="primary" />
-                                )}
-                            </View>
-
-                            {/* Content */}
-                            <View style={styles.chatContent}>
-                                {/* Top row: Name + Time */}
-                                <View style={styles.topRow}>
-                                    <ThemedText
-                                        variant="titleMedium"
-                                        numberOfLines={1}
-                                        style={[styles.senderName, !item.isRead && { fontWeight: '800' }]}
-                                    >
-                                        {item.senderName || 'Anonymous'}
-                                    </ThemedText>
-                                    <ThemedText variant="labelSmall" colorName="textMuted" style={styles.timestamp}>
-                                        {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </ThemedText>
-                                </View>
-
-                                {/* Middle row: Listing context */}
-                                {item.listingTitle && (
-                                    <View style={styles.contextRow}>
-                                        <ThemedIcon name="bookmark-outline" size={11} colorName="primary" />
-                                        <ThemedText variant="labelSmall" colorName="primary" numberOfLines={1} style={styles.contextLabel}>
-                                            {item.listingTitle}
-                                        </ThemedText>
-                                    </View>
-                                )}
-
-                                {/* Bottom row: Message snippet */}
-                                <ThemedText
-                                    variant="bodyMedium"
-                                    colorName={item.isRead ? 'textMuted' : 'textSecondary'}
-                                    numberOfLines={1}
-                                    style={[!item.isRead && { fontWeight: '600' }]}
-                                >
-                                    {item.message}
-                                </ThemedText>
-                            </View>
-                        </Pressable>
-                    )}
+                    renderItem={renderChatItem}
                     keyExtractor={(item) => item.id}
+                    removeClippedSubviews={true}
+                    initialNumToRender={10}
+                    windowSize={5}
                 />
             )}
         </ScreenLayout>

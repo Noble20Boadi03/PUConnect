@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, ScrollView, Pressable, Dimensions, ImageBackground } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { StyleSheet, View, FlatList, Pressable, Dimensions } from 'react-native';
+import { Image } from 'expo-image';
 import { useTheme } from '@/context/theme-context';
 import { Spacing } from '@/constants/theme';
 import { router } from 'expo-router';
-import { CAMPUS_CATEGORIES } from '@/constants/categories';
+import { CAMPUS_CATEGORIES, DetailedCategory } from '@/constants/categories';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
@@ -25,6 +26,41 @@ export default function SearchScreen() {
   const gridCardWidth = (Dimensions.get('window').width - (contentPaddingLeft + contentPaddingRight) - Spacing.md) / 2;
 
   const isAdmin = user?.role === 'admin';
+
+  const handleCategoryPress = useCallback((catId: string) => {
+    router.push({
+      pathname: "/search/[id]",
+      params: { id: catId }
+    });
+  }, []);
+
+  const renderCategoryItem = useCallback(({ item: cat }: { item: DetailedCategory }) => (
+    <ThemedView 
+      elevation={2}
+      style={[styles.categoryCard, { width: gridCardWidth }]}
+    >
+      <Pressable 
+        style={({ pressed }) => [styles.cardPressable, pressed && { opacity: 0.95 }]}
+        onPress={() => handleCategoryPress(cat.id)}
+      >
+        <Image 
+          source={cat.image} 
+          style={styles.cardImage}
+          contentFit="cover"
+          cachePolicy="disk"
+          transition={200}
+        />
+        <View style={[StyleSheet.absoluteFill, styles.cardOverlay]}>
+          <ThemedText variant="titleMedium" style={styles.cardTitle} numberOfLines={1}>
+            {cat.title}
+          </ThemedText>
+          <ThemedText variant="labelSmall" style={styles.cardSubtitle} numberOfLines={1}>
+            {cat.subtitle}
+          </ThemedText>
+        </View>
+      </Pressable>
+    </ThemedView>
+  ), [gridCardWidth, handleCategoryPress]);
 
   return (
     <ScreenLayout padding="none" withSafeArea={false}>
@@ -79,55 +115,30 @@ export default function SearchScreen() {
       </ThemedView>
 
       {/* List */}
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
-        contentContainerStyle={[
-          styles.listContent, 
-          { paddingBottom: tabBarHeight }
-        ]}
-      >
-        {activeTab === 'categories' ? (
-          <View style={[styles.grid, horizontalPadding]}>
-            {CAMPUS_CATEGORIES.map((cat) => (
-              <ThemedView 
-                key={cat.id} 
-                elevation={2}
-                style={[styles.categoryCard, { width: gridCardWidth }]}
-              >
-                <Pressable 
-                  style={({ pressed }) => [styles.cardPressable, pressed && { opacity: 0.95 }]}
-                  onPress={() => router.push({
-                    pathname: "/search/[id]",
-                    params: { id: cat.id }
-                  })}
-                >
-                  <ImageBackground 
-                    source={{ uri: cat.image }} 
-                    style={styles.cardImage}
-                    imageStyle={styles.cardImageInner}
-                  >
-                    <View style={styles.cardOverlay}>
-                        <ThemedText variant="titleMedium" style={styles.cardTitle} numberOfLines={1}>
-                          {cat.title}
-                        </ThemedText>
-                        <ThemedText variant="labelSmall" style={styles.cardSubtitle} numberOfLines={1}>
-                          {cat.subtitle}
-                        </ThemedText>
-                    </View>
-                  </ImageBackground>
-                </Pressable>
-              </ThemedView>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.emptyContainer}>
-             <ThemedIcon name="creation" size={48} colorName="outline" />
-             <ThemedText variant="bodyLarge" colorName="textSecondary" align="center" style={styles.emptyText}>
-               Your personalized interests will appear here.
-             </ThemedText>
-          </View>
-        )}
-      </ScrollView>
+      {activeTab === 'categories' ? (
+        <FlatList
+          data={CAMPUS_CATEGORIES}
+          renderItem={renderCategoryItem}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          contentContainerStyle={[
+            styles.listContent, 
+            { paddingBottom: tabBarHeight + Spacing.xl, paddingHorizontal: contentPaddingLeft }
+          ]}
+          columnWrapperStyle={styles.columnWrapper}
+          showsVerticalScrollIndicator={false}
+          removeClippedSubviews={true}
+          initialNumToRender={6}
+          windowSize={3}
+        />
+      ) : (
+        <View style={styles.emptyContainer}>
+           <ThemedIcon name="creation" size={48} colorName="outline" />
+           <ThemedText variant="bodyLarge" colorName="textSecondary" align="center" style={styles.emptyText}>
+             Your personalized interests will appear here.
+           </ThemedText>
+        </View>
+      )}
     </ScreenLayout>
   );
 }
@@ -165,16 +176,13 @@ const styles = StyleSheet.create({
   listContent: {
     paddingVertical: Spacing.lg,
   },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  columnWrapper: {
     justifyContent: 'space-between',
-    gap: Spacing.md,
+    marginBottom: Spacing.md,
   },
   categoryCard: {
     borderRadius: 24,
     overflow: 'hidden',
-    marginBottom: Spacing.sm,
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.05)',
     backgroundColor: '#2c3e50', // Fallback for missing images
@@ -185,11 +193,7 @@ const styles = StyleSheet.create({
   cardImage: {
     flex: 1,
   },
-  cardImageInner: {
-    borderRadius: 24,
-  },
   cardOverlay: {
-    flex: 1,
     backgroundColor: 'rgba(0,0,0,0.3)',
     justifyContent: 'flex-end',
     padding: Spacing.md,
@@ -199,25 +203,21 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    textShadowRadius: 2,
   },
   cardSubtitle: {
-    color: 'rgba(255,255,255,0.85)',
+    color: 'rgba(255,255,255,0.9)',
     marginTop: 2,
-  },
-  textContainer: {
-    flex: 1,
-    gap: 2,
   },
   emptyContainer: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 100,
+    alignItems: 'center',
+    padding: Spacing.xxl,
   },
   emptyText: {
-    marginTop: Spacing.lg,
-    paddingHorizontal: Spacing.huge,
+    marginTop: Spacing.md,
+    lineHeight: 24,
   }
 });
 
