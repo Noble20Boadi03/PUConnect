@@ -125,33 +125,33 @@ export const Colors = {
     errorContainer: palette.error[20],
     onErrorContainer: palette.error[90],
     
-    background: '#020617', // Deepest Slate
+    background: '#000000', // Pure Black for OLED
     onBackground: palette.neutral[100],
     
-    surface: '#0f172a', // Slate 900
+    surface: '#121212', // Material Design elevated surface
     onSurface: palette.neutral[100],
-    surfaceVariant: '#1e293b', // Slate 800
-    onSurfaceVariant: palette.neutral[80],
+    surfaceVariant: '#1e1e1e', // Higher elevation
+    onSurfaceVariant: '#a3a3a3', // Neutral 400
     
-    outline: '#334155', // Slate 700
-    outlineVariant: '#1e293b', // Slate 800
+    outline: '#333333', // Neutral border
+    outlineVariant: '#262626', // Subtle border
     
     inverseSurface: palette.neutral[100],
-    inverseOnSurface: '#020617',
+    inverseOnSurface: '#000000',
     inversePrimary: palette.primary[40],
     
     // Legacy mapping (Improved contrast)
     text: palette.neutral[100],
-    textSecondary: '#cbd5e1', // Slate 300
-    textMuted: '#94a3b8', // Slate 400
+    textSecondary: '#d4d4d4', // Neutral 300
+    textMuted: '#a3a3a3', // Neutral 400
     tint: palette.primary[80],
     discoveryPrimary: '#10b981',
-    icon: palette.neutral[80],
-    tabIconDefault: '#64748b',
+    icon: '#a3a3a3',
+    tabIconDefault: '#737373', // Neutral 500
     tabIconSelected: palette.neutral[100],
-    border: '#1e293b',
-    glass: 'rgba(15, 23, 42, 0.75)',
-    glassBorder: 'rgba(33, 47, 71, 0.5)',
+    border: '#262626',
+    glass: 'rgba(18, 18, 18, 0.75)',
+    glassBorder: 'rgba(51, 51, 51, 0.5)',
   },
 };
 
@@ -241,7 +241,7 @@ export const Gradients = {
   secondary: ['#0ea5e9', '#3b82f6'] as const,
   tertiary: ['#f59e0b', '#d97706'] as const,
   glass: (isDark: boolean) => isDark 
-    ? ['rgba(15, 23, 42, 0.75)', 'rgba(2, 6, 23, 0.85)'] as const
+    ? ['rgba(18, 18, 18, 0.75)', 'rgba(0, 0, 0, 0.85)'] as const
     : ['rgba(255, 255, 255, 0.85)', 'rgba(241, 245, 249, 0.75)'] as const,
 };
 
