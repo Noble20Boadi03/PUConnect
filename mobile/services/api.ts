@@ -119,9 +119,9 @@ export const api = {
 
     getMe: async (_token: string, signal?: AbortSignal): Promise<User> => {
         const userId = await getCurrentUserId();
-        let query = supabase.from('profiles').select('*').eq('id', userId).single();
+        let query = supabase.from('profiles').select('*').eq('id', userId);
         if (signal) query = query.abortSignal(signal);
-        const { data, error } = await query;
+        const { data, error } = await query.single();
         if (error) throw new Error(error.message);
         return mapProfile(data);
     },
@@ -209,9 +209,9 @@ export const api = {
     },
 
     getListing: async (id: string, signal?: AbortSignal): Promise<Listing> => {
-        let query = supabase.from('listings').select('*').eq('id', id).single();
+        let query = supabase.from('listings').select('*').eq('id', id);
         if (signal) query = query.abortSignal(signal);
-        const { data, error } = await query;
+        const { data, error } = await query.single();
         if (error) throw new Error(error.message);
         return mapListing(data);
     },
@@ -298,9 +298,9 @@ export const api = {
     // ── Users / Profiles ──────────────────────────────────────────────────────
 
     getUserById: async (id: string, signal?: AbortSignal): Promise<User | null> => {
-        let query = supabase.from('profiles').select('*').eq('id', id).single();
+        let query = supabase.from('profiles').select('*').eq('id', id);
         if (signal) query = query.abortSignal(signal);
-        const { data, error } = await query;
+        const { data, error } = await query.single();
         if (error) return null;
         return mapProfile(data);
     },

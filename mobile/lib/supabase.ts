@@ -13,3 +13,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: false,
   },
 })
+
+console.log('SUPABASE URL:', process.env.EXPO_PUBLIC_SUPABASE_URL)
+console.log('SUPABASE KEY:', process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY)
