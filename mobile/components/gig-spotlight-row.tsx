@@ -8,13 +8,13 @@ import { Spacing } from '@/constants/theme';
 import { Listing } from '@/types';
 import { router } from 'expo-router';
 
-interface GigSpotlightRowProps {
-  gigs: Listing[];
+interface RequestSpotlightRowProps {
+  requests: Listing[];
   cardWidth: number;
   horizontalPadding: { paddingLeft: number; paddingRight: number };
 }
 
-export function GigSpotlightRow({ gigs, cardWidth, horizontalPadding }: GigSpotlightRowProps) {
+export function RequestSpotlightRow({ requests, cardWidth, horizontalPadding }: RequestSpotlightRowProps) {
   const { theme } = useTheme();
   const scrollRef = useRef<ScrollView>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
@@ -52,7 +52,7 @@ export function GigSpotlightRow({ gigs, cardWidth, horizontalPadding }: GigSpotl
         <View style={styles.label}>
           <ThemedIcon name="lightning-bolt" size={18} colorName="tertiary" />
           <ThemedText variant="titleSmall" colorName="tertiary" style={styles.title}>
-            Available gigs
+            Available requests
           </ThemedText>
         </View>
       </View>
@@ -67,12 +67,12 @@ export function GigSpotlightRow({ gigs, cardWidth, horizontalPadding }: GigSpotl
           scrollEventThrottle={16}
           contentContainerStyle={{ gap: Spacing.md }}
         >
-          {gigs.map((gig) => (
+          {requests.map((request) => (
             <ListingCard
-              key={`gig-${gig.id}`}
-              listing={gig}
+              key={`request-${request.id}`}
+              listing={request}
               width={cardWidth}
-              onPress={() => router.push({ pathname: '/listing/[id]', params: { id: gig.id } })}
+              onPress={() => router.push({ pathname: '/listing/[id]', params: { id: request.id } })}
             />
           ))}
         </ScrollView>

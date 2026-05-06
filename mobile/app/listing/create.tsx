@@ -99,7 +99,7 @@ export default function CreateListingScreen() {
     } finally {
       setLoading(false);
     }
-  }, [editId, token, router, user?.canOfferServices, showAlert]);
+  }, [editId, token, router, user?.canOfferServices, showAlert, title]);
 
   useEffect(() => {
     load();
@@ -119,7 +119,7 @@ export default function CreateListingScreen() {
         setSubcategoryTitle('');
       }
     }
-  }, [categoryTitle]);
+  }, [categoryTitle, subcategoryTitle]);
 
   const onSubmit = async () => {
     if (!token) {
@@ -140,7 +140,7 @@ export default function CreateListingScreen() {
         primaryButtonTitle: 'Post a request',
         onPrimaryPress: () => setListingType('service_request'),
         secondaryButtonTitle: 'Upgrade profile',
-        onSecondaryPress: () => router.push('/(tabs)/onboarding')
+        onSecondaryPress: () => router.push('/profile/edit-profile')
       });
       return;
     }

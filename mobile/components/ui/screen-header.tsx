@@ -30,7 +30,7 @@ export function ScreenHeader({ title, onBack, backIcon = 'chevron-left', right, 
   });
 
   return (
-    <ThemedView style={[styles.header, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
+    <ThemedView style={[styles.header, { paddingTop: insets.top + Spacing.xs, ...horizontalPadding }]}>
       {showBack ? (
         <Pressable onPress={handleBack} style={styles.backBtn} accessibilityRole="button" accessibilityLabel="Go back">
           <ThemedIcon name={backIcon} size={28} />
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingBottom: Spacing.md,
+    paddingBottom: Spacing.sm,
     gap: Spacing.sm,
   },
   backBtn: {

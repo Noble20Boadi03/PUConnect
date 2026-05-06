@@ -8,14 +8,14 @@ import { UiState } from '@/types/ui-state';
 import { Gradients } from '@/constants/theme';
 
 export interface HomeDashboardData {
-    popular: { category: DetailedCategory; colors: readonly [string, string, ...string[]] }[];
-    trending: Listing[];
-    featuredOffers: Listing[];
-    featuredGigs: Listing[];
+    popularSubcategories: { title: string; icon: string; colors: readonly [string, string, ...string[]]; categoryId: string }[];
+    recentlyViewed: Listing[];
+    featuredServices: Listing[];
+    featuredRequests: Listing[];
 }
 
 export type HomeUiState = UiState<HomeDashboardData>;
-export type HomeFilter = 'All' | 'Experts' | 'Gigs';
+export type HomeFilter = 'All' | 'Services' | 'Requests';
 
 export function useHomeViewModel() {
     const [uiState, setUiState] = useState<HomeUiState>({ status: 'loading' });
@@ -48,8 +48,8 @@ export function useHomeViewModel() {
     const fetchDashboardData = useCallback(async (filter: HomeFilter, signal?: AbortSignal) => {
         try {
             let type: 'service_offer' | 'service_request' | undefined = undefined;
-            if (filter === 'Experts') type = 'service_offer';
-            else if (filter === 'Gigs') type = 'service_request';
+            if (filter === 'Services') type = 'service_offer';
+            else if (filter === 'Requests') type = 'service_request';
 
             const data = await api.getListings(0, 20, { type }, signal);
 
@@ -58,24 +58,29 @@ export function useHomeViewModel() {
                 return;
             }
 
-            const popularCats = [
-                { category: CAMPUS_CATEGORIES.find(c => c.id === 'tutoring')!, colors: Gradients.primary },
-                { category: CAMPUS_CATEGORIES.find(c => c.id === 'tech')!, colors: Gradients.secondary },
-                { category: CAMPUS_CATEGORIES.find(c => c.id === 'design')!, colors: Gradients.tertiary },
-                { category: CAMPUS_CATEGORIES.find(c => c.id === 'career')!, colors: ['#047857', '#065f46'] as const }, // Forest Green
-                { category: CAMPUS_CATEGORIES.find(c => c.id === 'photo')!, colors: ['#0891b2', '#0e7490'] as const }, // Deep Teal
-            ].filter(item => item.category);
+            // Popular subcategories (synced with actual categories)
+            const popularSubcategories = [
+                { title: 'Subject Tutoring', icon: 'book-open-page-variant', colors: Gradients.primary, categoryId: 'academics' },
+                { title: 'Website & App Development', icon: 'code-tags', colors: Gradients.secondary, categoryId: 'tech_design' },
+                { title: 'Graphic Design', icon: 'palette-outline', colors: Gradients.tertiary, categoryId: 'media_music' },
+                { title: 'Event Photography/Video', icon: 'camera-outline', colors: ['#047857', '#065f46'] as const, categoryId: 'media_music' },
+                { title: 'CV & Cover Letters', icon: 'file-document-outline', colors: ['#0891b2', '#0e7490'] as const, categoryId: 'biz_career' },
+                { title: 'Campus Delivery', icon: 'moped', colors: ['#7c3aed', '#6d28d9'] as const, categoryId: 'campus_life' },
+            ];
 
             const offers = data.filter(l => l.type === 'service_offer');
-            const gigs = data.filter(l => l.type === 'service_request');
+            const requests = data.filter(l => l.type === 'service_request');
+
+            // Recently viewed (mocked with 3 items from data)
+            const recentlyViewed = data.slice(0, 3);
 
             setUiState({
                 status: 'content',
                 data: {
-                    popular: popularCats,
-                    trending: data.slice(0, 10),
-                    featuredOffers: offers,
-                    featuredGigs: gigs,
+                    popularSubcategories,
+                    recentlyViewed,
+                    featuredServices: offers,
+                    featuredRequests: requests,
                 },
                 isRefreshing: false,
             });

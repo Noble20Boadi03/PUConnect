@@ -15,7 +15,7 @@ import Animated, {
   FadeInDown,
   FadeOut,
 } from "react-native-reanimated";
-import { ThemedView } from "@/components/themed-view";
+
 import { ThemedText } from "@/components/themed-text";
 import { ThemedIcon } from "@/components/ui/themed-icon";
 import { PrimaryButton } from "@/components/ui/primary-button";
@@ -24,7 +24,7 @@ import { useResponsive } from "@/hooks/use-responsive";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { useTheme } from "@/context/theme-context";
 
-const AnimatedThemedView = Animated.createAnimatedComponent(ThemedView);
+
 const AnimatedThemedText = Animated.createAnimatedComponent(ThemedText);
 
 const slides = [

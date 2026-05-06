@@ -27,7 +27,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function ProfileScreen() {
     const { uiState } = useProfileViewModel();
-    const { signOut, token, refreshUser } = useAuth();
+    const { token, refreshUser } = useAuth();
     const { theme, isDark } = useTheme();
     const { showAlert } = useAppAlert();
     const { showActionSheetWithOptions } = useActionSheet();
@@ -136,10 +136,10 @@ export default function ProfileScreen() {
     if (uiState.status === 'guest') {
         return (
             <ScreenLayout padding="none" withSafeArea={false}>
-                <ThemedView style={[styles.fixedHeader, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
+                <ThemedView style={[styles.fixedHeader, { paddingTop: insets.top + Spacing.xs, ...horizontalPadding }]}>
                     <View style={styles.topRow}>
                         <ThemedText variant="headlineSmall" style={styles.brandLogo}>
-                            PUConnect<ThemedText colorName="primary">.</ThemedText>
+                            PUConnect
                         </ThemedText>
                     </View>
                 </ThemedView>
@@ -172,7 +172,7 @@ export default function ProfileScreen() {
     return (
         <ScreenLayout padding="none" withSafeArea={false}>
             {/* ─── HEADER BAR ────────────────────────────────── */}
-            <ThemedView style={[styles.fixedHeader, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
+            <ThemedView style={[styles.fixedHeader, { paddingTop: insets.top + Spacing.xs, ...horizontalPadding }]}>
                 <View style={styles.topRow}>
                     <ThemedText variant="headlineSmall" style={[styles.brandLogo, { fontWeight: '900' }]}>
                         Profile<ThemedText colorName="primary" style={{ fontWeight: '900' }}></ThemedText>
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     fixedHeader: {
-        paddingBottom: Spacing.sm,
+        paddingBottom: Spacing.xs,
         zIndex: 10,
     },
     topRow: {

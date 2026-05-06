@@ -1,12 +1,12 @@
 import React from 'react';
-import { StyleSheet, View, Image, ScrollView, Dimensions } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, View, Image, ScrollView } from 'react-native';
+
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { Stack as ExpoStack } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { ScreenHeader } from '@/components/ui/screen-header';
 
@@ -16,12 +16,12 @@ import { useAuth } from '@/context/auth-context';
 import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 
 export default function PublicProfileScreen() {
     const { user } = useAuth();
     const { theme, isDark } = useTheme();
-    const insets = useSafeAreaInsets();
+
     const { horizontalPadding } = useResponsive();
 
     if (!user) return null;
@@ -145,7 +145,7 @@ export default function PublicProfileScreen() {
                             No active ads
                         </ThemedText>
                         <ThemedText variant="bodyMedium" colorName="textMuted" align="center" style={styles.emptySubtitle}>
-                            This provider currently doesn't have any active skill ads posted.
+                            This provider currently doesn&apos;t have any active skill ads posted.
                         </ThemedText>
                     </View>
                 </Animated.View>

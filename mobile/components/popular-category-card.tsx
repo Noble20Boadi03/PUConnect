@@ -34,7 +34,7 @@ export function PopularCategoryCard({ title, icon, colors, onPress, width = 140 
           end={{ x: 1, y: 1 }}
           style={styles.imageSection}
         >
-          <ThemedIcon name={icon as any} size={40} lightColor="#ffffff" darkColor="#ffffff" />
+          <ThemedIcon name={icon as any} size={56} lightColor="#ffffff" darkColor="#ffffff" />
         </LinearGradient>
         <View style={styles.content}>
           <ThemedText variant="labelLarge" style={styles.title} numberOfLines={1}>
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xs,
   },
   title: {
-    fontWeight: '700',
+    fontWeight: '600',
     textAlign: 'center',
   },
 });

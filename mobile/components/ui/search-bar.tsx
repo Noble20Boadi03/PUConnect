@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderRadius: 8,
   },
   searchInput: {

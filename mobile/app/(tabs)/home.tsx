@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { StyleSheet, View, ActivityIndicator, RefreshControl, ScrollView, Pressable, Dimensions } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, View, ActivityIndicator, RefreshControl, ScrollView, Pressable, Dimensions, Image } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
@@ -10,8 +10,9 @@ import { Spacing, BorderRadius } from '@/constants/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '@/hooks/use-responsive';
 import { ListingCard } from '@/components/listing-card';
+import { RequestCard } from '@/components/request-card';
 import { PopularCategoryCard } from '@/components/popular-category-card';
-import { GigSpotlightRow } from '@/components/gig-spotlight-row';
+
 import { SearchBar } from '@/components/ui/search-bar';
 import { useHomeViewModel } from '@/hooks/view-models/use-home-view-model';
 import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
@@ -36,9 +37,9 @@ const SectionHeader = ({ title, onSeeAll, horizontalPadding }: SectionHeaderProp
   );
 };
 
-const HomeFilterPills = ({ activeFilter, onFilterChange }: { activeFilter: 'All' | 'Experts' | 'Gigs', onFilterChange: (filter: 'All' | 'Experts' | 'Gigs') => void }) => {
+const HomeFilterPills = ({ activeFilter, onFilterChange }: { activeFilter: 'All' | 'Services' | 'Requests', onFilterChange: (filter: 'All' | 'Services' | 'Requests') => void }) => {
   const { theme } = useTheme();
-  const filters: ('All' | 'Experts' | 'Gigs')[] = ['All', 'Experts', 'Gigs'];
+  const filters: ('All' | 'Services' | 'Requests')[] = ['All', 'Services', 'Requests'];
 
   return (
     <ScrollView
@@ -81,42 +82,12 @@ export default function HomeScreen() {
   const { isTablet, isLandscape, horizontalPadding } = useResponsive();
   const tabBarHeight = useTabBarHeight();
 
-  const cardWidth = isTablet ? 240 : isLandscape ? 200 : 160;
-  const categoryCardWidth = isTablet ? 180 : isLandscape ? 160 : 130;
-  const gridCardWidth = (Dimensions.get('window').width - (horizontalPadding.paddingLeft + horizontalPadding.paddingRight) - Spacing.md) / 2;
+
+  const cardWidth = isTablet ? 360 : isLandscape ? 320 : 280;
+  const categoryCardWidth = isTablet ? 240 : isLandscape ? 220 : (Dimensions.get('window').width - horizontalPadding.paddingLeft) / 2.3;
 
   const isRefreshing = uiState.status === 'content' && !!uiState.isRefreshing;
   const isAdmin = user?.role === 'admin';
-
-  // Build the featured feed based on the active filter
-  // This hook is moved here to follow the rules of hooks (no early returns before hooks)
-  const featuredFeed = useMemo(() => {
-    if (uiState.status !== 'content') return [];
-    
-    const { featuredOffers, featuredGigs } = uiState.data;
-
-    if (activeFilter === 'Experts') {
-      return featuredOffers.map(item => ({ type: 'offer' as const, data: item }));
-    }
-    if (activeFilter === 'Gigs') {
-      return featuredGigs.map(item => ({ type: 'offer' as const, data: item }));
-    }
-    
-    const feed: { type: 'offer' | 'gigRow'; data: any }[] = [];
-    let gigInserted = false;
-    featuredOffers.forEach((item, index) => {
-      feed.push({ type: 'offer', data: item });
-      if (index === 2 && featuredGigs.length > 0) {
-        feed.push({ type: 'gigRow', data: featuredGigs });
-        gigInserted = true;
-      }
-    });
-
-    if (!gigInserted && featuredGigs.length > 0) {
-      feed.push({ type: 'gigRow', data: featuredGigs });
-    }
-    return feed;
-  }, [uiState, activeFilter]);
 
   if (uiState.status === 'loading') {
     return (
@@ -152,7 +123,7 @@ export default function HomeScreen() {
   }
 
   if (uiState.status !== 'content') return null;
-  const { popular, trending } = uiState.data;
+  const { popularSubcategories, recentlyViewed, featuredServices, featuredRequests } = uiState.data;
 
   return (
     <ScreenLayout padding="none" withSafeArea={false}>
@@ -160,12 +131,12 @@ export default function HomeScreen() {
       <ThemedView
         style={[
           styles.fixedHeader,
-          { paddingTop: insets.top + Spacing.sm }
+          { paddingTop: insets.top + Spacing.xs }
         ]}
       >
         <View style={[styles.topRow, horizontalPadding]}>
           <ThemedText variant="headlineSmall" style={[styles.brandLogo, { fontWeight: '900' }]}>
-            PuConnect<ThemedText colorName="primary" style={{ fontWeight: '900' }}>.</ThemedText>
+            PuConnect
           </ThemedText>
           <View style={styles.headerActions}>
             {isAdmin && (
@@ -189,7 +160,7 @@ export default function HomeScreen() {
         <SearchBar
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder="Search Experts or Gigs"
+          placeholder="Search Services or Requests"
           onSubmit={() => router.push({ pathname: '/search/results', params: { q: searchQuery.trim() } })}
           containerStyle={{ marginHorizontal: horizontalPadding.paddingLeft }}
         />
@@ -199,10 +170,10 @@ export default function HomeScreen() {
 
         <ThemedText variant="bodySmall" colorName="textMuted" style={[styles.discoveryTip, horizontalPadding]}>
           {activeFilter === 'All'
-            ? 'Tip: Browse Experts for professional help or Gigs to find students who need your skills.'
-            : activeFilter === 'Experts'
-            ? 'Tip: Experts are students offering professional services. Hire them to get your tasks done.'
-            : 'Tip: Gigs are requests from students who need help. Apply to these to earn and build your portfolio.'}
+            ? 'Browse Services for professional help or Requests to find students who need your skills.'
+            : activeFilter === 'Services'
+            ? 'Services are students offering professional help. Hire them to get your tasks done.'
+            : 'Requests are from students who need help. Apply to these to earn and build your portfolio.'}
         </ThemedText>
       </ThemedView>
 
@@ -216,87 +187,174 @@ export default function HomeScreen() {
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={theme.primary} />
         }
       >
-        {/* Popular Services Section */}
-        <SectionHeader
-          title="Popular Services"
-          horizontalPadding={horizontalPadding}
-          onSeeAll={() => router.push({ pathname: '/search/results', params: { q: '', section: 'popular' } })}
-        />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingLeft: horizontalPadding.paddingLeft,
-            paddingRight: horizontalPadding.paddingRight,
-            gap: Spacing.md,
-          }}
-          style={styles.horizontalSection}
-        >
-          {popular.map((item) => (
-            <PopularCategoryCard
-              key={`cat-${item.category.id}`}
-              title={item.category.title}
-              icon={item.category.icon}
-              colors={item.colors}
-              width={categoryCardWidth}
-              onPress={() => router.push({ pathname: '/search/[id]', params: { id: item.category.id } })}
+        {activeFilter === 'All' ? (
+          <>
+            {/* Section 1: Popular Services (Horizontal Subcategories) */}
+            <SectionHeader
+              title="Popular Services"
+              horizontalPadding={horizontalPadding}
+              onSeeAll={() => router.push({ pathname: '/search', params: { tab: 'categories' } })}
             />
-          ))}
-        </ScrollView>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{
+                paddingLeft: horizontalPadding.paddingLeft,
+                paddingRight: horizontalPadding.paddingRight,
+                gap: Spacing.md,
+              }}
+              style={styles.horizontalSection}
+            >
+              {popularSubcategories.map((item, index) => (
+                <PopularCategoryCard
+                  key={`cat-${index}`}
+                  title={item.title}
+                  icon={item.icon}
+                  colors={item.colors}
+                  width={categoryCardWidth}
+                  onPress={() => router.push({ 
+                    pathname: '/search/listings/[subcategory]', 
+                    params: { 
+                        subcategory: item.title,
+                        category: item.categoryId
+                    } 
+                  })}
+                />
+              ))}
+            </ScrollView>
 
-        {/* Trending This Week Section */}
-        <SectionHeader
-          title="Trending this week"
-          horizontalPadding={horizontalPadding}
-          onSeeAll={() => router.push({ pathname: '/search/results', params: { q: '', section: 'trending' } })}
-        />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingLeft: horizontalPadding.paddingLeft,
-            paddingRight: horizontalPadding.paddingRight,
-            gap: Spacing.md,
-          }}
-          style={styles.horizontalSection}
-        >
-          {trending.map((item) => (
-            <ListingCard
-              key={`trend-${item.id}`}
-              listing={item}
-              width={cardWidth}
-              onPress={() => router.push({ pathname: '/listing/[id]', params: { id: item.id } })}
-            />
-          ))}
-        </ScrollView>
-
-        {/* Featured Posts Section */}
-        <SectionHeader
-          title="Featured posts"
-          horizontalPadding={horizontalPadding}
-        />
-        <View style={[styles.featuredFeed, horizontalPadding]}>
-          {featuredFeed.map((entry, index) => {
-            if (entry.type === 'gigRow') {
-              return (
-                <GigSpotlightRow
-                  key={`gig-row-${index}`}
-                  gigs={entry.data as any[]}
-                  cardWidth={cardWidth}
+            {/* Section 2: Recently Viewed (Horizontal scrolling, 3 posts) */}
+            {recentlyViewed.length > 0 && (
+              <>
+                <SectionHeader
+                  title="Recently Viewed"
                   horizontalPadding={horizontalPadding}
                 />
-              );
-            }
-            return (
-              <ListingCard
-                key={`feat-${entry.data.id}`}
-                listing={entry.data}
-                width={gridCardWidth}
-                onPress={() => router.push({ pathname: '/listing/[id]', params: { id: entry.data.id } })}
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{
+                    paddingLeft: horizontalPadding.paddingLeft,
+                    paddingRight: horizontalPadding.paddingRight,
+                    gap: Spacing.md,
+                  }}
+                  style={styles.horizontalSection}
+                >
+                  {recentlyViewed.map((item) => (
+                    <ListingCard
+                      key={`recent-${item.id}`}
+                      listing={item}
+                      width={cardWidth}
+                      onPress={() => router.push({ pathname: '/listing/[id]', params: { id: item.id } })}
+                    />
+                  ))}
+                </ScrollView>
+              </>
+            )}
+
+            {/* Promo Banner */}
+            <Pressable 
+              style={[
+                styles.promoBanner, 
+                { marginHorizontal: horizontalPadding.paddingLeft }
+              ]}
+              onPress={() => router.push({ pathname: '/search', params: { tab: 'categories' } })}
+            >
+              <Image 
+                source={require('@/assets/images/promo-banner.png')} 
+                style={styles.promoImage} 
+                resizeMode="cover"
               />
-            );
-          })}
-        </View>
+              <View style={styles.promoContent}>
+                <ThemedText variant="headlineSmall" style={styles.promoTitle} darkColor="#fff" lightColor="#fff">
+                  Discover Campus Talent
+                </ThemedText>
+                <ThemedText variant="bodyLarge" style={styles.promoSubtitle} darkColor="rgba(255,255,255,0.95)" lightColor="rgba(255,255,255,0.95)">
+                  Explore services and requests from your peers today.
+                </ThemedText>
+              </View>
+            </Pressable>
+
+            {/* Section 3: Featured Posts */}
+            <View style={styles.featuredSection}>
+              <View style={styles.featuredMainHeader}>
+                <View style={[styles.headerLine, { backgroundColor: theme.outlineVariant }]} />
+                <ThemedText variant="headlineSmall" style={styles.featuredTitle}>
+                  Featured Posts
+                </ThemedText>
+                <View style={[styles.headerLine, { backgroundColor: theme.outlineVariant }]} />
+              </View>
+              
+              {/* Subsection 3.1: Services (Horizontal) */}
+              <SectionHeader
+                title="Services"
+                horizontalPadding={horizontalPadding}
+                onSeeAll={() => setActiveFilter('Services')}
+              />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{
+                  paddingLeft: horizontalPadding.paddingLeft,
+                  paddingRight: horizontalPadding.paddingRight,
+                  gap: Spacing.md,
+                }}
+                style={styles.horizontalSection}
+              >
+                {featuredServices.map((item) => (
+                  <ListingCard
+                    key={`service-${item.id}`}
+                    listing={item}
+                    width={cardWidth}
+                    onPress={() => router.push({ pathname: '/listing/[id]', params: { id: item.id } })}
+                  />
+                ))}
+              </ScrollView>
+
+              {/* Subsection 3.2: Requests (Horizontal) */}
+              <SectionHeader
+                title="Requests"
+                horizontalPadding={horizontalPadding}
+                onSeeAll={() => setActiveFilter('Requests')}
+              />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{
+                  paddingLeft: horizontalPadding.paddingLeft,
+                  paddingRight: horizontalPadding.paddingRight,
+                  gap: Spacing.md,
+                }}
+                style={styles.horizontalSection}
+              >
+                {featuredRequests.map((item) => (
+                  <RequestCard
+                    key={`request-${item.id}`}
+                    listing={item}
+                    width={cardWidth}
+                    onPress={() => router.push({ pathname: '/listing/[id]', params: { id: item.id } })}
+                  />
+                ))}
+              </ScrollView>
+            </View>
+          </>
+        ) : (
+          <View style={[{ paddingTop: Spacing.lg, gap: Spacing.md }, horizontalPadding]}>
+            <ThemedText variant="titleLarge" style={{ fontWeight: '800', marginBottom: Spacing.sm }}>
+              {activeFilter === 'Services' ? 'Available Services' : 'Open Requests'}
+            </ThemedText>
+            {(activeFilter === 'Services' ? featuredServices : featuredRequests).map((item) => {
+              const CardComponent = activeFilter === 'Requests' ? RequestCard : ListingCard;
+              return (
+                <CardComponent
+                  key={`list-${item.id}`}
+                  listing={item}
+                  onPress={() => router.push({ pathname: '/listing/[id]', params: { id: item.id } })}
+                />
+              );
+            })}
+          </View>
+        )}
       </ScrollView>
     </ScreenLayout>
   );
@@ -309,14 +367,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   fixedHeader: {
-    paddingBottom: Spacing.md,
+    paddingBottom: Spacing.sm,
     zIndex: 10,
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   headerActions: {
     flexDirection: 'row',
@@ -336,7 +394,7 @@ const styles = StyleSheet.create({
   },
   pillsContainer: {
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.sm,
     gap: Spacing.sm,
   },
   pill: {
@@ -369,11 +427,68 @@ const styles = StyleSheet.create({
   horizontalSection: {
     marginBottom: Spacing.sm,
   },
+  featuredSection: {
+    marginTop: Spacing.xxl,
+    paddingBottom: Spacing.xl,
+  },
+  featuredMainHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.md,
+    marginBottom: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+  },
+  featuredTitle: {
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    fontSize: 16,
+    opacity: 0.8,
+  },
+  headerLine: {
+    flex: 1,
+    height: 1,
+    opacity: 0.5,
+  },
   featuredFeed: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     gap: Spacing.md,
     marginTop: Spacing.sm,
+  },
+  promoBanner: {
+    marginTop: Spacing.xxl,
+    height: 200,
+    borderRadius: 20,
+    overflow: 'hidden',
+    position: 'relative',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+  },
+  promoImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  promoContent: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    padding: Spacing.xl,
+    backgroundColor: 'rgba(0,0,0,0.4)', 
+  },
+  promoTitle: {
+    fontWeight: '900',
+    marginBottom: Spacing.xs,
+  },
+  promoSubtitle: {
+    maxWidth: '90%',
+    lineHeight: 22,
   },
 });

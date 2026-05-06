@@ -4,17 +4,14 @@ import { useTheme } from '@/context/theme-context';
 import { BlurView } from 'expo-blur';
 import { Platform, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { useResponsive } from '@/hooks/use-responsive';
-import { useAuth } from '@/context/auth-context';
 
 export default function TabLayout() {
   const { theme, isDark } = useTheme();
-  const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const { isLandscape } = useResponsive();
-
-  const isAdmin = user?.role === 'admin';
 
   // In landscape, reduce tab bar height to preserve vertical screen space.
   // The tab bar also needs side (left/right) inset padding on phones in landscape.

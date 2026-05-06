@@ -56,6 +56,9 @@ export interface Listing {
   average_rating?: number;
   review_count?: number;
 
+  ownerName?: string;
+  ownerAvatar?: string;
+
   createdAt: string;
   updatedAt: string;
 }

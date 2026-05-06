@@ -5,7 +5,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { PrimaryButton } from '@/components/ui/primary-button';
-import { Spacing, BorderRadius } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '@/hooks/use-responsive';
@@ -21,7 +21,7 @@ export default function NotificationsScreen() {
             <Stack.Screen options={{ title: 'Notifications', headerShown: false }} />
             
             {/* Header */}
-            <View style={[styles.header, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
+            <View style={[styles.header, { paddingTop: insets.top + Spacing.xs, ...horizontalPadding }]}>
                 <View style={styles.headerLeft}>
                     <Pressable 
                         onPress={() => router.back()} 
@@ -45,7 +45,7 @@ export default function NotificationsScreen() {
                         No notifications yet
                     </ThemedText>
                     <ThemedText variant="bodyLarge" colorName="textMuted" align="center" style={styles.emptyDescription}>
-                        When you receive updates about your requests or collaborations, they'll appear here.
+                        When you receive updates about your requests or collaborations, they&apos;ll appear here.
                     </ThemedText>
                     <PrimaryButton
                         title="Explore Marketplace"
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingBottom: Spacing.md,
+        paddingBottom: Spacing.sm,
     },
     headerLeft: {
         flexDirection: 'row',

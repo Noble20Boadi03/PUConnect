@@ -222,13 +222,14 @@ const MOCK_LISTINGS: Listing[] = [
         title: 'Need Help with Calc II Homework',
         description: 'I am struggling with integration by parts and differential equations. Need a 1-hour session.',
         budget: 15,
-        category: 'Tutoring & Academics',
-        subcategory: 'STEM Tutoring',
+        category: 'academics',
+        subcategory: 'Subject Tutoring',
         type: 'service_request',
         ownerId: 'mock-user-001',
         media_url: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&auto=format&fit=crop',
         isActive: true,
-        tags: ['calculus', 'math', 'homework'],
+        tags: ['Subject Tutoring'],
+        requiredSkills: ['Calculus', 'Math', 'Tutoring'],
         createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
         updatedAt: new Date().toISOString(),
     },
@@ -237,13 +238,14 @@ const MOCK_LISTINGS: Listing[] = [
         title: 'Looking for a Guitarist for Band',
         description: 'Our campus band needs a lead guitarist for the upcoming talent show. Rehearsals twice a week.',
         budget: 0,
-        category: 'Events & Entertainment',
-        subcategory: 'Music',
+        category: 'media_music',
+        subcategory: 'Music & Arts',
         type: 'service_request',
         ownerId: 'user-009',
         media_url: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=800&auto=format&fit=crop',
         isActive: true,
-        tags: ['music', 'band', 'guitar'],
+        tags: ['Video Editing & Content'],
+        requiredSkills: ['Guitar', 'Music', 'Live Performance'],
         createdAt: new Date(Date.now() - 86400000).toISOString(),
         updatedAt: new Date().toISOString(),
     },
@@ -252,13 +254,14 @@ const MOCK_LISTINGS: Listing[] = [
         title: 'Website Bug Fix - Urgently Needed',
         description: 'My portfolio website has some CSS issues on mobile. Need a dev to fix it tonight.',
         budget: 30,
-        category: 'Tech & Development',
-        subcategory: 'App Development',
+        category: 'tech_design',
+        subcategory: 'Website & App Development',
         type: 'service_request',
         ownerId: 'user-007',
         media_url: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&auto=format&fit=crop',
         isActive: true,
-        tags: ['web', 'css', 'bug'],
+        tags: ['Website & App Development', 'Software Engineering Support'],
+        requiredSkills: ['CSS', 'HTML', 'Web Development'],
         createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
         updatedAt: new Date().toISOString(),
     },
@@ -557,7 +560,14 @@ function convKey(me: string, peer: string, listingId?: string): string {
 }
 
 function allListingsMerged(): Listing[] {
-    return [...MOCK_LISTINGS, ...extraListings];
+    return [...MOCK_LISTINGS, ...extraListings].map(listing => {
+        const owner = MOCK_PEER_USERS[listing.ownerId] || (listing.ownerId === mockSessionUser.id ? mockSessionUser : MOCK_USER);
+        return {
+            ...listing,
+            ownerName: owner.fullName,
+            ownerAvatar: owner.profilePictureUrl,
+        };
+    });
 }
 
 // ──────────────────────────────────────────────

@@ -68,7 +68,7 @@ export default function MessagesScreen() {
     return (
         <ScreenLayout padding="none" withSafeArea={false}>
             {/* Header */}
-            <View style={[styles.header, { paddingTop: insets.top + Spacing.sm, ...horizontalPadding }]}>
+            <View style={[styles.header, { paddingTop: insets.top + Spacing.xs, ...horizontalPadding }]}>
                 <ThemedText variant="headlineMedium" style={styles.title}>Messages</ThemedText>
                 <View style={styles.headerActions}>
                     {isAdmin && (
@@ -97,7 +97,7 @@ export default function MessagesScreen() {
                         No messages yet
                     </ThemedText>
                     <ThemedText variant="bodyLarge" colorName="textMuted" align="center" style={styles.emptyDescription}>
-                        Your collaborations will appear here. Start by exploring services or gigs in the marketplace.
+                        Your collaborations will appear here. Start by exploring services or requests in the marketplace.
                     </ThemedText>
                     <PrimaryButton
                         title="Explore Marketplace"
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingBottom: Spacing.md,
+        paddingBottom: Spacing.sm,
     },
     headerActions: {
         flexDirection: 'row',

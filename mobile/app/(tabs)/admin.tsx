@@ -9,10 +9,10 @@ import { useTheme } from '@/context/theme-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function AdminScreen() {
-    const { theme, isDark } = useTheme();
+    const { theme } = useTheme();
 
     const stats: { label: string; value: string; icon: IconName; color: string }[] = [
-        { label: 'Pending Gigs', value: '12', icon: 'clock-outline', color: '#f59e0b' },
+        { label: 'Pending Requests', value: '12', icon: 'clock-outline', color: '#f59e0b' },
         { label: 'Reported Users', value: '3', icon: 'alert-octagon-outline', color: '#ef4444' },
         { label: 'Total Users', value: '248', icon: 'account-group-outline', color: theme.primary },
     ];

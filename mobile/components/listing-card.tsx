@@ -17,20 +17,6 @@ const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1517245386807-bb43f
 
 export function ListingCard({ listing, width, onPress }: ListingCardProps) {
 
-    const getBadgeColors = () => {
-        switch (listing.type) {
-            case 'service_offer':
-                return { colorName: 'primary' as const, bgName: 'primaryContainer' as const, label: 'Offer' };
-            case 'service_request':
-                return { colorName: 'tertiary' as const, bgName: 'tertiaryContainer' as const, label: 'Need' };
-            case 'project_team':
-                return { colorName: 'secondary' as const, bgName: 'secondaryContainer' as const, label: 'Team' };
-            default:
-                return { colorName: 'textSecondary' as const, bgName: 'surfaceVariant' as const, label: 'Other' };
-        }
-    };
-
-    const badge = getBadgeColors();
 
     return (
         <ThemedView
@@ -52,28 +38,31 @@ export function ListingCard({ listing, width, onPress }: ListingCardProps) {
                         style={styles.image}
                         resizeMode="cover"
                     />
-                    <ThemedView colorName={badge.bgName} style={styles.badge}>
-                        <ThemedText variant="labelSmall" colorName={badge.colorName} style={styles.badgeText}>
-                            {badge.label}
-                        </ThemedText>
-                    </ThemedView>
                 </View>
 
                 <View style={styles.content}>
-                    <ThemedText variant="titleMedium" numberOfLines={2} style={styles.title}>
+                    <View style={styles.userRow}>
+                        {listing.ownerAvatar ? (
+                            <Image source={{ uri: listing.ownerAvatar }} style={styles.avatarImage} />
+                        ) : (
+                            <View style={[styles.avatarImage, { backgroundColor: '#e2e8f0', justifyContent: 'center', alignItems: 'center' }]}>
+                                <ThemedIcon name="account" size={16} colorName="textSecondary" />
+                            </View>
+                        )}
+                        <ThemedText variant="labelLarge" style={styles.userName}>
+                            {listing.ownerName || "Student Provider"}
+                        </ThemedText>
+                    </View>
+
+                    <ThemedText variant="bodyMedium" numberOfLines={2} style={styles.title}>
                         {listing.title}
                     </ThemedText>
 
                     <View style={styles.footer}>
-                        <View style={styles.ratingRow}>
-                            <ThemedIcon name="star" size={14} lightColor="#fbbf24" darkColor="#fbbf24" />
-                            <ThemedText variant="labelLarge" style={styles.ratingText}>
-                                {listing.average_rating || '5.0'}
-                            </ThemedText>
-                            <ThemedText variant="labelMedium" colorName="textMuted">
-                                ({listing.review_count || 12})
-                            </ThemedText>
-                        </View>
+                        <View style={{ flex: 1 }} />
+                        <ThemedText variant="labelMedium" colorName="textSecondary" style={styles.priceLabel}>
+                            <ThemedText style={styles.priceValue}>${listing.price || listing.budget || 15}</ThemedText>
+                        </ThemedText>
                     </View>
                 </View>
             </Pressable>
@@ -94,26 +83,12 @@ const styles = StyleSheet.create({
     },
     imageContainer: {
         width: '100%',
-        aspectRatio: 1.5,
+        aspectRatio: 1.2,
         backgroundColor: '#f1f5f9',
     },
     image: {
         width: '100%',
         height: '100%',
-    },
-    badge: {
-        position: 'absolute',
-        top: Spacing.sm,
-        left: Spacing.sm,
-        paddingHorizontal: Spacing.sm,
-        paddingVertical: 2,
-        borderRadius: 4,
-        elevation: 2,
-    },
-    badgeText: {
-        fontWeight: '800',
-        fontSize: 10,
-        textTransform: 'uppercase',
     },
     content: {
         padding: Spacing.md,
@@ -121,10 +96,8 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     title: {
-        fontWeight: '600',
-        fontSize: 15,
-        lineHeight: 20,
-        marginBottom: Spacing.md,
+        fontWeight: '400',
+        marginBottom: Spacing.sm,
     },
     footer: {
         flexDirection: 'row',
@@ -132,13 +105,25 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 'auto',
     },
-    ratingRow: {
+    userRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
+        marginBottom: Spacing.sm,
     },
-    ratingText: {
+    avatarImage: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        marginRight: Spacing.sm,
+    },
+    userName: {
+        fontWeight: '600',
+    },
+    priceLabel: {
+        fontSize: 12,
+    },
+    priceValue: {
         fontWeight: '800',
-        fontSize: 14,
+        fontSize: 16,
     },
 });
