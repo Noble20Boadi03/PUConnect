@@ -593,7 +593,8 @@ const styles = StyleSheet.create({
     },
     actionBtnLabel: {
         fontWeight: '600',
-        fontSize: 12,
+        fontSize: 11,
+        textAlign: 'center',
     },
 
     // Info Card

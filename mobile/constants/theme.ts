@@ -106,7 +106,7 @@ export const Colors = {
   },
   dark: {
     primary: palette.primary[80],
-    onPrimary: palette.primary[10],
+    onPrimary: palette.neutral[100], // High contrast white for primary buttons
     primaryContainer: palette.primary[20],
     onPrimaryContainer: palette.primary[90],
     
