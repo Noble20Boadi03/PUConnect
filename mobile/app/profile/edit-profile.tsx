@@ -1,12 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   StyleSheet,
   View,
   TextInput,
   Pressable,
   ActivityIndicator,
-  Image,
   ScrollView,
+  Modal,
 } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { ThemedText } from "@/components/themed-text";
@@ -17,8 +17,9 @@ import { useTheme } from "@/context/theme-context";
 import { useAuth } from "@/context/auth-context";
 import { useAppAlert } from "@/context/alert-context";
 import { api } from "@/services/api";
-import * as ImagePicker from 'expo-image-picker';
 import { Spacing, BorderRadius } from "@/constants/theme";
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { CAMPUS_CATEGORIES } from '@/constants/categories';
 
 export default function EditProfileScreen() {
   const { user, token, refreshUser } = useAuth();
@@ -26,57 +27,90 @@ export default function EditProfileScreen() {
   const { showAlert } = useAppAlert();
   const router = useRouter();
 
-  const [profilePictureUrl, setProfilePictureUrl] = useState(
-    user?.profilePictureUrl || ""
-  );
-  const [fullName, setFullName] = useState(user?.fullName || "");
+  const [firstName, setFirstName] = useState(user?.fullName?.split(" ")[0] || "");
+  const [lastName, setLastName] = useState(user?.fullName?.split(" ").slice(1).join(" ") || "");
+  const [username, setUsername] = useState((user as any)?.username || "");
   const [email, setEmail] = useState(user?.email || "");
-  const [universityId, setUniversityId] = useState(user?.universityId || "");
-  const [department, setDepartment] = useState(user?.department || "");
-  const [graduationYear, setGraduationYear] = useState(
-    user?.graduationYear?.toString() || ""
-  );
+
+  // Provider fields
+  const [isProviderExpanded, setIsProviderExpanded] = useState(user?.canOfferServices || false);
+  const [bio, setBio] = useState(user?.bio || "");
+  const [skills, setSkills] = useState<string[]>(user?.skillTags || []);
+  const [subcategory, setSubcategory] = useState((user as any)?.subcategory || "");
+  const [category, setCategory] = useState((user as any)?.category || "");
   
+  const [isSubcategoryModalVisible, setSubcategoryModalVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
+  const allSubcategories = useMemo(() => {
+    const options: { label: string; categoryId: string; categoryTitle: string }[] = [];
+    CAMPUS_CATEGORIES.forEach(cat => {
+      cat.groups.forEach(group => {
+        group.items.forEach(item => {
+          options.push({
+            label: item.title,
+            categoryId: cat.id,
+            categoryTitle: cat.title
+          });
+        });
+      });
     });
+    return options;
+  }, []);
 
-    if (!result.canceled) {
-      setProfilePictureUrl(result.assets[0].uri);
+  const handleAddSkillFromModal = (label: string, categoryId: string) => {
+    if (!skills.includes(label)) {
+      const newSkills = [...skills, label];
+      setSkills(newSkills);
+      // Set primary subcategory to the first one added
+      if (newSkills.length === 1) {
+        setSubcategory(label);
+        setCategory(categoryId);
+      }
+    }
+    setSubcategoryModalVisible(false);
+  };
+
+  const handleRemoveSkill = (skillToRemove: string) => {
+    const newSkills = skills.filter(s => s !== skillToRemove);
+    setSkills(newSkills);
+    
+    // Update primary subcategory if we removed the current one
+    if (skillToRemove === subcategory) {
+      if (newSkills.length > 0) {
+        // Fallback to the new first skill (we need to find its category)
+        const firstSkill = newSkills[0];
+        const opt = allSubcategories.find(o => o.label === firstSkill);
+        if (opt) {
+          setSubcategory(opt.label);
+          setCategory(opt.categoryId);
+        }
+      } else {
+        setSubcategory("");
+        setCategory("");
+      }
     }
   };
+
 
   const handleSave = async () => {
     if (!token) return;
 
     setIsSubmitting(true);
     try {
-      let finalImageUrl = profilePictureUrl;
-      
-      // Upload if it's a local file
-      if (profilePictureUrl && profilePictureUrl.startsWith("file://")) {
-        // Simulate upload but keep local file URI for mock UI rendering
-        await api.uploadImage(profilePictureUrl, token);
-        finalImageUrl = profilePictureUrl;
-      }
-
-      const yearNum = parseInt(graduationYear, 10);
+      const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
 
       await api.updateProfile(
         {
           fullName,
           email,
-          universityId,
-          department,
-          graduationYear: isNaN(yearNum) ? undefined : yearNum,
-          profilePictureUrl: finalImageUrl,
-        },
+          username, // passed to the mock API
+          bio: isProviderExpanded ? bio : undefined,
+          skillTags: isProviderExpanded ? skills : undefined,
+          category: isProviderExpanded ? category : undefined,
+          subcategory: isProviderExpanded ? subcategory : undefined,
+          canOfferServices: isProviderExpanded,
+        } as any,
         token,
       );
 
@@ -106,7 +140,7 @@ export default function EditProfileScreen() {
       keyboardAvoiding
     >
       <Stack.Screen options={{ headerShown: false }} />
-      <ScreenHeader title="Edit Profile" />
+      <ScreenHeader title="Edit Info" />
 
       <ScrollView 
         style={{ flex: 1 }}
@@ -114,112 +148,130 @@ export default function EditProfileScreen() {
         showsVerticalScrollIndicator={false}
       >
         <ThemedText variant="bodyLarge" colorName="textSecondary" style={styles.subtitle}>
-          Update your account information and personal details.
+          Edit your account details.
         </ThemedText>
-
-      {/* Profile Picture */}
-      <View style={styles.section}>
-        <View style={styles.avatarContainer}>
-          <Pressable
-            style={[
-              styles.avatarFrame,
-              {
-                borderColor: theme.primary,
-                backgroundColor: theme.surfaceVariant,
-              },
-            ]}
-            onPress={pickImage}
-          >
-            {profilePictureUrl ? (
-              <Image
-                source={{ uri: profilePictureUrl }}
-                style={styles.avatar}
-              />
-            ) : (
-              <ThemedIcon
-                name="account-circle"
-                size={100}
-                colorName="textMuted"
-              />
-            )}
-            <View
-              style={[
-                styles.editIconBadge,
-                { backgroundColor: theme.primary },
-              ]}
-            >
-              <ThemedIcon name="camera" size={16} lightColor="#fff" darkColor="#fff" />
-            </View>
-          </Pressable>
-        </View>
-      </View>
 
       {/* Account Info */}
       <View style={[styles.card, { backgroundColor: theme.surface }]}>
         <ThemedText variant="labelLarge" style={styles.label}>
           Account Information
         </ThemedText>
+        
+        <ThemedText variant="bodySmall" colorName="textSecondary" style={styles.fieldLabel}>First Name</ThemedText>
         <TextInput
           style={[
             styles.input,
             { color: theme.text, borderColor: theme.outlineVariant },
           ]}
-          placeholder="Full Name"
+          placeholder="Enter your first name"
           placeholderTextColor={theme.textMuted}
-          value={fullName}
-          onChangeText={setFullName}
+          value={firstName}
+          onChangeText={setFirstName}
         />
+        
+        <ThemedText variant="bodySmall" colorName="textSecondary" style={[styles.fieldLabel, { marginTop: Spacing.md }]}>Last Name</ThemedText>
         <TextInput
           style={[
             styles.input,
-            { color: theme.text, borderColor: theme.outlineVariant, marginTop: Spacing.md },
+            { color: theme.text, borderColor: theme.outlineVariant },
           ]}
-          placeholder="Email Address"
+          placeholder="Enter your last name"
+          placeholderTextColor={theme.textMuted}
+          value={lastName}
+          onChangeText={setLastName}
+        />
+
+        <ThemedText variant="bodySmall" colorName="textSecondary" style={[styles.fieldLabel, { marginTop: Spacing.md }]}>Username</ThemedText>
+        <TextInput
+          style={[
+            styles.input,
+            { color: theme.text, borderColor: theme.outlineVariant },
+          ]}
+          placeholder="Choose a username"
+          placeholderTextColor={theme.textMuted}
+          autoCapitalize="none"
+          value={username}
+          onChangeText={setUsername}
+        />
+
+        <ThemedText variant="bodySmall" colorName="textSecondary" style={[styles.fieldLabel, { marginTop: Spacing.md }]}>Email Address</ThemedText>
+        <TextInput
+          style={[
+            styles.input,
+            { color: theme.text, borderColor: theme.outlineVariant },
+          ]}
+          placeholder="Enter your email"
           placeholderTextColor={theme.textMuted}
           keyboardType="email-address"
           autoCapitalize="none"
           value={email}
           onChangeText={setEmail}
         />
-        <TextInput
-          style={[
-            styles.input,
-            { color: theme.text, borderColor: theme.outlineVariant, marginTop: Spacing.md },
-          ]}
-          placeholder="University ID"
-          placeholderTextColor={theme.textMuted}
-          value={universityId}
-          onChangeText={setUniversityId}
-        />
       </View>
 
-      {/* University Info */}
-      <View style={[styles.card, { backgroundColor: theme.surface }]}>
-        <ThemedText variant="labelLarge" style={styles.label}>
-          University Info
-        </ThemedText>
-        <TextInput
-          style={[
-            styles.input,
-            { color: theme.text, borderColor: theme.outlineVariant },
-          ]}
-          placeholder="Major / Department"
-          placeholderTextColor={theme.textMuted}
-          value={department}
-          onChangeText={setDepartment}
-        />
-        <TextInput
-          style={[
-            styles.input,
-            { color: theme.text, borderColor: theme.outlineVariant, marginTop: Spacing.md },
-          ]}
-          placeholder="Graduation Year"
-          placeholderTextColor={theme.textMuted}
-          keyboardType="numeric"
-          value={graduationYear}
-          onChangeText={setGraduationYear}
-        />
-      </View>
+      {/* Provider Section Header */}
+      <Pressable 
+        style={[styles.providerHeader, { backgroundColor: theme.surface }]} 
+        onPress={() => setIsProviderExpanded(!isProviderExpanded)}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+          <ThemedIcon name="briefcase-account-outline" size={24} colorName={isProviderExpanded ? 'primary' : 'text'} />
+          <ThemedText variant="titleMedium" style={{ fontWeight: 'bold' }}>
+            {user?.canOfferServices ? "Provider Information" : "Upgrade to a Provider"}
+          </ThemedText>
+        </View>
+        <ThemedIcon name={isProviderExpanded ? 'chevron-up' : 'chevron-down'} size={24} colorName="textSecondary" />
+      </Pressable>
+
+      {/* Provider Section Content */}
+      {isProviderExpanded && (
+        <Animated.View entering={FadeInDown.duration(300)} style={[styles.card, { backgroundColor: theme.surface, marginTop: Spacing.sm }]}>
+          <ThemedText variant="bodySmall" colorName="textSecondary" style={styles.fieldLabel}>Bio</ThemedText>
+          <TextInput
+            style={[
+              styles.input,
+              styles.textArea,
+              { color: theme.text, borderColor: theme.outlineVariant },
+            ]}
+            placeholder="Tell us about yourself and what you offer..."
+            placeholderTextColor={theme.textMuted}
+            multiline
+            numberOfLines={4}
+            value={bio}
+            onChangeText={setBio}
+          />
+
+          <ThemedText variant="bodySmall" colorName="textSecondary" style={[styles.fieldLabel, { marginTop: Spacing.md }]}>Your Skill(s)</ThemedText>
+          <View style={styles.skillInputContainer}>
+            <Pressable
+              style={[styles.input, { flex: 1, justifyContent: 'center', borderColor: theme.outlineVariant }]}
+              onPress={() => setSubcategoryModalVisible(true)}
+            >
+              <ThemedText colorName="textMuted">
+                Tap the + to add a service category...
+              </ThemedText>
+            </Pressable>
+            <Pressable
+              style={[styles.addSkillButton, { backgroundColor: theme.primary }]}
+              onPress={() => setSubcategoryModalVisible(true)}
+            >
+              <ThemedIcon name="plus" size={24} lightColor="#fff" darkColor="#fff" />
+            </Pressable>
+          </View>
+                    {skills.length > 0 && (
+            <View style={styles.skillsList}>
+              {skills.map((skill, index) => (
+                <View key={index} style={[styles.skillChip, { backgroundColor: theme.primaryContainer }]}>
+                  <ThemedText variant="labelMedium" colorName="onPrimaryContainer">{skill}</ThemedText>
+                  <Pressable onPress={() => handleRemoveSkill(skill)} style={styles.removeSkillBtn}>
+                    <ThemedIcon name="close" size={16} colorName="onPrimaryContainer" />
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          )}
+        </Animated.View>
+      )}
 
       <Pressable
         style={[styles.saveButton, { backgroundColor: theme.primary }]}
@@ -235,6 +287,47 @@ export default function EditProfileScreen() {
         )}
       </Pressable>
       </ScrollView>
+
+      {/* Custom Subcategory Modal */}
+      <Modal
+        visible={isSubcategoryModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSubcategoryModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setSubcategoryModalVisible(false)} />
+          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
+            <View style={styles.modalHeader}>
+              <ThemedText variant="titleLarge" style={{ fontWeight: 'bold' }}>Select a Subcategory</ThemedText>
+              <Pressable onPress={() => setSubcategoryModalVisible(false)}>
+                <ThemedIcon name="close" size={24} colorName="textSecondary" />
+              </Pressable>
+            </View>
+            <ThemedText variant="bodyMedium" colorName="textMuted" style={{ marginBottom: Spacing.md }}>
+              We will automatically place you in the correct main category.
+            </ThemedText>
+            
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {allSubcategories.map((option, index) => (
+                <Pressable 
+                  key={index} 
+                  style={[styles.modalOption, { borderBottomColor: theme.outlineVariant }]}
+                  onPress={() => handleAddSkillFromModal(option.label, option.categoryId)}
+                >
+                  <View>
+                    <ThemedText variant="bodyLarge" style={{ fontWeight: '600' }}>{option.label}</ThemedText>
+                    <ThemedText variant="bodySmall" colorName="textSecondary">{option.categoryTitle}</ThemedText>
+                  </View>
+                  {skills.includes(option.label) && (
+                    <ThemedIcon name="check" size={20} colorName="primary" />
+                  )}
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </ScreenLayout>
   );
 }
@@ -274,34 +367,74 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xl,
     marginBottom: Spacing.xxl,
   },
-  avatarContainer: {
-    alignItems: "center",
-    marginVertical: Spacing.md,
+  fieldLabel: {
+    marginBottom: 4,
+    fontWeight: '600',
   },
-  avatarFrame: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 2,
-    justifyContent: "center",
-    alignItems: "center",
-    overflow: "hidden",
-    position: "relative",
+  providerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginTop: Spacing.md,
   },
-  avatar: {
-    width: "100%",
-    height: "100%",
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+    paddingTop: Spacing.md,
   },
-  editIconBadge: {
-    position: "absolute",
-    bottom: 5,
-    right: 5,
-    width: 32,
-    height: 32,
+  skillInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  addSkillButton: {
+    width: 55,
+    height: 55,
+    borderRadius: BorderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  skillsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
+  },
+  skillChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 3,
-    borderColor: "#fff",
+    gap: 4,
+  },
+  removeSkillBtn: {
+    marginLeft: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  modalOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
 });

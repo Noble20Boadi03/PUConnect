@@ -29,53 +29,8 @@ export default function SettingsScreen() {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
             >
-                {/* ─── ACCOUNT SECTION ──────────────────────────── */}
-                <ThemedText variant="labelLarge" colorName="textMuted" style={styles.sectionLabel}>
-                    Account
-                </ThemedText>
-                <View style={[styles.menuGroup, { backgroundColor: theme.surface, borderColor: theme.outlineVariant }]}>
-                    <Pressable
-                        style={({ pressed }) => [
-                            styles.menuItem,
-                            { backgroundColor: pressed ? theme.surfaceVariant : 'transparent' },
-                        ]}
-                        onPress={() => router.push('/profile/edit-profile')}
-                    >
-                        <View style={[styles.menuIconBox, { backgroundColor: theme.primaryContainer }]}>
-                            <ThemedIcon name="pencil-outline" size={20} colorName="onPrimaryContainer" />
-                        </View>
-                        <View style={styles.menuTextCol}>
-                            <ThemedText variant="titleSmall" style={styles.menuItemTitle}>Edit Profile</ThemedText>
-                            <ThemedText variant="bodySmall" colorName="textMuted">Update your personal information</ThemedText>
-                        </View>
-                        <ThemedIcon name="chevron-right" size={20} colorName="textMuted" />
-                    </Pressable>
-
-                    <View style={[styles.menuDivider, { backgroundColor: theme.outlineVariant }]} />
-
-                    <Pressable
-                        style={({ pressed }) => [
-                            styles.menuItem,
-                            { backgroundColor: pressed ? theme.surfaceVariant : 'transparent' },
-                        ]}
-                        onPress={() => router.push({ pathname: '/profile/my-listings', params: { tab: 'requests' } })}
-                    >
-                        <View style={[styles.menuIconBox, { backgroundColor: theme.secondaryContainer }]}>
-                            <ThemedIcon name="clipboard-list-outline" size={20} colorName="onSecondaryContainer" />
-                        </View>
-                        <View style={styles.menuTextCol}>
-                            <ThemedText variant="titleSmall" style={styles.menuItemTitle}>My Requests</ThemedText>
-                            <ThemedText variant="bodySmall" colorName="textMuted">View and manage your service requests</ThemedText>
-                        </View>
-                        <ThemedIcon name="chevron-right" size={20} colorName="textMuted" />
-                    </Pressable>
-                </View>
-
-                {/* ─── PREFERENCES SECTION ──────────────────────── */}
-                <ThemedText variant="labelLarge" colorName="textMuted" style={styles.sectionLabel}>
-                    Preferences
-                </ThemedText>
-                <View style={[styles.menuGroup, { backgroundColor: theme.surface, borderColor: theme.outlineVariant }]}>
+                {/* ─── SETTINGS GROUP ──────────────────────────── */}
+                <View style={[styles.menuGroup, { backgroundColor: theme.surface, borderColor: theme.outlineVariant, marginTop: Spacing.xl }]}>
                     <View style={styles.menuItem}>
                         <View style={[styles.menuIconBox, { backgroundColor: theme.tertiaryContainer }]}>
                             <ThemedIcon name={isDark ? "moon-waning-crescent" : "white-balance-sunny"} size={20} colorName="onTertiaryContainer" />

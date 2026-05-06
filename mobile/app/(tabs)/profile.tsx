@@ -268,6 +268,28 @@ export default function ProfileScreen() {
                         </ThemedText>
                     </Pressable>
 
+                    {user?.canOfferServices && (
+                        <Pressable
+                            style={({ pressed }) => [
+                                styles.actionBtn,
+                                {
+                                    backgroundColor: pressed
+                                        ? (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)')
+                                        : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.03)'),
+                                    borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
+                                },
+                            ]}
+                            onPress={() => router.push('/profile/public-profile')}
+                        >
+                            <View style={[styles.actionBtnIcon, { backgroundColor: theme.surfaceVariant }]}>
+                                <ThemedIcon name="card-account-details-outline" size={22} colorName="onSurfaceVariant" />
+                            </View>
+                            <ThemedText variant="labelSmall" colorName="textSecondary" style={styles.actionBtnLabel}>
+                                View Profile
+                            </ThemedText>
+                        </Pressable>
+                    )}
+
                     <Pressable
                         style={({ pressed }) => [
                             styles.actionBtn,
@@ -295,41 +317,27 @@ export default function ProfileScreen() {
                     style={[styles.infoCard, { backgroundColor: theme.surface, borderColor: theme.outlineVariant }, horizontalPadding]}
                 >
                     <View style={styles.infoCardInner}>
-                        {/* Phone / Email row */}
-                        <View style={styles.infoRow}>
-                            <ThemedText variant="bodyLarge" style={styles.infoValue}>
-                                {user?.email || '—'}
-                            </ThemedText>
-                            <ThemedText variant="bodySmall" colorName="textMuted">
-                                Email
-                            </ThemedText>
-                        </View>
-
-                        <View style={[styles.infoDivider, { backgroundColor: theme.outlineVariant }]} />
-
                         {/* Username row */}
                         <View style={styles.infoRow}>
                             <ThemedText variant="bodyLarge" style={styles.infoValue}>
-                                @{user?.fullName?.toLowerCase().replace(/\s+/g, '_') || 'user'}
+                                @{(user as any)?.username || user?.fullName?.toLowerCase().replace(/\s+/g, '_') || 'user'}
                             </ThemedText>
                             <ThemedText variant="bodySmall" colorName="textMuted">
                                 Username
                             </ThemedText>
                         </View>
 
-                        {user?.department && (
-                            <>
-                                <View style={[styles.infoDivider, { backgroundColor: theme.outlineVariant }]} />
-                                <View style={styles.infoRow}>
-                                    <ThemedText variant="bodyLarge" style={styles.infoValue}>
-                                        {user.department}{user.graduationYear ? ` · Class of ${user.graduationYear}` : ''}
-                                    </ThemedText>
-                                    <ThemedText variant="bodySmall" colorName="textMuted">
-                                        Department
-                                    </ThemedText>
-                                </View>
-                            </>
-                        )}
+                        <View style={[styles.infoDivider, { backgroundColor: theme.outlineVariant }]} />
+
+                        {/* Email row */}
+                        <View style={styles.infoRow}>
+                            <ThemedText variant="bodyLarge" style={styles.infoValue}>
+                                {user?.email || '—'}
+                            </ThemedText>
+                            <ThemedText variant="bodySmall" colorName="textMuted">
+                                Email Address
+                            </ThemedText>
+                        </View>
                     </View>
                 </Animated.View>
 
@@ -390,15 +398,18 @@ export default function ProfileScreen() {
                     {/* Empty state */}
                     <View style={styles.emptyState}>
                         <ThemedText variant="headlineSmall" style={styles.emptyTitle}>
-                            No posts yet...
+                            {activeTab === 'posts' ? "No posts yet..." : "No skill ads yet..."}
                         </ThemedText>
                         <ThemedText variant="bodyMedium" colorName="textMuted" align="center" style={styles.emptySubtitle}>
-                            Post about anything you need help with so that providers can assist you when they see your request.
+                            {activeTab === 'posts' 
+                                ? "Post about anything you need help with so that providers can assist you when they see your request."
+                                : "As a provider, you can create ads for your services so that other students can discover and hire you."
+                            }
                         </ThemedText>
 
                         <PrimaryButton
-                            title="Add a post"
-                            onPress={() => router.push('/listing/create')}
+                            title={activeTab === 'posts' ? "Add a post" : "Create a skill ad"}
+                            onPress={() => router.push(activeTab === 'posts' ? '/listing/create' : '/listing/create?type=skill')}
                             style={styles.addPostBtn}
                         />
                     </View>
@@ -559,16 +570,18 @@ const styles = StyleSheet.create({
     actionRow: {
         flexDirection: 'row',
         justifyContent: 'center',
-        gap: 12,
+        flexWrap: 'wrap',
+        gap: 8,
         paddingVertical: Spacing.lg,
     },
     actionBtn: {
+        flex: 1,
         alignItems: 'center',
         paddingVertical: Spacing.md,
-        paddingHorizontal: Spacing.lg,
+        paddingHorizontal: 2,
         borderRadius: BorderRadius.lg,
         borderWidth: 1,
-        minWidth: (SCREEN_WIDTH - 48 - 24) / 3,
+        minWidth: (SCREEN_WIDTH - 64) / 4, // Dynamic adjustment for 4 buttons
     },
     actionBtnIcon: {
         width: 44,
