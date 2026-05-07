@@ -72,7 +72,7 @@ export default function SettingsScreen() {
                         style={[styles.logoutBtn, { borderColor: theme.error, backgroundColor: theme.errorContainer + '20' }]}
                         onPress={async () => {
                             await signOut();
-                            router.replace('/');
+                            router.replace('/login');
                         }}
                     >
                         <ThemedIcon name="logout" size={20} colorName="error" />

@@ -218,7 +218,7 @@ export default function HomeScreen() {
 
 
   const cardWidth = isTablet ? 360 : isLandscape ? 320 : 280;
-  const categoryCardWidth = isTablet ? 240 : isLandscape ? 220 : 180;
+  const categoryCardWidth = (Dimensions.get('window').width - (horizontalPadding.paddingLeft + horizontalPadding.paddingRight) - Spacing.md) / 2.15;
 
   const isRefreshing = uiState.status === 'content' && !!uiState.isRefreshing;
 
