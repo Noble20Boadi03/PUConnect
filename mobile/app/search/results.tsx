@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { StyleSheet, View, FlatList, Pressable, TextInput, StatusBar, Keyboard } from 'react-native';
+import { StyleSheet, View, FlatList, Pressable, TextInput, StatusBar, Keyboard, Image } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTheme } from '@/context/theme-context';
 import { Spacing, BorderRadius } from '@/constants/theme';
@@ -10,8 +11,10 @@ import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { useResponsive } from '@/hooks/use-responsive';
 import { api } from '@/services/api';
-import { ChatMessage } from '@/types';
+import { Listing, ChatMessage } from '@/types';
 import { useAuth } from '@/context/auth-context';
+import { ListingCard } from '@/components/listing-card';
+import { RequestCard } from '@/components/request-card';
 
 /**
  * Search context types:
@@ -20,15 +23,6 @@ import { useAuth } from '@/context/auth-context';
  * - 'providers'  → Search providers within a subcategory
  */
 export type SearchContext = 'home' | 'messages' | 'providers';
-
-interface SearchResult {
-    id: string;
-    title: string;
-    subtitle: string;
-    icon: string;
-    type: 'listing' | 'contact' | 'provider';
-    data: any;
-}
 
 // Simple in-memory recent searches (per context)
 const recentSearchesStore: Record<string, string[]> = {
@@ -62,7 +56,10 @@ export default function UniversalSearchScreen() {
     const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
 
     const [query, setQuery] = useState(params.q || '');
-    const [results, setResults] = useState<SearchResult[]>([]);
+    const [activeHomeFilter, setActiveHomeFilter] = useState<'All' | 'Services' | 'Requests'>('All');
+    const [listingResults, setListingResults] = useState<Listing[]>([]);
+    const [messageResults, setMessageResults] = useState<ChatMessage[]>([]);
+    const [providerResults, setProviderResults] = useState<any[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
     const inputRef = useRef<TextInput>(null);
@@ -90,11 +87,21 @@ export default function UniversalSearchScreen() {
         }
     };
 
+    const hasResults = (): boolean => {
+        switch (searchContext) {
+            case 'home': return listingResults.length > 0;
+            case 'messages': return messageResults.length > 0;
+            case 'providers': return providerResults.length > 0;
+        }
+    };
+
     // ── Search Logic ─────────────────────────────────────────────────────────
     const performSearch = useCallback(async (searchQuery: string) => {
         const q = searchQuery.trim();
         if (!q) {
-            setResults([]);
+            setListingResults([]);
+            setMessageResults([]);
+            setProviderResults([]);
             setHasSearched(false);
             return;
         }
@@ -103,27 +110,15 @@ export default function UniversalSearchScreen() {
         setHasSearched(true);
 
         try {
-            let mapped: SearchResult[] = [];
-
             if (searchContext === 'home') {
-                // Search listings
                 const listings = await api.searchListings(q);
-                mapped = listings.map(l => ({
-                    id: l.id,
-                    title: l.title,
-                    subtitle: `${l.category}${l.price ? ` · GH₵${l.price}` : l.budget ? ` · Budget: GH₵${l.budget}` : ''}`,
-                    icon: l.type === 'service_request' ? 'hand-extended-outline' : 'briefcase-outline',
-                    type: 'listing' as const,
-                    data: l,
-                }));
+                setListingResults(listings);
             } else if (searchContext === 'messages') {
-                // Search message contacts/threads
                 if (token) {
                     const messages = await api.getMessages(token);
                     const qLower = q.toLowerCase();
-                    // Dedupe by sender, filter by name or message content
                     const seenPeers = new Set<string>();
-                    mapped = messages
+                    const filtered = messages
                         .filter(m => {
                             const matchesName = m.senderName?.toLowerCase().includes(qLower);
                             const matchesMessage = m.message?.toLowerCase().includes(qLower);
@@ -131,45 +126,30 @@ export default function UniversalSearchScreen() {
                             return matchesName || matchesMessage || matchesListing;
                         })
                         .filter(m => {
+                            // Dedupe to one row per conversation peer
                             const peerId = m.senderId === 'mock-user-001' ? m.receiverId : m.senderId;
                             if (seenPeers.has(peerId)) return false;
                             seenPeers.add(peerId);
                             return true;
-                        })
-                        .map(m => ({
-                            id: m.id,
-                            title: m.senderName || 'Contact',
-                            subtitle: m.listingTitle ? `Re: ${m.listingTitle}` : m.message,
-                            icon: 'account-outline',
-                            type: 'contact' as const,
-                            data: m,
-                        }));
+                        });
+                    setMessageResults(filtered);
                 }
             } else if (searchContext === 'providers') {
-                // Search providers within current subcategory
                 const subcategory = params.subcategory || '';
                 const providers = await api.getProvidersBySubcategory(subcategory);
                 const qLower = q.toLowerCase();
-                mapped = providers
-                    .filter((p: any) => {
-                        const matchesName = p.fullName?.toLowerCase().includes(qLower);
-                        const matchesDept = p.department?.toLowerCase().includes(qLower);
-                        const matchesTags = p.skillTags?.some((t: string) => t.toLowerCase().includes(qLower));
-                        return matchesName || matchesDept || matchesTags;
-                    })
-                    .map((p: any) => ({
-                        id: p.id,
-                        title: p.fullName,
-                        subtitle: `${p.department || 'Expert'}${p.skillTags?.length ? ' · ' + p.skillTags.slice(0, 2).join(', ') : ''}`,
-                        icon: 'account-outline',
-                        type: 'provider' as const,
-                        data: p,
-                    }));
+                const filtered = providers.filter((p: any) => {
+                    const matchesName = p.fullName?.toLowerCase().includes(qLower);
+                    const matchesDept = p.department?.toLowerCase().includes(qLower);
+                    const matchesTags = p.skillTags?.some((t: string) => t.toLowerCase().includes(qLower));
+                    return matchesName || matchesDept || matchesTags;
+                });
+                setProviderResults(filtered);
             }
-
-            setResults(mapped);
         } catch {
-            setResults([]);
+            setListingResults([]);
+            setMessageResults([]);
+            setProviderResults([]);
         } finally {
             setIsSearching(false);
         }
@@ -189,25 +169,6 @@ export default function UniversalSearchScreen() {
         Keyboard.dismiss();
     }, [query, searchContext, performSearch]);
 
-    // ── Result Press Handlers ─────────────────────────────────────────────
-    const handleResultPress = useCallback((item: SearchResult) => {
-        addRecentSearch(searchContext, item.title);
-        Keyboard.dismiss();
-
-        if (item.type === 'listing') {
-            router.push({ pathname: '/listing/[id]', params: { id: item.id } });
-        } else if (item.type === 'contact') {
-            const msg = item.data as ChatMessage;
-            const peerId = msg.senderId === 'mock-user-001' ? msg.receiverId : msg.senderId;
-            router.push({
-                pathname: '/chat/[id]',
-                params: { id: peerId, listingId: msg.listingId },
-            });
-        } else if (item.type === 'provider') {
-            router.push({ pathname: '/profile/[id]', params: { id: item.id } });
-        }
-    }, [searchContext, router]);
-
     const handleRecentPress = useCallback((text: string) => {
         setQuery(text);
         performSearch(text);
@@ -215,12 +176,224 @@ export default function UniversalSearchScreen() {
 
     const clearRecentSearches = useCallback(() => {
         recentSearchesStore[searchContext] = [];
-        // Force re-render
-        setQuery(q => q);
+        setQuery(q => q); // force re-render
     }, [searchContext]);
+
+    const clearSearch = useCallback(() => {
+        setQuery('');
+        setListingResults([]);
+        setMessageResults([]);
+        setProviderResults([]);
+        setHasSearched(false);
+    }, []);
 
     // ── Recent Searches ──────────────────────────────────────────────────
     const recentSearches = recentSearchesStore[searchContext] || [];
+
+    // ── Render Helpers ────────────────────────────────────────────────────
+
+    const renderListingItem = useCallback(({ item }: { item: Listing }) => {
+        const CardComponent = item.type === 'service_request' ? RequestCard : ListingCard;
+        return (
+            <View style={[{ paddingHorizontal: contentPaddingLeft }]}>
+                <CardComponent
+                    listing={item}
+                    onPress={() => {
+                        addRecentSearch(searchContext, item.title);
+                        router.push({ pathname: '/listing/[id]', params: { id: item.id } });
+                    }}
+                />
+            </View>
+        );
+    }, [contentPaddingLeft, searchContext, router]);
+
+    const renderMessageItem = useCallback(({ item }: { item: ChatMessage }) => {
+        const peerId = item.senderId === 'mock-user-001' ? item.receiverId : item.senderId;
+        return (
+            <Pressable
+                style={({ pressed }) => [
+                    styles.chatRow,
+                    { paddingHorizontal: contentPaddingLeft },
+                    pressed && { backgroundColor: theme.surfaceVariant },
+                ]}
+                onPress={() => {
+                    addRecentSearch(searchContext, item.senderName || '');
+                    router.push({
+                        pathname: '/chat/[id]',
+                        params: { id: peerId, listingId: item.listingId },
+                    });
+                }}
+            >
+                {/* Avatar */}
+                <View style={[styles.avatar, { backgroundColor: theme.surfaceVariant }]}>
+                    {item.senderAvatar ? (
+                        <ExpoImage
+                            source={item.senderAvatar}
+                            style={styles.avatarImage}
+                            cachePolicy="disk"
+                            transition={200}
+                        />
+                    ) : (
+                        <ThemedIcon name="account" size={28} colorName="primary" />
+                    )}
+                </View>
+
+                {/* Content */}
+                <View style={styles.chatContent}>
+                    <View style={styles.topRow}>
+                        <ThemedText
+                            variant="titleMedium"
+                            numberOfLines={1}
+                            style={[styles.senderName, !item.isRead && { fontWeight: '800' }]}
+                        >
+                            {item.senderName || 'Anonymous'}
+                        </ThemedText>
+                        <ThemedText variant="labelSmall" colorName="textMuted" style={styles.timestamp}>
+                            {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </ThemedText>
+                    </View>
+
+                    {item.listingTitle && (
+                        <View style={styles.contextRowMsg}>
+                            <ThemedIcon name="bookmark-outline" size={11} colorName="primary" />
+                            <ThemedText variant="labelSmall" colorName="primary" numberOfLines={1} style={styles.contextLabel}>
+                                {item.listingTitle}
+                            </ThemedText>
+                        </View>
+                    )}
+
+                    <ThemedText
+                        variant="bodyMedium"
+                        colorName={item.isRead ? 'textMuted' : 'textSecondary'}
+                        numberOfLines={1}
+                        style={[!item.isRead && { fontWeight: '600' }]}
+                    >
+                        {item.message}
+                    </ThemedText>
+                </View>
+            </Pressable>
+        );
+    }, [contentPaddingLeft, theme.surfaceVariant, searchContext, router]);
+
+    const renderProviderItem = useCallback(({ item }: { item: any }) => (
+        <View style={styles.providerWrapper}>
+            <Pressable
+                onPress={() => {
+                    addRecentSearch(searchContext, item.fullName);
+                    router.push({ pathname: '/profile/[id]', params: { id: item.id } });
+                }}
+                style={[
+                    styles.providerCard,
+                    {
+                        backgroundColor: theme.surface,
+                        borderColor: theme.outlineVariant,
+                        borderWidth: 1,
+                    }
+                ]}
+            >
+                <View style={styles.providerLayout}>
+                    {/* Left: Profile Image */}
+                    <View style={[styles.providerLeft, { borderRightColor: theme.outlineVariant }]}>
+                        <Image
+                            source={{ uri: item.profilePictureUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200' }}
+                            style={styles.providerImage}
+                        />
+                    </View>
+
+                    {/* Right: Name & Skills */}
+                    <View style={styles.providerRight}>
+                        <ThemedText variant="titleMedium" style={styles.providerName}>
+                            {item.fullName}
+                        </ThemedText>
+                        <ThemedText variant="labelMedium" colorName="textMuted" style={styles.providerDept}>
+                            {item.department || 'Expert'}
+                        </ThemedText>
+                        <View style={styles.providerTags}>
+                            {item.skillTags?.slice(0, 3).map((tag: string, idx: number) => (
+                                <View key={idx} style={[styles.providerTagPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#f0f0f0' }]}>
+                                    <ThemedText variant="labelSmall" colorName="textMuted">{tag}</ThemedText>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+                </View>
+            </Pressable>
+        </View>
+    ), [theme.surface, theme.outlineVariant, isDark, searchContext, router]);
+
+    // ── Render the correct FlatList based on context ──────────────────────
+    const renderResultsList = () => {
+        if (searchContext === 'home') {
+            const filteredListings = listingResults.filter(l => {
+                if (activeHomeFilter === 'All') return true;
+                if (activeHomeFilter === 'Services') return l.type === 'service_offer';
+                if (activeHomeFilter === 'Requests') return l.type === 'service_request';
+                return true;
+            });
+
+            return (
+                <FlatList
+                    data={filteredListings}
+                    keyExtractor={(item) => item.id}
+                    renderItem={renderListingItem}
+                    contentContainerStyle={[styles.resultsList, { paddingBottom: insets.bottom + Spacing.xl }]}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                    ListEmptyComponent={renderEmptyState()}
+                />
+            );
+        }
+
+        if (searchContext === 'messages') {
+            return (
+                <FlatList
+                    data={messageResults}
+                    keyExtractor={(item) => item.id}
+                    renderItem={renderMessageItem}
+                    contentContainerStyle={[styles.resultsList, { paddingBottom: insets.bottom + Spacing.xl }]}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                    ItemSeparatorComponent={() => (
+                        <View style={{ marginLeft: contentPaddingLeft + 52 + Spacing.md }}>
+                            <View style={[styles.divider, { backgroundColor: theme.outlineVariant }]} />
+                        </View>
+                    )}
+                    ListEmptyComponent={renderEmptyState()}
+                />
+            );
+        }
+
+        if (searchContext === 'providers') {
+            return (
+                <FlatList
+                    data={providerResults}
+                    keyExtractor={(item) => item.id}
+                    renderItem={renderProviderItem}
+                    contentContainerStyle={[styles.resultsList, { paddingBottom: insets.bottom + Spacing.xl }]}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                    ListEmptyComponent={renderEmptyState()}
+                />
+            );
+        }
+
+        return null;
+    };
+
+    const renderEmptyState = () => {
+        if (!hasSearched || isSearching) return null;
+        return (
+            <View style={styles.emptyResults}>
+                <ThemedIcon name="magnify-close" size={56} colorName="outline" />
+                <ThemedText variant="titleMedium" style={{ marginTop: Spacing.lg, fontWeight: '700' }}>
+                    No results found
+                </ThemedText>
+                <ThemedText variant="bodyMedium" colorName="textMuted" align="center" style={{ marginTop: Spacing.sm }}>
+                    Try a different search term or check your spelling
+                </ThemedText>
+            </View>
+        );
+    };
 
     return (
         <ScreenLayout padding="none" withSafeArea={false}>
@@ -253,7 +426,7 @@ export default function UniversalSearchScreen() {
                             autoCorrect={false}
                         />
                         {query.length > 0 && (
-                            <Pressable onPress={() => { setQuery(''); setResults([]); setHasSearched(false); }}>
+                            <Pressable onPress={clearSearch}>
                                 <ThemedIcon name="close-circle" size={18} colorName="textMuted" />
                             </Pressable>
                         )}
@@ -273,6 +446,16 @@ export default function UniversalSearchScreen() {
                         </ThemedText>
                     </View>
                 </View>
+
+                {/* Filter Pills (only for home context) */}
+                {searchContext === 'home' && hasSearched && (
+                    <View style={{ marginTop: Spacing.sm }}>
+                        <HomeFilterPills 
+                            activeFilter={activeHomeFilter} 
+                            onFilterChange={setActiveHomeFilter} 
+                        />
+                    </View>
+                )}
             </ThemedView>
 
             {/* Content */}
@@ -312,53 +495,7 @@ export default function UniversalSearchScreen() {
                     )}
                 </View>
             ) : (
-                /* Search Results */
-                <FlatList
-                    data={results}
-                    keyExtractor={(item) => item.id}
-                    contentContainerStyle={[
-                        styles.resultsList,
-                        { paddingBottom: insets.bottom + Spacing.xl },
-                    ]}
-                    keyboardShouldPersistTaps="handled"
-                    showsVerticalScrollIndicator={false}
-                    renderItem={({ item }) => (
-                        <Pressable
-                            style={({ pressed }) => [
-                                styles.resultItem,
-                                horizontalPadding,
-                                pressed && { backgroundColor: theme.surfaceVariant },
-                            ]}
-                            onPress={() => handleResultPress(item)}
-                        >
-                            <View style={[styles.resultIcon, { backgroundColor: theme.primaryContainer }]}>
-                                <ThemedIcon name={item.icon as any} size={22} colorName="primary" />
-                            </View>
-                            <View style={styles.resultContent}>
-                                <ThemedText variant="titleSmall" style={{ fontWeight: '600' }} numberOfLines={1}>
-                                    {item.title}
-                                </ThemedText>
-                                <ThemedText variant="bodySmall" colorName="textMuted" numberOfLines={1}>
-                                    {item.subtitle}
-                                </ThemedText>
-                            </View>
-                            <ThemedIcon name="chevron-right" size={20} colorName="textMuted" />
-                        </Pressable>
-                    )}
-                    ListEmptyComponent={
-                        hasSearched && !isSearching ? (
-                            <View style={styles.emptyResults}>
-                                <ThemedIcon name="magnify-close" size={56} colorName="outline" />
-                                <ThemedText variant="titleMedium" style={{ marginTop: Spacing.lg, fontWeight: '700' }}>
-                                    No results found
-                                </ThemedText>
-                                <ThemedText variant="bodyMedium" colorName="textMuted" align="center" style={{ marginTop: Spacing.sm }}>
-                                    Try a different search term or check your spelling
-                                </ThemedText>
-                            </View>
-                        ) : null
-                    }
-                />
+                renderResultsList()
             )}
         </ScreenLayout>
     );
@@ -433,26 +570,156 @@ const styles = StyleSheet.create({
     resultsList: {
         paddingTop: Spacing.sm,
     },
-    resultItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: Spacing.md,
-        gap: Spacing.md,
-    },
-    resultIcon: {
-        width: 44,
-        height: 44,
-        borderRadius: 14,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    resultContent: {
-        flex: 1,
-        gap: 2,
-    },
     emptyResults: {
         alignItems: 'center',
         paddingTop: Spacing.huge * 2,
         paddingHorizontal: Spacing.xl,
     },
+    pillsContainer: {
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: Spacing.xs,
+        gap: Spacing.sm,
+    },
+    pill: {
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: Spacing.sm,
+        borderRadius: BorderRadius.full,
+        borderWidth: 1,
+        backgroundColor: 'transparent',
+    },
+    pillText: {
+        fontWeight: '600',
+    },
+
+    // ── Messages-style chat rows ─────────────────────────────────────────
+    chatRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: Spacing.md,
+    },
+    avatar: {
+        width: 52,
+        height: 52,
+        borderRadius: 26,
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+    },
+    avatarImage: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 26,
+    },
+    chatContent: {
+        flex: 1,
+        marginLeft: Spacing.md,
+        justifyContent: 'center',
+    },
+    topRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    senderName: {
+        fontWeight: '600',
+        flex: 1,
+        marginRight: Spacing.sm,
+    },
+    timestamp: {
+        flexShrink: 0,
+    },
+    contextRowMsg: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 3,
+        marginTop: 1,
+    },
+    contextLabel: {
+        fontWeight: '700',
+    },
+    divider: {
+        height: StyleSheet.hairlineWidth,
+    },
+
+    // ── Provider-style cards ─────────────────────────────────────────────
+    providerWrapper: {
+        marginHorizontal: Spacing.lg,
+        marginTop: Spacing.md,
+    },
+    providerCard: {
+        borderRadius: 16,
+        overflow: 'hidden',
+    },
+    providerLayout: {
+        flexDirection: 'row',
+        height: 120,
+    },
+    providerLeft: {
+        width: 110,
+        borderRightWidth: 1,
+    },
+    providerRight: {
+        flex: 1,
+        paddingHorizontal: 14,
+        justifyContent: 'center',
+    },
+    providerImage: {
+        width: '100%',
+        height: '100%',
+    },
+    providerName: {
+        fontWeight: '700',
+        fontSize: 17,
+    },
+    providerDept: {
+        marginTop: 2,
+        fontSize: 13,
+    },
+    providerTags: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 6,
+        marginTop: 10,
+    },
+    providerTagPill: {
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 4,
+    },
+});
+
+const HomeFilterPills = React.memo(({ activeFilter, onFilterChange }: { activeFilter: 'All' | 'Services' | 'Requests', onFilterChange: (filter: 'All' | 'Services' | 'Requests') => void }) => {
+    const { theme } = useTheme();
+    const filters: ('All' | 'Services' | 'Requests')[] = ['All', 'Services', 'Requests'];
+  
+    return (
+      <FlatList
+        data={filters}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.pillsContainer}
+        keyExtractor={(item) => item}
+        renderItem={({ item: filter }) => {
+          const isSelected = activeFilter === filter;
+          return (
+            <Pressable
+              style={[
+                styles.pill,
+                { borderColor: theme.outlineVariant },
+                isSelected && { backgroundColor: theme.primary, borderColor: theme.primary }
+              ]}
+              onPress={() => onFilterChange(filter)}
+            >
+              <ThemedText
+                variant="labelLarge"
+                style={[styles.pillText, isSelected && { color: theme.onPrimary }]}
+                colorName={isSelected ? undefined : 'textMuted'}
+              >
+                {filter}
+              </ThemedText>
+            </Pressable>
+          );
+        }}
+      />
+    );
 });
