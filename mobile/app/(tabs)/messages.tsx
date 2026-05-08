@@ -94,24 +94,6 @@ export default function MessagesScreen() {
         </Pressable>
     ), [contentPaddingLeft, theme.surfaceVariant, handleChatPress]);
 
-    if (uiState.status === 'guest') {
-        return (
-            <ThemedView style={styles.centered}>
-                <ThemedIcon name="lock-outline" size={64} colorName="outline" />
-                <ThemedText variant="headlineSmall" style={{ marginTop: Spacing.lg, fontWeight: '800' }}>
-                    Sign in required
-                </ThemedText>
-                <ThemedText variant="bodyLarge" colorName="textSecondary" align="center" style={styles.emptyText}>
-                    Please sign in to view your collaborations and messages.
-                </ThemedText>
-                <PrimaryButton
-                    title="Sign In"
-                    onPress={() => router.push('/login')}
-                    style={{ marginTop: Spacing.xl, width: '100%' }}
-                />
-            </ThemedView>
-        );
-    }
 
     if (uiState.status === 'loading') {
         return (
@@ -157,7 +139,7 @@ export default function MessagesScreen() {
                     </Pressable>
                     <Pressable
                         style={styles.iconBtn}
-                        onPress={() => (token ? router.push('/notifications') : router.push('/login'))}
+                        onPress={() => router.push('/notifications')}
                     >
                         <ThemedIcon name="bell-outline" size={24} />
                     </Pressable>

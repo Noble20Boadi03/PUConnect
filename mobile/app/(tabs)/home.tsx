@@ -209,7 +209,7 @@ const HomeFilterPills = React.memo(({ activeFilter, onFilterChange }: { activeFi
 
 export default function HomeScreen() {
   const { uiState, onRefresh, activeFilter, setActiveFilter } = useHomeViewModel();
-  const { token, user } = useAuth();
+  const { user } = useAuth();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const { isTablet, isLandscape, horizontalPadding } = useResponsive();
@@ -296,7 +296,7 @@ export default function HomeScreen() {
             )}
             <Pressable
               style={styles.iconBtn}
-              onPress={() => (token ? router.push('/notifications') : router.push('/login'))}
+              onPress={() => router.push('/notifications')}
             >
               <ThemedIcon name="bell-outline" size={24} />
             </Pressable>

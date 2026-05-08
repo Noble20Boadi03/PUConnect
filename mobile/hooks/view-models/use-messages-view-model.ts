@@ -7,26 +7,18 @@ import { useAuth } from '@/context/auth-context';
 
 export type MessagesUiState =
     | { status: 'loading' }
-    | { status: 'guest' }
     | { status: 'empty_inbox' }
     | { status: 'content'; data: ChatMessage[]; isRefreshing?: boolean }
     | { status: 'error'; message: string };
 
 export function useMessagesViewModel() {
     const { token, user } = useAuth();
-    const [uiState, setUiState] = useState<MessagesUiState>(
-        token ? { status: 'loading' } : { status: 'guest' }
-    );
+    const [uiState, setUiState] = useState<MessagesUiState>({ status: 'loading' });
     const lastRefreshTimestamp = useRef(0);
 
     const fetchMessages = useCallback(async (signal?: AbortSignal) => {
-        if (!token) {
-            setUiState({ status: 'guest' });
-            return;
-        }
-
         try {
-            const data = await api.getMessages(token, signal);
+            const data = await api.getMessages(token!, signal);
 
             if (data.length === 0) {
                 setUiState({ status: 'empty_inbox' });
@@ -41,11 +33,6 @@ export function useMessagesViewModel() {
 
     useFocusEffect(
         useCallback(() => {
-            if (!token) {
-                setUiState({ status: 'guest' });
-                return;
-            }
-
             const controller = new AbortController();
             const now = Date.now();
             const throttleMs = 5 * 60 * 1000;
@@ -66,11 +53,10 @@ export function useMessagesViewModel() {
                 controller.abort();
                 interactionTask.cancel();
             };
-        }, [token, fetchMessages])
+        }, [fetchMessages])
     );
 
     const onRefresh = useCallback(() => {
-        if (!token) return;
         const controller = new AbortController();
         setUiState((prev) =>
             prev.status === 'content'
@@ -79,7 +65,7 @@ export function useMessagesViewModel() {
         );
         fetchMessages(controller.signal);
         lastRefreshTimestamp.current = Date.now();
-    }, [token, fetchMessages]);
+    }, [fetchMessages]);
 
     return { uiState, user, onRefresh };
 }

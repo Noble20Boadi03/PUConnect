@@ -122,16 +122,6 @@ export default function CreateListingScreen() {
   }, [categoryTitle, subcategoryTitle]);
 
   const onSubmit = async () => {
-    if (!token) {
-      showAlert({
-        title: 'Sign in required',
-        subtitle: 'Please sign in to post a listing.',
-        severity: 'warning',
-        primaryButtonTitle: 'Sign in',
-        onPrimaryPress: () => router.push('/login')
-      });
-      return;
-    }
     if (listingType === 'service_offer' && !canOffer) {
       showAlert({
         title: 'Provider upgrade required',

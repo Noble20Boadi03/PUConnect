@@ -16,7 +16,7 @@ import { useAuth } from '@/context/auth-context';
 
 export default function SearchScreen() {
   const { theme } = useTheme();
-  const { token, user } = useAuth();
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const { contentPaddingLeft, contentPaddingRight } = useResponsive();
   const tabBarHeight = useTabBarHeight();
@@ -79,7 +79,7 @@ export default function SearchScreen() {
             )}
             <Pressable
               style={styles.iconBtn}
-              onPress={() => (token ? router.push('/notifications') : router.push('/login'))}
+              onPress={() => router.push('/notifications')}
             >
               <ThemedIcon name="bell-outline" size={24} />
             </Pressable>

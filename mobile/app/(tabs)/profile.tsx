@@ -2,9 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { StyleSheet, View, Pressable, ActivityIndicator, Image, ScrollView, Dimensions, Modal } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
 import { useActionSheet } from '@expo/react-native-action-sheet';
 
@@ -123,45 +121,21 @@ export default function ProfileScreen() {
     // ── LOADING STATE ───────────────────────────────────────────────────────
     if (uiState.status === 'loading') {
         return (
-            <ScreenLayout style={styles.centered}>
+            <ThemedView style={styles.centered}>
                 <ActivityIndicator size="large" color={theme.primary} />
-                <ThemedText variant="bodyMedium" colorName="textMuted" style={{ marginTop: Spacing.md }}>
-                    Loading profile...
-                </ThemedText>
-            </ScreenLayout>
+            </ThemedView>
         );
     }
 
-    // ── GUEST STATE ─────────────────────────────────────────────────────────
-    if (uiState.status === 'guest') {
+    // ── ERROR STATE ──────────────────────────────────────────────────────────
+    if (uiState.status === 'error') {
         return (
-            <ScreenLayout padding="none" withSafeArea={false}>
-                <ThemedView style={[styles.fixedHeader, { paddingTop: insets.top + Spacing.xs, ...horizontalPadding }]}>
-                    <View style={styles.topRow}>
-                        <ThemedText variant="headlineSmall" style={styles.brandLogo}>
-                            PUConnect
-                        </ThemedText>
-                    </View>
-                </ThemedView>
-
-                <View style={styles.guestContent}>
-                    <View style={[styles.guestIconContainer, { backgroundColor: theme.surfaceVariant }]}>
-                        <ThemedIcon name="account-lock-outline" size={60} colorName="primary" />
-                    </View>
-                    <ThemedText variant="headlineSmall" style={styles.guestTitle}>Join the Community</ThemedText>
-                    <ThemedText variant="bodyLarge" colorName="textSecondary" align="center" style={styles.guestSubtitle}>
-                        Sign in to showcase your skills, manage your requests, and connect with peers across campus.
-                    </ThemedText>
-                    <PrimaryButton
-                        title="Sign In to Continue"
-                        onPress={() => router.push('/login')}
-                        style={styles.guestBtn}
-                    />
-                    <Pressable onPress={() => router.push('/register')} style={{ marginTop: Spacing.xl }}>
-                        <ThemedText variant="labelLarge" colorName="primary">Don&apos;t have an account? Sign Up</ThemedText>
-                    </Pressable>
-                </View>
-            </ScreenLayout>
+            <ThemedView style={styles.centered}>
+                <ThemedIcon name="alert-circle-outline" size={48} colorName="error" />
+                <ThemedText variant="bodyLarge" colorName="textSecondary" align="center" style={{ marginTop: Spacing.md }}>
+                    {uiState.message}
+                </ThemedText>
+            </ThemedView>
         );
     }
 
@@ -188,7 +162,7 @@ export default function ProfileScreen() {
                         )}
                         <Pressable
                             style={styles.iconBtn}
-                            onPress={() => (token ? router.push('/notifications') : router.push('/login'))}
+                            onPress={() => router.push('/notifications')}
                         >
                             <ThemedIcon name="bell-outline" size={24} />
                         </Pressable>
@@ -201,50 +175,34 @@ export default function ProfileScreen() {
                 contentContainerStyle={{ paddingBottom: tabBarHeight + Spacing.xl }}
             >
                 {/* ─── AVATAR + IDENTITY ──────────────────────── */}
-                <Animated.View entering={FadeIn.duration(600)} style={styles.heroSection}>
+                <View style={styles.heroSection}>
                     <View style={styles.avatarWrapper}>
-                        {/* Outer glow */}
-                        <LinearGradient
-                            colors={isDark
-                                ? ['#c084fc', '#7c3aed', '#4c1d95'] as const
-                                : ['#e9d5ff', '#8b5cf6', '#5b21b6'] as const
-                            }
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.avatarGradientRing}
-                        >
+                        <View style={[styles.avatarGradientRing, { borderColor: theme.primary }]}>
                             <View style={[styles.avatarInnerRing, { backgroundColor: theme.background }]}>
                                 {user?.profilePictureUrl ? (
                                     <Image source={{ uri: user.profilePictureUrl }} style={styles.avatarImage} />
                                 ) : (
-                                    <LinearGradient
-                                        colors={isDark
-                                            ? ['#7c3aed', '#6d28d9'] as const
-                                            : ['#a78bfa', '#7c3aed'] as const
-                                        }
-                                        style={styles.avatarPlaceholder}
-                                    >
+                                    <View style={[styles.avatarPlaceholder, { backgroundColor: theme.primaryContainer }]}>
                                         <ThemedText
                                             variant="displaySmall"
-                                            lightColor="#fff"
-                                            darkColor="#fff"
+                                            colorName="primary"
                                             style={{ fontWeight: '700', fontSize: 44 }}
                                         >
                                             {user?.fullName?.charAt(0) || '?'}
                                         </ThemedText>
-                                    </LinearGradient>
+                                    </View>
                                 )}
                             </View>
-                        </LinearGradient>
+                        </View>
                     </View>
 
                     <ThemedText variant="headlineSmall" style={styles.displayName}>
                         {user?.fullName || 'User'}
                     </ThemedText>
-                </Animated.View>
+                </View>
 
                 {/* ─── ACTION BUTTONS ROW ─────────────────────── */}
-                <Animated.View entering={FadeInDown.delay(100).duration(600)} style={[styles.actionRow, horizontalPadding]}>
+                <View style={[styles.actionRow, horizontalPadding]}>
                     <Pressable
                         style={({ pressed }) => [
                             styles.actionBtn,
@@ -326,11 +284,10 @@ export default function ProfileScreen() {
                             Settings
                         </ThemedText>
                     </Pressable>
-                </Animated.View>
+                </View>
 
                 {/* ─── INFO CARD ──────────────────────────────── */}
-                <Animated.View
-                    entering={FadeInDown.delay(200).duration(600)}
+                <View
                     style={[styles.infoCard, { backgroundColor: theme.surface, borderColor: theme.outlineVariant }, horizontalPadding]}
                 >
                     <View style={styles.infoCardInner}>
@@ -356,10 +313,10 @@ export default function ProfileScreen() {
                             </ThemedText>
                         </View>
                     </View>
-                </Animated.View>
+                </View>
 
                 {/* ─── TABS: Posts / Skill Ads ───────────── */}
-                <Animated.View entering={FadeInDown.delay(300).duration(600)} style={styles.tabSection}>
+                <View style={styles.tabSection}>
                     <View style={styles.tabBar}>
                         <Pressable
                             style={[
@@ -430,7 +387,7 @@ export default function ProfileScreen() {
                             style={styles.addPostBtn}
                         />
                     </View>
-                </Animated.View>
+                </View>
             </ScrollView>
 
             {/* ─── PHOTO CONFIRMATION MODAL ─────────────────── */}
@@ -441,7 +398,7 @@ export default function ProfileScreen() {
                 onRequestClose={() => setPendingPhoto(null)}
             >
                 <BlurView intensity={isDark ? 50 : 25} tint={isDark ? 'dark' : 'light'} style={styles.photoModalOverlay}>
-                    <Animated.View entering={FadeInDown.duration(400)} style={[styles.photoModalContent, { backgroundColor: theme.surface }]}>
+                    <View style={[styles.photoModalContent, { backgroundColor: theme.surface }]}>
                         <ThemedText variant="headlineSmall" style={styles.photoModalTitle}>
                             Confirm Profile Photo
                         </ThemedText>
@@ -451,21 +408,13 @@ export default function ProfileScreen() {
 
                         {/* Preview */}
                         <View style={styles.photoPreviewWrapper}>
-                            <LinearGradient
-                                colors={isDark
-                                    ? ['#c084fc', '#7c3aed', '#4c1d95'] as const
-                                    : ['#e9d5ff', '#8b5cf6', '#5b21b6'] as const
-                                }
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 1 }}
-                                style={styles.photoPreviewRing}
-                            >
+                            <View style={[styles.photoPreviewRing, { borderColor: theme.primary }]}>
                                 <View style={[styles.photoPreviewInner, { backgroundColor: theme.surface }]}>
                                     {pendingPhoto && (
                                         <Image source={{ uri: pendingPhoto }} style={styles.photoPreviewImage} />
                                     )}
                                 </View>
-                            </LinearGradient>
+                            </View>
                         </View>
 
                         {/* Action buttons */}
@@ -486,7 +435,7 @@ export default function ProfileScreen() {
                                 Cancel
                             </ThemedText>
                         </Pressable>
-                    </Animated.View>
+                    </View>
                 </BlurView>
             </Modal>
         </ScreenLayout>
@@ -521,35 +470,6 @@ const styles = StyleSheet.create({
         padding: Spacing.xs,
     },
 
-    // Guest
-    guestContent: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: Spacing.xl * 1.5,
-    },
-    guestIconContainer: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: Spacing.xl,
-    },
-    guestTitle: {
-        fontWeight: '800',
-        marginBottom: Spacing.sm,
-        textAlign: 'center',
-    },
-    guestSubtitle: {
-        lineHeight: 24,
-        marginBottom: Spacing.xl * 1.5,
-    },
-    guestBtn: {
-        width: '100%',
-        height: 56,
-    },
-
     // Hero
     heroSection: {
         alignItems: 'center',
@@ -565,6 +485,7 @@ const styles = StyleSheet.create({
         borderRadius: 65,
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 3,
     },
     avatarInnerRing: {
         width: 122,
@@ -721,6 +642,7 @@ const styles = StyleSheet.create({
         borderRadius: 100,
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 3,
     },
     photoPreviewInner: {
         width: 188,

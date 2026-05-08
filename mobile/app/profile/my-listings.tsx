@@ -94,23 +94,6 @@ export default function MyListingsScreen() {
     });
   };
 
-  if (!token) {
-    return (
-      <ScreenLayout>
-        <View style={styles.centered}>
-          <ThemedText variant="bodyLarge" colorName="textSecondary">
-            Sign in to manage your listings.
-          </ThemedText>
-          <Pressable onPress={() => router.push('/login')} style={{ marginTop: Spacing.lg }}>
-            <ThemedText variant="labelLarge" colorName="primary">
-              Sign in
-            </ThemedText>
-          </Pressable>
-        </View>
-      </ScreenLayout>
-    );
-  }
-
   if (loading) {
     return (
       <ScreenLayout>
