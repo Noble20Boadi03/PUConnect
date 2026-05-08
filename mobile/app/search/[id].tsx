@@ -89,7 +89,7 @@ export default function CategoryDetailScreen() {
             {/* Fixed Background Image */}
             <View style={styles.imageBackground}>
                 <Image
-                    source={{ uri: category.image }}
+                    source={category.image}
                     style={styles.mainImage}
                     resizeMode="cover"
                 />

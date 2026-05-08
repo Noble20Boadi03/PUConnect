@@ -14,7 +14,7 @@ export interface DetailedCategory {
     title: string;
     subtitle: string;
     tagline: string;
-    image: string; // Unsplash URL or local image
+    image: any; // Local require or Unsplash URL
     icon: string; // MaterialCommunityIcons name for fallback/detail page
     groups: SubCategoryGroup[];
 }
@@ -25,7 +25,7 @@ export const CAMPUS_CATEGORIES: DetailedCategory[] = [
         title: 'Academics & Language',
         subtitle: 'Tutoring, Exam Prep, Translation',
         tagline: '"Master your courses with peer support"',
-        image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=800&auto=format&fit=crop',
+        image: require('@/assets/images/categories/academics.jpg'),
         icon: 'book-open-page-variant-outline',
         groups: [
             {
@@ -48,7 +48,7 @@ export const CAMPUS_CATEGORIES: DetailedCategory[] = [
         title: 'Tech & Creative',
         subtitle: 'Web, Apps, Graphic Design',
         tagline: '"Build and design the future"',
-        image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800&auto=format&fit=crop',
+        image: require('@/assets/images/categories/tech_design.jpg'),
         icon: 'code-json',
         groups: [
             {
@@ -71,7 +71,7 @@ export const CAMPUS_CATEGORIES: DetailedCategory[] = [
         title: 'Media & Music',
         subtitle: 'Photo, Video, Arts, Audio',
         tagline: '"Capture and create campus culture"',
-        image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=800&auto=format&fit=crop',
+        image: require('@/assets/images/categories/media_music.jpg'),
         icon: 'camera-iris',
         groups: [
             {
@@ -94,7 +94,7 @@ export const CAMPUS_CATEGORIES: DetailedCategory[] = [
         title: 'Business & Career',
         subtitle: 'CVs, Startups, Job Prep',
         tagline: '"Launch your career on campus"',
-        image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=800&auto=format&fit=crop',
+        image: require('@/assets/images/categories/biz_career.jpg'),
         icon: 'briefcase-check-outline',
         groups: [
             {
@@ -114,9 +114,9 @@ export const CAMPUS_CATEGORIES: DetailedCategory[] = [
     {
         id: 'campus_life',
         title: 'Campus & Lifestyle',
-        subtitle: 'Logistics, Delivery, Daily Help',
+        subtitle: 'Logistics, Daily Help',
         tagline: '"Everyday help, right where you are"',
-        image: 'https://images.pexels.com/photos/256490/pexels-photo-256490.jpeg?auto=compress&cs=tinysrgb&w=800',
+        image: require('@/assets/images/categories/campus_life.jpg'),
         icon: 'store-outline',
         groups: [
             {
