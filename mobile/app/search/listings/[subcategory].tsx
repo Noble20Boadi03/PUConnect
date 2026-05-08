@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, FlatList, Pressable, Image, ActivityIndicator, Modal, ScrollView } from 'react-native';
+import { StyleSheet, View, FlatList, Pressable, Image, ActivityIndicator, Modal, ScrollView, StatusBar } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTheme } from '@/context/theme-context';
 import { Spacing, BorderRadius } from '@/constants/theme';
@@ -155,6 +155,11 @@ export default function SubcategoryListingsScreen() {
 
     return (
         <ScreenLayout padding="none" withSafeArea={false}>
+            <StatusBar 
+                barStyle={isDark ? 'light-content' : 'dark-content'} 
+                translucent 
+                backgroundColor="transparent"
+            />
             <Stack.Screen options={{ headerShown: false }} />
             
             <ThemedView style={[styles.fixedHeader, { paddingTop: insets.top + Spacing.sm }]}>
@@ -163,7 +168,10 @@ export default function SubcategoryListingsScreen() {
                         <ThemedIcon name="chevron-left" size={26} />
                     </Pressable>
                     <View />
-                    <Pressable style={styles.iconBtn}>
+                    <Pressable onPress={() => router.push({ 
+                        pathname: '/search/results', 
+                        params: { context: 'providers', subcategory: subcategoryTitle, category: category } 
+                    })} style={styles.iconBtn}>
                         <ThemedIcon name="magnify" size={24} />
                     </Pressable>
                 </View>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { StyleSheet, View, ActivityIndicator, RefreshControl, ScrollView, Pressable, Dimensions, FlatList } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
@@ -212,7 +212,6 @@ export default function HomeScreen() {
   const { token, user } = useAuth();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const [searchQuery, setSearchQuery] = useState('');
   const { isTablet, isLandscape, horizontalPadding } = useResponsive();
   const tabBarHeight = useTabBarHeight();
 
@@ -304,14 +303,18 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Search Bar */}
-        <SearchBar
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder="Search Services or Requests"
-          onSubmit={() => router.push({ pathname: '/search/results', params: { q: searchQuery.trim() } })}
-          containerStyle={{ marginHorizontal: horizontalPadding.paddingLeft }}
-        />
+        {/* Search Bar (tappable, navigates to universal search) */}
+        <Pressable
+          style={{ marginHorizontal: horizontalPadding.paddingLeft }}
+          onPress={() => router.push({ pathname: '/search/results', params: { context: 'home' } })}
+        >
+          <SearchBar
+            value=""
+            onChangeText={() => {}}
+            placeholder="Search Services or Requests"
+            containerStyle={{ pointerEvents: 'none' }}
+          />
+        </Pressable>
 
         {/* Filters */}
         <HomeFilterPills activeFilter={activeFilter} onFilterChange={setActiveFilter} />

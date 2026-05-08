@@ -151,6 +151,12 @@ export default function MessagesScreen() {
                     )}
                     <Pressable
                         style={styles.iconBtn}
+                        onPress={() => router.push({ pathname: '/search/results', params: { context: 'messages' } })}
+                    >
+                        <ThemedIcon name="magnify" size={24} />
+                    </Pressable>
+                    <Pressable
+                        style={styles.iconBtn}
                         onPress={() => (token ? router.push('/notifications') : router.push('/login'))}
                     >
                         <ThemedIcon name="bell-outline" size={24} />

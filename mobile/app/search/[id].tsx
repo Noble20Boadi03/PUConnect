@@ -101,10 +101,6 @@ export default function CategoryDetailScreen() {
                 <Pressable onPress={() => router.back()} style={styles.navBtn}>
                     <ThemedIcon name="chevron-left" size={26} lightColor="#fff" darkColor="#fff" />
                 </Pressable>
-                
-                <Pressable onPress={() => router.push({ pathname: '/search/results', params: { q: '' } })} style={styles.navBtn}>
-                    <ThemedIcon name="magnify" size={24} lightColor="#fff" darkColor="#fff" />
-                </Pressable>
             </View>
 
             <ScrollView
