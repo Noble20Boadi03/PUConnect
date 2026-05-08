@@ -284,7 +284,7 @@ export default function HomeScreen() {
       >
         <View style={[styles.topRow, horizontalPadding]}>
           <ThemedText variant="headlineSmall" style={[styles.brandLogo, { fontWeight: '900' }]}>
-            PuConnect<ThemedText colorName="primary" style={{ fontWeight: '900' }}>.</ThemedText>
+            PuConnect<ThemedText colorName="primary" style={{ fontWeight: '900' }}></ThemedText>
           </ThemedText>
           <View style={styles.headerActions}>
             {isAdmin && (

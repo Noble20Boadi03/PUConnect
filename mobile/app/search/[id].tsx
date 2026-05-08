@@ -64,21 +64,18 @@ export default function CategoryDetailScreen() {
     };
 
     /**
-     * SOLID CATEGORY PALETTE
-     * High-vibrancy solid colors for the cards
+     * CATEGORY SPECIFIC PALETTES
+     * High-vibrancy solid colors for the cards, tailored per category
      */
-    const SOLID_PALETTE = [
-        '#00838F', // Teal/Cyan
-        '#303F9F', // Blue
-        '#2E7D32', // Green
-        '#C62828', // Red
-        '#6A1B9A', // Purple
-        '#EF6C00', // Orange
-        '#00695C', // Dark Teal
-        '#AD1457', // Pink
-        '#1565C0', // Bright Blue
-        '#455A64', // Slate
-    ];
+    const CATEGORY_PALETTES: Record<string, string[]> = {
+        'academics': ['#1565C0', '#00695C', '#6A1B9A'], // Blue, Dark Teal, Purple
+        'tech_design': ['#455A64', '#C62828', '#EF6C00'], // Slate, Red, Orange
+        'media_music': ['#00838F', '#303F9F', '#2E7D32'], // Teal, Blue, Green (Original screenshot)
+        'biz_career': ['#303F9F', '#AD1457', '#1565C0'], // Blue, Pink, Bright Blue
+        'campus_life': ['#2E7D32', '#EF6C00', '#C62828'], // Green, Orange, Red
+    };
+
+    const FALLBACK_PALETTE = ['#00838F', '#303F9F', '#2E7D32', '#C62828'];
 
     return (
         <View style={[styles.root, { backgroundColor: theme.background }]}>
@@ -131,7 +128,8 @@ export default function CategoryDetailScreen() {
                     {/* Simple Solid Colored discovery list */}
                     <View style={[styles.listContainer, { paddingHorizontal: contentPaddingLeft }]}>
                         {category.groups.flatMap(g => g.items).map((item, index) => {
-                            const backgroundColor = SOLID_PALETTE[index % SOLID_PALETTE.length];
+                            const activePalette = CATEGORY_PALETTES[category.id] || FALLBACK_PALETTE;
+                            const backgroundColor = activePalette[index % activePalette.length];
                             return (
                                 <Pressable 
                                     key={index}
