@@ -131,25 +131,38 @@ export default function ListingDetailsScreen() {
     if (user.id === listing.ownerId) return false;
     if (!user.canOfferServices) return false;
 
-    const userExpertise = [
-      ...(user.skillTags || []),
-      user.department,
-    ].filter(Boolean).map(s => s!.toLowerCase());
+    // 1. Resolve IDs for reliable comparison
+    const listingCatId = CAMPUS_CATEGORIES.find(c => c.title === listing.category || c.id === listing.category)?.id;
+    const userCatId = (user as any).category; // From provider profile upgrade
 
-    const listingNeeds = [
-      listing.category,
-      listing.subcategory,
-      ...(listing.tags || []),
-      ...(listing.requiredSkills || []),
-    ].filter(Boolean).map(s => s!.toLowerCase());
+    // 2. Normalize skills/tags for comparison
+    const userSkills = (user.skillTags || []).map(s => s.toLowerCase());
+    const listingSub = listing.subcategory?.toLowerCase();
+    const listingTags = (listing.tags || []).map(t => t.toLowerCase());
 
-    return listingNeeds.some(need => 
-      userExpertise.some(exp => exp.includes(need) || need.includes(exp))
-    );
+    // RULE A: Direct Category Match (e.g. both in 'academics')
+    if (listingCatId && userCatId && listingCatId === userCatId) return true;
+
+    // RULE B: Subcategory Match (e.g. listing is 'Logo Design' and provider has 'Logo Design' in skills)
+    if (listingSub && userSkills.includes(listingSub)) return true;
+
+    // RULE C: Tag Overlap (e.g. shared keywords)
+    if (listingTags.some(tag => userSkills.includes(tag))) return true;
+
+    // RULE D: Department Fallback
+    if (user.department && listing.category.toLowerCase().includes(user.department.toLowerCase())) return true;
+
+    return false;
   };
 
   const isQualifiedProvider = canInteractWithRequest();
   const isOwner = user?.id === listing?.ownerId;
+
+  // Determine the display image (Using local category assets per user request)
+  const categoryData = CAMPUS_CATEGORIES.find(c => c.title === listing.category || c.id === listing.category);
+  const displayImage = listing.type === 'service_request' 
+    ? (categoryData?.image || require('@/assets/images/categories/campus_life.jpg')) 
+    : (listing.media_url || categoryData?.image || require('@/assets/images/categories/campus_life.jpg'));
 
   return (
     <View style={[styles.root, { backgroundColor: theme.background }]}>
@@ -164,7 +177,7 @@ export default function ListingDetailsScreen() {
       {/* Fixed Background Image — stays completely still */}
       <View style={styles.imageBackground}>
         <Image
-          source={listing.media_url || "https://images.unsplash.com/photo-1626785774573-4b799315345d?q=80&w=800&auto=format&fit=crop"}
+          source={displayImage}
           style={styles.mainImage}
           contentFit="cover"
           cachePolicy="disk"
