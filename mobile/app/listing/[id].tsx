@@ -15,6 +15,7 @@ import { useResponsive } from '@/hooks/use-responsive';
 import { api } from '@/services/api';
 import { CAMPUS_CATEGORIES } from '@/constants/categories';
 import { User } from '@/types';
+import { useAuth } from '@/context/auth-context';
 
 const IMAGE_HEIGHT = 320;
 
@@ -23,6 +24,7 @@ export default function ListingDetailsScreen() {
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { user } = useAuth();
 
   const { uiState } = useListingViewModel(id as string);
   const { contentPaddingLeft, contentPaddingRight } = useResponsive();
@@ -99,30 +101,55 @@ export default function ListingDetailsScreen() {
     );
   }
 
-  const { listing, isOwner } = uiState.data;
+  const { listing } = uiState.data;
 
   const getBadge = () => {
     switch (listing.type) {
       case 'service_offer':
-        return { colorName: 'primary' as const, bgName: 'primaryContainer' as const, label: 'Service Offer' };
+        return { colorName: 'primary' as const, bgName: 'primaryContainer' as const, label: 'Service Offer', themeColor: 'primary' as const };
       case 'service_request':
-        return { colorName: 'tertiary' as const, bgName: 'tertiaryContainer' as const, label: 'Need Help' };
+        return { colorName: 'tertiary' as const, bgName: 'tertiaryContainer' as const, label: 'Request', themeColor: 'tertiary' as const };
       default:
-        return { colorName: 'textSecondary' as const, bgName: 'surfaceVariant' as const, label: 'Post' };
+        return { colorName: 'textSecondary' as const, bgName: 'surfaceVariant' as const, label: 'Post', themeColor: 'primary' as const };
     }
   };
   const badge = getBadge();
+  const themeColor = badge.themeColor;
 
-  // Helper to get normalized category title
   const getNormalizedCategory = (cat: string) => {
-    // Specifically handle the "Creative & Design" mismatch
-    if (cat === 'Creative & Design') return 'Tech & Creative';
-    
-    // Try to find a match in official categories (by title or ID)
-    const match = CAMPUS_CATEGORIES.find(c => c.title === cat || c.id === cat);
-    return match ? match.title : cat;
+    const found = CAMPUS_CATEGORIES.find(c => c.title === cat);
+    if (found) return found.title;
+    if (cat.toLowerCase().includes('creative') || cat.toLowerCase().includes('design')) return 'Tech & Creative';
+    return cat;
   };
-  const categoryTitle = getNormalizedCategory(listing.category);
+
+  const categoryTitle = listing ? getNormalizedCategory(listing.category) : '';
+
+  const canInteractWithRequest = () => {
+    if (!listing || !user) return false;
+    if (listing.type !== 'service_request') return true;
+    if (user.id === listing.ownerId) return false;
+    if (!user.canOfferServices) return false;
+
+    const userExpertise = [
+      ...(user.skillTags || []),
+      user.department,
+    ].filter(Boolean).map(s => s!.toLowerCase());
+
+    const listingNeeds = [
+      listing.category,
+      listing.subcategory,
+      ...(listing.tags || []),
+      ...(listing.requiredSkills || []),
+    ].filter(Boolean).map(s => s!.toLowerCase());
+
+    return listingNeeds.some(need => 
+      userExpertise.some(exp => exp.includes(need) || need.includes(exp))
+    );
+  };
+
+  const isQualifiedProvider = canInteractWithRequest();
+  const isOwner = user?.id === listing?.ownerId;
 
   return (
     <View style={[styles.root, { backgroundColor: theme.background }]}>
@@ -145,7 +172,6 @@ export default function ListingDetailsScreen() {
         />
       </View>
 
-      {/* Sticky Back Button */}
       <Pressable
         onPress={() => router.back()}
         style={[
@@ -160,7 +186,7 @@ export default function ListingDetailsScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         removeClippedSubviews={true}
-        contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
+        contentContainerStyle={{ paddingBottom: 120 + insets.bottom }}
         onScroll={handleScroll}
         scrollEventThrottle={32}
       >
@@ -172,12 +198,10 @@ export default function ListingDetailsScreen() {
           colorName="background"
           style={[styles.contentCard, horizontalPadding]}
         >
-          {/* Pull Indicator / Handle */}
           <View style={styles.pullIndicatorWrapper}>
             <View style={[styles.pullIndicator, { backgroundColor: theme.outlineVariant }]} />
           </View>
 
-          {/* Type Badge & Meta */}
           <View style={styles.cardHeader}>
             <ThemedView colorName={badge.bgName} style={styles.typeBadge}>
               <ThemedText variant="labelSmall" colorName={badge.colorName} style={styles.typeBadgeText}>
@@ -193,23 +217,21 @@ export default function ListingDetailsScreen() {
             </View>
           </View>
 
-          {/* Title & Category */}
           <View style={styles.mainTitleSection}>
             <ThemedText variant="headlineSmall" style={styles.title}>
               {listing.title}
             </ThemedText>
             
             <View style={styles.categoryRow}>
-              <View style={[styles.categoryIconCircle, { backgroundColor: theme.primary + '15' }]}>
-                <ThemedIcon name="tag-outline" size={14} colorName="primary" />
+              <View style={[styles.categoryIconCircle, { backgroundColor: theme[themeColor] + '15' }]}>
+                <ThemedIcon name="tag-outline" size={14} colorName={themeColor} />
               </View>
-              <ThemedText variant="labelLarge" colorName="primary" style={styles.categoryText}>
+              <ThemedText variant="labelLarge" colorName={themeColor} style={styles.categoryText}>
                 {categoryTitle}
               </ThemedText>
             </View>
           </View>
 
-          {/* Description */}
           <View style={styles.section}>
             <ThemedText variant="titleMedium" style={styles.sectionTitle}>
               {listing.type === 'service_offer' ? 'About this service' : 'About this request'}
@@ -219,7 +241,6 @@ export default function ListingDetailsScreen() {
             </ThemedText>
           </View>
 
-          {/* Tags */}
           {listing.tags && listing.tags.length > 0 && (
             <View style={styles.section}>
               <ThemedText variant="titleMedium" style={styles.sectionTitle}>
@@ -241,11 +262,10 @@ export default function ListingDetailsScreen() {
             </View>
           )}
 
-          {/* Skills */}
-          {listing.requiredSkills && listing.requiredSkills.length > 0 && (
+          {listing.type === 'service_offer' && listing.requiredSkills && listing.requiredSkills.length > 0 && (
             <View style={styles.section}>
               <ThemedText variant="titleMedium" style={styles.sectionTitle}>
-                {listing.type === 'service_offer' ? 'Expertise' : 'Requirements'}
+                Expertise
               </ThemedText>
               <View style={styles.tagGrid}>
                 {listing.requiredSkills.map((skill) => (
@@ -263,7 +283,6 @@ export default function ListingDetailsScreen() {
             </View>
           )}
 
-          {/* Provider Info - Hidden when coming from chat or profile to avoid redundancy and loops */}
           {fromChat !== 'true' && fromProfile !== 'true' && (
             <View style={styles.section}>
               <ThemedText variant="titleMedium" style={styles.sectionTitle}>
@@ -277,8 +296,14 @@ export default function ListingDetailsScreen() {
                   {owner?.profilePictureUrl ? (
                     <Image source={{ uri: owner.profilePictureUrl }} style={styles.providerAvatarLarge} />
                   ) : (
-                    <View style={[styles.providerAvatarLarge, { backgroundColor: theme.primary + '20' }]}>
-                      <ThemedIcon name="account" size={40} colorName="primary" />
+                    <View style={[styles.providerAvatarLarge, { backgroundColor: theme.primary + '15' }]}>
+                      <ThemedText 
+                        variant="headlineSmall" 
+                        colorName="primary" 
+                        style={{ fontWeight: 'bold', fontSize: 40 }}
+                      >
+                        {(owner?.fullName || 'C').charAt(0).toUpperCase()}
+                      </ThemedText>
                     </View>
                   )}
                   
@@ -287,14 +312,16 @@ export default function ListingDetailsScreen() {
                   </ThemedText>
                 </View>
 
-                <PrimaryButton
-                  title="View Profile"
-                  variant="ghost"
-                  onPress={() =>
-                    router.push({ pathname: '/profile/[id]', params: { id: listing.ownerId } })
-                  }
-                  style={styles.viewProfileBtn}
-                />
+                {listing.type === 'service_offer' && (
+                  <PrimaryButton
+                    title="View Profile"
+                    variant="ghost"
+                    onPress={() =>
+                      router.push({ pathname: '/profile/[id]', params: { id: listing.ownerId } })
+                    }
+                    style={styles.viewProfileBtn}
+                  />
+                )}
               </ThemedView>
             </View>
           )}
@@ -302,37 +329,44 @@ export default function ListingDetailsScreen() {
       </ScrollView>
 
       {/* Bottom Action Bar */}
-      {!isOwner && (
-        <View
-          style={[
-            styles.bottomBar,
-            {
-              paddingBottom: Math.max(insets.bottom, Spacing.lg),
-              backgroundColor: theme.surface,
-              borderTopColor: theme.outlineVariant,
-            },
-          ]}
-        >
-          <View style={[styles.bottomBarInner, horizontalPadding]}>
-            {fromChat === 'true' ? (
-              <PrimaryButton
-                title="Back to Chat"
-                onPress={() => router.back()}
-                style={styles.messageBtn}
-              />
-            ) : (
-              <PrimaryButton
-                title="Send Message"
-                onPress={() => router.replace({
-                  pathname: "/chat/[id]",
-                  params: { id: listing.ownerId, listingId: listing.id }
-                })}
-                style={styles.messageBtn}
-              />
-            )}
-          </View>
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + Spacing.md, backgroundColor: theme.surface, borderTopColor: theme.outlineVariant }]}>
+        <View style={[styles.bottomBarInner, horizontalPadding]}>
+          {isOwner ? (
+            <PrimaryButton
+              title="Edit My Listing"
+              variant="outline"
+              onPress={() => router.push({ pathname: '/listing/create', params: { editId: listing.id } })}
+              style={styles.messageBtn}
+            />
+          ) : listing.type === 'service_request' && !isQualifiedProvider ? (
+            <View style={styles.restrictedNotice}>
+              <ThemedIcon name="lock-outline" size={16} colorName="textMuted" />
+              <ThemedText variant="labelSmall" colorName="textMuted" style={{ marginLeft: 6, flex: 1 }}>
+                {user?.canOfferServices 
+                  ? `Only providers with expertise in ${categoryTitle} can respond to this request.`
+                  : "Complete your provider profile to respond to student requests."}
+              </ThemedText>
+            </View>
+          ) : fromChat === 'true' ? (
+            <PrimaryButton
+              title="Back to Chat"
+              variant={themeColor as any}
+              onPress={() => router.back()}
+              style={styles.messageBtn}
+            />
+          ) : (
+            <PrimaryButton
+              title="Send Message"
+              variant={themeColor as any}
+              onPress={() => router.replace({
+                pathname: "/chat/[id]",
+                params: { id: listing.ownerId, listingId: listing.id }
+              })}
+              style={styles.messageBtn}
+            />
+          )}
         </View>
-      )}
+      </View>
     </View>
   );
 }
@@ -525,5 +559,14 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 52,
     borderRadius: BorderRadius.lg,
+  },
+  restrictedNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
   },
 });

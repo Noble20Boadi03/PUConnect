@@ -11,7 +11,7 @@ interface PrimaryButtonProps extends PressableProps {
     isLoading?: boolean;
     delay?: number;
     marginTop?: number;
-    variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+    variant?: 'primary' | 'secondary' | 'tertiary' | 'outline' | 'ghost';
     size?: 'small' | 'medium' | 'large';
     style?: StyleProp<ViewStyle>;
 }
@@ -34,6 +34,11 @@ export function PrimaryButton({
                 return {
                     button: { backgroundColor: theme.secondaryContainer },
                     text: { colorName: 'onSecondaryContainer' as const },
+                };
+            case 'tertiary':
+                return {
+                    button: { backgroundColor: theme.tertiaryContainer },
+                    text: { colorName: 'onTertiaryContainer' as const },
                 };
             case 'outline':
                 return {
@@ -97,7 +102,7 @@ export function PrimaryButton({
             <Pressable
                 style={(state) => [
                     styles.button,
-                    variant !== 'primary' && variantStyles.button,
+                    variant !== 'primary' && variant !== 'tertiary' && variantStyles.button,
                     sizeStyles.button,
                     {
                         opacity: isLoading || props.disabled ? 0.8 : 1,
@@ -109,9 +114,9 @@ export function PrimaryButton({
                 {...props}
             >
                 {({ pressed }) => (
-                    variant === 'primary' ? (
+                    variant === 'primary' || variant === 'tertiary' ? (
                         <LinearGradient
-                            colors={Gradients.primary}
+                            colors={variant === 'tertiary' ? Gradients.tertiary : Gradients.primary}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 1 }}
                             style={[styles.gradient, sizeStyles.button, { opacity: pressed ? 0.9 : 1 }]}

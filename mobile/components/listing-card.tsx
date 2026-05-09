@@ -7,6 +7,7 @@ import { Spacing } from '@/constants/theme';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 import { ThemedIcon } from './ui/themed-icon';
+import { useTheme } from '@/context/theme-context';
 
 interface ListingCardProps {
     listing: Listing;
@@ -17,6 +18,7 @@ interface ListingCardProps {
 const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800&auto=format&fit=crop";
 
 export const ListingCard = memo(function ListingCard({ listing, width, onPress }: ListingCardProps) {
+    const { theme } = useTheme();
     return (
         <ThemedView
             elevation={2}
@@ -50,8 +52,14 @@ export const ListingCard = memo(function ListingCard({ listing, width, onPress }
                                 cachePolicy="disk"
                             />
                         ) : (
-                            <View style={[styles.avatarImage, { backgroundColor: '#e2e8f0', justifyContent: 'center', alignItems: 'center' }]}>
-                                <ThemedIcon name="account" size={16} colorName="textSecondary" />
+                            <View style={[styles.avatarImage, { backgroundColor: theme.primary + '15', justifyContent: 'center', alignItems: 'center' }]}>
+                                <ThemedText 
+                                    variant="labelSmall" 
+                                    colorName="primary" 
+                                    style={{ fontWeight: 'bold' }}
+                                >
+                                    {(listing.ownerName || 'C').charAt(0).toUpperCase()}
+                                </ThemedText>
                             </View>
                         )}
                         <ThemedText variant="labelLarge" style={styles.userName}>

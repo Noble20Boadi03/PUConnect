@@ -164,6 +164,7 @@ export default function CreateListingScreen() {
     setSubmitting(true);
     try {
       if (editId) {
+        if (!token) throw new Error('Not authenticated');
         await api.updateListing(
           editId as string,
           {
@@ -184,6 +185,7 @@ export default function CreateListingScreen() {
           onPrimaryPress: () => router.replace('/profile/my-listings')
         });
       } else {
+        if (!token) throw new Error('Not authenticated');
         await api.createListing(
           {
             title: title.trim(),
@@ -262,7 +264,7 @@ export default function CreateListingScreen() {
                 ]}
               >
                 <ThemedText variant="labelLarge" colorName={listingType === t ? 'primary' : 'textSecondary'}>
-                  {t === 'service_offer' ? 'I offer a service' : 'I need help'}
+                  {t === 'service_offer' ? 'Offer a Service' : 'Post a Request'}
                 </ThemedText>
               </Pressable>
               );
@@ -385,7 +387,7 @@ export default function CreateListingScreen() {
           <TextInput
             value={description}
             onChangeText={setDescription}
-            placeholder="Describe what you offer or what you need..."
+            placeholder="Describe what you offer or what you are requesting..."
             placeholderTextColor={theme.textMuted}
             multiline
             textAlignVertical="top"

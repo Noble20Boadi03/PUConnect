@@ -465,7 +465,7 @@ export default function ChatScreen() {
                 </ThemedText>
                 <View style={[styles.contextTinyBadge, { backgroundColor: contextListing.type === 'service_offer' ? theme.primaryContainer : theme.tertiaryContainer }]}>
                     <ThemedText style={{ fontSize: 9, fontWeight: 'bold' }} colorName={contextListing.type === 'service_offer' ? 'primary' : 'tertiary'}>
-                        {contextListing.type === 'service_offer' ? 'OFFER' : 'NEED'}
+                        {contextListing.type === 'service_offer' ? 'OFFER' : 'REQUEST'}
                     </ThemedText>
                 </View>
                 <ThemedIcon name="chevron-right" size={14} colorName="textMuted" style={{ marginLeft: Spacing.xs }} />

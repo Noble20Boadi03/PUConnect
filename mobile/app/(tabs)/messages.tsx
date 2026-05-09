@@ -51,7 +51,9 @@ export default function MessagesScreen() {
                         transition={200}
                     />
                 ) : (
-                    <ThemedIcon name="account" size={28} colorName="primary" />
+                    <ThemedText variant="titleMedium" colorName="primary" style={{ fontWeight: 'bold' }}>
+                        {(item.senderName || 'C').charAt(0).toUpperCase()}
+                    </ThemedText>
                 )}
             </View>
 
