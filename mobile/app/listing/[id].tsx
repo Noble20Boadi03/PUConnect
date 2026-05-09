@@ -13,6 +13,7 @@ import { useTheme } from '@/context/theme-context';
 import { useListingViewModel } from '@/hooks/view-models/use-listing-view-model';
 import { useResponsive } from '@/hooks/use-responsive';
 import { api } from '@/services/api';
+import { CAMPUS_CATEGORIES } from '@/constants/categories';
 import { User } from '@/types';
 
 const IMAGE_HEIGHT = 320;
@@ -112,6 +113,17 @@ export default function ListingDetailsScreen() {
   };
   const badge = getBadge();
 
+  // Helper to get normalized category title
+  const getNormalizedCategory = (cat: string) => {
+    // Specifically handle the "Creative & Design" mismatch
+    if (cat === 'Creative & Design') return 'Tech & Creative';
+    
+    // Try to find a match in official categories (by title or ID)
+    const match = CAMPUS_CATEGORIES.find(c => c.title === cat || c.id === cat);
+    return match ? match.title : cat;
+  };
+  const categoryTitle = getNormalizedCategory(listing.category);
+
   return (
     <View style={[styles.root, { backgroundColor: theme.background }]}>
       <StatusBar 
@@ -160,54 +172,47 @@ export default function ListingDetailsScreen() {
           colorName="background"
           style={[styles.contentCard, horizontalPadding]}
         >
-          {/* Type Badge */}
-          <ThemedView colorName={badge.bgName} style={styles.typeBadge}>
-            <ThemedText variant="labelSmall" colorName={badge.colorName} style={styles.typeBadgeText}>
-              {badge.label}
-            </ThemedText>
-          </ThemedView>
-
-          {/* Title */}
-          <ThemedText variant="headlineSmall" style={styles.title}>
-            {listing.title}
-          </ThemedText>
-
-          {/* Category */}
-          <View style={styles.categoryRow}>
-            <ThemedIcon name="folder-outline" size={16} colorName="primary" />
-            <ThemedText variant="labelLarge" colorName="primary" style={{ marginLeft: 6 }}>
-              {listing.category}
-            </ThemedText>
+          {/* Pull Indicator / Handle */}
+          <View style={styles.pullIndicatorWrapper}>
+            <View style={[styles.pullIndicator, { backgroundColor: theme.outlineVariant }]} />
           </View>
 
-          {/* Meta info */}
-          <View style={[styles.metaRow, { borderColor: theme.outlineVariant }]}>
-            <View style={styles.metaItem}>
-              <ThemedIcon name="calendar-outline" size={18} colorName="textMuted" />
-              <ThemedText variant="labelSmall" colorName="textMuted">
-                {new Date(listing.createdAt).toLocaleDateString()}
+          {/* Type Badge & Meta */}
+          <View style={styles.cardHeader}>
+            <ThemedView colorName={badge.bgName} style={styles.typeBadge}>
+              <ThemedText variant="labelSmall" colorName={badge.colorName} style={styles.typeBadgeText}>
+                {badge.label}
+              </ThemedText>
+            </ThemedView>
+            
+            <View style={styles.headerDate}>
+              <ThemedIcon name="calendar-month-outline" size={14} colorName="textMuted" />
+              <ThemedText variant="labelSmall" colorName="textMuted" style={{ marginLeft: 4 }}>
+                {new Date(listing.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
               </ThemedText>
             </View>
-            <View style={styles.metaItem}>
-              <ThemedIcon name="star" size={18} lightColor="#fbbf24" darkColor="#fbbf24" />
-              <ThemedText variant="labelSmall" colorName="textMuted">
-                {listing.average_rating || '5.0'} ({listing.review_count || 0})
-              </ThemedText>
-            </View>
-            {listing.level && (
-              <View style={styles.metaItem}>
-                <ThemedIcon name="shield-check-outline" size={18} colorName="textMuted" />
-                <ThemedText variant="labelSmall" colorName="textMuted" style={{ textTransform: 'capitalize' }}>
-                  {listing.level}
-                </ThemedText>
+          </View>
+
+          {/* Title & Category */}
+          <View style={styles.mainTitleSection}>
+            <ThemedText variant="headlineSmall" style={styles.title}>
+              {listing.title}
+            </ThemedText>
+            
+            <View style={styles.categoryRow}>
+              <View style={[styles.categoryIconCircle, { backgroundColor: theme.primary + '15' }]}>
+                <ThemedIcon name="tag-outline" size={14} colorName="primary" />
               </View>
-            )}
+              <ThemedText variant="labelLarge" colorName="primary" style={styles.categoryText}>
+                {categoryTitle}
+              </ThemedText>
+            </View>
           </View>
 
           {/* Description */}
           <View style={styles.section}>
             <ThemedText variant="titleMedium" style={styles.sectionTitle}>
-              About this service
+              {listing.type === 'service_offer' ? 'About this service' : 'About this request'}
             </ThemedText>
             <ThemedText variant="bodyLarge" colorName="textSecondary" style={styles.description}>
               {listing.description}
@@ -240,7 +245,7 @@ export default function ListingDetailsScreen() {
           {listing.requiredSkills && listing.requiredSkills.length > 0 && (
             <View style={styles.section}>
               <ThemedText variant="titleMedium" style={styles.sectionTitle}>
-                Expertise
+                {listing.type === 'service_offer' ? 'Expertise' : 'Requirements'}
               </ThemedText>
               <View style={styles.tagGrid}>
                 {listing.requiredSkills.map((skill) => (
@@ -268,40 +273,27 @@ export default function ListingDetailsScreen() {
                 colorName="surfaceVariant"
                 style={styles.providerCard}
               >
-                <View style={styles.providerRow}>
+                <View style={styles.providerCenteredContent}>
                   {owner?.profilePictureUrl ? (
-                    <Image source={{ uri: owner.profilePictureUrl }} style={styles.providerAvatar} />
+                    <Image source={{ uri: owner.profilePictureUrl }} style={styles.providerAvatarLarge} />
                   ) : (
-                    <View style={[styles.providerAvatar, { backgroundColor: theme.primary + '20' }]}>
-                      <ThemedIcon name="account" size={28} colorName="primary" />
+                    <View style={[styles.providerAvatarLarge, { backgroundColor: theme.primary + '20' }]}>
+                      <ThemedIcon name="account" size={40} colorName="primary" />
                     </View>
                   )}
-                  <View style={styles.providerInfo}>
-                    <ThemedText variant="titleMedium" style={{ fontWeight: '700' }}>
-                      {owner?.fullName ?? 'Campus Member'}
-                    </ThemedText>
-                    <ThemedText variant="bodySmall" colorName="textMuted">
-                      {owner
-                        ? `${owner.department ?? 'Student'} · Class of ${owner.graduationYear ?? '—'}`
-                        : 'Loading…'}
-                    </ThemedText>
-                    {owner?.reputationScore !== undefined && owner.reputationScore > 0 && (
-                      <View style={styles.providerStats}>
-                        <ThemedIcon name="star" size={14} lightColor="#fbbf24" darkColor="#fbbf24" />
-                        <ThemedText variant="labelSmall" colorName="textMuted">
-                          {owner.reputationScore.toFixed(1)} · {owner.completedProjects ?? 0} completed
-                        </ThemedText>
-                      </View>
-                    )}
-                  </View>
+                  
+                  <ThemedText variant="titleLarge" style={styles.providerNameCentered}>
+                    {owner?.fullName ?? 'Campus Member'}
+                  </ThemedText>
                 </View>
+
                 <PrimaryButton
                   title="View Profile"
                   variant="ghost"
                   onPress={() =>
                     router.push({ pathname: '/profile/[id]', params: { id: listing.ownerId } })
                   }
-                  size="small"
+                  style={styles.viewProfileBtn}
                 />
               </ThemedView>
             </View>
@@ -386,94 +378,136 @@ const styles = StyleSheet.create({
   },
   // Content card that slides over the image
   contentCard: {
-    borderTopLeftRadius: BorderRadius.xxl,
-    borderTopRightRadius: BorderRadius.xxl,
-    paddingTop: Spacing.xl,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingTop: Spacing.md,
     paddingBottom: Spacing.xl,
-    minHeight: 500,
+    minHeight: 600,
+    marginTop: -20, // Negative margin to overlap image slightly better
+    ...Shadows.level3,
+  },
+  pullIndicatorWrapper: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+  },
+  pullIndicator: {
+    width: 40,
+    height: 5,
+    borderRadius: 3,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+  },
+  headerDate: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
   typeBadge: {
-    alignSelf: 'flex-start',
     paddingHorizontal: Spacing.md,
-    paddingVertical: 4,
+    paddingVertical: 6,
     borderRadius: BorderRadius.full,
-    marginBottom: Spacing.md,
   },
   typeBadgeText: {
     fontWeight: '800',
-    fontSize: 11,
+    fontSize: 10,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
+  },
+  mainTitleSection: {
+    marginBottom: Spacing.lg,
   },
   title: {
-    fontWeight: '800',
-    marginBottom: Spacing.xs,
+    fontWeight: '900',
+    fontSize: 26,
+    lineHeight: 32,
+    marginBottom: Spacing.sm,
+    letterSpacing: -0.5,
   },
   categoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: Spacing.xs,
   },
-  metaRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.lg,
-    marginTop: Spacing.lg,
-    paddingTop: Spacing.lg,
-    borderTopWidth: 1,
-  },
-  metaItem: {
-    flexDirection: 'row',
+  categoryIconCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 6,
+  },
+  categoryText: {
+    marginLeft: 8,
+    fontWeight: '700',
+    fontSize: 14,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   section: {
     marginTop: Spacing.xl,
+    paddingTop: Spacing.xl,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(128,128,128,0.1)',
   },
   sectionTitle: {
-    fontWeight: '700',
-    marginBottom: Spacing.sm,
+    fontWeight: '800',
+    fontSize: 18,
+    marginBottom: Spacing.md,
+    letterSpacing: -0.2,
   },
   description: {
-    lineHeight: 24,
+    lineHeight: 26,
+    fontSize: 16,
+    opacity: 0.9,
   },
   tagGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.sm,
-    marginTop: Spacing.xs,
   },
   skillTag: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: BorderRadius.full,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(128,128,128,0.1)',
   },
   providerCard: {
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-  },
-  providerRow: {
-    flexDirection: 'row',
+    padding: Spacing.xl,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(128,128,128,0.1)',
     alignItems: 'center',
-    marginBottom: Spacing.md,
+    ...Shadows.level1,
   },
-  providerAvatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+  providerCenteredContent: {
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+  },
+  providerAvatarLarge: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: '#fff',
+    marginBottom: Spacing.md,
   },
-  providerInfo: {
-    marginLeft: Spacing.md,
-    flex: 1,
+  providerNameCentered: {
+    fontWeight: '900',
+    textAlign: 'center',
+    letterSpacing: -0.5,
   },
-  providerStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 4,
+  viewProfileBtn: {
+    marginTop: Spacing.sm,
   },
   // Bottom action bar
   bottomBar: {
