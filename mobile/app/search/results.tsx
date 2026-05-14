@@ -11,7 +11,7 @@ import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { useResponsive } from '@/hooks/use-responsive';
 import { api } from '@/services/api';
-import { Listing, ChatMessage } from '@/types';
+import { Listing, ChatMessage, User } from '@/types';
 import { useAuth } from '@/context/auth-context';
 import { ListingCard } from '@/components/listing-card';
 import { RequestCard } from '@/components/request-card';
@@ -84,14 +84,6 @@ export default function UniversalSearchScreen() {
             case 'messages': return 'Messages';
             case 'providers': return params.subcategory || 'Providers';
             default: return 'Marketplace';
-        }
-    };
-
-    const hasResults = (): boolean => {
-        switch (searchContext) {
-            case 'home': return listingResults.length > 0;
-            case 'messages': return messageResults.length > 0;
-            case 'providers': return providerResults.length > 0;
         }
     };
 
@@ -277,7 +269,7 @@ export default function UniversalSearchScreen() {
         );
     }, [contentPaddingLeft, theme.surfaceVariant, searchContext, router]);
 
-    const renderProviderItem = useCallback(({ item }: { item: any }) => (
+    const renderProviderItem = useCallback(({ item }: { item: User }) => (
         <View style={styles.providerWrapper}>
             <Pressable
                 onPress={() => {
@@ -307,9 +299,16 @@ export default function UniversalSearchScreen() {
                         <ThemedText variant="titleMedium" style={styles.providerName}>
                             {item.fullName}
                         </ThemedText>
-                        <ThemedText variant="labelMedium" colorName="textMuted" style={styles.providerDept}>
-                            {item.department || 'Expert'}
-                        </ThemedText>
+                        <View style={styles.providerInfoRow}>
+                            <ThemedText variant="labelMedium" colorName="textMuted" style={styles.providerDept}>
+                                {item.department || 'Expert'}
+                            </ThemedText>
+                            {item.username && (
+                                <ThemedText variant="labelSmall" colorName="primary" style={styles.usernameText}>
+                                    @{item.username}
+                                </ThemedText>
+                            )}
+                        </View>
                         <View style={styles.providerTags}>
                             {item.skillTags?.slice(0, 3).map((tag: string, idx: number) => (
                                 <View key={idx} style={[styles.providerTagPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#f0f0f0' }]}>
@@ -673,9 +672,17 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         fontSize: 17,
     },
-    providerDept: {
+    providerInfoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
         marginTop: 2,
+    },
+    providerDept: {
         fontSize: 13,
+    },
+    usernameText: {
+        fontWeight: '600',
     },
     providerTags: {
         flexDirection: 'row',
@@ -725,3 +732,4 @@ const HomeFilterPills = React.memo(({ activeFilter, onFilterChange }: { activeFi
       />
     );
 });
+HomeFilterPills.displayName = 'HomeFilterPills';

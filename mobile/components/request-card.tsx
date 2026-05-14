@@ -4,7 +4,6 @@ import { Listing } from '@/types';
 import { Spacing, BorderRadius } from '@/constants/theme';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
-import { ThemedIcon } from './ui/themed-icon';
 
 import { useTheme } from '@/context/theme-context';
 

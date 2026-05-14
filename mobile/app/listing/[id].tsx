@@ -134,7 +134,7 @@ export default function ListingDetailsScreen() {
 
     // 1. Resolve IDs for reliable comparison
     const listingCatId = CAMPUS_CATEGORIES.find(c => c.title === listing.category || c.id === listing.category)?.id;
-    const userCatId = (user as any).category; // From provider profile upgrade
+    const userCatId = user.category; // Now formally part of User type
 
     // 2. Normalize skills/tags for comparison
     const userSkills = (user.skillTags || []).map(s => s.toLowerCase());
@@ -159,14 +159,17 @@ export default function ListingDetailsScreen() {
   const isQualifiedProvider = canInteractWithRequest();
   const isOwner = user?.id === listing?.ownerId;
 
-  // Determine the display image (Using local category assets per user request)
+  // Determine the display images (Unified media_urls approach)
   const categoryData = CAMPUS_CATEGORIES.find(c => c.title === listing.category || c.id === listing.category);
-  const displayImage = listing.type === 'service_request' 
-    ? (categoryData?.image || require('@/assets/images/categories/campus_life.jpg')) 
-    : (listing.media_url || categoryData?.image || require('@/assets/images/categories/campus_life.jpg'));
+  const fallbackImage = categoryData?.image || require('@/assets/images/categories/campus_life.jpg');
 
-  const hasMultipleImages = listing.media_urls && listing.media_urls.length > 0;
-  const imagesToDisplay = hasMultipleImages ? listing.media_urls : [displayImage];
+  // If it's a service request, we usually prefer category images unless user provided specific ones
+  // If it's a service offer, we prefer user provided media_urls
+  const imagesToDisplay = (listing.type === 'service_offer' && listing.media_urls && listing.media_urls.length > 0)
+    ? listing.media_urls 
+    : [listing.media_url || fallbackImage];
+
+  const hasMultipleImages = imagesToDisplay.length > 1;
 
   return (
     <View style={[styles.root, { backgroundColor: theme.background }]}>
@@ -206,7 +209,7 @@ export default function ListingDetailsScreen() {
           </>
         ) : (
           <Image
-            source={displayImage}
+            source={imagesToDisplay[0]}
             style={styles.mainImage}
             contentFit="cover"
             cachePolicy="disk"

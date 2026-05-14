@@ -123,14 +123,21 @@ export default function PublicProfileScreen() {
           <ThemedText variant="headlineSmall" style={styles.name}>
             {profile.fullName}
           </ThemedText>
-          {profile.verifiedStudent && (
-            <View style={styles.badgeRow}>
-              <ThemedIcon name="check-decagram" size={16} colorName="primary" />
-              <ThemedText variant="labelSmall" colorName="primary">
-                Verified student
+          <View style={styles.profileMetaRow}>
+            {profile.verifiedStudent && (
+              <View style={styles.badgeRow}>
+                <ThemedIcon name="check-decagram" size={16} colorName="primary" />
+                <ThemedText variant="labelSmall" colorName="primary">
+                  Verified student
+                </ThemedText>
+              </View>
+            )}
+            {profile.username && (
+              <ThemedText variant="labelSmall" colorName="primary" style={{ fontWeight: '700' }}>
+                @{profile.username}
               </ThemedText>
-            </View>
-          )}
+            )}
+          </View>
           <ThemedText variant="bodyMedium" colorName="textSecondary" align="center">
             {profile.department ?? 'Student'} · Class of {profile.graduationYear ?? '—'}
           </ThemedText>
@@ -295,7 +302,14 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   name: { fontWeight: '800', textAlign: 'center' },
-  badgeRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: Spacing.xs },
+  profileMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: Spacing.xs,
+  },
+  badgeRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   bio: { marginTop: Spacing.md, textAlign: 'center' },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginTop: Spacing.md, justifyContent: 'center' },
   tag: { paddingHorizontal: Spacing.md, paddingVertical: 6, borderRadius: 6 },

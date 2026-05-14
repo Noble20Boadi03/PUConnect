@@ -294,7 +294,7 @@ export default function ProfileScreen() {
                         {/* Username row */}
                         <View style={styles.infoRow}>
                             <ThemedText variant="bodyLarge" style={styles.infoValue}>
-                                @{(user as any)?.username || user?.fullName?.toLowerCase().replace(/\s+/g, '_') || 'user'}
+                                @{user?.username || user?.fullName?.toLowerCase().replace(/\s+/g, '_') || 'user'}
                             </ThemedText>
                             <ThemedText variant="bodySmall" colorName="textMuted">
                                 Username

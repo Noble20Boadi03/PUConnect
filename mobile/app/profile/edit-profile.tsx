@@ -30,15 +30,15 @@ export default function EditProfileScreen() {
 
   const [firstName, setFirstName] = useState(user?.fullName?.split(" ")[0] || "");
   const [lastName, setLastName] = useState(user?.fullName?.split(" ").slice(1).join(" ") || "");
-  const [username, setUsername] = useState((user as any)?.username || "");
+  const [username, setUsername] = useState(user?.username || "");
   const [email, setEmail] = useState(user?.email || "");
 
   // Provider fields
   const [isProviderExpanded, setIsProviderExpanded] = useState(user?.canOfferServices || false);
   const [bio, setBio] = useState(user?.bio || "");
   const [skills, setSkills] = useState<string[]>(user?.skillTags || []);
-  const [subcategory, setSubcategory] = useState((user as any)?.subcategory || "");
-  const [category, setCategory] = useState((user as any)?.category || "");
+  const [subcategory, setSubcategory] = useState(user?.subcategory || "");
+  const [category, setCategory] = useState(user?.category || "");
   
   const [isSubcategoryModalVisible, setSubcategoryModalVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -134,13 +134,13 @@ export default function EditProfileScreen() {
         {
           fullName,
           email,
-          username, // passed to the mock API
+          username,
           bio: isProviderExpanded ? bio : undefined,
           skillTags: isProviderExpanded ? skills : undefined,
           category: isProviderExpanded ? category : undefined,
           subcategory: isProviderExpanded ? subcategory : undefined,
           canOfferServices: isProviderExpanded,
-        } as any,
+        },
         token,
       );
 

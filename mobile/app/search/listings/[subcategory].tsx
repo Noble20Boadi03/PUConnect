@@ -65,10 +65,6 @@ export default function SubcategoryListingsScreen() {
         selectFilter(filterLabel, optionValue, isMulti);
     };
 
-    const handleClearFilter = (filterLabel: string) => {
-        clearFilter(filterLabel);
-    };
-
     const isAllSelected = Object.keys(activeFilters).length === 0;
 
     const renderHeader = () => (
@@ -288,7 +284,7 @@ export default function SubcategoryListingsScreen() {
 /**
  * Original Style Horizontal Provider Card
  */
-function ProviderCard({ item, theme, isDark, subcategory, onPress }: any) {
+function ProviderCard({ item, theme, isDark, subcategory, onPress }: { item: User, theme: any, isDark: boolean, subcategory: string, onPress: () => void }) {
     return (
         <View style={styles.cardWrapper}>
             <Pressable 
@@ -317,9 +313,16 @@ function ProviderCard({ item, theme, isDark, subcategory, onPress }: any) {
                             {item.fullName}
                         </ThemedText>
                         
-                        <ThemedText variant="labelMedium" colorName="textMuted" style={styles.departmentText}>
-                            {item.department || 'Expert'}
-                        </ThemedText>
+                        <View style={styles.providerInfoRow}>
+                            <ThemedText variant="labelMedium" colorName="textMuted" style={styles.departmentText}>
+                                {item.department || 'Expert'}
+                            </ThemedText>
+                            {item.username && (
+                                <ThemedText variant="labelSmall" colorName="primary" style={styles.usernameText}>
+                                    @{item.username}
+                                </ThemedText>
+                            )}
+                        </View>
 
                         <View style={styles.tagsRow}>
                             {item.skillTags?.slice(0, 3).map((tag: string, idx: number) => (
@@ -423,9 +426,17 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         fontSize: 17,
     },
-    departmentText: {
+    providerInfoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
         marginTop: 2,
+    },
+    departmentText: {
         fontSize: 13,
+    },
+    usernameText: {
+        fontWeight: '600',
     },
     tagsRow: {
         flexDirection: 'row',

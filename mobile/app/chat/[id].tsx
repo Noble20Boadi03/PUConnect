@@ -428,13 +428,20 @@ export default function ChatScreen() {
                             <ThemedText variant="titleMedium" style={{ fontWeight: '700' }} numberOfLines={1}>
                                 {peerLabel}
                             </ThemedText>
-                            <ThemedText variant="labelSmall" style={{ marginTop: 2, color: isServiceActive ? theme.primary : theme.textMuted }}>
-                                {isServiceActive 
-                                    ? '● Active Collaboration' 
-                                    : isCompleted 
-                                        ? '✓ Completed' 
-                                        : (peer?.department ? `${peer.department} · '26` : 'Campus Member')}
-                            </ThemedText>
+                            <View style={styles.headerSubtitleRow}>
+                                <ThemedText variant="labelSmall" style={{ color: isServiceActive ? theme.primary : theme.textMuted }}>
+                                    {isServiceActive 
+                                        ? '● Active Collaboration' 
+                                        : isCompleted 
+                                            ? '✓ Completed' 
+                                            : (peer?.department ? `${peer.department}` : 'Campus Member')}
+                                </ThemedText>
+                                {peer?.username && !isServiceActive && !isCompleted && (
+                                    <ThemedText variant="labelSmall" colorName="primary" style={{ fontWeight: '600' }}>
+                                        @{peer.username}
+                                    </ThemedText>
+                                )}
+                            </View>
                         </View>
                     </>
                 )}
@@ -645,6 +652,12 @@ const styles = StyleSheet.create({
   },
   headerTextWrap: {
       flex: 1,
+  },
+  headerSubtitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginTop: 2,
   },
   menuBtn: {
       padding: Spacing.xs,

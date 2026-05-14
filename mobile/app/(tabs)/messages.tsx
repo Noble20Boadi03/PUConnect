@@ -14,25 +14,27 @@ import { PrimaryButton } from '@/components/ui/primary-button';
 import { useMessagesViewModel } from '@/hooks/view-models/use-messages-view-model';
 import { useTabBarHeight } from '@/hooks/use-tab-bar-height';
 import { useAuth } from '@/context/auth-context';
+import { ChatMessage } from '@/types';
 
 export default function MessagesScreen() {
     const { uiState, onRefresh } = useMessagesViewModel();
     const { theme } = useTheme();
     const insets = useSafeAreaInsets();
     const { horizontalPadding, contentPaddingLeft } = useResponsive();
-    const { token, user } = useAuth();
+    const { user } = useAuth();
     const tabBarHeight = useTabBarHeight();
 
     const isAdmin = user?.role === 'admin';
 
-    const handleChatPress = useCallback((item: any) => {
+    const handleChatPress = useCallback((item: ChatMessage) => {
+        const peerId = item.peerId || (item.senderId === user?.id ? item.receiverId : item.senderId);
         router.push({
             pathname: '/chat/[id]',
-            params: { id: item.peerId || item.senderId, listingId: item.listingId },
+            params: { id: peerId, listingId: item.listingId },
         });
-    }, []);
+    }, [user?.id]);
 
-    const renderChatItem = useCallback(({ item }: { item: any }) => (
+    const renderChatItem = useCallback(({ item }: { item: ChatMessage }) => (
         <Pressable
             style={({ pressed }) => [
                 styles.chatRow,

@@ -6,7 +6,6 @@ import { Spacing } from '@/constants/theme';
 
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
-import { ThemedIcon } from './ui/themed-icon';
 import { useTheme } from '@/context/theme-context';
 
 interface ListingCardProps {
@@ -35,7 +34,7 @@ export const ListingCard = memo(function ListingCard({ listing, width, onPress }
                 {/* Image Section */}
                 <View style={styles.imageContainer}>
                     <Image 
-                        source={listing.media_url || PLACEHOLDER_IMAGE} 
+                        source={(listing.media_urls && listing.media_urls.length > 0) ? listing.media_urls[0] : (listing.media_url || PLACEHOLDER_IMAGE)} 
                         style={styles.image}
                         contentFit="cover"
                         transition={200}

@@ -78,7 +78,7 @@ export default function CreateListingScreen() {
     } else if (listingType === 'service_offer' && priceType === 'fixed') {
       setPriceType('starting_at');
     }
-  }, [listingType]);
+  }, [listingType, priceType]);
 
   const load = useCallback(async () => {
     if (!editId || !token) return;
@@ -113,7 +113,7 @@ export default function CreateListingScreen() {
     } finally {
       setLoading(false);
     }
-  }, [editId, token, router, user?.canOfferServices, showAlert, title]);
+  }, [editId, token, router, user?.canOfferServices, showAlert]);
 
   useEffect(() => {
     load();
@@ -167,7 +167,7 @@ export default function CreateListingScreen() {
             ...(listingType === 'service_request' ? { budget: p, price: undefined } : { price: p, budget: undefined }),
             priceType,
             urgency: listingType === 'service_request' ? urgency : undefined,
-            media_urls: mediaUrls.length > 0 ? mediaUrls : undefined,
+            media_urls: listingType === 'service_offer' ? mediaUrls : [], // Unified: always send array, only for offers
             tags: allTags,
           },
           token
@@ -190,7 +190,7 @@ export default function CreateListingScreen() {
             ...(listingType === 'service_request' ? { budget: p } : { price: p }),
             priceType,
             urgency: listingType === 'service_request' ? urgency : undefined,
-            media_urls: mediaUrls.length > 0 ? mediaUrls : undefined,
+            media_urls: listingType === 'service_offer' ? mediaUrls : [], // Unified: always send array, only for offers
             level: 'intermediate',
             tags: allTags,
           },

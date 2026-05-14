@@ -6,7 +6,8 @@ export interface User {
   id: string;
   email: string;
   fullName: string;
-  universityId: string;
+  username: string; // Unified: replaced universityId in UI
+  universityId?: string; // Kept for backend compatibility
   role: UserRole;
   isActive: boolean;
 
@@ -17,14 +18,18 @@ export interface User {
   portfolioLinks?: string[];
   isAvailable?: boolean;
   profilePictureUrl?: string;
+  
+  // Provider / Professional Fields
+  category?: string;
+  subcategory?: string;
+  department?: string;
+  graduationYear?: number;
 
   // Reputation & Marketplace
   reputationScore?: number; // 0-100 or rating-based
   completedProjects?: number;
   review_count?: number;
   verifiedStudent?: boolean;
-  department?: string;
-  graduationYear?: number;
 
   /** After provider upgrade (skills + trust fields). Required to publish service_offer listings. */
   canOfferServices?: boolean;
@@ -37,22 +42,24 @@ export interface Listing {
   id: string;
   title: string;
   description: string | null;
-  price?: number; // Optional for projects/certain services
-  budget?: number; // For service requests
+  price?: number; // Primary for service_offer
+  budget?: number; // Primary for service_request
+  priceType: 'fixed' | 'negotiable' | 'starting_at';
   category: string;
+  subcategory?: string;
   type: ListingType;
   ownerId: string;
   isActive: boolean;
 
-  // Specific to marketplace focus
-  priceType?: 'fixed' | 'negotiable' | 'starting_at';
+  // Media
+  media_url?: string; // Legacy/Single
+  media_urls: string[]; // Unified: always use array in UI
+  
+  // Marketplace details
   urgency?: string;
   deadline?: string;
   requiredSkills?: string[];
   teamSize?: number; // For project teams
-  media_url?: string;
-  media_urls?: string[];
-  subcategory?: string;
   level?: string;
   department?: string;
   tags?: string[];
@@ -70,6 +77,7 @@ export interface ChatMessage {
   id: string;
   senderId: string;
   receiverId: string;
+  peerId?: string; // Unified: for thread grouping
   listingId: string;
   listingTitle?: string;
   listingThumbnail?: string;

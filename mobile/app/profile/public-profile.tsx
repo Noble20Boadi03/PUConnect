@@ -78,7 +78,7 @@ export default function PublicProfileScreen() {
                         {user?.fullName || 'User'}
                     </ThemedText>
                     <ThemedText variant="bodyMedium" colorName="primary" style={{ marginTop: 4, fontWeight: '600' }}>
-                        {(user as any)?.category || "Verified Provider"}
+                        {user.category || "Verified Provider"}
                     </ThemedText>
                 </Animated.View>
 
@@ -91,7 +91,7 @@ export default function PublicProfileScreen() {
                         {/* Username row */}
                         <View style={styles.infoRow}>
                             <ThemedText variant="bodyLarge" style={styles.infoValue}>
-                                @{(user as any)?.username || user?.fullName?.toLowerCase().replace(/\s+/g, '_') || 'user'}
+                                @{user.username || user.fullName?.toLowerCase().replace(/\s+/g, '_') || 'user'}
                             </ThemedText>
                             <ThemedText variant="bodySmall" colorName="textMuted">
                                 Username

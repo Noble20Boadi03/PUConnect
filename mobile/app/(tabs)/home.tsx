@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { StyleSheet, View, ActivityIndicator, RefreshControl, ScrollView, Pressable, Dimensions, FlatList } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
@@ -170,6 +170,7 @@ const SectionHeader = React.memo(({ title, onSeeAll, horizontalPadding }: Sectio
     </View>
   );
 });
+SectionHeader.displayName = 'SectionHeader';
 
 const HomeFilterPills = React.memo(({ activeFilter, onFilterChange }: { activeFilter: 'All' | 'Services' | 'Requests', onFilterChange: (filter: 'All' | 'Services' | 'Requests') => void }) => {
   const { theme } = useTheme();
@@ -206,6 +207,7 @@ const HomeFilterPills = React.memo(({ activeFilter, onFilterChange }: { activeFi
     />
   );
 });
+HomeFilterPills.displayName = 'HomeFilterPills';
 
 export default function HomeScreen() {
   const { uiState, onRefresh, activeFilter, setActiveFilter } = useHomeViewModel();

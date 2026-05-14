@@ -176,7 +176,9 @@ export default function MyListingsScreen() {
                 {item.type === 'service_request' ? 'Request' : 'Offer'} · {item.category}
               </ThemedText>
               <ThemedText variant="titleSmall" colorName="primary" style={{ marginTop: Spacing.sm }}>
+                {item.priceType === 'fixed' ? '' : item.priceType === 'starting_at' ? 'Starting at ' : ''}
                 ${item.price ?? item.budget ?? '—'}
+                {item.priceType === 'negotiable' ? ' (Negotiable)' : ''}
               </ThemedText>
             </Pressable>
             <View style={styles.actions}>

@@ -30,6 +30,9 @@ export const AnimatedInput = React.forwardRef<TextInput, AnimatedInputProps>(({
     const focusValue = useSharedValue(0);
     const hasValue = useMemo(() => props.value && props.value.length > 0, [props.value]);
 
+    // Use standard React state for focus to handle non-animatable props like placeholder
+    const [isFocused, setIsFocused] = React.useState(false);
+
     const animatedContainerStyle = useAnimatedStyle(() => ({
         borderColor: withTiming(focusValue.value ? theme.primary : theme.outlineVariant),
         backgroundColor: withTiming(focusValue.value ? theme.surface : theme.surfaceVariant),
@@ -39,8 +42,9 @@ export const AnimatedInput = React.forwardRef<TextInput, AnimatedInputProps>(({
     const isFloatingValue = useSharedValue(hasValue ? 1 : 0);
 
     React.useEffect(() => {
-        isFloatingValue.value = withTiming(focusValue.value || hasValue ? 1 : 0, { duration: 200 });
-    }, [focusValue.value, hasValue]);
+        isFloatingValue.value = withTiming(isFocused || hasValue ? 1 : 0, { duration: 200 });
+        focusValue.value = isFocused ? 1 : 0;
+    }, [isFocused, hasValue, isFloatingValue, focusValue]);
 
     const animatedLabelStyle = useAnimatedStyle(() => {
         return {
@@ -48,7 +52,7 @@ export const AnimatedInput = React.forwardRef<TextInput, AnimatedInputProps>(({
                 { translateY: interpolate(isFloatingValue.value, [0, 1], [0, -28], Extrapolate.CLAMP) },
                 { scale: interpolate(isFloatingValue.value, [0, 1], [1, 0.75], Extrapolate.CLAMP) },
             ],
-            color: focusValue.value ? theme.primary : theme.textMuted,
+            color: withTiming(focusValue.value ? theme.primary : theme.textMuted),
             paddingHorizontal: interpolate(isFloatingValue.value, [0, 1], [0, 4], Extrapolate.CLAMP),
         };
     });
@@ -56,7 +60,7 @@ export const AnimatedInput = React.forwardRef<TextInput, AnimatedInputProps>(({
     const labelBgStyle = useAnimatedStyle(() => {
         return {
             opacity: interpolate(isFloatingValue.value, [0, 1], [0, 1], Extrapolate.CLAMP),
-            backgroundColor: focusValue.value ? theme.surface : theme.surfaceVariant,
+            backgroundColor: withTiming(focusValue.value ? theme.surface : theme.surfaceVariant),
         };
     });
 
@@ -78,10 +82,7 @@ export const AnimatedInput = React.forwardRef<TextInput, AnimatedInputProps>(({
                         >
                             <Animated.View style={[styles.labelBackground, labelBgStyle]} />
                             <Animated.Text 
-                                style={[
-                                    styles.floatingLabelText,
-                                    { color: focusValue.value ? theme.primary : theme.textMuted }
-                                ]}
+                                style={styles.floatingLabelText}
                             >
                                 {props.placeholder}
                             </Animated.Text>
@@ -90,18 +91,18 @@ export const AnimatedInput = React.forwardRef<TextInput, AnimatedInputProps>(({
                         <TextInput
                             ref={ref}
                             style={[styles.input, { color: theme.text }]}
-                            placeholderTextColor={focusValue.value ? "transparent" : theme.textMuted}
+                            placeholderTextColor={isFocused ? "transparent" : theme.textMuted}
                             onFocus={(e) => {
-                                focusValue.value = 1;
+                                setIsFocused(true);
                                 props.onFocus?.(e);
                             }}
                             onBlur={(e) => {
-                                focusValue.value = 0;
+                                setIsFocused(false);
                                 props.onBlur?.(e);
                             }}
                             secureTextEntry={isPassword && !showPassword}
                             {...props}
-                            placeholder={focusValue.value ? "" : props.placeholder}
+                            placeholder={isFocused ? "" : props.placeholder}
                         />
                     </View>
 
