@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Listing } from '@/types';
-import { Spacing, BorderRadius } from '@/constants/theme';
+import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
@@ -38,7 +38,7 @@ export const RequestCard = memo(function RequestCard({ listing, width, onPress }
                     </ThemedText>
                 </View>
 
-                <ThemedText variant="titleMedium" style={styles.title} numberOfLines={2}>
+                <ThemedText variant="titleSmall" style={styles.title} numberOfLines={2}>
                     {listing.title}
                 </ThemedText>
 
@@ -54,6 +54,13 @@ export const RequestCard = memo(function RequestCard({ listing, width, onPress }
                             </ThemedText>
                         </View>
                     ))}
+                </View>
+
+                <View style={styles.footer}>
+                    <View style={{ flex: 1 }} />
+                    <ThemedText variant="labelMedium" colorName="textSecondary" style={styles.priceLabel}>
+                        Budget: <ThemedText style={styles.priceValue}>${listing.budget || 0}</ThemedText>
+                    </ThemedText>
                 </View>
             </Pressable>
         </ThemedView>
@@ -80,9 +87,7 @@ const styles = StyleSheet.create({
         fontSize: 11,
     },
     title: {
-        fontWeight: '900',
-        fontSize: 18,
-        lineHeight: 24,
+        fontWeight: '700',
         marginBottom: Spacing.sm,
     },
     description: {
@@ -98,6 +103,20 @@ const styles = StyleSheet.create({
     tag: {
         paddingHorizontal: Spacing.sm,
         paddingVertical: 4,
-        borderRadius: BorderRadius.full,
+        borderRadius: 4,
+    },
+    footer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: Spacing.md,
+    },
+    priceLabel: {
+        fontSize: 12,
+    },
+    priceValue: {
+        fontWeight: '800',
+        fontSize: 16,
+        color: '#10b981', // Emerald for budget/money
     },
 });

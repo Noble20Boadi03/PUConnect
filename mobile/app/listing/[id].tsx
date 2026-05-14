@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { StyleSheet, ScrollView, ActivityIndicator, Pressable, View, StatusBar, Dimensions } from 'react-native';
 import { Image } from 'expo-image';
+import { BlurView } from 'expo-blur';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ThemedView } from '@/components/themed-view';
@@ -181,7 +183,7 @@ export default function ListingDetailsScreen() {
       />
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* Fixed Background Image — stays completely still */}
+      {/* Fixed Background Image */}
       <View style={styles.imageBackground}>
         {hasMultipleImages ? (
           <>
@@ -201,7 +203,7 @@ export default function ListingDetailsScreen() {
                 />
               ))}
             </ScrollView>
-            <View style={{ position: 'absolute', bottom: 40, width: '100%', flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
+            <View style={{ position: 'absolute', bottom: 60, width: '100%', flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
               {imagesToDisplay!.map((_, i) => (
                 <View key={i} style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.7)' }} />
               ))}
@@ -216,6 +218,10 @@ export default function ListingDetailsScreen() {
             transition={200}
           />
         )}
+        <LinearGradient
+          colors={['rgba(0,0,0,0.4)', 'transparent', 'rgba(0,0,0,0.6)']}
+          style={StyleSheet.absoluteFill}
+        />
       </View>
 
       <Pressable
@@ -225,21 +231,21 @@ export default function ListingDetailsScreen() {
           { top: insets.top + Spacing.sm },
         ]}
       >
-        <ThemedIcon name="chevron-left" size={26} lightColor="#fff" darkColor="#fff" />
+        <BlurView intensity={30} tint="dark" style={styles.backBtnBlur}>
+          <ThemedIcon name="chevron-left" size={26} lightColor="#fff" darkColor="#fff" />
+        </BlurView>
       </Pressable>
 
       {/* Scrollable Content */}
       <ScrollView
         showsVerticalScrollIndicator={false}
         removeClippedSubviews={true}
-        contentContainerStyle={{ paddingBottom: 120 + insets.bottom }}
+        contentContainerStyle={{ paddingBottom: 140 + insets.bottom }}
         onScroll={handleScroll}
         scrollEventThrottle={32}
       >
-        {/* Transparent spacer to reveal the image behind */}
         <View style={styles.imageSpacer} />
 
-        {/* Content Card slides up over the image */}
         <ThemedView
           colorName="background"
           style={[styles.contentCard, horizontalPadding]}
@@ -256,25 +262,50 @@ export default function ListingDetailsScreen() {
             </ThemedView>
             
             <View style={styles.headerDate}>
-              <ThemedIcon name="calendar-month-outline" size={14} colorName="textMuted" />
+              <ThemedIcon name="clock-outline" size={14} colorName="textMuted" />
               <ThemedText variant="labelSmall" colorName="textMuted" style={{ marginLeft: 4 }}>
-                {new Date(listing.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                {new Date(listing.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
               </ThemedText>
             </View>
           </View>
 
           <View style={styles.mainTitleSection}>
-            <ThemedText variant="headlineSmall" style={styles.title}>
-              {listing.title}
-            </ThemedText>
-            
-            <View style={styles.categoryRow}>
-              <View style={[styles.categoryIconCircle, { backgroundColor: theme[themeColor] + '15' }]}>
-                <ThemedIcon name="tag-outline" size={14} colorName={themeColor} />
-              </View>
-              <ThemedText variant="labelLarge" colorName={themeColor} style={styles.categoryText}>
-                {categoryTitle}
+            <View style={styles.titlePriceRow}>
+              <ThemedText variant="headlineSmall" style={styles.title}>
+                {listing.title}
               </ThemedText>
+              <View style={styles.priceContainer}>
+                <ThemedText variant="headlineSmall" colorName={themeColor} style={styles.priceText}>
+                  ${listing.price || listing.budget || 0}
+                </ThemedText>
+                {listing.priceType === 'starting_at' && (
+                  <ThemedText variant="labelSmall" colorName="textMuted" style={{ marginTop: -4 }}>
+                    Starting at
+                  </ThemedText>
+                )}
+              </View>
+            </View>
+            
+            <View style={styles.metaRow}>
+              <View style={styles.metaItem}>
+                <View style={[styles.metaIconCircle, { backgroundColor: theme[themeColor] + '15' }]}>
+                  <ThemedIcon name="tag-outline" size={12} colorName={themeColor} />
+                </View>
+                <ThemedText variant="labelLarge" colorName={themeColor} style={styles.metaText}>
+                  {categoryTitle}
+                </ThemedText>
+              </View>
+
+              {listing.subcategory && (
+                <View style={styles.metaItem}>
+                  <View style={[styles.metaIconCircle, { backgroundColor: theme.primary + '15' }]}>
+                    <ThemedIcon name="layers-outline" size={12} colorName="primary" />
+                  </View>
+                  <ThemedText variant="labelLarge" colorName="primary" style={styles.metaText}>
+                    {listing.subcategory}
+                  </ThemedText>
+                </View>
+              )}
             </View>
           </View>
 
@@ -289,22 +320,27 @@ export default function ListingDetailsScreen() {
 
           {listing.type === 'service_request' && listing.urgency ? (
             <View style={styles.section}>
-              <ThemedText variant="titleMedium" style={styles.sectionTitle}>
-                Urgency
-              </ThemedText>
-              <ThemedText variant="bodyLarge" colorName="primary" style={{ fontWeight: 'bold' }}>
-                {listing.urgency}
-              </ThemedText>
+              <View style={styles.urgencyContainer}>
+                <ThemedIcon name="alert-circle-outline" size={20} colorName="error" />
+                <View style={{ marginLeft: Spacing.sm }}>
+                  <ThemedText variant="labelSmall" colorName="error" style={{ fontWeight: '700', textTransform: 'uppercase' }}>
+                    Urgency
+                  </ThemedText>
+                  <ThemedText variant="bodyLarge" style={{ fontWeight: '600' }}>
+                    {listing.urgency}
+                  </ThemedText>
+                </View>
+              </View>
             </View>
           ) : null}
 
-          {listing.tags && listing.tags.length > 0 && (
+          {(listing.tags?.length ?? 0) > 0 && (
             <View style={styles.section}>
               <ThemedText variant="titleMedium" style={styles.sectionTitle}>
                 Tags
               </ThemedText>
               <View style={styles.tagGrid}>
-                {listing.tags.map((tag) => (
+                {listing.tags!.map((tag) => (
                   <View
                     key={tag}
                     style={[
@@ -312,28 +348,28 @@ export default function ListingDetailsScreen() {
                       { backgroundColor: theme.surfaceVariant || theme.surface },
                     ]}
                   >
-                    <ThemedText variant="labelLarge">#{tag}</ThemedText>
+                    <ThemedText variant="labelSmall" colorName="textSecondary">#{tag}</ThemedText>
                   </View>
                 ))}
               </View>
             </View>
           )}
 
-          {listing.type === 'service_offer' && listing.requiredSkills && listing.requiredSkills.length > 0 && (
+          {listing.type === 'service_offer' && (listing.requiredSkills?.length ?? 0) > 0 && (
             <View style={styles.section}>
               <ThemedText variant="titleMedium" style={styles.sectionTitle}>
                 Expertise
               </ThemedText>
               <View style={styles.tagGrid}>
-                {listing.requiredSkills.map((skill) => (
+                {listing.requiredSkills!.map((skill) => (
                   <View
                     key={skill}
                     style={[
                       styles.skillTag,
-                      { backgroundColor: theme.surfaceVariant || theme.surface },
+                      { backgroundColor: theme.primaryContainer + '20' },
                     ]}
                   >
-                    <ThemedText variant="labelLarge">{skill}</ThemedText>
+                    <ThemedText variant="labelSmall" colorName="primary">{skill}</ThemedText>
                   </View>
                 ))}
               </View>
@@ -346,39 +382,54 @@ export default function ListingDetailsScreen() {
                 {listing.type === 'service_offer' ? 'About the provider' : 'Posted by'}
               </ThemedText>
               <ThemedView
-                colorName="surfaceVariant"
-                style={styles.providerCard}
+                colorName="surface"
+                style={[styles.providerCard, { borderColor: theme.outlineVariant }]}
               >
-                <View style={styles.providerCenteredContent}>
-                  {owner?.profilePictureUrl ? (
-                    <Image source={{ uri: owner.profilePictureUrl }} style={styles.providerAvatarLarge} />
-                  ) : (
-                    <View style={[styles.providerAvatarLarge, { backgroundColor: theme.primary + '15' }]}>
-                      <ThemedText 
-                        variant="headlineSmall" 
-                        colorName="primary" 
-                        style={{ fontWeight: 'bold', fontSize: 40 }}
-                      >
-                        {(owner?.fullName || 'C').charAt(0).toUpperCase()}
-                      </ThemedText>
-                    </View>
-                  )}
-                  
-                  <ThemedText variant="titleLarge" style={styles.providerNameCentered}>
-                    {owner?.fullName ?? 'Campus Member'}
-                  </ThemedText>
-                </View>
+                <Pressable 
+                  onPress={() => router.push({ pathname: '/profile/[id]', params: { id: listing.ownerId } })}
+                  style={styles.providerCardLayout}
+                >
+                  <View style={styles.providerImageWrapper}>
+                    {owner?.profilePictureUrl ? (
+                      <Image source={{ uri: owner.profilePictureUrl }} style={styles.providerImage} />
+                    ) : (
+                      <View style={[styles.providerImage, { backgroundColor: theme.primary + '15', justifyContent: 'center', alignItems: 'center' }]}>
+                        <ThemedText 
+                          variant="headlineSmall" 
+                          colorName="primary" 
+                          style={{ fontWeight: 'bold' }}
+                        >
+                          {(owner?.fullName || 'C').charAt(0).toUpperCase()}
+                        </ThemedText>
+                      </View>
+                    )}
+                  </View>
 
-                {listing.type === 'service_offer' && (
-                  <PrimaryButton
-                    title="View Profile"
-                    variant="ghost"
-                    onPress={() =>
-                      router.push({ pathname: '/profile/[id]', params: { id: listing.ownerId } })
-                    }
-                    style={styles.viewProfileBtn}
-                  />
-                )}
+                  <View style={styles.providerRightSection}>
+                    <ThemedText variant="titleLarge" style={styles.providerName}>
+                      {owner?.fullName ?? 'Campus Member'}
+                    </ThemedText>
+                    
+                    <View style={styles.providerInfoRow}>
+                      <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.departmentText}>
+                        {owner?.department || 'Expert'}
+                      </ThemedText>
+                      {owner?.username && (
+                        <ThemedText variant="labelLarge" colorName="primary" style={styles.usernameText}>
+                          @{owner.username}
+                        </ThemedText>
+                      )}
+                    </View>
+
+                    <View style={styles.tagsRow}>
+                      {owner?.skillTags?.slice(0, 3).map((tag: string, idx: number) => (
+                        <View key={idx} style={[styles.tagPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#f3f4f6' }]}>
+                          <ThemedText variant="labelSmall" colorName="textSecondary" style={{ fontWeight: '600' }}>{tag}</ThemedText>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                </Pressable>
               </ThemedView>
             </View>
           )}
@@ -454,18 +505,22 @@ const styles = StyleSheet.create({
   backBtn: {
     position: 'absolute',
     left: Spacing.lg,
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    overflow: 'hidden',
     zIndex: 100,
     ...Shadows.level2,
   },
+  backBtnBlur: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   // Transparent spacer so the image is visible before scrolling
   imageSpacer: {
-    height: IMAGE_HEIGHT - 28, // leave room for the overlap
+    height: IMAGE_HEIGHT - 32, // leave room for the overlap
   },
   // Content card that slides over the image
   contentCard: {
@@ -473,8 +528,8 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 32,
     paddingTop: Spacing.md,
     paddingBottom: Spacing.xl,
-    minHeight: 600,
-    marginTop: -20, // Negative margin to overlap image slightly better
+    minHeight: 500,
+    marginTop: -20,
     ...Shadows.level3,
   },
   pullIndicatorWrapper: {
@@ -484,8 +539,9 @@ const styles = StyleSheet.create({
   },
   pullIndicator: {
     width: 40,
-    height: 5,
-    borderRadius: 3,
+    height: 4,
+    borderRadius: 2,
+    opacity: 0.5,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -496,66 +552,96 @@ const styles = StyleSheet.create({
   headerDate: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.03)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    backgroundColor: 'rgba(128,128,128,0.06)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
   },
   typeBadge: {
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: BorderRadius.full,
+    borderRadius: 10,
   },
   typeBadgeText: {
     fontWeight: '800',
-    fontSize: 10,
+    fontSize: 11,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   mainTitleSection: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl,
+  },
+  titlePriceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: Spacing.md,
+    marginBottom: Spacing.md,
   },
   title: {
     fontWeight: '900',
-    fontSize: 26,
-    lineHeight: 32,
-    marginBottom: Spacing.sm,
-    letterSpacing: -0.5,
+    fontSize: 28,
+    lineHeight: 34,
+    letterSpacing: -0.8,
+    flex: 1,
   },
-  categoryRow: {
+  priceContainer: {
+    alignItems: 'flex-end',
+  },
+  priceText: {
+    fontWeight: '900',
+    fontSize: 28,
+    letterSpacing: -1,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.md,
+  },
+  metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  categoryIconCircle: {
+  metaIconCircle: {
     width: 24,
     height: 24,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  categoryText: {
-    marginLeft: 8,
+  metaText: {
+    marginLeft: 6,
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: 13,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   section: {
-    marginTop: Spacing.xl,
-    paddingTop: Spacing.xl,
+    marginBottom: Spacing.xl,
+    paddingTop: Spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(128,128,128,0.1)',
+    borderTopColor: 'rgba(128,128,128,0.08)',
   },
   sectionTitle: {
     fontWeight: '800',
-    fontSize: 18,
+    fontSize: 16,
     marginBottom: Spacing.md,
-    letterSpacing: -0.2,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    opacity: 0.6,
   },
   description: {
     lineHeight: 26,
-    fontSize: 16,
-    opacity: 0.9,
+    fontSize: 17,
+  },
+  urgencyContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+    padding: Spacing.md,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.15)',
   },
   tagGrid: {
     flexDirection: 'row',
@@ -563,42 +649,63 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   skillTag: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: 'rgba(128,128,128,0.1)',
   },
   providerCard: {
-    padding: Spacing.xl,
-    borderRadius: 24,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(128,128,128,0.1)',
-    alignItems: 'center',
+    overflow: 'hidden',
     ...Shadows.level1,
   },
-  providerCenteredContent: {
-    alignItems: 'center',
-    marginBottom: Spacing.lg,
+  providerCardLayout: {
+    flexDirection: 'row',
+    padding: 12,
   },
-  providerAvatarLarge: {
+  providerImageWrapper: {
     width: 100,
     height: 100,
-    borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderRadius: 16,
     overflow: 'hidden',
-    borderWidth: 3,
-    borderColor: '#fff',
-    marginBottom: Spacing.md,
   },
-  providerNameCentered: {
-    fontWeight: '900',
-    textAlign: 'center',
-    letterSpacing: -0.5,
+  providerImage: {
+    width: '100%',
+    height: '100%',
   },
-  viewProfileBtn: {
-    marginTop: Spacing.sm,
+  providerRightSection: {
+    flex: 1,
+    paddingLeft: 16,
+    justifyContent: 'center',
+  },
+  providerName: {
+    fontWeight: '800',
+    fontSize: 19,
+    marginBottom: 4,
+  },
+  providerInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  departmentText: {
+    fontWeight: '600',
+  },
+  usernameText: {
+    fontWeight: '700',
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  tagPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
   },
   // Bottom action bar
   bottomBar: {
@@ -614,8 +721,8 @@ const styles = StyleSheet.create({
   },
   messageBtn: {
     width: '100%',
-    height: 52,
-    borderRadius: BorderRadius.lg,
+    height: 56,
+    borderRadius: 16,
   },
   restrictedNotice: {
     flexDirection: 'row',

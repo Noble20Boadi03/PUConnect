@@ -21,8 +21,13 @@ import { ThemedIcon } from '@/components/ui/themed-icon';
 export default function PublicProfileScreen() {
     const { user } = useAuth();
     const { theme, isDark } = useTheme();
-
     const { horizontalPadding } = useResponsive();
+    const [isHeaderScrolled, setIsHeaderScrolled] = React.useState(false);
+
+    const handleScroll = (event: any) => {
+        const offsetY = event.nativeEvent.contentOffset.y;
+        setIsHeaderScrolled(offsetY > 160);
+    };
 
     if (!user) return null;
 
@@ -31,10 +36,12 @@ export default function PublicProfileScreen() {
             <ExpoStack.Screen options={{ headerShown: false }} />
             
             {/* Header */}
-            <ScreenHeader title="Provider Profile" />
+            <ScreenHeader title={isHeaderScrolled ? user.fullName : ""} />
 
             <ScrollView
                 showsVerticalScrollIndicator={false}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
                 contentContainerStyle={{ paddingBottom: Spacing.xxl }}
             >
                 {/* ─── AVATAR + IDENTITY ──────────────────────── */}
@@ -89,12 +96,12 @@ export default function PublicProfileScreen() {
                 >
                     <View style={styles.infoCardInner}>
                         {/* Username row */}
-                        <View style={styles.infoRow}>
-                            <ThemedText variant="bodyLarge" style={styles.infoValue}>
-                                @{user.username || user.fullName?.toLowerCase().replace(/\s+/g, '_') || 'user'}
-                            </ThemedText>
-                            <ThemedText variant="bodySmall" colorName="textMuted">
+                        <View style={styles.infoRowColumn}>
+                            <ThemedText variant="bodySmall" colorName="textMuted" style={{ marginBottom: Spacing.xs }}>
                                 Username
+                            </ThemedText>
+                            <ThemedText variant="bodyLarge" style={styles.infoValue}>
+                                @{user.username || 'username'}
                             </ThemedText>
                         </View>
 
@@ -135,7 +142,7 @@ export default function PublicProfileScreen() {
                 {/* ─── SKILL ADS SECTION ───────────── */}
                 <Animated.View entering={FadeInDown.delay(300).duration(600)} style={[styles.adsSection, horizontalPadding]}>
                     <ThemedText variant="titleMedium" style={styles.adsSectionTitle}>
-                        Skill Ads
+                        Active services
                     </ThemedText>
 
                     {/* Empty state for now */}
@@ -212,7 +219,7 @@ const styles = StyleSheet.create({
         paddingVertical: Spacing.xs,
     },
     infoValue: {
-        fontWeight: '600',
+        fontWeight: '700',
     },
     infoDivider: {
         height: 1,

@@ -385,12 +385,14 @@ export default function UniversalSearchScreen() {
         if (!hasSearched || isSearching) return null;
         return (
             <View style={styles.emptyResults}>
-                <ThemedIcon name="magnify-close" size={56} colorName="outline" />
-                <ThemedText variant="titleMedium" style={{ marginTop: Spacing.lg, fontWeight: '700' }}>
+                <View style={[styles.illustrationContainer, { backgroundColor: theme.primaryContainer + '20' }]}>
+                    <ThemedIcon name="magnify-close" size={64} colorName="primary" />
+                </View>
+                <ThemedText variant="titleLarge" style={{ marginTop: Spacing.xl, fontWeight: '800' }}>
                     No results found
                 </ThemedText>
-                <ThemedText variant="bodyMedium" colorName="textMuted" align="center" style={{ marginTop: Spacing.sm }}>
-                    Try a different search term or check your spelling
+                <ThemedText variant="bodyLarge" colorName="textMuted" align="center" style={styles.emptyDescription}>
+                    We couldn't find anything matching "{query}". Try a different search term or check your spelling.
                 </ThemedText>
             </View>
         );
@@ -488,9 +490,14 @@ export default function UniversalSearchScreen() {
                         ))
                     ) : (
                         <View style={styles.emptyRecent}>
-                            <ThemedIcon name="text-search" size={48} colorName="outline" />
-                            <ThemedText variant="bodyMedium" colorName="textMuted" align="center" style={{ marginTop: Spacing.md }}>
-                                Your recent searches will appear here
+                            <View style={[styles.illustrationContainer, { backgroundColor: theme.primaryContainer + '10' }]}>
+                                <ThemedIcon name="text-search" size={48} colorName="textMuted" />
+                            </View>
+                            <ThemedText variant="titleMedium" style={{ marginTop: Spacing.lg, fontWeight: '700' }}>
+                                No recent searches
+                            </ThemedText>
+                            <ThemedText variant="bodyMedium" colorName="textMuted" align="center" style={{ marginTop: Spacing.sm }}>
+                                Your search history will appear here.
                             </ThemedText>
                         </View>
                     )}
@@ -573,8 +580,19 @@ const styles = StyleSheet.create({
     },
     emptyResults: {
         alignItems: 'center',
-        paddingTop: Spacing.huge * 2,
+        marginTop: 60,
         paddingHorizontal: Spacing.xl,
+    },
+    illustrationContainer: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    emptyDescription: {
+        marginTop: Spacing.md,
+        lineHeight: 22,
     },
     pillsContainer: {
         paddingHorizontal: Spacing.lg,

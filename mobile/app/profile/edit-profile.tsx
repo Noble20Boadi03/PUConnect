@@ -32,6 +32,8 @@ export default function EditProfileScreen() {
   const [lastName, setLastName] = useState(user?.fullName?.split(" ").slice(1).join(" ") || "");
   const [username, setUsername] = useState(user?.username || "");
   const [email, setEmail] = useState(user?.email || "");
+  const [department, setDepartment] = useState(user?.department || "");
+  const [graduationYear, setGraduationYear] = useState(user?.graduationYear ? String(user.graduationYear) : "");
 
   // Provider fields
   const [isProviderExpanded, setIsProviderExpanded] = useState(user?.canOfferServices || false);
@@ -135,6 +137,8 @@ export default function EditProfileScreen() {
           fullName,
           email,
           username,
+          department,
+          graduationYear: graduationYear ? parseInt(graduationYear) : undefined,
           bio: isProviderExpanded ? bio : undefined,
           skillTags: isProviderExpanded ? skills : undefined,
           category: isProviderExpanded ? category : undefined,
@@ -236,6 +240,31 @@ export default function EditProfileScreen() {
           autoCapitalize="none"
           value={email}
           onChangeText={setEmail}
+        />
+
+        <ThemedText variant="bodySmall" colorName="textSecondary" style={[styles.fieldLabel, { marginTop: Spacing.md }]}>Department</ThemedText>
+        <TextInput
+          style={[
+            styles.input,
+            { color: theme.text, borderColor: theme.outlineVariant },
+          ]}
+          placeholder="e.g. Computer Engineering"
+          placeholderTextColor={theme.textMuted}
+          value={department}
+          onChangeText={setDepartment}
+        />
+
+        <ThemedText variant="bodySmall" colorName="textSecondary" style={[styles.fieldLabel, { marginTop: Spacing.md }]}>Graduation Year</ThemedText>
+        <TextInput
+          style={[
+            styles.input,
+            { color: theme.text, borderColor: theme.outlineVariant },
+          ]}
+          placeholder="e.g. 2025"
+          placeholderTextColor={theme.textMuted}
+          keyboardType="numeric"
+          value={graduationYear}
+          onChangeText={setGraduationYear}
         />
       </View>
 

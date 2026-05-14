@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { StyleSheet, View, Pressable, ActivityIndicator, Image, ScrollView, Dimensions, Modal } from 'react-native';
+import React, { useState, useCallback, useMemo } from 'react';
+import { StyleSheet, View, Pressable, ActivityIndicator, Image, ScrollView, Dimensions, Modal, RefreshControl } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
@@ -11,6 +11,8 @@ import { ThemedView } from '@/components/themed-view';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { PrimaryButton } from '@/components/ui/primary-button';
+import { ListingCard } from '@/components/listing-card';
+import { RequestCard } from '@/components/request-card';
 
 import { useTheme } from '@/context/theme-context';
 import { useResponsive } from '@/hooks/use-responsive';
@@ -24,18 +26,34 @@ import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function ProfileScreen() {
-    const { uiState } = useProfileViewModel();
+    const { uiState, handleRefresh } = useProfileViewModel();
     const { token, refreshUser } = useAuth();
     const { theme, isDark } = useTheme();
     const { showAlert } = useAppAlert();
     const { showActionSheetWithOptions } = useActionSheet();
     const insets = useSafeAreaInsets();
-    const { horizontalPadding } = useResponsive();
+    const { horizontalPadding, isTablet, isLandscape } = useResponsive();
     const tabBarHeight = useTabBarHeight();
 
     const [activeTab, setActiveTab] = useState<'posts' | 'skills'>('posts');
     const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+
+    // ── Grid Layout Calculation ───────────────────────────────────────────
+    const cardWidth = useMemo(() => {
+        const padding = horizontalPadding.paddingLeft + horizontalPadding.paddingRight;
+        if (isTablet) return (SCREEN_WIDTH - padding - Spacing.md) / 2;
+        if (isLandscape) return (SCREEN_WIDTH - padding - Spacing.md * 2) / 3;
+        return SCREEN_WIDTH - padding;
+    }, [horizontalPadding, isTablet, isLandscape]);
+
+    // ── LISTING FILTERING ────────────────────────────────────────────────
+    const filteredListings = useMemo(() => {
+        if (uiState.status !== 'content') return [];
+        return uiState.listings.filter(l => 
+            activeTab === 'posts' ? l.type === 'service_request' : l.type === 'service_offer'
+        );
+    }, [uiState, activeTab]);
 
     // ── SET PHOTO: Pick from library ────────────────────────────────────────
     const pickFromLibrary = useCallback(async () => {
@@ -140,7 +158,7 @@ export default function ProfileScreen() {
     }
 
     // ── CONTENT STATE ───────────────────────────────────────────────────────
-    const { data: user } = uiState;
+    const { data: user, isRefreshingListings } = uiState;
     const isAdmin = user?.role === 'admin';
 
     return (
@@ -173,6 +191,13 @@ export default function ProfileScreen() {
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: tabBarHeight + Spacing.xl }}
+                refreshControl={
+                    <RefreshControl 
+                        refreshing={isRefreshingListings} 
+                        onRefresh={handleRefresh} 
+                        tintColor={theme.primary} 
+                    />
+                }
             >
                 {/* ─── AVATAR + IDENTITY ──────────────────────── */}
                 <View style={styles.heroSection}>
@@ -292,24 +317,24 @@ export default function ProfileScreen() {
                 >
                     <View style={styles.infoCardInner}>
                         {/* Username row */}
-                        <View style={styles.infoRow}>
-                            <ThemedText variant="bodyLarge" style={styles.infoValue}>
-                                @{user?.username || user?.fullName?.toLowerCase().replace(/\s+/g, '_') || 'user'}
-                            </ThemedText>
-                            <ThemedText variant="bodySmall" colorName="textMuted">
+                        <View style={styles.infoRowColumn}>
+                            <ThemedText variant="bodySmall" colorName="textMuted" style={{ marginBottom: Spacing.xs }}>
                                 Username
+                            </ThemedText>
+                            <ThemedText variant="bodyLarge" style={styles.infoValue}>
+                                @{user?.username || 'username'}
                             </ThemedText>
                         </View>
 
                         <View style={[styles.infoDivider, { backgroundColor: theme.outlineVariant }]} />
 
                         {/* Email row */}
-                        <View style={styles.infoRow}>
+                        <View style={styles.infoRowColumn}>
+                            <ThemedText variant="bodySmall" colorName="textMuted" style={{ marginBottom: Spacing.xs }}>
+                                Email Address
+                            </ThemedText>
                             <ThemedText variant="bodyLarge" style={styles.infoValue}>
                                 {user?.email || '—'}
-                            </ThemedText>
-                            <ThemedText variant="bodySmall" colorName="textMuted">
-                                Email Address
                             </ThemedText>
                         </View>
                     </View>
@@ -363,30 +388,60 @@ export default function ProfileScreen() {
                                     colorName={activeTab === 'skills' ? 'primary' : 'textMuted'}
                                     style={styles.tabLabel}
                                 >
-                                    Skill Ads
+                                    Active services
                                 </ThemedText>
                             </Pressable>
                         )}
                     </View>
 
-                    {/* Empty state */}
-                    <View style={styles.emptyState}>
-                        <ThemedText variant="headlineSmall" style={styles.emptyTitle}>
-                            {activeTab === 'posts' ? "No posts yet..." : "No skill ads yet..."}
-                        </ThemedText>
-                        <ThemedText variant="bodyMedium" colorName="textMuted" align="center" style={styles.emptySubtitle}>
-                            {activeTab === 'posts' 
-                                ? "Post about anything you need help with so that providers can assist you when they see your request."
-                                : "As a provider, you can create ads for your services so that other students can discover and hire you."
-                            }
-                        </ThemedText>
+                    {/* Content Feed */}
+                    {filteredListings.length > 0 ? (
+                        <View style={[styles.listingsGrid, horizontalPadding]}>
+                            {filteredListings.map(listing => (
+                                <View key={listing.id} style={{ width: cardWidth }}>
+                                    {listing.type === 'service_request' ? (
+                                        <RequestCard 
+                                            listing={listing} 
+                                            width={cardWidth} 
+                                            onPress={() => router.push({ pathname: '/listing/[id]', params: { id: listing.id } })}
+                                        />
+                                    ) : (
+                                        <ListingCard 
+                                            listing={listing} 
+                                            width={cardWidth} 
+                                            onPress={() => router.push({ pathname: '/listing/[id]', params: { id: listing.id } })}
+                                        />
+                                    )}
+                                </View>
+                            ))}
+                        </View>
+                    ) : (
+                        /* Empty state */
+                        <View style={styles.emptyState}>
+                            <View style={[styles.illustrationContainer, { backgroundColor: theme.primaryContainer + '20' }]}>
+                                <ThemedIcon 
+                                    name={activeTab === 'posts' ? "post-outline" : "bullhorn-outline"} 
+                                    size={64} 
+                                    colorName="primary" 
+                                />
+                            </View>
+                            <ThemedText variant="titleLarge" style={[styles.emptyTitle, { marginTop: Spacing.xl }]}>
+                                {activeTab === 'posts' ? "No posts yet" : "No skill ads yet"}
+                            </ThemedText>
+                            <ThemedText variant="bodyLarge" colorName="textMuted" align="center" style={styles.emptySubtitle}>
+                                {activeTab === 'posts' 
+                                    ? "Post about anything you need help with so that providers can assist you when they see your request."
+                                    : "As a provider, you can create ads for your services so that other students can discover and hire you."
+                                }
+                            </ThemedText>
 
-                        <PrimaryButton
-                            title={activeTab === 'posts' ? "Add a post" : "Create a skill ad"}
-                            onPress={() => router.push(activeTab === 'posts' ? '/listing/create' : '/listing/create?type=skill')}
-                            style={styles.addPostBtn}
-                        />
-                    </View>
+                            <PrimaryButton
+                                title={activeTab === 'posts' ? "Add a post" : "Create a skill ad"}
+                                onPress={() => router.push(activeTab === 'posts' ? '/listing/create' : '/listing/create?type=skill')}
+                                style={styles.addPostBtn}
+                            />
+                        </View>
+                    )}
                 </View>
             </ScrollView>
 
@@ -557,8 +612,11 @@ const styles = StyleSheet.create({
     infoRow: {
         paddingVertical: Spacing.md,
     },
+    infoRowColumn: {
+        paddingVertical: Spacing.md,
+    },
     infoValue: {
-        fontWeight: '600',
+        fontWeight: '700',
         marginBottom: 2,
     },
     infoDivider: {
@@ -586,12 +644,25 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
 
+    // Listings Grid
+    listingsGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: Spacing.md,
+        paddingBottom: Spacing.xl,
+    },
+
     // Empty state
     emptyState: {
         alignItems: 'center',
-        paddingHorizontal: Spacing.xl * 1.5,
-        paddingTop: Spacing.xl,
-        paddingBottom: Spacing.xxl,
+        paddingVertical: Spacing.huge,
+        paddingHorizontal: Spacing.xl,
+    },
+    illustrationContainer: {
+        width: 120,        height: 120,
+        borderRadius: 60,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     emptyTitle: {
         fontWeight: '800',

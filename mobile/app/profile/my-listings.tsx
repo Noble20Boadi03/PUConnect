@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View, FlatList, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
+import { StyleSheet, View, FlatList, Pressable, ActivityIndicator, RefreshControl, Image, Dimensions } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 
 import { useAuth } from '@/context/auth-context';
 import { api } from '@/services/api';
@@ -11,18 +13,23 @@ import { ThemedView } from '@/components/themed-view';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { ScreenHeader } from '@/components/ui/screen-header';
-import { Spacing, BorderRadius } from '@/constants/theme';
+import { PrimaryButton } from '@/components/ui/primary-button';
+import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
 import { useAppAlert } from '@/context/alert-context';
 import { useResponsive } from '@/hooks/use-responsive';
+import { ListingCard } from '@/components/listing-card';
+import { RequestCard } from '@/components/request-card';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function MyListingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { token, user } = useAuth();
   const { showAlert } = useAppAlert();
-  const { horizontalPadding } = useResponsive();
+  const { horizontalPadding, isTablet, isLandscape } = useResponsive();
 
   const params = useLocalSearchParams<{ tab?: string }>();
   const tabParam = typeof params.tab === 'string' ? params.tab : params.tab?.[0];
@@ -30,6 +37,19 @@ export default function MyListingsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<'all' | 'requests' | 'offers'>('all');
+  const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
+
+  const handleScroll = (event: any) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    setIsHeaderScrolled(offsetY > 160);
+  };
+
+  const cardWidth = useMemo(() => {
+    const padding = horizontalPadding.paddingLeft + horizontalPadding.paddingRight;
+    if (isTablet) return (SCREEN_WIDTH - padding - Spacing.md) / 2;
+    if (isLandscape) return (SCREEN_WIDTH - padding - Spacing.md * 2) / 3;
+    return SCREEN_WIDTH - padding;
+  }, [horizontalPadding, isTablet, isLandscape]);
 
   useEffect(() => {
     if (tabParam === 'requests') setFilter('requests');
@@ -84,7 +104,6 @@ export default function MyListingsScreen() {
           await api.deleteListing(item.id, token);
           load();
         } catch (e: any) {
-          // A tiny timeout avoids state collisions with two modals stacking concurrently instantly
           setTimeout(() => {
               showAlert({ title: 'Error', subtitle: e?.message ?? 'Could not remove listing.', severity: 'error' });
           }, 500);
@@ -94,28 +113,108 @@ export default function MyListingsScreen() {
     });
   };
 
-  if (loading) {
-    return (
-      <ScreenLayout>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={theme.primary} />
-        </View>
-      </ScreenLayout>
-    );
-  }
+  const renderHeader = () => (
+    <View style={{ paddingTop: Spacing.sm }}>
+      {/* ─── AVATAR + IDENTITY ──────────────────────── */}
+      {user && (
+        <Animated.View entering={FadeIn.duration(600)} style={styles.heroSection}>
+          <View style={styles.avatarWrapper}>
+            <LinearGradient
+              colors={isDark
+                ? ['#c084fc', '#7c3aed', '#4c1d95'] as const
+                : ['#e9d5ff', '#8b5cf6', '#5b21b6'] as const
+              }
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.avatarGradientRing}
+            >
+              <View style={[styles.avatarInnerRing, { backgroundColor: theme.background }]}>
+                {user.profilePictureUrl ? (
+                  <Image source={{ uri: user.profilePictureUrl }} style={styles.avatarImage} />
+                ) : (
+                  <LinearGradient
+                    colors={isDark
+                      ? ['#7c3aed', '#6d28d9'] as const
+                      : ['#a78bfa', '#7c3aed'] as const
+                    }
+                    style={styles.avatarPlaceholder}
+                  >
+                    <ThemedText
+                      variant="displaySmall"
+                      lightColor="#fff"
+                      darkColor="#fff"
+                      style={{ fontWeight: '700', fontSize: 44 }}
+                    >
+                      {user.fullName?.charAt(0) || '?'}
+                    </ThemedText>
+                  </LinearGradient>
+                )}
+              </View>
+            </LinearGradient>
+          </View>
 
-  return (
-    <ScreenLayout padding="none" withSafeArea={false}>
-      <Stack.Screen options={{ headerShown: false }} />
-      <ScreenHeader
-        title="My listings"
-        right={
-          <Pressable onPress={() => router.push('/listing/create')} style={styles.addBtn}>
-            <ThemedIcon name="plus" size={24} colorName="primary" />
-          </Pressable>
-        }
-      />
+          <ThemedText variant="headlineSmall" style={styles.displayName}>
+            {user.fullName}
+          </ThemedText>
+          <ThemedText variant="bodyMedium" colorName="primary" style={{ marginTop: 4, fontWeight: '600' }}>
+            Verified Provider
+          </ThemedText>
+        </Animated.View>
+      )}
 
+      {/* ─── PROVIDER INFO CARD ──────────────────────────────── */}
+      {user && (
+        <Animated.View
+          entering={FadeInDown.delay(200).duration(600)}
+          style={[styles.infoCard, { backgroundColor: theme.surface, borderColor: theme.outlineVariant }]}
+        >
+          <View style={styles.infoCardInner}>
+            {/* Username row */}
+            <View style={styles.infoRowColumn}>
+              <ThemedText variant="bodySmall" colorName="textMuted" style={{ marginBottom: Spacing.xs }}>
+                Username
+              </ThemedText>
+              <ThemedText variant="bodyLarge" style={styles.infoValue}>
+                @{user.username || 'username'}
+              </ThemedText>
+            </View>
+
+            {user.bio && (
+              <>
+                <View style={[styles.infoDivider, { backgroundColor: theme.outlineVariant }]} />
+                <View style={styles.infoRowColumn}>
+                  <ThemedText variant="bodySmall" colorName="textMuted" style={{ marginBottom: Spacing.xs }}>
+                    About Me
+                  </ThemedText>
+                  <ThemedText variant="bodyMedium" style={{ lineHeight: 22 }}>
+                    {user.bio}
+                  </ThemedText>
+                </View>
+              </>
+            )}
+
+            {user.skillTags && user.skillTags.length > 0 && (
+              <>
+                <View style={[styles.infoDivider, { backgroundColor: theme.outlineVariant }]} />
+                <View style={styles.infoRowColumn}>
+                  <ThemedText variant="bodySmall" colorName="textMuted" style={{ marginBottom: Spacing.sm }}>
+                    Offered Services & Skills
+                  </ThemedText>
+                  <View style={styles.skillsContainer}>
+                    {user.skillTags.map((skill, index) => (
+                      <View key={index} style={[styles.skillChip, { backgroundColor: theme.primaryContainer }]}>
+                        <ThemedText variant="labelMedium" colorName="onPrimaryContainer">{skill}</ThemedText>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              </>
+            )}
+          </View>
+        </Animated.View>
+      )}
+
+      {/* Tabs */}
       <View style={[styles.tabRow, horizontalPadding]}>
         {(['all', 'requests', 'offers'] as const).map((key) => (
           <Pressable
@@ -136,78 +235,102 @@ export default function MyListingsScreen() {
         ))}
       </View>
 
+      <View style={[horizontalPadding, { marginTop: Spacing.xl, marginBottom: Spacing.sm }]}>
+        <ThemedText variant="titleLarge" style={{ fontWeight: '800' }}>
+          Active services
+        </ThemedText>
+      </View>
+    </View>
+  );
+
+  if (loading) {
+    return (
+      <ScreenLayout>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={theme.primary} />
+        </View>
+      </ScreenLayout>
+    );
+  }
+
+  return (
+    <ScreenLayout padding="none" withSafeArea={false}>
+      <Stack.Screen options={{ headerShown: false }} />
+      <ScreenHeader
+        title={isHeaderScrolled ? user?.fullName || "" : ""}
+        right={
+          <Pressable onPress={() => router.push('/listing/create')} style={styles.addBtn}>
+            <ThemedIcon name="plus" size={24} colorName="primary" />
+          </Pressable>
+        }
+      />
+
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
+        ListHeaderComponent={renderHeader}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />}
         contentContainerStyle={[
           styles.list,
-          horizontalPadding,
           { paddingBottom: insets.bottom + Spacing.xl },
           filtered.length === 0 && styles.emptyList,
         ]}
+        columnWrapperStyle={isTablet || isLandscape ? { gap: Spacing.md, paddingHorizontal: horizontalPadding.paddingLeft } : undefined}
+        numColumns={isTablet ? 2 : isLandscape ? 3 : 1}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <ThemedIcon name="briefcase-outline" size={48} colorName="outline" />
-            <ThemedText variant="bodyLarge" colorName="textSecondary" align="center" style={{ marginTop: Spacing.md }}>
+            <View style={[styles.illustrationContainer, { backgroundColor: theme.primaryContainer + '20' }]}>
+                <ThemedIcon name="briefcase-outline" size={64} colorName="primary" />
+            </View>
+            <ThemedText variant="titleLarge" style={{ marginTop: Spacing.xl, fontWeight: '800' }}>
+                No active listings
+            </ThemedText>
+            <ThemedText variant="bodyLarge" colorName="textSecondary" align="center" style={styles.emptyDescription}>
               {listings.length === 0
-                ? 'You have no active listings yet.'
+                ? 'You have no active listings yet. Start by offering a service or posting a request.'
                 : filter === 'requests'
                   ? 'No request listings in this tab.'
                   : 'No service offers in this tab.'}
             </ThemedText>
-            <Pressable onPress={() => router.push('/listing/create')} style={{ marginTop: Spacing.lg }}>
-              <ThemedText variant="labelLarge" colorName="primary">
-                Create a listing
-              </ThemedText>
-            </Pressable>
+            <PrimaryButton 
+                title="Create a listing" 
+                onPress={() => router.push('/listing/create')} 
+                style={{ marginTop: Spacing.xl, width: '100%' }} 
+            />
           </View>
         }
         renderItem={({ item }) => (
-          <ThemedView
-            colorName="surfaceVariant"
-            style={[styles.card, { borderColor: theme.outlineVariant }]}
-          >
-            <Pressable onPress={() => router.push({ pathname: '/listing/[id]', params: { id: item.id } })}>
-              <ThemedText variant="titleMedium" numberOfLines={2}>
-                {item.title}
-              </ThemedText>
-              <ThemedText variant="labelSmall" colorName="textMuted" style={{ marginTop: 4 }}>
-                {item.type === 'service_request' ? 'Request' : 'Offer'} · {item.category}
-              </ThemedText>
-              <ThemedText variant="titleSmall" colorName="primary" style={{ marginTop: Spacing.sm }}>
-                {item.priceType === 'fixed' ? '' : item.priceType === 'starting_at' ? 'Starting at ' : ''}
-                ${item.price ?? item.budget ?? '—'}
-                {item.priceType === 'negotiable' ? ' (Negotiable)' : ''}
-              </ThemedText>
-            </Pressable>
-            <View style={styles.actions}>
-              <Pressable
-                onPress={() => router.push({ pathname: '/listing/[id]', params: { id: item.id } })}
-                style={styles.actionBtn}
-              >
-                <ThemedIcon name="eye-outline" size={20} colorName="textSecondary" />
-                <ThemedText variant="labelLarge" colorName="textSecondary">
-                  View
-                </ThemedText>
-              </Pressable>
+          <View style={[styles.cardContainer, { width: cardWidth, marginHorizontal: isTablet || isLandscape ? 0 : horizontalPadding.paddingLeft }]}>
+            {item.type === 'service_offer' ? (
+              <ListingCard 
+                listing={item} 
+                onPress={() => router.push({ pathname: '/listing/[id]', params: { id: item.id } })} 
+              />
+            ) : (
+              <RequestCard 
+                listing={item} 
+                onPress={() => router.push({ pathname: '/listing/[id]', params: { id: item.id } })} 
+              />
+            )}
+            
+            {/* Management Actions Overlay/Row */}
+            <View style={[styles.cardActions, { backgroundColor: theme.surface, borderColor: theme.outlineVariant }]}>
               <Pressable
                 onPress={() => router.push({ pathname: '/listing/create', params: { editId: item.id } })}
                 style={styles.actionBtn}
               >
-                <ThemedIcon name="pencil-outline" size={20} colorName="primary" />
-                <ThemedText variant="labelLarge" colorName="primary">
-                  Edit
-                </ThemedText>
+                <ThemedIcon name="pencil-outline" size={18} colorName="primary" />
+                <ThemedText variant="labelMedium" colorName="primary">Edit</ThemedText>
               </Pressable>
+              <View style={[styles.actionDivider, { backgroundColor: theme.outlineVariant }]} />
               <Pressable onPress={() => confirmDelete(item)} style={styles.actionBtn}>
-                <ThemedIcon name="trash-can-outline" size={20} colorName="error" />
-                <ThemedText variant="labelLarge" colorName="error">
-                  Remove
-                </ThemedText>
+                <ThemedIcon name="trash-can-outline" size={18} colorName="error" />
+                <ThemedText variant="labelMedium" colorName="error">Remove</ThemedText>
               </Pressable>
             </View>
-          </ThemedView>
+          </View>
         )}
       />
     </ScreenLayout>
@@ -218,10 +341,83 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
   addBtn: { padding: Spacing.xs, width: 40, alignItems: 'flex-end' },
+  heroSection: {
+    alignItems: 'center',
+    paddingVertical: Spacing.xl,
+  },
+  avatarWrapper: {
+    marginBottom: Spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  avatarGradientRing: {
+    padding: 4,
+    borderRadius: 999,
+  },
+  avatarInnerRing: {
+    padding: 4,
+    borderRadius: 999,
+  },
+  avatarImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+  },
+  avatarPlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  displayName: {
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  infoCard: {
+    marginHorizontal: 16,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    marginBottom: Spacing.xl,
+    ...Shadows.level1,
+  },
+  infoCardInner: {
+    padding: Spacing.lg,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: Spacing.xs,
+  },
+  infoRowColumn: {
+    paddingVertical: Spacing.xs,
+  },
+  infoValue: {
+    fontWeight: '700',
+  },
+  infoDivider: {
+    height: 1,
+    width: '100%',
+    marginVertical: Spacing.md,
+  },
+  skillsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  skillChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+  },
+
   tabRow: {
     flexDirection: 'row',
     gap: Spacing.sm,
-    paddingBottom: Spacing.sm,
     flexWrap: 'wrap',
   },
   tabChip: {
@@ -230,22 +426,48 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.full,
     borderWidth: 1,
   },
-  list: { paddingTop: Spacing.md, gap: Spacing.md },
+  list: { paddingTop: Spacing.md },
   emptyList: { flexGrow: 1, justifyContent: 'center' },
-  empty: { alignItems: 'center', paddingVertical: Spacing.xl * 2 },
-  card: {
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    padding: Spacing.lg,
+  empty: { 
+    alignItems: 'center', 
+    paddingVertical: Spacing.xl,
+    paddingHorizontal: Spacing.xl,
   },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: Spacing.lg,
+  illustrationContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyDescription: {
     marginTop: Spacing.md,
-    paddingTop: Spacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(128,128,128,0.3)',
+    lineHeight: 22,
   },
-  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  
+  cardContainer: {
+    marginBottom: Spacing.xl,
+  },
+  cardActions: {
+    flexDirection: 'row',
+    marginTop: -Spacing.sm, // Slight overlap with card for tighter look
+    marginHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    paddingVertical: 8,
+    justifyContent: 'space-around',
+    ...Shadows.level1,
+  },
+  actionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+    justifyContent: 'center',
+  },
+  actionDivider: {
+    width: 1,
+    height: '60%',
+    alignSelf: 'center',
+  },
 });

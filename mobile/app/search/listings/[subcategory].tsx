@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View, FlatList, Pressable, Image, ActivityIndicator, Modal, ScrollView, StatusBar } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTheme } from '@/context/theme-context';
-import { Spacing, BorderRadius } from '@/constants/theme';
+import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { User } from '@/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedView } from '@/components/themed-view';
@@ -190,9 +190,14 @@ export default function SubcategoryListingsScreen() {
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
-                        <ThemedIcon name="account-search-outline" size={64} colorName="outline" />
+                        <View style={[styles.illustrationContainer, { backgroundColor: theme.primaryContainer + '20' }]}>
+                            <ThemedIcon name="account-search-outline" size={64} colorName="primary" />
+                        </View>
+                        <ThemedText variant="titleLarge" style={{ marginTop: Spacing.xl, fontWeight: '800' }}>
+                            No Providers Found
+                        </ThemedText>
                         <ThemedText variant="bodyLarge" colorName="textMuted" align="center" style={styles.emptyText}>
-                            No Providers matching this criteria.
+                            No providers matching this criteria in {subcategoryTitle}. Try adjusting your filters.
                         </ThemedText>
                     </View>
                 }
@@ -299,35 +304,35 @@ function ProviderCard({ item, theme, isDark, subcategory, onPress }: { item: Use
                 ]}
             >
                 <View style={styles.cardLayout}>
-                    {/* Left: Profile Image Box */}
-                    <View style={[styles.leftSection, { borderRightColor: theme.outlineVariant }]}>
+                    {/* Left: Profile Image */}
+                    <View style={styles.imageWrapper}>
                         <Image 
                             source={{ uri: item.profilePictureUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200' }} 
                             style={styles.profileImage} 
                         />
                     </View>
                     
-                    {/* Right: Name & Skills */}
+                    {/* Right: Name & Info */}
                     <View style={styles.rightSection}>
-                        <ThemedText variant="titleMedium" style={styles.providerName}>
+                        <ThemedText variant="titleLarge" style={styles.providerName}>
                             {item.fullName}
                         </ThemedText>
                         
                         <View style={styles.providerInfoRow}>
-                            <ThemedText variant="labelMedium" colorName="textMuted" style={styles.departmentText}>
+                            <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.departmentText}>
                                 {item.department || 'Expert'}
                             </ThemedText>
                             {item.username && (
-                                <ThemedText variant="labelSmall" colorName="primary" style={styles.usernameText}>
+                                <ThemedText variant="labelLarge" colorName="primary" style={styles.usernameText}>
                                     @{item.username}
                                 </ThemedText>
                             )}
                         </View>
 
-                        <View style={styles.tagsRow}>
+                        <View style={styles.tagsContainer}>
                             {item.skillTags?.slice(0, 3).map((tag: string, idx: number) => (
-                                <View key={idx} style={[styles.tagPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#f0f0f0' }]}>
-                                    <ThemedText variant="labelSmall" colorName="textMuted">{tag}</ThemedText>
+                                <View key={idx} style={[styles.tagPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#f3f4f6' }]}>
+                                    <ThemedText variant="labelSmall" colorName="textSecondary" style={{ fontWeight: '600' }}>{tag}</ThemedText>
                                 </View>
                             ))}
                         </View>
@@ -402,60 +407,71 @@ const styles = StyleSheet.create({
         marginTop: Spacing.md,
     },
     card: {
-        borderRadius: 16,
+        borderRadius: 20,
         overflow: 'hidden',
+        ...Shadows.level1,
     },
     cardLayout: {
         flexDirection: 'row',
-        height: 120,
+        padding: 12,
     },
-    leftSection: {
-        width: 110,
-        borderRightWidth: 1,
-    },
-    rightSection: {
-        flex: 1,
-        paddingHorizontal: 14,
-        justifyContent: 'center',
+    imageWrapper: {
+        width: 100,
+        height: 100,
+        borderRadius: 16,
+        overflow: 'hidden',
     },
     profileImage: {
         width: '100%',
         height: '100%',
     },
+    rightSection: {
+        flex: 1,
+        paddingLeft: 16,
+        justifyContent: 'center',
+    },
     providerName: {
-        fontWeight: '700',
-        fontSize: 17,
+        fontWeight: '800',
+        fontSize: 19,
+        marginBottom: 4,
     },
     providerInfoRow: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
-        marginTop: 2,
+        marginBottom: 10,
     },
     departmentText: {
-        fontSize: 13,
-    },
-    usernameText: {
         fontWeight: '600',
     },
-    tagsRow: {
+    usernameText: {
+        fontWeight: '700',
+    },
+    tagsContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: 6,
-        marginTop: 10,
     },
     tagPill: {
-        paddingHorizontal: 8,
-        paddingVertical: 3,
-        borderRadius: 4,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 8,
     },
     emptyContainer: {
         alignItems: 'center',
-        marginTop: 100,
+        marginTop: 60,
+        paddingHorizontal: Spacing.xl,
+    },
+    illustrationContainer: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     emptyText: {
-        marginTop: 16,
-        fontSize: 16,
+        marginTop: Spacing.md,
+        lineHeight: 22,
     },
     dropdownOverlay: {
         flex: 1,

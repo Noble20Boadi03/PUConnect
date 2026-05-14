@@ -66,7 +66,7 @@ export const ListingCard = memo(function ListingCard({ listing, width, onPress }
                         </ThemedText>
                     </View>
 
-                    <ThemedText variant="bodyMedium" numberOfLines={2} style={styles.title}>
+                    <ThemedText variant="titleSmall" numberOfLines={2} style={styles.title}>
                         {listing.title}
                     </ThemedText>
 
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     title: {
-        fontWeight: '400',
+        fontWeight: '700',
         marginBottom: Spacing.sm,
     },
     footer: {
