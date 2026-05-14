@@ -22,8 +22,6 @@ export interface User {
   // Provider / Professional Fields
   category?: string;
   subcategory?: string;
-  department?: string;
-  graduationYear?: number;
 
   // Reputation & Marketplace
   reputationScore?: number; // 0-100 or rating-based
@@ -61,7 +59,6 @@ export interface Listing {
   requiredSkills?: string[];
   teamSize?: number; // For project teams
   level?: string;
-  department?: string;
   tags?: string[];
   average_rating?: number;
   review_count?: number;

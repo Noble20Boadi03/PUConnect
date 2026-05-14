@@ -28,8 +28,6 @@ const MOCK_USER: User = {
     reputationScore: 4.8,
     completedProjects: 12,
     verifiedStudent: true,
-    department: 'Computer Engineering',
-    graduationYear: 2025,
     canOfferServices: true,
     createdAt: '2024-09-12T10:00:00Z',
     updatedAt: new Date().toISOString(),
@@ -369,23 +367,23 @@ const MOCK_MESSAGES: ChatMessage[] = [
 ];
 
 const MOCK_TALENT: User[] = [
-    { ...MOCK_USER, id: 'talent-001', fullName: 'Ama Mensah', username: 'amensah', department: 'Graphic Design', skillTags: ['Illustration', 'Branding', 'Figma'], createdAt: '2026-01-10T10:00:00Z', updatedAt: new Date().toISOString() },
-    { ...MOCK_USER, id: 'talent-002', fullName: 'Kwame Asante', username: 'kasante', department: 'Computer Engineering', skillTags: ['Python', 'Machine Learning', 'Data Science'], createdAt: '2026-02-15T10:00:00Z', updatedAt: new Date().toISOString() },
-    { ...MOCK_USER, id: 'talent-003', fullName: 'Nana Yaa Boateng', username: 'nyboateng', department: 'Business Administration', skillTags: ['Marketing', 'Social Media', 'Copywriting'], createdAt: '2026-03-20T10:00:00Z', updatedAt: new Date().toISOString() },
+    { ...MOCK_USER, id: 'talent-001', fullName: 'Ama Mensah', username: 'amensah', skillTags: ['Illustration', 'Branding', 'Figma'], createdAt: '2026-01-10T10:00:00Z', updatedAt: new Date().toISOString() },
+    { ...MOCK_USER, id: 'talent-002', fullName: 'Kwame Asante', username: 'kasante', skillTags: ['Python', 'Machine Learning', 'Data Science'], createdAt: '2026-02-15T10:00:00Z', updatedAt: new Date().toISOString() },
+    { ...MOCK_USER, id: 'talent-003', fullName: 'Nana Yaa Boateng', username: 'nyboateng', skillTags: ['Marketing', 'Social Media', 'Copywriting'], createdAt: '2026-03-20T10:00:00Z', updatedAt: new Date().toISOString() },
 ];
 
 /** Synthetic campus users backing listing `ownerId`s (public profiles + chat headers). */
 const MOCK_PEER_USERS: Record<string, User> = {
-    'user-002': { ...MOCK_USER, id: 'user-002', fullName: 'Abena Appiah', username: 'aappiah', email: 'a.appiah@pu.edu.gh', universityId: 'PU2024002', department: 'Visual Arts', graduationYear: 2026, skillTags: ['Graphic Design', 'Branding', 'Adobe Suite', 'UI Design'], bio: 'Passionate about creating visual stories that resonate. I love helping campus brands find their identity.', canOfferServices: true, profilePictureUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop' },
-    'user-003': { ...MOCK_USER, id: 'user-003', fullName: 'Kofi Osei', username: 'kosei', email: 'k.osei@pu.edu.gh', universityId: 'PU2024003', department: 'Mathematics', graduationYear: 2025, skillTags: ['Calculus', 'Linear Algebra', 'Statistics'], bio: 'Math doesn\'t have to be hard. I specialize in breaking down complex topics for my peers.', canOfferServices: true, profilePictureUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop' },
-    'user-004': { ...MOCK_USER, id: 'user-004', fullName: 'Yaw Dankwa', username: 'ydankwa', email: 'y.dankwa@pu.edu.gh', universityId: 'PU2024004', department: 'Computer Science', graduationYear: 2026, skillTags: ['React Native', 'Expo', 'TypeScript', 'Node.js'], bio: 'Full-stack developer building tools for students. Let\'s collaborate on your next big idea.', canOfferServices: true, profilePictureUrl: 'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=400&h=400&fit=crop' },
-    'user-005': { ...MOCK_USER, id: 'user-005', fullName: 'Ekow Mensah', username: 'emensah', email: 'e.mensah@pu.edu.gh', universityId: 'PU2024005', department: 'Logistics', graduationYear: 2027, skillTags: ['Delivery', 'Time Management', 'Customer Relations'], bio: 'Your reliable partner for campus errands. Fast, safe, and always on time.', canOfferServices: true, profilePictureUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop' },
-    'user-006': { ...MOCK_USER, id: 'user-006', fullName: 'Akua Agyemang', username: 'aagyemang', email: 'a.agyemang@pu.edu.gh', universityId: 'PU2024006', department: 'Journalism', graduationYear: 2025, skillTags: ['Photography', 'Editing', 'Storytelling'], bio: 'Capturing the spirit of campus life one frame at a time. Available for all your photography needs.', canOfferServices: true, profilePictureUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop' },
-    'user-007': { ...MOCK_USER, id: 'user-007', fullName: 'Papa Boateng', username: 'pboateng', email: 'p.boateng@pu.edu.gh', universityId: 'PU2024007', department: 'English', graduationYear: 2026, skillTags: ['CV Writing', 'Proofreading', 'Copywriting'], bio: 'Helping you present your best self to employers. Expert in academic and professional writing.', canOfferServices: true },
-    'user-008': { ...MOCK_USER, id: 'user-008', fullName: 'Araba Owusu', username: 'aowusu', email: 'a.owusu@pu.edu.gh', universityId: 'PU2024008', department: 'Marketing', graduationYear: 2027, skillTags: ['Social Media', 'Content Strategy', 'Public Relations'], bio: 'Digital native helping campus clubs and brands grow their online presence.', canOfferServices: true },
-    'user-009': { ...MOCK_USER, id: 'user-009', fullName: 'Kwabena Asante', username: 'kasante_music', email: 'k.asante@pu.edu.gh', universityId: 'PU2024009', department: 'Music', graduationYear: 2025, skillTags: ['Music Production', 'Mixing', 'Beat Making'], bio: 'Producer and sound engineer. Let\'s make some music that moves people.', canOfferServices: true },
-    'user-010': { ...MOCK_USER, id: 'user-010', fullName: 'Afua Dankwa', username: 'adankwa', email: 'a.dankwa@pu.edu.gh', universityId: 'PU2024010', department: 'Hospitality', graduationYear: 2026, skillTags: ['Hair Braiding', 'Styling', 'Beauty'], bio: 'Expert hair braiding in the hostel. Looking good shouldn\'t be stressful.', canOfferServices: true },
-    'user-011': { ...MOCK_USER, id: 'user-011', fullName: 'Esi Osei', username: 'eosei', email: 'e.osei@pu.edu.gh', universityId: 'PU2024011', department: 'Modern Languages', graduationYear: 2027, skillTags: ['French', 'Translation', 'Linguistics'], bio: 'Bilingual student helping with all your French-English translation needs.', canOfferServices: true },
+    'user-002': { ...MOCK_USER, id: 'user-002', fullName: 'Abena Appiah', username: 'aappiah', email: 'a.appiah@pu.edu.gh', universityId: 'PU2024002', skillTags: ['Graphic Design', 'Branding', 'Adobe Suite', 'UI Design'], bio: 'Passionate about creating visual stories that resonate. I love helping campus brands find their identity.', canOfferServices: true, profilePictureUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop' },
+    'user-003': { ...MOCK_USER, id: 'user-003', fullName: 'Kofi Osei', username: 'kosei', email: 'k.osei@pu.edu.gh', universityId: 'PU2024003', skillTags: ['Calculus', 'Linear Algebra', 'Statistics'], bio: 'Math doesn\'t have to be hard. I specialize in breaking down complex topics for my peers.', canOfferServices: true, profilePictureUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop' },
+    'user-004': { ...MOCK_USER, id: 'user-004', fullName: 'Yaw Dankwa', username: 'ydankwa', email: 'y.dankwa@pu.edu.gh', universityId: 'PU2024004', skillTags: ['React Native', 'Expo', 'TypeScript', 'Node.js'], bio: 'Full-stack developer building tools for students. Let\'s collaborate on your next big idea.', canOfferServices: true, profilePictureUrl: 'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=400&h=400&fit=crop' },
+    'user-005': { ...MOCK_USER, id: 'user-005', fullName: 'Ekow Mensah', username: 'emensah', email: 'e.mensah@pu.edu.gh', universityId: 'PU2024005', skillTags: ['Delivery', 'Time Management', 'Customer Relations'], bio: 'Your reliable partner for campus errands. Fast, safe, and always on time.', canOfferServices: true, profilePictureUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop' },
+    'user-006': { ...MOCK_USER, id: 'user-006', fullName: 'Akua Agyemang', username: 'aagyemang', email: 'a.agyemang@pu.edu.gh', universityId: 'PU2024006', skillTags: ['Photography', 'Editing', 'Storytelling'], bio: 'Capturing the spirit of campus life one frame at a time. Available for all your photography needs.', canOfferServices: true, profilePictureUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop' },
+    'user-007': { ...MOCK_USER, id: 'user-007', fullName: 'Papa Boateng', username: 'pboateng', email: 'p.boateng@pu.edu.gh', universityId: 'PU2024007', skillTags: ['CV Writing', 'Proofreading', 'Copywriting'], bio: 'Helping you present your best self to employers. Expert in academic and professional writing.', canOfferServices: true },
+    'user-008': { ...MOCK_USER, id: 'user-008', fullName: 'Araba Owusu', username: 'aowusu', email: 'a.owusu@pu.edu.gh', universityId: 'PU2024008', skillTags: ['Social Media', 'Content Strategy', 'Public Relations'], bio: 'Digital native helping campus clubs and brands grow their online presence.', canOfferServices: true },
+    'user-009': { ...MOCK_USER, id: 'user-009', fullName: 'Kwabena Asante', username: 'kasante_music', email: 'k.asante@pu.edu.gh', universityId: 'PU2024009', skillTags: ['Music Production', 'Mixing', 'Beat Making'], bio: 'Producer and sound engineer. Let\'s make some music that moves people.', canOfferServices: true },
+    'user-010': { ...MOCK_USER, id: 'user-010', fullName: 'Afua Dankwa', username: 'adankwa', email: 'a.dankwa@pu.edu.gh', universityId: 'PU2024010', skillTags: ['Hair Braiding', 'Styling', 'Beauty'], bio: 'Expert hair braiding in the hostel. Looking good shouldn\'t be stressful.', canOfferServices: true },
+    'user-011': { ...MOCK_USER, id: 'user-011', fullName: 'Esi Osei', username: 'eosei', email: 'e.osei@pu.edu.gh', universityId: 'PU2024011', skillTags: ['French', 'Translation', 'Linguistics'], bio: 'Bilingual student helping with all your French-English translation needs.', canOfferServices: true },
 };
 
 let extraListings: Listing[] = [];
@@ -572,9 +570,6 @@ export const api = {
         }
         if (_filters?.type) {
             rows = rows.filter((l) => l.type === _filters.type);
-        }
-        if (_filters?.department) {
-            rows = rows.filter((l) => l.department === _filters.department);
         }
         if (_filters?.minPrice != null) {
             rows = rows.filter((l) => (l.price ?? l.budget ?? 0) >= _filters.minPrice!);

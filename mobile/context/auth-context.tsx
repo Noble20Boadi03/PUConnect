@@ -45,7 +45,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             profilePictureUrl,
             category: response.category,
             subcategory: response.subcategory,
-            department: response.department,
             reputationScore: response.reputationScore ?? response.reputation_score,
             completedProjects: response.completedProjects ?? response.completed_projects,
             verifiedStudent: response.verifiedStudent ?? response.verified_student,

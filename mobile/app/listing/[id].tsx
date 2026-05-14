@@ -152,9 +152,6 @@ export default function ListingDetailsScreen() {
     // RULE C: Tag Overlap (e.g. shared keywords)
     if (listingTags.some(tag => userSkills.includes(tag))) return true;
 
-    // RULE D: Department Fallback
-    if (user.department && listing.category.toLowerCase().includes(user.department.toLowerCase())) return true;
-
     return false;
   };
 
@@ -411,9 +408,6 @@ export default function ListingDetailsScreen() {
                     </ThemedText>
                     
                     <View style={styles.providerInfoRow}>
-                      <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.departmentText}>
-                        {owner?.department || 'Expert'}
-                      </ThemedText>
                       {owner?.username && (
                         <ThemedText variant="labelLarge" colorName="primary" style={styles.usernameText}>
                           @{owner.username}

@@ -319,9 +319,6 @@ function ProviderCard({ item, theme, isDark, subcategory, onPress }: { item: Use
                         </ThemedText>
                         
                         <View style={styles.providerInfoRow}>
-                            <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.departmentText}>
-                                {item.department || 'Expert'}
-                            </ThemedText>
                             {item.username && (
                                 <ThemedText variant="labelLarge" colorName="primary" style={styles.usernameText}>
                                     @{item.username}
