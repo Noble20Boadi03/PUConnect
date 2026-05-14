@@ -45,10 +45,13 @@ export interface Listing {
   isActive: boolean;
 
   // Specific to marketplace focus
+  priceType?: 'fixed' | 'negotiable' | 'starting_at';
+  urgency?: string;
   deadline?: string;
   requiredSkills?: string[];
   teamSize?: number; // For project teams
   media_url?: string;
+  media_urls?: string[];
   subcategory?: string;
   level?: string;
   department?: string;

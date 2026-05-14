@@ -17,7 +17,7 @@ interface SubcategoryParams {
 
 export function useSubcategoryViewModel({ subcategoryTitle, category }: SubcategoryParams) {
     const [uiState, setUiState] = useState<SubcategoryUiState>({ status: 'loading' });
-    const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
+    const [activeFilters, setActiveFilters] = useState<Record<string, string[]>>({});
     const [activeModalFilter, setActiveModalFilter] = useState<SubcategoryFilter | null>(null);
 
     // ── Load listings whenever subcategory or filters change ─────────────
@@ -34,13 +34,14 @@ export function useSubcategoryViewModel({ subcategoryTitle, category }: Subcateg
             try {
                 const apiFilters: any = { category, subcategory: subcategoryTitle };
 
-                Object.entries(activeFilters).forEach(([key, value]) => {
+                Object.entries(activeFilters).forEach(([key, values]) => {
                     const lowerKey = key.toLowerCase();
+                    const valStr = values.join(',');
                     if (lowerKey.includes('rating')) apiFilters.sortBy = 'rating';
                     else if (lowerKey.includes('price')) apiFilters.sortBy = 'price';
-                    else if (lowerKey === 'department') apiFilters.department = value;
-                    else if (lowerKey === 'academic level' || lowerKey === 'level') apiFilters.level = value;
-                    else apiFilters.tag = value;
+                    else if (lowerKey === 'department') apiFilters.department = valStr;
+                    else if (lowerKey === 'academic level' || lowerKey === 'level') apiFilters.level = valStr;
+                    else apiFilters.tag = valStr;
                 });
 
                 const [providers, filters] = await Promise.all([
@@ -78,9 +79,25 @@ export function useSubcategoryViewModel({ subcategoryTitle, category }: Subcateg
     }, [subcategoryTitle, activeFilters, category]);
 
     // ── Actions ───────────────────────────────────────────────────────────
-    const selectFilter = useCallback((filterLabel: string, optionValue: string) => {
-        setActiveFilters(prev => ({ ...prev, [filterLabel]: optionValue }));
-        setActiveModalFilter(null);
+    const selectFilter = useCallback((filterLabel: string, optionValue: string, isMulti: boolean = false) => {
+        setActiveFilters(prev => {
+            const current = prev[filterLabel] || [];
+            if (isMulti) {
+                if (current.includes(optionValue)) {
+                    const next = current.filter(val => val !== optionValue);
+                    if (next.length === 0) {
+                        const copy = { ...prev };
+                        delete copy[filterLabel];
+                        return copy;
+                    }
+                    return { ...prev, [filterLabel]: next };
+                } else {
+                    return { ...prev, [filterLabel]: [...current, optionValue] };
+                }
+            } else {
+                return { ...prev, [filterLabel]: [optionValue] };
+            }
+        });
     }, []);
 
     const clearFilter = useCallback((filterLabel: string) => {

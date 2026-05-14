@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { StyleSheet, ScrollView, ActivityIndicator, Pressable, View, StatusBar } from 'react-native';
+import { StyleSheet, ScrollView, ActivityIndicator, Pressable, View, StatusBar, Dimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,6 +25,7 @@ export default function ListingDetailsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
+  const { width } = Dimensions.get('window');
 
   const { uiState } = useListingViewModel(id as string);
   const { contentPaddingLeft, contentPaddingRight } = useResponsive();
@@ -164,6 +165,9 @@ export default function ListingDetailsScreen() {
     ? (categoryData?.image || require('@/assets/images/categories/campus_life.jpg')) 
     : (listing.media_url || categoryData?.image || require('@/assets/images/categories/campus_life.jpg'));
 
+  const hasMultipleImages = listing.media_urls && listing.media_urls.length > 0;
+  const imagesToDisplay = hasMultipleImages ? listing.media_urls : [displayImage];
+
   return (
     <View style={[styles.root, { backgroundColor: theme.background }]}>
       <StatusBar 
@@ -176,13 +180,39 @@ export default function ListingDetailsScreen() {
 
       {/* Fixed Background Image — stays completely still */}
       <View style={styles.imageBackground}>
-        <Image
-          source={displayImage}
-          style={styles.mainImage}
-          contentFit="cover"
-          cachePolicy="disk"
-          transition={200}
-        />
+        {hasMultipleImages ? (
+          <>
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              style={{ width: '100%', height: '100%' }}
+            >
+              {imagesToDisplay!.map((url, i) => (
+                <Image
+                  key={i}
+                  source={typeof url === 'string' ? { uri: url } : url}
+                  style={{ width, height: '100%' }}
+                  contentFit="cover"
+                  cachePolicy="disk"
+                />
+              ))}
+            </ScrollView>
+            <View style={{ position: 'absolute', bottom: 40, width: '100%', flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
+              {imagesToDisplay!.map((_, i) => (
+                <View key={i} style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.7)' }} />
+              ))}
+            </View>
+          </>
+        ) : (
+          <Image
+            source={displayImage}
+            style={styles.mainImage}
+            contentFit="cover"
+            cachePolicy="disk"
+            transition={200}
+          />
+        )}
       </View>
 
       <Pressable
@@ -253,6 +283,17 @@ export default function ListingDetailsScreen() {
               {listing.description}
             </ThemedText>
           </View>
+
+          {listing.type === 'service_request' && listing.urgency ? (
+            <View style={styles.section}>
+              <ThemedText variant="titleMedium" style={styles.sectionTitle}>
+                Urgency
+              </ThemedText>
+              <ThemedText variant="bodyLarge" colorName="primary" style={{ fontWeight: 'bold' }}>
+                {listing.urgency}
+              </ThemedText>
+            </View>
+          ) : null}
 
           {listing.tags && listing.tags.length > 0 && (
             <View style={styles.section}>

@@ -61,8 +61,8 @@ export default function SubcategoryListingsScreen() {
     const filtersConfig = uiState.status === 'content' ? uiState.data.filtersConfig : [];
     const isRefreshing = uiState.status === 'content' && !!uiState.isRefreshing;
 
-    const handleSelectOption = (filterLabel: string, optionValue: string) => {
-        selectFilter(filterLabel, optionValue);
+    const handleSelectOption = (filterLabel: string, optionValue: string, isMulti: boolean = false) => {
+        selectFilter(filterLabel, optionValue, isMulti);
     };
 
     const handleClearFilter = (filterLabel: string) => {
@@ -105,8 +105,11 @@ export default function SubcategoryListingsScreen() {
                 </Pressable>
 
                 {filtersConfig.map((filter) => {
-                    const selectedVal = activeFilters[filter.filter_label];
-                    const isSelected = !!selectedVal;
+                    const selectedVals = activeFilters[filter.filter_label];
+                    const isSelected = selectedVals && selectedVals.length > 0;
+                    const pillLabel = isSelected 
+                        ? (selectedVals.length === 1 ? selectedVals[0] : `${selectedVals[0]} +${selectedVals.length - 1}`)
+                        : filter.filter_label;
 
                     return (
                         <Pressable 
@@ -116,14 +119,14 @@ export default function SubcategoryListingsScreen() {
                                 { borderColor: theme.outlineVariant },
                                 isSelected && { backgroundColor: theme.primary, borderColor: theme.primary }
                             ]}
-                            onPress={() => isSelected ? handleClearFilter(filter.filter_label) : setActiveModalFilter(filter)}
+                            onPress={() => setActiveModalFilter(filter)}
                         >
                             <ThemedText 
                                 variant="labelLarge"
                                 style={[styles.pillText, isSelected && { color: theme.onPrimary, fontWeight: '800' }]}
                                 colorName={isSelected ? undefined : "textMuted"}
                             >
-                                {isSelected ? selectedVal : filter.filter_label}
+                                {pillLabel}
                             </ThemedText>
                             {!isSelected && (
                                 <ThemedIcon 
@@ -222,29 +225,57 @@ export default function SubcategoryListingsScreen() {
                             ]}
                         >
                             <ScrollView style={styles.dropdownScroll} showsVerticalScrollIndicator={false}>
-                                {activeModalFilter?.filter_options?.map((option: string, idx: number) => {
-                                    const isSelected = activeFilters[activeModalFilter.filter_label] === option;
-                                    return (
+                                {activeModalFilter?.filter_type === 'range' ? (
+                                    <View style={{ paddingVertical: Spacing.xl }}>
+                                        <ThemedText variant="bodyLarge" align="center">
+                                            Price Range: ${activeModalFilter.filter_options.min} - ${activeModalFilter.filter_options.max}
+                                        </ThemedText>
                                         <Pressable 
-                                            key={idx}
-                                            style={[styles.dropdownOption, { borderBottomColor: theme.outlineVariant }]}
+                                            style={{ 
+                                                marginTop: Spacing.lg, 
+                                                padding: Spacing.md, 
+                                                backgroundColor: theme.primary, 
+                                                borderRadius: BorderRadius.md, 
+                                                alignItems: 'center' 
+                                            }}
                                             onPress={() => {
-                                                handleSelectOption(activeModalFilter.filter_label, option);
+                                                handleSelectOption(activeModalFilter.filter_label, `Under $${activeModalFilter.filter_options.default}`);
                                                 setActiveModalFilter(null);
                                             }}
                                         >
-                                            <ThemedText 
-                                                variant="bodyMedium" 
-                                                style={[isSelected && { fontWeight: '700', color: theme.primary }]}
-                                            >
-                                                {option}
+                                            <ThemedText colorName="onPrimary" style={{ fontWeight: '700' }}>
+                                                Apply Default (${activeModalFilter.filter_options.default})
                                             </ThemedText>
-                                            {isSelected && (
-                                                <ThemedIcon name="check" colorName="primary" size={20} />
-                                            )}
                                         </Pressable>
-                                    );
-                                })}
+                                    </View>
+                                ) : (
+                                    Array.isArray(activeModalFilter?.filter_options) && activeModalFilter.filter_options.map((option: string, idx: number) => {
+                                        const isSelected = activeFilters[activeModalFilter.filter_label]?.includes(option);
+                                        const isMulti = activeModalFilter.filter_type === 'multi_select';
+                                        return (
+                                            <Pressable 
+                                                key={idx}
+                                                style={[styles.dropdownOption, { borderBottomColor: theme.outlineVariant }]}
+                                                onPress={() => {
+                                                    handleSelectOption(activeModalFilter.filter_label, option, isMulti);
+                                                    if (!isMulti) {
+                                                        setActiveModalFilter(null);
+                                                    }
+                                                }}
+                                            >
+                                                <ThemedText 
+                                                    variant="bodyMedium" 
+                                                    style={[isSelected && { fontWeight: '700', color: theme.primary }]}
+                                                >
+                                                    {option}
+                                                </ThemedText>
+                                                {isSelected && (
+                                                    <ThemedIcon name="check" colorName="primary" size={20} />
+                                                )}
+                                            </Pressable>
+                                        );
+                                    })
+                                )}
                             </ScrollView>
                         </BlurView>
                     </Pressable>

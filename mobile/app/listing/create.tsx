@@ -55,9 +55,19 @@ export default function CreateListingScreen() {
   const [price, setPrice] = useState('');
   const [listingType, setListingType] = useState<ListingType>('service_request');
   const [categoryTitle, setCategoryTitle] = useState(CAMPUS_CATEGORIES[0]?.title ?? '');
-  const [subcategoryTitle, setSubcategoryTitle] = useState('');
   const [subject, setSubject] = useState('');
   const [customSubject, setCustomSubject] = useState('');
+  const [priceType, setPriceType] = useState<'fixed' | 'negotiable' | 'starting_at'>('fixed');
+  const [urgency, setUrgency] = useState('');
+  const [mediaUrls, setMediaUrls] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (listingType === 'service_request' && priceType === 'starting_at') {
+      setPriceType('fixed');
+    } else if (listingType === 'service_offer' && priceType === 'fixed') {
+      setPriceType('starting_at');
+    }
+  }, [listingType]);
 
   const load = useCallback(async () => {
     if (!editId || !token) return;
@@ -66,6 +76,9 @@ export default function CreateListingScreen() {
       setTitle(listing.title);
       setDescription(listing.description ?? '');
       setPrice(String(listing.price ?? listing.budget ?? ''));
+      setPriceType(listing.priceType ?? (listing.type === 'service_request' ? 'fixed' : 'starting_at'));
+      setUrgency(listing.urgency ?? '');
+      setMediaUrls(listing.media_urls ?? (listing.media_url ? [listing.media_url] : []));
       const offerNeedsProvider = listing.type === 'service_offer' && user?.canOfferServices !== true;
       if (offerNeedsProvider) {
         showAlert({
@@ -76,7 +89,6 @@ export default function CreateListingScreen() {
       }
       setListingType(offerNeedsProvider ? 'service_request' : listing.type);
       setCategoryTitle(listing.category);
-      setSubcategoryTitle(listing.subcategory ?? '');
       if (listing.tags) {
         const foundSub = SUBJECT_OPTIONS.find(so => listing.tags!.includes(so.toLowerCase()));
         if (foundSub) {
@@ -111,15 +123,7 @@ export default function CreateListingScreen() {
     }
   }, [canOffer, listingType]);
 
-  useEffect(() => {
-    const currentCat = CAMPUS_CATEGORIES.find((c) => c.title === categoryTitle);
-    if (currentCat) {
-      const allSubtitles = currentCat.groups.flatMap(g => g.items.map(i => i.title));
-      if (!allSubtitles.includes(subcategoryTitle)) {
-        setSubcategoryTitle('');
-      }
-    }
-  }, [categoryTitle, subcategoryTitle]);
+  // Removed subcategory sync effect
 
   const onSubmit = async () => {
     if (listingType === 'service_offer' && !canOffer) {
@@ -135,18 +139,13 @@ export default function CreateListingScreen() {
       return;
     }
 
-    const p = parseFloat(price.replace(/,/g, ''));
-    if (!title.trim() || !description.trim() || Number.isNaN(p) || p < 0) {
+    const p = priceType === 'negotiable' ? 0 : parseFloat(price.replace(/,/g, ''));
+    if (!title.trim() || !description.trim() || (priceType !== 'negotiable' && (Number.isNaN(p) || p < 0))) {
       showAlert({ title: 'Validation', subtitle: 'Please enter title, description, and a valid price.', severity: 'warning' });
       return;
     }
     const cat = CAMPUS_CATEGORIES.find((c) => c.title === categoryTitle) ?? CAMPUS_CATEGORIES[0];
-    const sub = subcategoryTitle || (cat.groups[0]?.items[0]?.title ?? 'General');
-
-    if (!subcategoryTitle) {
-      showAlert({ title: 'Validation', subtitle: 'Please select a subcategory.', severity: 'warning' });
-      return;
-    }
+    const sub = cat.title;
 
     const baseTags = title.split(/\s+/).slice(0, 5).map((s) => s.toLowerCase());
     const needsSubject = sub.toLowerCase().includes('tutoring') || sub.toLowerCase().includes('subject');
@@ -174,6 +173,9 @@ export default function CreateListingScreen() {
             subcategory: sub,
             type: listingType,
             ...(listingType === 'service_request' ? { budget: p, price: undefined } : { price: p, budget: undefined }),
+            priceType,
+            urgency: listingType === 'service_request' ? urgency : undefined,
+            media_urls: mediaUrls.length > 0 ? mediaUrls : undefined,
             tags: baseTags,
           },
           token
@@ -194,6 +196,9 @@ export default function CreateListingScreen() {
             subcategory: sub,
             type: listingType,
             ...(listingType === 'service_request' ? { budget: p } : { price: p }),
+            priceType,
+            urgency: listingType === 'service_request' ? urgency : undefined,
+            media_urls: mediaUrls.length > 0 ? mediaUrls : undefined,
             level: 'intermediate',
             tags: baseTags,
           },
@@ -294,69 +299,7 @@ export default function CreateListingScreen() {
             ))}
           </ScrollView>
 
-          {categoryTitle ? (
-            <>
-              <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.label}>
-                Subcategory
-              </ThemedText>
-              <View style={styles.row}>
-                {CAMPUS_CATEGORIES.find((c) => c.title === categoryTitle)?.groups.flatMap(g => g.items).map((subItem) => (
-                  <Pressable
-                    key={subItem.title}
-                    onPress={() => setSubcategoryTitle(subItem.title)}
-                    style={[
-                      styles.chipSm,
-                      {
-                        borderColor: subcategoryTitle === subItem.title ? theme.primary : theme.outlineVariant,
-                        backgroundColor: subcategoryTitle === subItem.title ? theme.primaryContainer : theme.surface,
-                      },
-                    ]}
-                  >
-                    <ThemedText variant="labelSmall" numberOfLines={1}>
-                      {subItem.title}
-                    </ThemedText>
-                  </Pressable>
-                ))}
-              </View>
-            </>
-          ) : null}
 
-          {subcategoryTitle.toLowerCase().includes('tutoring') || subcategoryTitle.toLowerCase().includes('subject') ? (
-            <>
-              <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.label}>
-                Subject
-              </ThemedText>
-              <View style={styles.row}>
-                {SUBJECT_OPTIONS.map((subOpt) => (
-                  <Pressable
-                    key={subOpt}
-                    onPress={() => setSubject(subOpt)}
-                    style={[
-                      styles.chipSm,
-                      {
-                        borderColor: subject === subOpt ? theme.primary : theme.outlineVariant,
-                        backgroundColor: subject === subOpt ? theme.primaryContainer : theme.surface,
-                      },
-                    ]}
-                  >
-                    <ThemedText variant="labelSmall" numberOfLines={1}>
-                      {subOpt}
-                    </ThemedText>
-                  </Pressable>
-                ))}
-              </View>
-
-              {subject === 'Other' ? (
-                <TextInput
-                  value={customSubject}
-                  onChangeText={setCustomSubject}
-                  placeholder="Specify subject..."
-                  placeholderTextColor={theme.textMuted}
-                  style={[styles.input, { marginTop: Spacing.sm, color: theme.text, borderColor: theme.outlineVariant, backgroundColor: theme.surfaceVariant }]}
-                />
-              ) : null}
-            </>
-          ) : null}
 
           <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.label}>
             Title
@@ -369,17 +312,98 @@ export default function CreateListingScreen() {
             style={[styles.input, { color: theme.text, borderColor: theme.outlineVariant, backgroundColor: theme.surfaceVariant }]}
           />
 
+          {/* Price Type */}
           <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.label}>
-            {listingType === 'service_request' ? 'Budget (USD)' : 'Price (USD)'}
+            Pricing Type
           </ThemedText>
-          <TextInput
-            value={price}
-            onChangeText={setPrice}
-            placeholder="0"
-            keyboardType="decimal-pad"
-            placeholderTextColor={theme.textMuted}
-            style={[styles.input, { color: theme.text, borderColor: theme.outlineVariant, backgroundColor: theme.surfaceVariant }]}
-          />
+          <View style={styles.row}>
+            {(listingType === 'service_request' ? ['fixed', 'negotiable'] : ['starting_at', 'negotiable']).map((pt) => (
+              <Pressable
+                key={pt}
+                onPress={() => setPriceType(pt as any)}
+                style={[
+                  styles.chipSm,
+                  {
+                    borderColor: priceType === pt ? theme.primary : theme.outlineVariant,
+                    backgroundColor: priceType === pt ? theme.primaryContainer : theme.surface,
+                  },
+                ]}
+              >
+                <ThemedText variant="labelSmall">
+                  {pt === 'starting_at' ? 'Starting at' : pt === 'fixed' ? 'Fixed Price' : 'Negotiable'}
+                </ThemedText>
+              </Pressable>
+            ))}
+          </View>
+
+          {priceType !== 'negotiable' && (
+            <>
+              <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.label}>
+                {listingType === 'service_request' ? 'Budget (USD)' : 'Base Price (USD)'}
+              </ThemedText>
+              <TextInput
+                value={price}
+                onChangeText={setPrice}
+                placeholder="0"
+                keyboardType="decimal-pad"
+                placeholderTextColor={theme.textMuted}
+                style={[styles.input, { color: theme.text, borderColor: theme.outlineVariant, backgroundColor: theme.surfaceVariant }]}
+              />
+            </>
+          )}
+
+          {listingType === 'service_request' && (
+            <>
+              <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.label}>
+                Urgency (Optional)
+              </ThemedText>
+              <TextInput
+                value={urgency}
+                onChangeText={setUrgency}
+                placeholder="e.g. Next week, End of semester..."
+                placeholderTextColor={theme.textMuted}
+                style={[styles.input, { color: theme.text, borderColor: theme.outlineVariant, backgroundColor: theme.surfaceVariant }]}
+              />
+            </>
+          )}
+
+          {listingType === 'service_offer' && (
+            <>
+              <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.label}>
+                Thumbnails / Portfolio Images
+              </ThemedText>
+              <ThemedText variant="bodySmall" colorName="textMuted" style={{ marginBottom: Spacing.sm }}>
+                Upload multiple images to showcase your work.
+              </ThemedText>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: Spacing.sm }}>
+                {mediaUrls.map((url, i) => (
+                  <Pressable key={i} onPress={() => setMediaUrls(mediaUrls.filter((_, idx) => idx !== i))}>
+                    <View style={{ width: 100, height: 100, borderRadius: BorderRadius.md, backgroundColor: theme.surfaceVariant, overflow: 'hidden' }}>
+                      <View style={{ width: '100%', height: '100%', backgroundColor: theme.primary, opacity: 0.2 }} />
+                      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' }}>
+                         <ThemedText variant="labelSmall" colorName="primary">Remove</ThemedText>
+                      </View>
+                    </View>
+                  </Pressable>
+                ))}
+                {mediaUrls.length < 5 && (
+                  <Pressable
+                    style={{ width: 100, height: 100, borderRadius: BorderRadius.md, borderWidth: 1, borderColor: theme.outlineVariant, borderStyle: 'dashed', justifyContent: 'center', alignItems: 'center' }}
+                    onPress={() => {
+                      const mocks = [
+                        'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=800',
+                        'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=800',
+                        'https://images.unsplash.com/photo-1526498460520-4c246339dccb?w=800'
+                      ];
+                      setMediaUrls([...mediaUrls, mocks[mediaUrls.length % mocks.length]]);
+                    }}
+                  >
+                    <ThemedText variant="labelSmall" colorName="textSecondary">+ Add Image</ThemedText>
+                  </Pressable>
+                )}
+              </ScrollView>
+            </>
+          )}
 
           <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.label}>
             Description
