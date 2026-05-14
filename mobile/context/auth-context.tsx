@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setUser(normalizeUser({ 
             id: isAdmin ? 'admin-001' : 'mock-user-001',
-            fullName: isAdmin ? 'Admin User' : 'Test User', 
+            fullName: isAdmin ? 'Admin User' : (email ? email.split('@')[0] : 'Test User'), 
             email: email || 'test@domain.edu',
             universityId: isAdmin ? '00000000' : '20270000',
             role: isAdmin ? 'admin' : 'student',
@@ -85,20 +85,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             verifiedStudent: true,
             canOfferServices: false,
         }));
-        /*
-        const tokens = await api.login(email, password);
-        await SecureStore.setItemAsync('userToken', tokens.access_token);
-        setToken(tokens.access_token);
-
-        const userDataResponse = await api.getMe(tokens.access_token) as any;
-        setUser(normalizeUser(userDataResponse));
-        */
     }
 
     async function register(userData: any) {
         // BYPASS AUTH CHECKS FOR TESTING
-        // await api.register(userData);
         console.log("Mock Registration:", userData);
+        
+        const dummyToken = 'dev_dummy_token_reg';
+        setToken(dummyToken);
+        
+        setUser(normalizeUser({
+            id: 'mock-reg-user-001',
+            fullName: userData.fullName || 'New User',
+            email: userData.email || 'new@domain.edu',
+            username: userData.username || 'testuser',
+            role: userData.role || 'student',
+            skillTags: [],
+            isAvailable: true,
+            verifiedStudent: true,
+            canOfferServices: false,
+        }));
     }
 
     async function signOut() {

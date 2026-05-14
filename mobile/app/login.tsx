@@ -46,15 +46,6 @@ export default function LoginScreen() {
     const passwordRef = useRef<TextInput>(null);
 
     const handleLogin = async () => {
-        if (!email.trim() || !password) {
-            showAlert({
-                title: "Incomplete Fields",
-                subtitle: "Please enter both your email and password.",
-                severity: "warning"
-            });
-            return;
-        }
-
         setIsLoading(true);
         try {
             await signIn(email, password);

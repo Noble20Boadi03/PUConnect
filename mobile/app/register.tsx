@@ -33,54 +33,43 @@ export default function RegisterScreen() {
     const horizontalPadding = { paddingLeft: contentPaddingLeft, paddingRight: contentPaddingRight };
 
     const [formData, setFormData] = useState({
-        username: "",
-        fullName: "",
+        firstName: "",
+        lastName: "",
         email: "",
-        universityId: "",
         password: "",
         confirmPassword: "",
+        username: "",
     });
-    const [step, setStep] = useState<1 | 2>(1);
+    const [step, setStep] = useState<1 | 2 | 3>(1);
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
     // Keyboard accessibility references
+    const lastNameRef = useRef<TextInput>(null);
     const emailRef = useRef<TextInput>(null);
-    const uniIdRef = useRef<TextInput>(null);
     const passwordRef = useRef<TextInput>(null);
     const confirmPasswordRef = useRef<TextInput>(null);
+    const usernameRef = useRef<TextInput>(null);
 
     const insets = useSafeAreaInsets();
 
     const handleContinue = () => {
-        if (!formData.fullName || !formData.email || !formData.universityId) {
-            showAlert({ title: "Incomplete Fields", subtitle: "Please fill in all identity fields to continue.", severity: "warning" });
-            return;
+        if (step === 1) {
+            setStep(2);
+        } else if (step === 2) {
+            setStep(3);
         }
-        if (!formData.email.includes('@')) {
-            showAlert({ title: "Invalid Email", subtitle: "Please enter a valid university email address.", severity: "warning" });
-            return;
-        }
-        setStep(2);
     };
 
     const handleRegister = async () => {
-        const { fullName, email, password, confirmPassword } = formData;
-
-        if (!password || password.length < 6) {
-            showAlert({ title: "Weak Password", subtitle: "Password must be at least 6 characters long.", severity: "warning" });
-            return;
-        }
-        if (password !== confirmPassword) {
-            showAlert({ title: "Password Mismatch", subtitle: "Passwords do not match. Please try again.", severity: "warning" });
-            return;
-        }
+        const { firstName, lastName, email, password, username } = formData;
 
         setIsLoading(true);
         try {
             await register({
-                fullName,
+                fullName: `${firstName} ${lastName}`.trim(),
                 email,
+                username,
                 password,
                 role: 'student',
             });
@@ -89,8 +78,8 @@ export default function RegisterScreen() {
                 title: "Success",
                 subtitle: "Account created successfully!",
                 severity: "success",
-                primaryButtonTitle: "Login",
-                onPrimaryPress: () => router.push({ pathname: "/login" })
+                primaryButtonTitle: "Go to Home",
+                onPrimaryPress: () => router.replace({ pathname: "/(tabs)/home" })
             });
         } catch (error) {
             console.error("Registration failed:", error);
@@ -106,11 +95,11 @@ export default function RegisterScreen() {
         <ScreenLayout transparent padding="none" keyboardAvoiding scrollable contentContainerStyle={horizontalPadding}>
             <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
                 <View style={styles.content}>
-                    {/* Dynamic Back Button for Option A */}
-                    {step === 2 && (
+                    {/* Dynamic Back Button */}
+                    {step > 1 && (
                         <Animated.View entering={FadeInDown.duration(300)}>
                             <Pressable 
-                                onPress={() => setStep(1)} 
+                                onPress={() => setStep((step - 1) as 1 | 2 | 3)} 
                                 accessibilityRole="button"
                                 accessibilityLabel="Go back"
                                 style={[styles.backButton, { backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.25)', marginTop: insets.top + Spacing.sm }]}
@@ -122,16 +111,17 @@ export default function RegisterScreen() {
 
                     <View style={[styles.header, step === 1 && { marginTop: insets.top + Spacing.xl }]}>
                         <AnimatedThemedText key={`title-${step}`} entering={FadeInDown.duration(400)} variant="headlineLarge" colorName="primary" style={styles.title}>
-                            {step === 1 ? "Create Account" : "Secure Account"}
+                            {step === 1 ? "Create Account" : step === 2 ? "Secure Account" : "Final Step"}
                         </AnimatedThemedText>
                         <AnimatedThemedText key={`sub-${step}`} entering={FadeInDown.delay(100).duration(400)} variant="titleLarge" style={styles.subtitle}>
-                            {step === 1 ? "Join us and start building\nyour campus network!" : "Choose a strong password\nto protect your profile."}
+                            {step === 1 ? "Join us and start building\nyour campus network!" : step === 2 ? "Choose a strong password\nto protect your profile." : "Pick a unique username\nfor your public profile."}
                         </AnimatedThemedText>
                         
                         {/* Step Indicator */}
                         <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.stepIndicatorContainer}>
                             <View style={[styles.stepDot, { backgroundColor: step === 1 ? theme.primary : theme.surfaceVariant }]} />
                             <View style={[styles.stepDot, { backgroundColor: step === 2 ? theme.primary : theme.surfaceVariant }]} />
+                            <View style={[styles.stepDot, { backgroundColor: step === 3 ? theme.primary : theme.surfaceVariant }]} />
                         </Animated.View>
                     </View>
 
@@ -139,39 +129,39 @@ export default function RegisterScreen() {
                         {step === 1 ? (
                             <Animated.View key="step1" entering={SlideInLeft.duration(400)} exiting={SlideOutLeft.duration(400)} style={{ flex: 1 }}>
                                 <AnimatedInput
-                                    placeholder="Full Name"
-                                    value={formData.fullName}
-                                    onChangeText={(text) => setFormData({ ...formData, fullName: text })}
+                                    placeholder="First Name"
+                                    value={formData.firstName}
+                                    onChangeText={(text) => setFormData({ ...formData, firstName: text })}
                                     autoCapitalize="words"
                                     returnKeyType="next"
-                                    onSubmitEditing={() => emailRef.current?.focus()}
-                                    accessibilityLabel="Full Name"
+                                    onSubmitEditing={() => lastNameRef.current?.focus()}
+                                    accessibilityLabel="First Name"
                                     delay={100}
                                 />
 
                                 <AnimatedInput
-                                    placeholder="University Email"
-                                    value={formData.email}
-                                    onChangeText={(text) => setFormData({ ...formData, email: text })}
-                                    autoCapitalize="none"
-                                    keyboardType="email-address"
-                                    ref={emailRef}
+                                    placeholder="Last Name"
+                                    value={formData.lastName}
+                                    onChangeText={(text) => setFormData({ ...formData, lastName: text })}
+                                    autoCapitalize="words"
+                                    ref={lastNameRef}
                                     returnKeyType="next"
-                                    onSubmitEditing={() => uniIdRef.current?.focus()}
-                                    accessibilityLabel="University Email"
+                                    onSubmitEditing={() => emailRef.current?.focus()}
+                                    accessibilityLabel="Last Name"
                                     delay={200}
                                     marginTop={Spacing.lg}
                                 />
 
                                 <AnimatedInput
-                                    placeholder="University ID"
-                                    value={formData.universityId}
-                                    onChangeText={(text) => setFormData({ ...formData, universityId: text })}
+                                    placeholder="Email"
+                                    value={formData.email}
+                                    onChangeText={(text) => setFormData({ ...formData, email: text })}
                                     autoCapitalize="none"
-                                    ref={uniIdRef}
+                                    keyboardType="email-address"
+                                    ref={emailRef}
                                     returnKeyType="done"
                                     onSubmitEditing={handleContinue}
-                                    accessibilityLabel="University ID"
+                                    accessibilityLabel="Email"
                                     delay={300}
                                     marginTop={Spacing.lg}
                                 />
@@ -184,7 +174,7 @@ export default function RegisterScreen() {
                                     marginTop={Spacing.massive}
                                 />
                             </Animated.View>
-                        ) : (
+                        ) : step === 2 ? (
                             <Animated.View key="step2" entering={SlideInRight.duration(400)} exiting={SlideOutRight.duration(400)} style={{ flex: 1 }}>
                                 <AnimatedInput
                                     placeholder="Password"
@@ -208,17 +198,39 @@ export default function RegisterScreen() {
                                     showPassword={showPassword}
                                     ref={confirmPasswordRef}
                                     returnKeyType="done"
-                                    onSubmitEditing={handleRegister}
+                                    onSubmitEditing={handleContinue}
                                     accessibilityLabel="Confirm Password"
                                     delay={200}
                                     marginTop={Spacing.lg}
                                 />
 
                                 <PrimaryButton
+                                    title="Continue"
+                                    onPress={handleContinue}
+                                    delay={300}
+                                    size="large"
+                                    marginTop={Spacing.massive}
+                                />
+                            </Animated.View>
+                        ) : (
+                            <Animated.View key="step3" entering={SlideInRight.duration(400)} exiting={SlideOutRight.duration(400)} style={{ flex: 1 }}>
+                                <AnimatedInput
+                                    placeholder="Username"
+                                    value={formData.username}
+                                    onChangeText={(text) => setFormData({ ...formData, username: text })}
+                                    autoCapitalize="none"
+                                    ref={usernameRef}
+                                    returnKeyType="done"
+                                    onSubmitEditing={handleRegister}
+                                    accessibilityLabel="Username"
+                                    delay={100}
+                                />
+
+                                <PrimaryButton
                                     title="Create Account"
                                     onPress={handleRegister}
                                     isLoading={isLoading}
-                                    delay={300}
+                                    delay={200}
                                     size="large"
                                     marginTop={Spacing.massive}
                                 />
