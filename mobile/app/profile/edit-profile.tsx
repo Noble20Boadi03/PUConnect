@@ -20,6 +20,7 @@ import { api } from "@/services/api";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { CAMPUS_CATEGORIES } from '@/constants/categories';
+import { SUBCATEGORY_FILTERS } from '@/constants/filters';
 
 export default function EditProfileScreen() {
   const { user, token, refreshUser } = useAuth();
@@ -58,12 +59,33 @@ export default function EditProfileScreen() {
     return options;
   }, []);
 
-  const handleAddSkillFromModal = (label: string, categoryId: string) => {
+  const selectedSubcategories = useMemo(() => {
+    return skills.filter(s => allSubcategories.some(opt => opt.label === s));
+  }, [skills, allSubcategories]);
+
+  const groupedTags = useMemo(() => {
+    const groups: { subcategory: string, tags: string[] }[] = [];
+    selectedSubcategories.forEach(sub => {
+      const options = new Set<string>();
+      if (SUBCATEGORY_FILTERS[sub]) {
+        SUBCATEGORY_FILTERS[sub].forEach(filter => {
+          if (Array.isArray(filter.filter_options)) {
+            filter.filter_options.forEach((opt: string) => options.add(opt));
+          }
+        });
+      }
+      if (options.size > 0) {
+        groups.push({ subcategory: sub, tags: Array.from(options) });
+      }
+    });
+    return groups;
+  }, [selectedSubcategories]);
+
+  const handleAddSubcategoryFromModal = (label: string, categoryId: string) => {
     if (!skills.includes(label)) {
       const newSkills = [...skills, label];
       setSkills(newSkills);
-      // Set primary subcategory to the first one added
-      if (newSkills.length === 1) {
+      if (selectedSubcategories.length === 0) {
         setSubcategory(label);
         setCategory(categoryId);
       }
@@ -71,15 +93,15 @@ export default function EditProfileScreen() {
     setSubcategoryModalVisible(false);
   };
 
-  const handleRemoveSkill = (skillToRemove: string) => {
+  const handleRemoveSubcategory = (skillToRemove: string) => {
     const newSkills = skills.filter(s => s !== skillToRemove);
     setSkills(newSkills);
     
-    // Update primary subcategory if we removed the current one
+    const remainingSubs = newSkills.filter(s => allSubcategories.some(opt => opt.label === s));
+
     if (skillToRemove === subcategory) {
-      if (newSkills.length > 0) {
-        // Fallback to the new first skill (we need to find its category)
-        const firstSkill = newSkills[0];
+      if (remainingSubs.length > 0) {
+        const firstSkill = remainingSubs[0];
         const opt = allSubcategories.find(o => o.label === firstSkill);
         if (opt) {
           setSubcategory(opt.label);
@@ -90,6 +112,14 @@ export default function EditProfileScreen() {
         setCategory("");
       }
     }
+  };
+
+  const toggleSkill = (skill: string) => {
+    setSkills(prev => 
+      prev.includes(skill) 
+        ? prev.filter(s => s !== skill)
+        : [...prev, skill]
+    );
   };
 
 
@@ -241,7 +271,7 @@ export default function EditProfileScreen() {
             onChangeText={setBio}
           />
 
-          <ThemedText variant="bodySmall" colorName="textSecondary" style={[styles.fieldLabel, { marginTop: Spacing.md }]}>Your Skill(s)</ThemedText>
+          <ThemedText variant="bodySmall" colorName="textSecondary" style={[styles.fieldLabel, { marginTop: Spacing.md }]}>Your Subcategories</ThemedText>
           <View style={styles.skillInputContainer}>
             <Pressable
               style={[styles.input, { flex: 1, justifyContent: 'center', borderColor: theme.outlineVariant }]}
@@ -258,14 +288,54 @@ export default function EditProfileScreen() {
               <ThemedIcon name="plus" size={24} lightColor="#fff" darkColor="#fff" />
             </Pressable>
           </View>
-                    {skills.length > 0 && (
+          {selectedSubcategories.length > 0 && (
             <View style={styles.skillsList}>
-              {skills.map((skill, index) => (
+              {selectedSubcategories.map((skill, index) => (
                 <View key={index} style={[styles.skillChip, { backgroundColor: theme.primaryContainer }]}>
                   <ThemedText variant="labelMedium" colorName="onPrimaryContainer">{skill}</ThemedText>
-                  <Pressable onPress={() => handleRemoveSkill(skill)} style={styles.removeSkillBtn}>
+                  <Pressable onPress={() => handleRemoveSubcategory(skill)} style={styles.removeSkillBtn}>
                     <ThemedIcon name="close" size={16} colorName="onPrimaryContainer" />
                   </Pressable>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {groupedTags.length > 0 && (
+            <View style={{ marginTop: Spacing.md }}>
+              <ThemedText variant="bodySmall" colorName="textSecondary" style={styles.fieldLabel}>Select Tags (Skills)</ThemedText>
+              
+              {groupedTags.map((group, groupIndex) => (
+                <View key={groupIndex} style={{ marginTop: Spacing.sm }}>
+                  <ThemedText variant="labelMedium" colorName="textSecondary" style={{ marginBottom: Spacing.xs }}>
+                    {group.subcategory}
+                  </ThemedText>
+                  <View style={styles.skillsList}>
+                    {group.tags.map((tag, tagIndex) => {
+                      const isSelected = skills.includes(tag);
+                      return (
+                        <Pressable 
+                          key={tagIndex} 
+                          style={[
+                            styles.skillChip, 
+                            { 
+                              backgroundColor: isSelected ? theme.primary : theme.surfaceVariant,
+                              borderColor: isSelected ? theme.primary : theme.outlineVariant,
+                              borderWidth: 1,
+                            }
+                          ]}
+                          onPress={() => toggleSkill(tag)}
+                        >
+                          <ThemedText 
+                            variant="labelMedium" 
+                            colorName={isSelected ? "onPrimary" : "text"}
+                          >
+                            {tag}
+                          </ThemedText>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
                 </View>
               ))}
             </View>
@@ -313,7 +383,7 @@ export default function EditProfileScreen() {
                 <Pressable 
                   key={index} 
                   style={[styles.modalOption, { borderBottomColor: theme.outlineVariant }]}
-                  onPress={() => handleAddSkillFromModal(option.label, option.categoryId)}
+                  onPress={() => handleAddSubcategoryFromModal(option.label, option.categoryId)}
                 >
                   <View>
                     <ThemedText variant="bodyLarge" style={{ fontWeight: '600' }}>{option.label}</ThemedText>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -21,21 +21,9 @@ import { ScreenHeader } from '@/components/ui/screen-header';
 import { useTheme } from '@/context/theme-context';
 import { Spacing, BorderRadius } from '@/constants/theme';
 import { CAMPUS_CATEGORIES } from '@/constants/categories';
+import { SUBCATEGORY_FILTERS } from '@/constants/filters';
 import { ListingType } from '@/types';
 import { useResponsive } from '@/hooks/use-responsive';
-
-const SUBJECT_OPTIONS = [
-  'Mathematics',
-  'Physics',
-  'Chemistry',
-  'Biology',
-  'Computer Science',
-  'Engineering',
-  'Business / Economics',
-  'Languages',
-  'Literature',
-  'Other'
-];
 
 export default function CreateListingScreen() {
   const params = useLocalSearchParams<{ editId?: string }>();
@@ -55,11 +43,34 @@ export default function CreateListingScreen() {
   const [price, setPrice] = useState('');
   const [listingType, setListingType] = useState<ListingType>('service_request');
   const [categoryTitle, setCategoryTitle] = useState(CAMPUS_CATEGORIES[0]?.title ?? '');
-  const [subject, setSubject] = useState('');
-  const [customSubject, setCustomSubject] = useState('');
   const [priceType, setPriceType] = useState<'fixed' | 'negotiable' | 'starting_at'>('fixed');
   const [urgency, setUrgency] = useState('');
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const groupedTags = useMemo(() => {
+    const cat = CAMPUS_CATEGORIES.find(c => c.title === categoryTitle);
+    if (!cat) return [];
+    
+    const groups: { subcategory: string, tags: string[] }[] = [];
+    cat.groups.forEach(group => {
+      group.items.forEach(item => {
+        const subTitle = item.title;
+        const options = new Set<string>();
+        if (SUBCATEGORY_FILTERS[subTitle]) {
+          SUBCATEGORY_FILTERS[subTitle].forEach(filter => {
+            if (Array.isArray(filter.filter_options)) {
+              filter.filter_options.forEach((opt: string) => options.add(opt));
+            }
+          });
+        }
+        if (options.size > 0) {
+          groups.push({ subcategory: subTitle, tags: Array.from(options) });
+        }
+      });
+    });
+    return groups;
+  }, [categoryTitle]);
 
   useEffect(() => {
     if (listingType === 'service_request' && priceType === 'starting_at') {
@@ -83,28 +94,19 @@ export default function CreateListingScreen() {
       if (offerNeedsProvider) {
         showAlert({
           title: 'Provider status required',
-          subtitle: 'This listing is a service offer. Complete your provider profile to keep editing it as an offer.',
+          subtitle: 'This post is a service offer. Complete your provider profile to keep editing it as an offer.',
           severity: 'warning'
         });
       }
       setListingType(offerNeedsProvider ? 'service_request' : listing.type);
       setCategoryTitle(listing.category);
       if (listing.tags) {
-        const foundSub = SUBJECT_OPTIONS.find(so => listing.tags!.includes(so.toLowerCase()));
-        if (foundSub) {
-          setSubject(foundSub);
-        } else if (listing.subcategory?.toLowerCase().includes('tutoring') || listing.subcategory?.toLowerCase().includes('subject')) {
-          const customSubTag = listing.tags.find(t => !title.toLowerCase().includes(t));
-          if (customSubTag) {
-            setSubject('Other');
-            setCustomSubject(customSubTag);
-          }
-        }
+        setSelectedTags(listing.tags);
       }
     } catch {
       showAlert({
         title: 'Error',
-        subtitle: 'Could not load listing.',
+        subtitle: 'Could not load post.',
         severity: 'error',
         onPrimaryPress: () => router.back()
       });
@@ -147,18 +149,8 @@ export default function CreateListingScreen() {
     const cat = CAMPUS_CATEGORIES.find((c) => c.title === categoryTitle) ?? CAMPUS_CATEGORIES[0];
     const sub = cat.title;
 
-    const baseTags = title.split(/\s+/).slice(0, 5).map((s) => s.toLowerCase());
-    const needsSubject = sub.toLowerCase().includes('tutoring') || sub.toLowerCase().includes('subject');
-    if (needsSubject) {
-      const selectedSubject = subject === 'Other' ? customSubject.trim() : subject;
-      if (!selectedSubject) {
-        showAlert({ title: 'Validation', subtitle: 'Please specify the subject.', severity: 'warning' });
-        return;
-      }
-      if (!baseTags.includes(selectedSubject.toLowerCase())) {
-        baseTags.push(selectedSubject.toLowerCase());
-      }
-    }
+    const titleTags = title.split(/\s+/).slice(0, 5).map((s) => s.toLowerCase());
+    const allTags = Array.from(new Set([...titleTags, ...selectedTags.map(t => t.toLowerCase())]));
 
     setSubmitting(true);
     try {
@@ -176,13 +168,13 @@ export default function CreateListingScreen() {
             priceType,
             urgency: listingType === 'service_request' ? urgency : undefined,
             media_urls: mediaUrls.length > 0 ? mediaUrls : undefined,
-            tags: baseTags,
+            tags: allTags,
           },
           token
         );
         showAlert({
           title: 'Saved',
-          subtitle: 'Your listing was updated.',
+          subtitle: 'Your post was updated.',
           severity: 'success',
           onPrimaryPress: () => router.replace('/profile/my-listings')
         });
@@ -200,13 +192,13 @@ export default function CreateListingScreen() {
             urgency: listingType === 'service_request' ? urgency : undefined,
             media_urls: mediaUrls.length > 0 ? mediaUrls : undefined,
             level: 'intermediate',
-            tags: baseTags,
+            tags: allTags,
           },
           token
         );
         showAlert({
           title: 'Published',
-          subtitle: 'Your listing is live.',
+          subtitle: 'Your post is live.',
           severity: 'success',
           onPrimaryPress: () => router.replace('/profile/my-listings')
         });
@@ -236,7 +228,7 @@ export default function CreateListingScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={insets.top}
       >
-        <ScreenHeader title={editId ? 'Edit listing' : 'New listing'} />
+        <ScreenHeader title={editId ? 'Edit post' : 'New post'} />
 
         <ScrollView
           contentContainerStyle={[styles.scroll, horizontalPadding, { paddingBottom: insets.bottom + Spacing.xl }]}
@@ -244,25 +236,19 @@ export default function CreateListingScreen() {
           showsVerticalScrollIndicator={false}
         >
           <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.label}>
-            Listing type
+            Post type
           </ThemedText>
-          {!canOffer ? (
-            <ThemedText variant="bodySmall" colorName="textMuted" style={{ marginBottom: Spacing.sm }}>
-              Everyone can post a request for help. To offer a service, complete your provider profile first.
-            </ThemedText>
-          ) : null}
           <View style={styles.row}>
-            {(['service_offer', 'service_request'] as const).map((t) => {
-              const disabled = t === 'service_offer' && !canOffer;
+            {(['service_offer', 'service_request'] as const)
+              .filter(t => t === 'service_request' || canOffer)
+              .map((t) => {
               return (
                 <Pressable
                   key={t}
-                  disabled={disabled}
-                  onPress={() => !disabled && setListingType(t)}
+                  onPress={() => setListingType(t)}
                   style={[
                     styles.chip,
                     {
-                      opacity: disabled ? 0.45 : 1,
                     borderColor: listingType === t ? theme.primary : theme.outlineVariant,
                     backgroundColor: listingType === t ? theme.primaryContainer : theme.surfaceVariant,
                   },
@@ -299,7 +285,49 @@ export default function CreateListingScreen() {
             ))}
           </ScrollView>
 
-
+          {groupedTags.length > 0 && (
+            <View style={{ marginTop: Spacing.md }}>
+              <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.label}>
+                Tags (Select all that apply)
+              </ThemedText>
+              
+              {groupedTags.map((group, groupIndex) => (
+                <View key={groupIndex} style={{ marginTop: Spacing.sm }}>
+                  <ThemedText variant="labelMedium" colorName="textSecondary" style={{ marginBottom: Spacing.xs }}>
+                    {group.subcategory}
+                  </ThemedText>
+                  <View style={styles.row}>
+                    {group.tags.map((tag) => {
+                      const isSelected = selectedTags.some(t => t.toLowerCase() === tag.toLowerCase());
+                      return (
+                        <Pressable
+                          key={tag}
+                          onPress={() => {
+                            setSelectedTags(prev => 
+                              isSelected 
+                                ? prev.filter(t => t.toLowerCase() !== tag.toLowerCase())
+                                : [...prev, tag]
+                            );
+                          }}
+                          style={[
+                            styles.chipSm,
+                            {
+                              borderColor: isSelected ? theme.primary : theme.outlineVariant,
+                              backgroundColor: isSelected ? theme.primaryContainer : theme.surface,
+                            },
+                          ]}
+                        >
+                          <ThemedText variant="labelSmall" colorName={isSelected ? 'primary' : 'textSecondary'}>
+                            {tag}
+                          </ThemedText>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
 
           <ThemedText variant="labelLarge" colorName="textSecondary" style={styles.label}>
             Title
@@ -422,7 +450,7 @@ export default function CreateListingScreen() {
           />
 
           <PrimaryButton
-            title={editId ? 'Save changes' : 'Publish listing'}
+            title={editId ? 'Save changes' : 'Publish post'}
             onPress={onSubmit}
             isLoading={submitting}
             disabled={submitting}
