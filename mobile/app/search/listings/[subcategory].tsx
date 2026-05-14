@@ -407,18 +407,18 @@ const styles = StyleSheet.create({
         marginTop: Spacing.md,
     },
     card: {
-        borderRadius: 20,
+        borderRadius: 24,
         overflow: 'hidden',
         ...Shadows.level1,
     },
     cardLayout: {
         flexDirection: 'row',
-        padding: 12,
+        padding: 16,
     },
     imageWrapper: {
-        width: 100,
-        height: 100,
-        borderRadius: 16,
+        width: 110,
+        height: 110,
+        borderRadius: 22,
         overflow: 'hidden',
     },
     profileImage: {
@@ -427,25 +427,29 @@ const styles = StyleSheet.create({
     },
     rightSection: {
         flex: 1,
-        paddingLeft: 16,
+        paddingLeft: 18,
         justifyContent: 'center',
     },
     providerName: {
-        fontWeight: '800',
-        fontSize: 19,
-        marginBottom: 4,
+        fontWeight: '900',
+        fontSize: 22,
+        marginBottom: 2,
+        letterSpacing: -0.5,
     },
     providerInfoRow: {
         flexDirection: 'row',
         alignItems: 'center',
+        flexWrap: 'wrap',
         gap: 8,
-        marginBottom: 10,
+        marginBottom: 12,
     },
     departmentText: {
-        fontWeight: '600',
+        fontWeight: '500',
+        fontSize: 16,
     },
     usernameText: {
         fontWeight: '700',
+        fontSize: 15,
     },
     tagsContainer: {
         flexDirection: 'row',
@@ -453,9 +457,9 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     tagPill: {
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 6,
     },
     emptyContainer: {
         alignItems: 'center',
