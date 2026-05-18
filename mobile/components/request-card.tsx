@@ -58,9 +58,15 @@ export const RequestCard = memo(function RequestCard({ listing, width, onPress }
 
                 <View style={styles.footer}>
                     <View style={{ flex: 1 }} />
-                    <ThemedText variant="labelMedium" colorName="textSecondary" style={styles.priceLabel}>
-                        Budget: <ThemedText style={styles.priceValue}>${listing.budget || 0}</ThemedText>
-                    </ThemedText>
+                    {listing.priceType === 'negotiable' ? (
+                        <ThemedText variant="labelSmall" colorName="tertiary" style={{ fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                            Negotiable
+                        </ThemedText>
+                    ) : (
+                        <ThemedText variant="labelMedium" colorName="textSecondary" style={styles.priceLabel}>
+                            Budget: <ThemedText style={styles.priceValue}>${listing.budget || 0}</ThemedText>
+                        </ThemedText>
+                    )}
                 </View>
             </Pressable>
         </ThemedView>

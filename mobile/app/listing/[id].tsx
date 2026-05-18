@@ -203,6 +203,20 @@ export default function ListingDetailsScreen() {
   const isQualifiedProvider = canInteractWithRequest();
   const isOwner = user?.id === listing?.ownerId;
 
+  const hasPrice = ((listing.price !== undefined && listing.price !== null && listing.price > 0) ||
+                    (listing.budget !== undefined && listing.budget !== null && listing.budget > 0));
+
+  const priceVal = listing.price || listing.budget;
+  const priceTypeLabel = listing.priceType === 'starting_at' 
+    ? 'Starting at' 
+    : listing.priceType === 'negotiable' 
+      ? 'Negotiable' 
+      : 'Fixed Price';
+
+  const priceTextString = hasPrice 
+    ? `$${priceVal} • ${priceTypeLabel}`
+    : (listing.type === 'service_request' ? 'Open Budget' : 'Inquire for Pricing');
+
 
   return (
     <View style={[styles.root, { backgroundColor: theme.background }]}>
@@ -389,16 +403,6 @@ export default function ListingDetailsScreen() {
               <ThemedText variant="headlineSmall" style={styles.title}>
                 {listing.title}
               </ThemedText>
-              <View style={styles.priceContainer}>
-                <ThemedText variant="headlineSmall" colorName={themeColor} style={styles.priceText}>
-                  ${listing.price || listing.budget || 0}
-                </ThemedText>
-                {listing.priceType === 'starting_at' && (
-                  <ThemedText variant="labelSmall" colorName="textMuted" style={{ marginTop: -4 }}>
-                    Starting at
-                  </ThemedText>
-                )}
-              </View>
             </View>
             
             <View style={styles.metaRow}>
@@ -421,6 +425,18 @@ export default function ListingDetailsScreen() {
                   </ThemedText>
                 </View>
               )}
+            </View>
+
+            {/* Pricing Metadata Block (Cleanly formatted beneath category and subcategory) */}
+            <View style={[styles.metaRow, { marginTop: Spacing.sm }]}>
+              <View style={styles.metaItem}>
+                <View style={[styles.metaIconCircle, { backgroundColor: theme[themeColor] + '15' }]}>
+                  <ThemedIcon name="currency-usd" size={12} colorName={themeColor} />
+                </View>
+                <ThemedText variant="labelLarge" colorName={themeColor} style={styles.metaText}>
+                  {priceTextString}
+                </ThemedText>
+              </View>
             </View>
           </View>
 

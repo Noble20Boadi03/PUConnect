@@ -72,9 +72,15 @@ export const ListingCard = memo(function ListingCard({ listing, width, onPress }
 
                     <View style={styles.footer}>
                         <View style={{ flex: 1 }} />
-                        <ThemedText variant="labelMedium" colorName="textSecondary" style={styles.priceLabel}>
-                            <ThemedText style={styles.priceValue}>${listing.price || listing.budget || 15}</ThemedText>
-                        </ThemedText>
+                        {listing.priceType === 'negotiable' ? (
+                            <ThemedText variant="labelSmall" colorName="primary" style={{ fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                Negotiable
+                            </ThemedText>
+                        ) : (
+                            <ThemedText variant="labelMedium" colorName="textSecondary" style={styles.priceLabel}>
+                                <ThemedText style={styles.priceValue}>${listing.price || listing.budget || 15}</ThemedText>
+                            </ThemedText>
+                        )}
                     </View>
                 </View>
             </Pressable>
