@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Listing } from '@/types';
-import { Spacing, BorderRadius, Shadows } from '@/constants/theme';
+import { Spacing, BorderRadius } from '@/constants/theme';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 

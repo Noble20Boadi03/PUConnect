@@ -9,7 +9,6 @@ import { useAuth } from '@/context/auth-context';
 import { api } from '@/services/api';
 import { Listing } from '@/types';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { ThemedIcon } from '@/components/ui/themed-icon';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { ScreenHeader } from '@/components/ui/screen-header';

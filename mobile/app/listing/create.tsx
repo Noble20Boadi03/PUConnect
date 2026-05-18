@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/auth-context';
 import { api } from '@/services/api';
 import { ThemedText } from '@/components/themed-text';
+import { ThemedIcon } from '@/components/ui/themed-icon';
 import { useAppAlert } from '@/context/alert-context';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { ScreenLayout } from '@/components/ui/screen-layout';
@@ -24,6 +25,9 @@ import { CAMPUS_CATEGORIES } from '@/constants/categories';
 import { SUBCATEGORY_FILTERS } from '@/constants/filters';
 import { ListingType } from '@/types';
 import { useResponsive } from '@/hooks/use-responsive';
+import * as ImagePicker from 'expo-image-picker';
+import { useActionSheet } from '@expo/react-native-action-sheet';
+import { Image } from 'expo-image';
 
 export default function CreateListingScreen() {
   const params = useLocalSearchParams<{ editId?: string }>();
@@ -35,7 +39,6 @@ export default function CreateListingScreen() {
   const { showAlert } = useAppAlert();
   const canOffer = user?.canOfferServices === true;
   const { horizontalPadding } = useResponsive();
-
   const [loading, setLoading] = useState(!!editId);
   const [submitting, setSubmitting] = useState(false);
   const [title, setTitle] = useState('');
@@ -47,6 +50,67 @@ export default function CreateListingScreen() {
   const [urgency, setUrgency] = useState('');
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const { showActionSheetWithOptions } = useActionSheet();
+
+  const pickFromLibrary = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      showAlert({
+        title: 'Permission Required',
+        subtitle: 'Please allow access to your photo library to select photos.',
+        severity: 'warning'
+      });
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: true,
+      quality: 0.8,
+      selectionLimit: 5 - mediaUrls.length,
+    });
+    if (!result.canceled) {
+      const uris = result.assets.map(asset => asset.uri);
+      setMediaUrls(prev => [...prev, ...uris].slice(0, 5));
+    }
+  };
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      showAlert({
+        title: 'Permission Required',
+        subtitle: 'Please allow camera access to take a photo.',
+        severity: 'warning'
+      });
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setMediaUrls(prev => [...prev, result.assets[0].uri].slice(0, 5));
+    }
+  };
+
+  const handleAddImage = () => {
+    const options = ['Choose from Library', 'Take a Photo', 'Cancel'];
+    const cancelButtonIndex = 2;
+
+    showActionSheetWithOptions(
+      {
+        options,
+        cancelButtonIndex,
+        title: 'Add Portfolio Image',
+        message: 'Choose a source for your listing image',
+      },
+      (buttonIndex) => {
+        if (buttonIndex === 0) pickFromLibrary();
+        else if (buttonIndex === 1) takePhoto();
+      }
+    );
+  };
 
   const groupedTags = useMemo(() => {
     const cat = CAMPUS_CATEGORIES.find(c => c.title === categoryTitle);
@@ -154,6 +218,23 @@ export default function CreateListingScreen() {
 
     setSubmitting(true);
     try {
+      // Upload local images first
+      const isLocalUri = (uri: string) => uri.startsWith('file://') || uri.startsWith('content://') || !uri.startsWith('http');
+      const uploadedMediaUrls = await Promise.all(
+        mediaUrls.map(async (url) => {
+          if (isLocalUri(url)) {
+            try {
+              await api.uploadImage(url, token!);
+              return url; // Keep local URI for premium rendering in mock mode
+            } catch (err) {
+              console.error('Failed to upload image:', err);
+              return url;
+            }
+          }
+          return url;
+        })
+      );
+
       if (editId) {
         if (!token) throw new Error('Not authenticated');
         await api.updateListing(
@@ -167,7 +248,7 @@ export default function CreateListingScreen() {
             ...(listingType === 'service_request' ? { budget: p, price: undefined } : { price: p, budget: undefined }),
             priceType,
             urgency: listingType === 'service_request' ? urgency : undefined,
-            media_urls: listingType === 'service_offer' ? mediaUrls : [], // Unified: always send array, only for offers
+            media_urls: listingType === 'service_offer' ? uploadedMediaUrls : [], // Unified: always send array, only for offers
             tags: allTags,
           },
           token
@@ -190,7 +271,7 @@ export default function CreateListingScreen() {
             ...(listingType === 'service_request' ? { budget: p } : { price: p }),
             priceType,
             urgency: listingType === 'service_request' ? urgency : undefined,
-            media_urls: listingType === 'service_offer' ? mediaUrls : [], // Unified: always send array, only for offers
+            media_urls: listingType === 'service_offer' ? uploadedMediaUrls : [], // Unified: always send array, only for offers
             level: 'intermediate',
             tags: allTags,
           },
@@ -405,28 +486,54 @@ export default function CreateListingScreen() {
               </ThemedText>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: Spacing.sm }}>
                 {mediaUrls.map((url, i) => (
-                  <Pressable key={i} onPress={() => setMediaUrls(mediaUrls.filter((_, idx) => idx !== i))}>
-                    <View style={{ width: 100, height: 100, borderRadius: BorderRadius.md, backgroundColor: theme.surfaceVariant, overflow: 'hidden' }}>
-                      <View style={{ width: '100%', height: '100%', backgroundColor: theme.primary, opacity: 0.2 }} />
-                      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' }}>
-                         <ThemedText variant="labelSmall" colorName="primary">Remove</ThemedText>
-                      </View>
-                    </View>
-                  </Pressable>
+                  <View key={i} style={{ width: 100, height: 100, borderRadius: BorderRadius.md, overflow: 'hidden', position: 'relative' }}>
+                    <Image
+                      source={{ uri: url }}
+                      style={{ width: '100%', height: '100%' }}
+                      contentFit="cover"
+                      transition={200}
+                    />
+                    <Pressable
+                      onPress={() => setMediaUrls(mediaUrls.filter((_, idx) => idx !== i))}
+                      style={({ pressed }) => [
+                        {
+                          position: 'absolute',
+                          top: 6,
+                          right: 6,
+                          width: 24,
+                          height: 24,
+                          borderRadius: 12,
+                          backgroundColor: 'rgba(0,0,0,0.6)',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          zIndex: 10,
+                          opacity: pressed ? 0.8 : 1,
+                        }
+                      ]}
+                    >
+                      <ThemedIcon name="close" size={14} lightColor="#fff" darkColor="#fff" />
+                    </Pressable>
+                  </View>
                 ))}
                 {mediaUrls.length < 5 && (
                   <Pressable
-                    style={{ width: 100, height: 100, borderRadius: BorderRadius.md, borderWidth: 1, borderColor: theme.outlineVariant, borderStyle: 'dashed', justifyContent: 'center', alignItems: 'center' }}
-                    onPress={() => {
-                      const mocks = [
-                        'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=800',
-                        'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=800',
-                        'https://images.unsplash.com/photo-1526498460520-4c246339dccb?w=800'
-                      ];
-                      setMediaUrls([...mediaUrls, mocks[mediaUrls.length % mocks.length]]);
-                    }}
+                    style={({ pressed }) => [
+                      {
+                        width: 100,
+                        height: 100,
+                        borderRadius: BorderRadius.md,
+                        borderWidth: 1,
+                        borderColor: theme.outlineVariant,
+                        borderStyle: 'dashed',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        backgroundColor: pressed ? theme.surfaceVariant : 'transparent',
+                      }
+                    ]}
+                    onPress={handleAddImage}
                   >
-                    <ThemedText variant="labelSmall" colorName="textSecondary">+ Add Image</ThemedText>
+                    <ThemedIcon name="camera-plus-outline" size={24} colorName="textSecondary" style={{ marginBottom: Spacing.xs }} />
+                    <ThemedText variant="labelSmall" colorName="textSecondary">Add Image</ThemedText>
                   </Pressable>
                 )}
               </ScrollView>

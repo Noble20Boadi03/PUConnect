@@ -434,7 +434,7 @@ export default function ChatScreen() {
                                         ? '● Active Collaboration' 
                                         : isCompleted 
                                             ? '✓ Completed' 
-                                            : (peer?.department ? `${peer.department}` : 'Campus Member')}
+                                            : (peer?.subcategory || peer?.category || 'Campus Member')}
                                 </ThemedText>
                                 {peer?.username && !isServiceActive && !isCompleted && (
                                     <ThemedText variant="labelSmall" colorName="primary" style={{ fontWeight: '600' }}>

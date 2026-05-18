@@ -132,7 +132,7 @@ export default function UniversalSearchScreen() {
                 const qLower = q.toLowerCase();
                 const filtered = providers.filter((p: any) => {
                     const matchesName = p.fullName?.toLowerCase().includes(qLower);
-                    const matchesDept = p.department?.toLowerCase().includes(qLower);
+                    const matchesDept = (p.subcategory || p.category)?.toLowerCase().includes(qLower);
                     const matchesTags = p.skillTags?.some((t: string) => t.toLowerCase().includes(qLower));
                     return matchesName || matchesDept || matchesTags;
                 });
@@ -301,7 +301,7 @@ export default function UniversalSearchScreen() {
                         </ThemedText>
                         <View style={styles.providerInfoRow}>
                             <ThemedText variant="labelMedium" colorName="textMuted" style={styles.providerDept}>
-                                {item.department || 'Expert'}
+                                {item.subcategory || item.category || 'Expert'}
                             </ThemedText>
                             {item.username && (
                                 <ThemedText variant="labelSmall" colorName="primary" style={styles.usernameText}>
@@ -392,7 +392,7 @@ export default function UniversalSearchScreen() {
                     No results found
                 </ThemedText>
                 <ThemedText variant="bodyLarge" colorName="textMuted" align="center" style={styles.emptyDescription}>
-                    We couldn't find anything matching "{query}". Try a different search term or check your spelling.
+                    We couldn&apos;t find anything matching &quot;{query}&quot;. Try a different search term or check your spelling.
                 </ThemedText>
             </View>
         );

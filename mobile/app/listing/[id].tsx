@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { StyleSheet, ScrollView, ActivityIndicator, Pressable, View, StatusBar, Dimensions } from 'react-native';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { StyleSheet, ScrollView, ActivityIndicator, Pressable, View, StatusBar, Dimensions, Animated } from 'react-native';
 import { Image } from 'expo-image';
 import { BlurView } from 'expo-blur';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -35,6 +35,51 @@ export default function ListingDetailsScreen() {
 
   const [owner, setOwner] = useState<User | null>(null);
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const horizontalScrollX = useRef(new Animated.Value(0)).current;
+  const carouselRef = useRef<ScrollView>(null);
+
+  // Determine the display images dynamically at the top of the component to obey React Rules of Hooks
+  const imagesToDisplay = useMemo(() => {
+    if (uiState.status !== 'content') return [];
+    const { listing } = uiState.data;
+    const categoryData = CAMPUS_CATEGORIES.find(c => c.title === listing.category || c.id === listing.category);
+    const fallbackImage = categoryData?.image || require('@/assets/images/categories/campus_life.jpg');
+
+    return (listing.type === 'service_offer' && listing.media_urls && listing.media_urls.length > 0)
+      ? listing.media_urls 
+      : [listing.media_url || fallbackImage];
+  }, [uiState]);
+
+  const hasMultipleImages = imagesToDisplay.length > 1;
+
+  const handleCarouselScrollEnd = useCallback((e: any) => {
+    const contentOffset = e.nativeEvent.contentOffset.x;
+    const index = Math.round(contentOffset / width);
+    setActiveImageIndex(index);
+  }, [width]);
+
+  const handlePrevImage = useCallback(() => {
+    if (activeImageIndex > 0) {
+      const nextIndex = activeImageIndex - 1;
+      (carouselRef.current as any)?.scrollTo({
+        x: nextIndex * width,
+        animated: true,
+      });
+      setActiveImageIndex(nextIndex);
+    }
+  }, [activeImageIndex, width]);
+
+  const handleNextImage = useCallback(() => {
+    if (activeImageIndex < imagesToDisplay.length - 1) {
+      const nextIndex = activeImageIndex + 1;
+      (carouselRef.current as any)?.scrollTo({
+        x: nextIndex * width,
+        animated: true,
+      });
+      setActiveImageIndex(nextIndex);
+    }
+  }, [activeImageIndex, imagesToDisplay.length, width]);
 
   const THRESHOLD = IMAGE_HEIGHT - (insets.top + 24);
 
@@ -56,10 +101,10 @@ export default function ListingDetailsScreen() {
   }, [uiState]);
 
   const handleScroll = useCallback((e: any) => {
-    const scrollY = e.nativeEvent.contentOffset.y;
-    if (scrollY > THRESHOLD && !isHeaderScrolled) {
+    const y = e.nativeEvent.contentOffset.y;
+    if (y > THRESHOLD && !isHeaderScrolled) {
       setIsHeaderScrolled(true);
-    } else if (scrollY <= THRESHOLD && isHeaderScrolled) {
+    } else if (y <= THRESHOLD && isHeaderScrolled) {
       setIsHeaderScrolled(false);
     }
   }, [isHeaderScrolled, THRESHOLD]);
@@ -158,17 +203,6 @@ export default function ListingDetailsScreen() {
   const isQualifiedProvider = canInteractWithRequest();
   const isOwner = user?.id === listing?.ownerId;
 
-  // Determine the display images (Unified media_urls approach)
-  const categoryData = CAMPUS_CATEGORIES.find(c => c.title === listing.category || c.id === listing.category);
-  const fallbackImage = categoryData?.image || require('@/assets/images/categories/campus_life.jpg');
-
-  // If it's a service request, we usually prefer category images unless user provided specific ones
-  // If it's a service offer, we prefer user provided media_urls
-  const imagesToDisplay = (listing.type === 'service_offer' && listing.media_urls && listing.media_urls.length > 0)
-    ? listing.media_urls 
-    : [listing.media_url || fallbackImage];
-
-  const hasMultipleImages = imagesToDisplay.length > 1;
 
   return (
     <View style={[styles.root, { backgroundColor: theme.background }]}>
@@ -180,36 +214,36 @@ export default function ListingDetailsScreen() {
       />
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* Fixed Background Image */}
+      {/* Fixed Background Image Layer */}
       <View style={styles.imageBackground}>
         {hasMultipleImages ? (
-          <>
-            <ScrollView
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              style={{ width: '100%', height: '100%' }}
-            >
-              {imagesToDisplay!.map((url, i) => (
-                <Image
-                  key={i}
-                  source={typeof url === 'string' ? { uri: url } : url}
-                  style={{ width, height: '100%' }}
-                  contentFit="cover"
-                  cachePolicy="disk"
-                />
-              ))}
-            </ScrollView>
-            <View style={{ position: 'absolute', bottom: 60, width: '100%', flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
-              {imagesToDisplay!.map((_, i) => (
-                <View key={i} style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.7)' }} />
-              ))}
-            </View>
-          </>
+          <Animated.View
+            style={{
+              flexDirection: 'row',
+              width: width * imagesToDisplay.length,
+              height: '100%',
+              transform: [{
+                translateX: horizontalScrollX.interpolate({
+                  inputRange: [0, width * (imagesToDisplay.length - 1)],
+                  outputRange: [0, -width * (imagesToDisplay.length - 1)],
+                })
+              }]
+            }}
+          >
+            {imagesToDisplay.map((url: any, i: number) => (
+              <Image
+                key={i}
+                source={typeof url === 'string' ? { uri: url } : url}
+                style={{ width, height: '100%' }}
+                contentFit="cover"
+                cachePolicy="disk"
+              />
+            ))}
+          </Animated.View>
         ) : (
           <Image
             source={imagesToDisplay[0]}
-            style={styles.mainImage}
+            style={{ width: '100%', height: '100%' }}
             contentFit="cover"
             cachePolicy="disk"
             transition={200}
@@ -220,6 +254,26 @@ export default function ListingDetailsScreen() {
           style={StyleSheet.absoluteFill}
         />
       </View>
+
+      {/* Pagination Dots (Stationary on Image Area, overlayed by ScrollView content card) */}
+      {hasMultipleImages && (
+        <View style={{ position: 'absolute', top: IMAGE_HEIGHT - 44, width: '100%', flexDirection: 'row', justifyContent: 'center', gap: 6, zIndex: 5 }}>
+          {imagesToDisplay!.map((_: any, i: number) => {
+            const isActive = activeImageIndex === i;
+            return (
+              <View
+                key={i}
+                style={{
+                  width: isActive ? 16 : 6,
+                  height: 6,
+                  borderRadius: 3,
+                  backgroundColor: isActive ? '#fff' : 'rgba(255,255,255,0.4)',
+                }}
+              />
+            );
+          })}
+        </View>
+      )}
 
       <Pressable
         onPress={() => router.back()}
@@ -241,7 +295,71 @@ export default function ListingDetailsScreen() {
         onScroll={handleScroll}
         scrollEventThrottle={32}
       >
-        <View style={styles.imageSpacer} />
+        {/* Transparent Horizontal Gesture Receiver */}
+        {hasMultipleImages ? (
+          <View style={{ height: IMAGE_HEIGHT, width: '100%', position: 'relative' }}>
+            <Animated.ScrollView
+              ref={carouselRef}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              style={{ width: '100%', height: '100%' }}
+              scrollEventThrottle={16}
+              onScroll={Animated.event(
+                [{ nativeEvent: { contentOffset: { x: horizontalScrollX } } }],
+                { useNativeDriver: true }
+              )}
+              onMomentumScrollEnd={handleCarouselScrollEnd}
+            >
+              {imagesToDisplay!.map((_: any, i: number) => (
+                <View key={i} style={{ width, height: IMAGE_HEIGHT }} />
+              ))}
+            </Animated.ScrollView>
+
+            {/* Navigation Arrows */}
+            {activeImageIndex > 0 && (
+              <Pressable
+                onPress={handlePrevImage}
+                style={{
+                  position: 'absolute',
+                  left: 16,
+                  top: IMAGE_HEIGHT / 2 - 20,
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: 'rgba(0,0,0,0.5)',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  zIndex: 30,
+                }}
+              >
+                <ThemedIcon name="chevron-left" size={24} lightColor="#fff" darkColor="#fff" />
+              </Pressable>
+            )}
+
+            {activeImageIndex < imagesToDisplay.length - 1 && (
+              <Pressable
+                onPress={handleNextImage}
+                style={{
+                  position: 'absolute',
+                  right: 16,
+                  top: IMAGE_HEIGHT / 2 - 20,
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: 'rgba(0,0,0,0.5)',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  zIndex: 30,
+                }}
+              >
+                <ThemedIcon name="chevron-right" size={24} lightColor="#fff" darkColor="#fff" />
+              </Pressable>
+            )}
+          </View>
+        ) : (
+          <View style={{ height: IMAGE_HEIGHT, width: '100%' }} />
+        )}
 
         <ThemedView
           colorName="background"
