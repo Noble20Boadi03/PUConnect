@@ -1,5 +1,5 @@
 import axios from 'axios';
-import ENV from '@/config';
+import ENV from '../config';
 
 /**
  * Basic API client configuration using Axios.

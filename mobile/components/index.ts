@@ -1,2 +1,2 @@
 // Barrel file for components
-export {};
+export * from './Button';

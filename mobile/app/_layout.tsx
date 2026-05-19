@@ -3,7 +3,7 @@ import { ThemeProvider, DarkTheme, DefaultTheme } from '@react-navigation/native
 import { useColorScheme } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { useAuthStore } from '@/store';
+import { useAuthStore } from '../store';
 import { useRouter, useSegments } from 'expo-router';
 
 export default function RootLayout() {
@@ -26,7 +26,7 @@ export default function RootLayout() {
       // router.replace('/(auth)/login');
     } else if (isAuthenticated && inAuthGroup) {
       // Redirect to home if authenticated and in auth group
-      router.replace('/');
+      router.replace('/index' as any);
     }
   }, [isAuthenticated, segments, isLoading]);
 
