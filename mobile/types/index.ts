@@ -1,2 +1,1 @@
-// Barrel file for types
-export {};
+export * from './common';

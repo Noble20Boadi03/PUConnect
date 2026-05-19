@@ -1,2 +1,1 @@
-// Barrel file for store
-export {};
+export * from './authStore';

@@ -1,2 +1,1 @@
-// Barrel file for constants
-export {};
+export * from './Theme';

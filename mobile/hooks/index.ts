@@ -1,2 +1,2 @@
-// Barrel file for hooks
-export {};
+export * from './useThemeColor';
+export * from './useAuth';
