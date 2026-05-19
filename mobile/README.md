@@ -48,3 +48,22 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Project Structure
+
+This project follows a specific directory hierarchy to streamline development and maintain separation of concerns:
+
+- **app/**: Screen components and file-based navigation (Expo Router).
+- **components/**: Reusable UI components. Each component has its own folder with implementation, types, and tests.
+- **hooks/**: Custom React hooks for logic, data fetching, and state.
+- **services/**: API clients and external service integrations.
+- **store/**: Global state management slices (Zustand/Redux).
+- **lib/**: Shared utility functions and business logic.
+- **types/**: Global TypeScript interfaces and shared types.
+- **assets/**: Static assets (images, fonts, icons).
+- **config/**: Environment-specific configurations and feature flags.
+- **constants/**: App-wide constants (theme tokens, URLs).
+
+### Guardrails
+- **ESLint**: Import restrictions are enforced to maintain layer abstractions.
+- **Validation**: Run `npm run validate-structure` to check for unapproved files in the root.
