@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   ScrollView,
   useColorScheme,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -42,8 +44,10 @@ export default function MarketScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
-      {/* Top Header Section */}
-      <View style={[styles.headerContainer, { backgroundColor: cardBg }]}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <View style={{ flex: 1 }}>
+          {/* Top Header Section */}
+          <View style={[styles.headerContainer, { backgroundColor: cardBg }]}>
         {/* Title Row */}
         <View style={styles.titleRow}>
           <Text style={[styles.appTitle, { color: Colors.text }]}>PuConnect</Text>
@@ -127,6 +131,8 @@ export default function MarketScreen() {
       >
         <View style={styles.emptyContentPlaceholder} />
       </ScrollView>
+        </View>
+      </TouchableWithoutFeedback>
     </SafeAreaView>
   );
 }

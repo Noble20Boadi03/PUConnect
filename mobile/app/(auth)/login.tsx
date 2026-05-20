@@ -5,9 +5,6 @@ import {
   Text, 
   TextInput, 
   TouchableOpacity, 
-  KeyboardAvoidingView, 
-  Platform, 
-  ScrollView,
   useColorScheme
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,7 +15,7 @@ import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
 
 import { useThemeColor } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
-import { Button, Alert } from '../../components';
+import { Button, Alert, KeyboardLayout } from '../../components';
 import { LoginSearchParams, LoginFormInput } from '../../types';
 import { useAuthStore } from '../../store';
 import { authService } from '../../services';
@@ -90,17 +87,8 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]}>
-      <KeyboardAvoidingView 
-        style={{ flex: 1 }} 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent} 
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          
-          <View style={styles.header}>
+      <KeyboardLayout contentContainerStyle={styles.scrollContent}>
+        <View style={styles.header}>
             <TouchableOpacity 
               style={[styles.backButton, { backgroundColor: cardBg }]} 
               onPress={handleBack}
@@ -238,11 +226,10 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-  );
-}
+        </KeyboardLayout>
+      </SafeAreaView>
+    );
+  }
 
 const styles = StyleSheet.create({
   container: {

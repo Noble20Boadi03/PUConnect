@@ -5,9 +5,6 @@ import {
   Text, 
   TextInput, 
   TouchableOpacity, 
-  KeyboardAvoidingView, 
-  Platform, 
-  ScrollView,
   useColorScheme
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,7 +14,7 @@ import * as Haptics from 'expo-haptics';
 
 import { useThemeColor } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
-import { Button, Alert } from '../../components';
+import { Button, Alert, KeyboardLayout } from '../../components';
 import Animated, { FadeIn, FadeOut, FadeInDown } from 'react-native-reanimated';
 import { WizardStep, RegisterFormInput } from '../../types';
 import { authService } from '../../services';
@@ -148,18 +145,9 @@ export default function RegisterScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]}>
-      <KeyboardAvoidingView 
-        style={{ flex: 1 }} 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent} 
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          
-          {/* Header */}
-          <View style={styles.header}>
+      <KeyboardLayout contentContainerStyle={styles.scrollContent}>
+        {/* Header */}
+        <View style={styles.header}>
             <TouchableOpacity 
               style={[styles.backButton, { backgroundColor: cardBg }]} 
               onPress={handleBack}
@@ -437,12 +425,10 @@ export default function RegisterScreen() {
 
             </View>
           </Animated.View>
-
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-  );
-}
+        </KeyboardLayout>
+      </SafeAreaView>
+    );
+  }
 
 const styles = StyleSheet.create({
   container: {
