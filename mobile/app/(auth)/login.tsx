@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   StyleSheet, 
   View, 
@@ -11,9 +11,10 @@ import {
   useColorScheme
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
 
 import { useThemeColor } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
@@ -21,6 +22,7 @@ import { Button } from '../../components';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { registered, username } = useLocalSearchParams();
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   
@@ -31,6 +33,13 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+
+  useEffect(() => {
+    if (registered === 'true') {
+      setShowSuccessAlert(true);
+    }
+  }, [registered]);
 
   const handleSignIn = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -70,6 +79,39 @@ export default function LoginScreen() {
                 Welcome back you've been missed!
               </Text>
             </View>
+
+            {showSuccessAlert && (
+              <Animated.View 
+                entering={FadeInDown.duration(400).springify()}
+                exiting={FadeOut.duration(300)}
+                style={[
+                  styles.successBanner, 
+                  { 
+                    backgroundColor: Colors.primary + '15', 
+                    borderColor: Colors.primary,
+                  }
+                ]}
+              >
+                <Ionicons name="checkmark-circle" size={20} color={Colors.primary} style={{ marginTop: 2 }} />
+                <View style={styles.successTextContainer}>
+                  <Text style={[styles.successBannerTitle, { color: Colors.text }]}>
+                    Registration Complete
+                  </Text>
+                  <Text style={[styles.successBannerSubtitle, { color: Colors.text + 'CC' }]}>
+                    {username ? `Welcome @${username}! ` : 'Welcome aboard! '}Your campus account is ready. Please log in to access your profile.
+                  </Text>
+                </View>
+                <TouchableOpacity 
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setShowSuccessAlert(false);
+                  }}
+                  style={styles.closeAlertButton}
+                >
+                  <Ionicons name="close" size={16} color={Colors.icon} />
+                </TouchableOpacity>
+              </Animated.View>
+            )}
 
             <View style={styles.formContainer}>
               <View style={styles.inputWrapper}>
@@ -149,7 +191,10 @@ export default function LoginScreen() {
                   title="Create new account" 
                   variant="ghost" 
                   size="sm" 
-                  onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)} 
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push('/(auth)/register' as any);
+                  }} 
                 />
               </View>
             </View>
@@ -270,5 +315,29 @@ const styles = StyleSheet.create({
     fontSize: Typography.size.xs,
     fontWeight: '500',
     textDecorationLine: 'underline',
+  },
+  successBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  successTextContainer: {
+    flex: 1,
+  },
+  successBannerTitle: {
+    fontSize: Typography.size.sm,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  successBannerSubtitle: {
+    fontSize: Typography.size.xs,
+    lineHeight: 16,
+  },
+  closeAlertButton: {
+    padding: 2,
   },
 });
