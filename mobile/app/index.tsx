@@ -20,15 +20,47 @@ const { width, height } = Dimensions.get('window');
 const LOGO_SIZE_INITIAL = 120;
 const LOGO_SIZE_FINAL = 40;
 
+const ONBOARDING_DATA = [
+  {
+    id: 1,
+    title: "Welcome to",
+    highlight: "PuConnect!",
+    subtitle: "The campus marketplace to collaborate, earn, and build together.",
+    image: require('../assets/images/welcome-hero.jpg'),
+  },
+  {
+    id: 2,
+    title: "Find the Help",
+    highlight: "You Need",
+    subtitle: "Easily browse and request services from talented peers around campus.",
+    image: require('../assets/images/onboarding-2.jpg'),
+  },
+  {
+    id: 3,
+    title: "Offer Your",
+    highlight: "Skills",
+    subtitle: "Upgrade your account to provide services, build your portfolio, and earn.",
+    image: require('../assets/images/onboarding-3.jpg'),
+  },
+  {
+    id: 4,
+    title: "Ready?",
+    highlight: "",
+    subtitle: "Join the community and start connecting today.",
+    image: require('../assets/images/onboarding-4.jpg'),
+  },
+];
+
 export default function LandingPage() {
   const router = useRouter();
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
-  
-  const [isAnimationComplete, setIsAnimationComplete] = useState(false);
   const insets = useSafeAreaInsets();
+  
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAnimationComplete, setIsAnimationComplete] = useState(false);
 
-  // Animation shared values
+  // ... animation shared values
   const logoX = useSharedValue(width / 2 - LOGO_SIZE_INITIAL / 2);
   const logoY = useSharedValue(height / 2 - LOGO_SIZE_INITIAL / 2);
   const logoScale = useSharedValue(2.5);
@@ -90,6 +122,23 @@ export default function LandingPage() {
     };
   });
 
+  const currentData = ONBOARDING_DATA[currentIndex];
+  const isLastSlide = currentIndex === ONBOARDING_DATA.length - 1;
+
+  const handleNext = () => {
+    if (isLastSlide) {
+      // router.replace('/(auth)/login' as any);
+    } else {
+      setCurrentIndex(prev => prev + 1);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
+    }
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: Colors.background }]}>
       <Animated.View style={animatedLogoStyle}>
@@ -117,7 +166,7 @@ export default function LandingPage() {
 
         <View style={styles.heroContainer}>
           <Image
-            source={require('../assets/images/welcome-hero.jpg')}
+            source={currentData.image}
             style={styles.heroImage}
             resizeMode="cover"
           />
@@ -125,35 +174,56 @@ export default function LandingPage() {
         </View>
 
         <View style={styles.contentContainer}>
-          <Text style={[styles.title, { color: Colors.text }]}>
-            {"Welcome to\n"}
-            <Text style={{ color: Colors.primary }}>PuConnect!</Text>
-          </Text>
-          <Text style={[styles.subtitle, { color: Colors.icon }]}>
-            The campus marketplace to collaborate, earn, and build together.
-          </Text>
+          <View>
+            <Text style={[styles.title, { color: Colors.text }]}>
+              {`${currentData.title}\n`}
+              <Text style={{ color: Colors.primary }}>{currentData.highlight}</Text>
+            </Text>
+            <Text style={[styles.subtitle, { color: Colors.icon }]}>
+              {currentData.subtitle}
+            </Text>
+          </View>
+
+          {isLastSlide && (
+            <Button
+              title="Let's Go"
+              variant="primary"
+              size="lg"
+              style={styles.ctaButton}
+              onPress={handleNext}
+            />
+          )}
 
           <View style={styles.footer}>
+            <View style={styles.footerLeft}>
+              {currentIndex > 0 && (
+                <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+                  <Ionicons name="chevron-back" size={18} color={Colors.primary} />
+                  <Text style={[styles.backText, { color: Colors.primary }]}>Back</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
             <View style={styles.pagination}>
-              {[1, 2, 3, 4].map((i) => (
+              {ONBOARDING_DATA.map((_, i) => (
                 <View 
                   key={i} 
                   style={[
                     styles.dot, 
-                    { backgroundColor: i === 1 ? Colors.primary : Colors.border }
+                    { backgroundColor: i === currentIndex ? Colors.primary : Colors.border }
                   ]} 
                 />
               ))}
             </View>
 
-            <Button
-              title="Next"
-              variant="ghost"
-              rightIcon={<Ionicons name="arrow-forward" size={18} color={Colors.primary} />}
-              onPress={() => {
-                // Navigation logic
-              }}
-            />
+            <View style={styles.footerRight}>
+              {!isLastSlide && (
+                <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
+                  <Text style={[styles.nextText, { color: Colors.primary }]}>Next</Text>
+                  <Ionicons name="chevron-forward" size={18} color={Colors.primary} />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </View>
       </Animated.View>
@@ -172,7 +242,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
     zIndex: 10,
-    height: 80, // Explicit height to match animation target
+    height: 80,
   },
   iconButton: {
     width: 40,
@@ -211,15 +281,48 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     fontWeight: Typography.weight.regular as any,
   },
+  ctaButton: {
+    marginTop: Spacing.xl,
+    width: '100%',
+  },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: Spacing.xl,
+    height: 40,
+  },
+  footerLeft: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  footerRight: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  nextButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backText: {
+    fontSize: Typography.size.md,
+    fontWeight: Typography.weight.semibold as any,
+    marginLeft: 4,
+  },
+  nextText: {
+    fontSize: Typography.size.md,
+    fontWeight: Typography.weight.semibold as any,
+    marginRight: 4,
   },
   pagination: {
     flexDirection: 'row',
     gap: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   dot: {
     width: 8,
