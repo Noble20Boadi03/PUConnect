@@ -77,15 +77,18 @@ export default function LandingPage() {
   const [isAnimationComplete, setIsAnimationComplete] = useState(false);
 
   // Animation shared values
-  const logoX = useSharedValue(width / 2 - LOGO_SIZE_INITIAL / 2);
-  const logoY = useSharedValue(height / 2 - LOGO_SIZE_INITIAL / 2);
+  const logoX = useSharedValue(width / 2 - 22);
+  const logoY = useSharedValue(height / 2 - 22);
   const logoScale = useSharedValue(2.5);
   const contentOpacity = useSharedValue(0);
 
   useEffect(() => {
     const startAnimation = async () => {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Hide native splash screen immediately to reveal our custom solid-color splash
       await SplashScreen.hideAsync();
+
+      // Hold the logo in the perfect center for 2 seconds
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       const targetX = Spacing.lg;
       const targetY = insets.top + Spacing.md; 
@@ -106,9 +109,11 @@ export default function LandingPage() {
       }, (finished) => {
         if (finished) {
           runOnJS(setIsAnimationComplete)(true);
-          contentOpacity.value = withTiming(1, { duration: 600 });
         }
       });
+
+      // Fade in the images and content while the logo is moving
+      contentOpacity.value = withTiming(1, { duration: 800 });
     };
 
     startAnimation();
@@ -116,6 +121,8 @@ export default function LandingPage() {
 
   const animatedLogoStyle = useAnimatedStyle(() => {
     return {
+      top: 0,
+      left: 0,
       transform: [
         { translateX: logoX.value },
         { translateY: logoY.value },
@@ -144,13 +151,19 @@ export default function LandingPage() {
     };
   });
 
+  const animatedImageWrapperStyle = useAnimatedStyle(() => {
+    return {
+      opacity: contentOpacity.value,
+    };
+  });
+
   const currentData = ONBOARDING_DATA[currentIndex];
   const isLastSlide = currentIndex === ONBOARDING_DATA.length - 1;
 
   const handleNext = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (isLastSlide) {
-      // router.replace('/(auth)/login' as any);
+      router.replace('/(auth)/login' as any);
     } else {
       setCurrentIndex(prev => prev + 1);
     }
@@ -166,7 +179,7 @@ export default function LandingPage() {
   return (
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
       {/* Immersive Top Background Images with Crossfade */}
-      <View style={styles.imageWrapper}>
+      <Animated.View style={[styles.imageWrapper, animatedImageWrapperStyle]}>
         {ONBOARDING_DATA.map((data, index) => {
           const isActive = index === currentIndex;
           return isActive ? (
@@ -192,7 +205,7 @@ export default function LandingPage() {
           locations={[0.4, 1]}
           style={[StyleSheet.absoluteFillObject, { zIndex: 2 }]}
         />
-      </View>
+      </Animated.View>
 
       <SafeAreaView style={styles.safeArea}>
         <Animated.View style={animatedLogoStyle}>
