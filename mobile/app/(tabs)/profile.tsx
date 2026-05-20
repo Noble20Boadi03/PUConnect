@@ -44,12 +44,26 @@ export default function ProfileScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={[styles.title, { color: Colors.text }]}>Profile</Text>
-        <TouchableOpacity
-          style={[styles.settingsButton, { backgroundColor: cardBg }]}
-          onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-        >
-          <Ionicons name="settings-outline" size={22} color={Colors.text} />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={[styles.headerButton, { backgroundColor: subtleBg }]}
+            onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+          >
+            <Ionicons name={isDark ? "sunny-outline" : "moon-outline"} size={22} color={Colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.headerButton, { backgroundColor: subtleBg }]}
+            onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+          >
+            <Ionicons name="notifications-outline" size={22} color={Colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.headerButton, { backgroundColor: subtleBg }]}
+            onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+          >
+            <Ionicons name="settings-outline" size={22} color={Colors.text} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -180,17 +194,16 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: -0.5,
   },
-  settingsButton: {
+  headerActions: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  headerButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
   },
   scrollContent: {
     paddingHorizontal: Spacing.lg,
