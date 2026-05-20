@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   StyleSheet, 
   View, 
@@ -18,22 +18,31 @@ import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
 
 import { useThemeColor } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
-import { Button } from '../../components';
+import { Button, Alert } from '../../components';
+import { LoginSearchParams, LoginFormInput } from '../../types';
+import { useAuthStore } from '../../store';
+import { authService } from '../../services';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { registered, username } = useLocalSearchParams();
+  const { registered, username } = useLocalSearchParams() as unknown as LoginSearchParams;
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   
   const screenBg = colorScheme === 'dark' ? '#09090B' : '#F4F4F5';
   const cardBg = colorScheme === 'dark' ? '#18181B' : '#FFFFFF';
   
-  const [email, setEmail] = useState('');
+  const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [focusedInput, setFocusedInput] = useState<string | null>(null);
+  const [focusedInput, setFocusedInput] = useState<LoginFormInput | null>(null);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const passwordInputRef = useRef<TextInput>(null);
+  
+  const { login } = useAuthStore();
 
   useEffect(() => {
     if (registered === 'true') {
@@ -41,9 +50,33 @@ export default function LoginScreen() {
     }
   }, [registered]);
 
-  const handleSignIn = () => {
+  const handleSignIn = async () => {
+    if (!emailOrUsername.trim() || !password) {
+      setErrorMsg('Please fill in all fields.');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      return;
+    }
+    
+    setErrorMsg(null);
+    setIsSubmitting(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // Authentication logic
+    
+    try {
+      const response = await authService.login({ emailOrUsername: emailOrUsername.trim(), password });
+      await login(response.user, response.token);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error: any) {
+      console.error('Login Error Details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        code: error.code,
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setErrorMsg(error.response?.data?.message || 'Invalid email or password. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleBack = () => {
@@ -61,7 +94,11 @@ export default function LoginScreen() {
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent} 
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           
           <View style={styles.header}>
             <TouchableOpacity 
@@ -81,58 +118,44 @@ export default function LoginScreen() {
             </View>
 
             {showSuccessAlert && (
-              <Animated.View 
-                entering={FadeInDown.duration(400).springify()}
-                exiting={FadeOut.duration(300)}
-                style={[
-                  styles.successBanner, 
-                  { 
-                    backgroundColor: Colors.primary + '15', 
-                    borderColor: Colors.primary,
-                  }
-                ]}
-              >
-                <Ionicons name="checkmark-circle" size={20} color={Colors.primary} style={{ marginTop: 2 }} />
-                <View style={styles.successTextContainer}>
-                  <Text style={[styles.successBannerTitle, { color: Colors.text }]}>
-                    Registration Complete
-                  </Text>
-                  <Text style={[styles.successBannerSubtitle, { color: Colors.text + 'CC' }]}>
-                    {username ? `Welcome @${username}! ` : 'Welcome aboard! '}Your campus account is ready. Please log in to access your profile.
-                  </Text>
-                </View>
-                <TouchableOpacity 
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setShowSuccessAlert(false);
-                  }}
-                  style={styles.closeAlertButton}
-                >
-                  <Ionicons name="close" size={16} color={Colors.icon} />
-                </TouchableOpacity>
-              </Animated.View>
+              <Alert
+                type="success"
+                title="Registration Complete"
+                message={username ? `Welcome @${username}! Your campus account is ready. Please log in to access your profile.` : 'Welcome aboard! Your campus account is ready. Please log in to access your profile.'}
+                dismissible
+                onDismiss={() => setShowSuccessAlert(false)}
+              />
             )}
 
             <View style={styles.formContainer}>
+              {errorMsg && (
+                <Alert
+                  type="error"
+                  message={errorMsg}
+                />
+              )}
               <View style={styles.inputWrapper}>
-                <Text style={[styles.inputLabel, { color: Colors.icon }]}>Email</Text>
+                <Text style={[styles.inputLabel, { color: Colors.icon }]}>Email or Username</Text>
                 <View style={[
                   styles.inputContainer, 
                   { 
                     backgroundColor: screenBg, 
-                    borderColor: focusedInput === 'email' ? Colors.primary : Colors.border 
+                    borderColor: focusedInput === 'emailOrUsername' ? Colors.primary : Colors.border 
                   }
                 ]}>
                   <TextInput
                     style={[styles.input, { color: Colors.text }]}
-                    placeholder="Enter your email"
+                    placeholder="Enter your email or username"
                     placeholderTextColor={Colors.icon + '80'}
-                    keyboardType="email-address"
+                    keyboardType="default"
                     autoCapitalize="none"
-                    value={email}
-                    onChangeText={setEmail}
-                    onFocus={() => setFocusedInput('email')}
+                    value={emailOrUsername}
+                    onChangeText={setEmailOrUsername}
+                    onFocus={() => setFocusedInput('emailOrUsername')}
                     onBlur={() => setFocusedInput(null)}
+                    returnKeyType="next"
+                    blurOnSubmit={false}
+                    onSubmitEditing={() => passwordInputRef.current?.focus()}
                   />
                 </View>
               </View>
@@ -155,6 +178,9 @@ export default function LoginScreen() {
                     onChangeText={setPassword}
                     onFocus={() => setFocusedInput('password')}
                     onBlur={() => setFocusedInput(null)}
+                    ref={passwordInputRef}
+                    returnKeyType="done"
+                    onSubmitEditing={handleSignIn}
                   />
                   <TouchableOpacity 
                     onPress={() => setIsPasswordVisible(!isPasswordVisible)}
@@ -185,6 +211,8 @@ export default function LoginScreen() {
                   size="md" 
                   onPress={handleSignIn} 
                   style={styles.mainButton}
+                  isLoading={isSubmitting}
+                  disabled={isSubmitting}
                 />
                 
                 <Button 
@@ -315,29 +343,5 @@ const styles = StyleSheet.create({
     fontSize: Typography.size.xs,
     fontWeight: '500',
     textDecorationLine: 'underline',
-  },
-  successBanner: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: Spacing.md,
-    marginBottom: Spacing.lg,
-    gap: Spacing.sm,
-  },
-  successTextContainer: {
-    flex: 1,
-  },
-  successBannerTitle: {
-    fontSize: Typography.size.sm,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  successBannerSubtitle: {
-    fontSize: Typography.size.xs,
-    lineHeight: 16,
-  },
-  closeAlertButton: {
-    padding: 2,
   },
 });

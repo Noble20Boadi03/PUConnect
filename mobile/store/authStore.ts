@@ -1,11 +1,6 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-}
+import { User } from '../types';
 
 interface AuthState {
   user: User | null;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   StyleSheet, 
   View, 
@@ -17,8 +17,10 @@ import * as Haptics from 'expo-haptics';
 
 import { useThemeColor } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
-import { Button } from '../../components';
+import { Button, Alert } from '../../components';
 import Animated, { FadeIn, FadeOut, FadeInDown } from 'react-native-reanimated';
+import { WizardStep, RegisterFormInput } from '../../types';
+import { authService } from '../../services';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -28,7 +30,7 @@ export default function RegisterScreen() {
   const screenBg = colorScheme === 'dark' ? '#09090B' : '#F4F4F5';
   const cardBg = colorScheme === 'dark' ? '#18181B' : '#FFFFFF';
   
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState<WizardStep>(1);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -37,28 +39,92 @@ export default function RegisterScreen() {
   const [username, setUsername] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
-  const [focusedInput, setFocusedInput] = useState<string | null>(null);
+  const [focusedInput, setFocusedInput] = useState<RegisterFormInput | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleContinue = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  const lastNameInputRef = useRef<TextInput>(null);
+  const emailInputRef = useRef<TextInput>(null);
+  const confirmPasswordInputRef = useRef<TextInput>(null);
+
+  const handleContinue = async () => {
+    setErrorMsg(null);
+    
     if (step === 1) {
+      if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+        setErrorMsg('Please fill in all fields.');
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        setErrorMsg('Please enter a valid email address.');
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        return;
+      }
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       setStep(2);
     } else if (step === 2) {
+      if (!password || !confirmPassword) {
+        setErrorMsg('Please enter and confirm your password.');
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        return;
+      }
+      if (password.length < 6) {
+        setErrorMsg('Password must be at least 6 characters.');
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        return;
+      }
+      if (password !== confirmPassword) {
+        setErrorMsg('Passwords do not match.');
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        return;
+      }
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       setStep(3);
     } else if (step === 3) {
-      // Complete Account Creation (Testing flow: return to login)
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.replace({
-        pathname: '/(auth)/login',
-        params: { registered: 'true', username: username }
-      } as any);
+      if (!username.trim()) {
+        setErrorMsg('Please choose a unique username.');
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        return;
+      }
+      
+      setIsSubmitting(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      
+      try {
+        await authService.register({
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
+          password,
+          username: username.trim()
+        });
+        
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        router.replace({
+          pathname: '/(auth)/login',
+          params: { registered: 'true', username: username.trim() }
+        } as any);
+      } catch (error: any) {
+        console.error('Registration Error Details:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status,
+          code: error.code,
+        });
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        setErrorMsg(error.response?.data?.message || 'Registration failed. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
   const handleBack = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (step > 1) {
-      setStep(prev => prev - 1);
+      setStep(prev => (prev - 1) as WizardStep);
     } else {
       if (router.canGoBack()) {
         router.back();
@@ -86,7 +152,11 @@ export default function RegisterScreen() {
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent} 
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           
           {/* Header */}
           <View style={styles.header}>
@@ -134,6 +204,12 @@ export default function RegisterScreen() {
 
             {/* Form */}
             <View style={styles.formContainer}>
+              {errorMsg && (
+                <Alert
+                  type="error"
+                  message={errorMsg}
+                />
+              )}
               
               {step === 1 && (
                 <Animated.View
@@ -159,6 +235,9 @@ export default function RegisterScreen() {
                         onChangeText={setFirstName}
                         onFocus={() => setFocusedInput('firstName')}
                         onBlur={() => setFocusedInput(null)}
+                        returnKeyType="next"
+                        blurOnSubmit={false}
+                        onSubmitEditing={() => lastNameInputRef.current?.focus()}
                       />
                     </View>
                   </View>
@@ -181,6 +260,10 @@ export default function RegisterScreen() {
                         onChangeText={setLastName}
                         onFocus={() => setFocusedInput('lastName')}
                         onBlur={() => setFocusedInput(null)}
+                        ref={lastNameInputRef}
+                        returnKeyType="next"
+                        blurOnSubmit={false}
+                        onSubmitEditing={() => emailInputRef.current?.focus()}
                       />
                     </View>
                   </View>
@@ -205,6 +288,9 @@ export default function RegisterScreen() {
                         onChangeText={setEmail}
                         onFocus={() => setFocusedInput('email')}
                         onBlur={() => setFocusedInput(null)}
+                        ref={emailInputRef}
+                        returnKeyType="done"
+                        onSubmitEditing={handleContinue}
                       />
                     </View>
                   </View>
@@ -236,6 +322,9 @@ export default function RegisterScreen() {
                         onChangeText={setPassword}
                         onFocus={() => setFocusedInput('password')}
                         onBlur={() => setFocusedInput(null)}
+                        returnKeyType="next"
+                        blurOnSubmit={false}
+                        onSubmitEditing={() => confirmPasswordInputRef.current?.focus()}
                       />
                       <TouchableOpacity 
                         onPress={() => setIsPasswordVisible(!isPasswordVisible)}
@@ -269,6 +358,9 @@ export default function RegisterScreen() {
                         onChangeText={setConfirmPassword}
                         onFocus={() => setFocusedInput('confirmPassword')}
                         onBlur={() => setFocusedInput(null)}
+                        ref={confirmPasswordInputRef}
+                        returnKeyType="done"
+                        onSubmitEditing={handleContinue}
                       />
                       <TouchableOpacity 
                         onPress={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)}
@@ -310,6 +402,8 @@ export default function RegisterScreen() {
                         onChangeText={setUsername}
                         onFocus={() => setFocusedInput('username')}
                         onBlur={() => setFocusedInput(null)}
+                        returnKeyType="done"
+                        onSubmitEditing={handleContinue}
                       />
                     </View>
                   </View>
@@ -324,6 +418,8 @@ export default function RegisterScreen() {
                   size="md" 
                   onPress={handleContinue} 
                   style={styles.mainButton}
+                  isLoading={isSubmitting}
+                  disabled={isSubmitting}
                 />
                 
                 <TouchableOpacity 

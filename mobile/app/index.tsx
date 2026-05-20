@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useThemeColor } from '../hooks';
 import { Spacing, Typography } from '../constants';
 import { Button } from '../components';
+import { LandingPageSearchParams } from '../types';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -83,7 +84,7 @@ const PaginationDot = ({ isActive, activeColor, inactiveColor }: PaginationDotPr
 
 export default function LandingPage() {
   const router = useRouter();
-  const { slide, skipSplash } = useLocalSearchParams();
+  const { slide, skipSplash } = useLocalSearchParams() as unknown as LandingPageSearchParams;
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
