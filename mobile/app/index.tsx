@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, Image, TouchableOpacity, useColorScheme, Dimensions } from 'react-native';
+import { StyleSheet, View, Text, Image, TouchableOpacity, useColorScheme, Dimensions, Appearance, ImageSourcePropType } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColor } from '../hooks';
 import { Spacing, Typography } from '../constants';
@@ -25,7 +25,15 @@ const { width, height } = Dimensions.get('window');
 const LOGO_SIZE_INITIAL = 120;
 const LOGO_SIZE_FINAL = 40;
 
-const ONBOARDING_DATA = [
+interface OnboardingSlide {
+  id: number;
+  title: string;
+  highlight: string;
+  subtitle: string;
+  image: ImageSourcePropType;
+}
+
+const ONBOARDING_DATA: OnboardingSlide[] = [
   {
     id: 1,
     title: "Welcome to",
@@ -56,7 +64,13 @@ const ONBOARDING_DATA = [
   },
 ];
 
-const PaginationDot = ({ isActive, activeColor, inactiveColor }: { isActive: boolean, activeColor: string, inactiveColor: string }) => {
+interface PaginationDotProps {
+  isActive: boolean;
+  activeColor: string;
+  inactiveColor: string;
+}
+
+const PaginationDot = ({ isActive, activeColor, inactiveColor }: PaginationDotProps) => {
   const animatedStyle = useAnimatedStyle(() => {
     return {
       width: withSpring(isActive ? 28 : 8, { damping: 15, stiffness: 150 }),
@@ -69,23 +83,28 @@ const PaginationDot = ({ isActive, activeColor, inactiveColor }: { isActive: boo
 
 export default function LandingPage() {
   const router = useRouter();
+  const { slide, skipSplash } = useLocalSearchParams();
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
   
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAnimationComplete, setIsAnimationComplete] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(slide === 'last' ? ONBOARDING_DATA.length - 1 : 0);
+  const [isAnimationComplete, setIsAnimationComplete] = useState(skipSplash === 'true');
 
   // Animation shared values
-  const logoX = useSharedValue(width / 2 - 22);
-  const logoY = useSharedValue(height / 2 - 22);
-  const logoScale = useSharedValue(2.5);
-  const contentOpacity = useSharedValue(0);
+  const logoX = useSharedValue(skipSplash === 'true' ? Spacing.lg : width / 2 - 22);
+  const logoY = useSharedValue(skipSplash === 'true' ? insets.top + Spacing.md : height / 2 - 22);
+  const logoScale = useSharedValue(skipSplash === 'true' ? 1 : 2.5);
+  const contentOpacity = useSharedValue(skipSplash === 'true' ? 1 : 0);
 
   useEffect(() => {
     const startAnimation = async () => {
       // Hide native splash screen immediately to reveal our custom solid-color splash
       await SplashScreen.hideAsync();
+
+      if (skipSplash === 'true') {
+        return;
+      }
 
       // Hold the logo in the perfect center for 2 seconds
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -163,7 +182,7 @@ export default function LandingPage() {
   const handleNext = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (isLastSlide) {
-      router.replace('/(auth)/login' as any);
+      router.push('/(auth)/login' as any);
     } else {
       setCurrentIndex(prev => prev + 1);
     }
@@ -174,6 +193,11 @@ export default function LandingPage() {
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
     }
+  };
+
+  const toggleTheme = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Appearance.setColorScheme(colorScheme === 'dark' ? 'light' : 'dark');
   };
 
   return (
@@ -222,7 +246,7 @@ export default function LandingPage() {
             <TouchableOpacity 
               style={[styles.iconButton, { backgroundColor: Colors.background + 'E6' }]}
               activeOpacity={0.7}
-              onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+              onPress={toggleTheme}
             >
               <Ionicons 
                 name={colorScheme === 'dark' ? 'sunny' : 'moon'} 
@@ -235,24 +259,26 @@ export default function LandingPage() {
           <View style={styles.contentWrapper}>
             {/* Animated Content Area */}
             <View style={styles.textContainer}>
-              <Animated.Text 
+              <Animated.View
                 key={`title-${currentIndex}`}
                 entering={FadeIn.delay(100).duration(400).springify()}
-                style={[styles.title, { color: Colors.text }]}
               >
-                {currentData.title}
-                {currentData.highlight ? (
-                  <Text style={{ color: Colors.primary }}>{`\n${currentData.highlight}`}</Text>
-                ) : null}
-              </Animated.Text>
+                <Text style={[styles.title, { color: Colors.text }]}>
+                  {currentData.title}
+                  {currentData.highlight ? (
+                    <Text style={{ color: Colors.primary }}>{`\n${currentData.highlight}`}</Text>
+                  ) : null}
+                </Text>
+              </Animated.View>
               
-              <Animated.Text 
+              <Animated.View
                 key={`subtitle-${currentIndex}`}
                 entering={FadeIn.delay(200).duration(400).springify()}
-                style={[styles.subtitle, { color: Colors.icon }]}
               >
-                {currentData.subtitle}
-              </Animated.Text>
+                <Text style={[styles.subtitle, { color: Colors.icon }]}>
+                  {currentData.subtitle}
+                </Text>
+              </Animated.View>
             </View>
 
             {isLastSlide && (
