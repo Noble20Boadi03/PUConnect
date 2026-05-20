@@ -8,6 +8,16 @@ export interface ApiResponse<T> {
 }
 
 /**
+ * API responses that return only status and message (no data payload).
+ */
+export interface ApiMessageResponse {
+  status: number;
+  message: string;
+}
+
+import type { ThemePreference } from './theme';
+
+/**
  * Common User interface.
  */
 export interface User {
@@ -17,6 +27,7 @@ export interface User {
   username?: string;
   role?: 'user' | 'admin';
   avatarUrl?: string;
+  themePreference?: ThemePreference;
 }
 
 /**

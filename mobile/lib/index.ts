@@ -1,2 +1,1 @@
-// Barrel file for lib
-export {};
+export * from './themePreference';

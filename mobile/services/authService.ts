@@ -1,5 +1,12 @@
 import { apiClient } from './apiClient';
-import { LoginCredentials, RegisterCredentials, AuthResponse, ApiResponse } from '../types';
+import {
+  LoginCredentials,
+  RegisterCredentials,
+  AuthResponse,
+  ApiResponse,
+  LogoutResponse,
+  User,
+} from '../types';
 
 /**
  * Authentication service for API requests related to login, registration, and logout.
@@ -30,11 +37,22 @@ export const authService = {
   },
 
   /**
-   * Logs out the user session.
+   * Notifies the server that the client is ending the session.
+   * @route POST /api/auth/logout
    */
-  async logout(): Promise<void> {
-    await apiClient.post('/auth/logout');
-  }
+  async logout(): Promise<LogoutResponse> {
+    const response = await apiClient.post<LogoutResponse>('/auth/logout');
+    return response.data;
+  },
+
+  /**
+   * Fetches the authenticated user's profile.
+   * @route GET /api/auth/me
+   */
+  async getMe(): Promise<User> {
+    const response = await apiClient.get<ApiResponse<User>>('/auth/me');
+    return response.data.data;
+  },
 };
 
 export default authService;

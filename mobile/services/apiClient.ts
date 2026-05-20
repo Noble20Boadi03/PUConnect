@@ -1,5 +1,7 @@
 import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
 import ENV from '../config';
+import { AUTH_TOKEN_KEY } from '../constants';
 
 /**
  * Basic API client configuration using Axios.
@@ -12,15 +14,15 @@ export const apiClient = axios.create({
   timeout: 10000,
 });
 
-// Request interceptor for adding auth tokens, etc.
 apiClient.interceptors.request.use(
-  (config) => {
-    // Add logic to attach auth token from store if needed
+  async (config) => {
+    const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Response interceptor for global error handling

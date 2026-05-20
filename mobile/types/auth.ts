@@ -1,6 +1,22 @@
+import type { ApiMessageResponse } from './common';
+
 /**
  * Types and interfaces related to authentication flows (Login, Register, and Onboarding).
  */
+
+/**
+ * Successful logout response from POST /api/auth/logout.
+ */
+export type LogoutResponse = ApiMessageResponse;
+
+/**
+ * Result of a client-side logout attempt (API + local session clear).
+ */
+export interface LogoutResult {
+  success: boolean;
+  message: string;
+  apiReached: boolean;
+}
 
 /**
  * Credentials required for standard login.

@@ -4,6 +4,7 @@ import { useColorScheme, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { useAuthStore } from '../store';
+import { initializeThemePreference } from '../lib/themePreference';
 import { useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as NavigationBar from 'expo-navigation-bar';
@@ -19,6 +20,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     initialize();
+    initializeThemePreference();
   }, []);
 
   // Sync System Navigation Bar on Android with the theme
@@ -35,12 +37,13 @@ export default function RootLayout() {
 
     const inAuthGroup = segments[0] === '(auth)';
     const inTabsGroup = segments[0] === '(tabs)';
+    const inSettings = segments[0] === 'settings';
 
-    if (isAuthenticated && !inTabsGroup) {
+    if (isAuthenticated && !inTabsGroup && !inSettings) {
       // Redirect authenticated users to the home tabs
       router.replace('/(tabs)/market' as any);
-    } else if (!isAuthenticated && inTabsGroup) {
-      // Redirect unauthenticated users away from tabs
+    } else if (!isAuthenticated && (inTabsGroup || inSettings)) {
+      // Redirect unauthenticated users away from protected screens
       router.replace('/(auth)/login' as any);
     }
   }, [isAuthenticated, segments, isLoading]);
@@ -51,6 +54,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="settings" />
       </Stack>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>

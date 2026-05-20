@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
-import { User } from '../types';
+import { User, LogoutResult } from '../types';
+import { AUTH_TOKEN_KEY } from '../constants';
+import { settingsService } from '../services';
 
 interface AuthState {
   user: User | null;
@@ -11,10 +13,11 @@ interface AuthState {
   setToken: (token: string | null) => Promise<void>;
   login: (user: User, token: string) => Promise<void>;
   initialize: () => Promise<void>;
-  logout: () => Promise<void>;
+  logout: () => Promise<LogoutResult>;
+  clearSession: () => Promise<void>;
 }
 
-const TOKEN_KEY = 'auth_token';
+const TOKEN_KEY = AUTH_TOKEN_KEY;
 
 /**
  * Authentication store for managing user session state with persistent storage.
@@ -40,15 +43,19 @@ export const useAuthStore = create<AuthState>((set) => ({
   initialize: async () => {
     try {
       const token = await SecureStore.getItemAsync(TOKEN_KEY);
-      // Here you would typically also fetch the user profile with the token
       set({ token, isAuthenticated: !!token, isLoading: false });
     } catch (e) {
       set({ isLoading: false });
     }
   },
-  logout: async () => {
+  clearSession: async () => {
     await SecureStore.deleteItemAsync(TOKEN_KEY);
     set({ user: null, token: null, isAuthenticated: false });
+  },
+  logout: async () => {
+    const result = await settingsService.logout();
+    set({ user: null, token: null, isAuthenticated: false });
+    return result;
   },
 }));
 

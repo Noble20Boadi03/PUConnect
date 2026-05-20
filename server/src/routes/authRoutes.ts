@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, logout, getMe } from '../controllers/authController';
+import { register, login, logout, getMe, updatePreferences } from '../controllers/authController';
 import { protect } from '../middlewares/authMiddleware';
 
 const router = Router();
@@ -11,5 +11,6 @@ router.post('/logout', logout);
 
 // Protected routes (require JWT verification)
 router.get('/me', protect, getMe);
+router.patch('/preferences', protect, updatePreferences);
 
 export default router;

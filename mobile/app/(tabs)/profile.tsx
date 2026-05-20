@@ -8,14 +8,16 @@ import {
   useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { useThemeColor } from '../../hooks';
+import { useThemeColor, useThemeToggle } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { useAuthStore } from '../../store';
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -23,7 +25,8 @@ export default function ProfileScreen() {
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
 
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
+  const { iconName, handleToggle } = useThemeToggle();
 
   const initials = user?.name
     ? user.name
@@ -34,9 +37,9 @@ export default function ProfileScreen() {
         .slice(0, 2)
     : '?';
 
-  const handleLogout = async () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    await logout();
+  const handleOpenSettings = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/settings');
   };
 
   return (
@@ -47,9 +50,9 @@ export default function ProfileScreen() {
         <View style={styles.headerActions}>
           <TouchableOpacity
             style={[styles.headerButton, { backgroundColor: subtleBg }]}
-            onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+            onPress={handleToggle}
           >
-            <Ionicons name={isDark ? "sunny-outline" : "moon-outline"} size={22} color={Colors.text} />
+            <Ionicons name={iconName} size={22} color={Colors.text} />
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.headerButton, { backgroundColor: subtleBg }]}
@@ -59,7 +62,7 @@ export default function ProfileScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.headerButton, { backgroundColor: subtleBg }]}
-            onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+            onPress={handleOpenSettings}
           >
             <Ionicons name="settings-outline" size={22} color={Colors.text} />
           </TouchableOpacity>
@@ -164,15 +167,6 @@ export default function ProfileScreen() {
             </View>
           </View>
         </View>
-
-        {/* Logout */}
-        <TouchableOpacity
-          style={[styles.logoutButton, { borderColor: Colors.error + '35' }]}
-          onPress={handleLogout}
-        >
-          <Ionicons name="log-out-outline" size={20} color={Colors.error} />
-          <Text style={[styles.logoutText, { color: Colors.error }]}>Log Out</Text>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -323,21 +317,5 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     marginLeft: 54,
-  },
-
-  // --- Logout ---
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.sm + 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginTop: Spacing.xl,
-  },
-  logoutText: {
-    fontSize: Typography.size.sm,
-    fontWeight: '600',
   },
 });
