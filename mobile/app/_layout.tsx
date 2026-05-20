@@ -34,13 +34,14 @@ export default function RootLayout() {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const inTabsGroup = segments[0] === '(tabs)';
 
-    if (!isAuthenticated && !inAuthGroup) {
-      // Redirect to login if not authenticated and not in auth group
-      // router.replace('/(auth)/login');
-    } else if (isAuthenticated && inAuthGroup) {
-      // Redirect to home if authenticated and in auth group
-      router.replace('/index' as any);
+    if (isAuthenticated && !inTabsGroup) {
+      // Redirect authenticated users to the home tabs
+      router.replace('/(tabs)/market' as any);
+    } else if (!isAuthenticated && inTabsGroup) {
+      // Redirect unauthenticated users away from tabs
+      router.replace('/(auth)/login' as any);
     }
   }, [isAuthenticated, segments, isLoading]);
 
@@ -48,7 +49,8 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
-        {/* Add more screens/groups here */}
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(tabs)" />
       </Stack>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>
