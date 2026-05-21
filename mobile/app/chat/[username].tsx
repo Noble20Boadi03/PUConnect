@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
-import { StyleSheet, Text, TouchableOpacity, useColorScheme } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { BackHandler, StyleSheet, Text, TouchableOpacity, useColorScheme } from 'react-native';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -27,14 +27,20 @@ export default function ChatScreen() {
     return getChatThread(username, resolvedPostId);
   }, [username, resolvedPostId]);
 
-  const handleBack = useCallback(() => {
+  const exitToMessages = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace('/(tabs)/messages');
-    }
+    router.replace('/(tabs)/messages' as any);
   }, [router]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        exitToMessages();
+        return true;
+      });
+      return () => sub.remove();
+    }, [exitToMessages])
+  );
 
   const handleOpenPost = useCallback(
     (id: string) => {
@@ -43,10 +49,6 @@ export default function ChatScreen() {
     [router]
   );
 
-  const handleMoreOptions = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }, []);
-
   if (!thread) {
     return (
       <SafeAreaView
@@ -54,22 +56,15 @@ export default function ChatScreen() {
         edges={['top', 'bottom']}
       >
         <Text style={[styles.notFoundTitle, { color: textColor }]}>Chat not found</Text>
-        <TouchableOpacity style={styles.notFoundBtn} onPress={handleBack}>
+        <TouchableOpacity style={styles.notFoundBtn} onPress={exitToMessages}>
           <Ionicons name="arrow-back" size={18} color={textColor} />
-          <Text style={[styles.notFoundBtnText, { color: textColor }]}>Go back</Text>
+          <Text style={[styles.notFoundBtnText, { color: textColor }]}>Back to Messages</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
   }
 
-  return (
-    <ChatView
-      thread={thread}
-      onBack={handleBack}
-      onOpenPost={handleOpenPost}
-      onMoreOptions={handleMoreOptions}
-    />
-  );
+  return <ChatView thread={thread} onBack={exitToMessages} onOpenPost={handleOpenPost} />;
 }
 
 const styles = StyleSheet.create({

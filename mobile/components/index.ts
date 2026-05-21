@@ -14,3 +14,4 @@ export * from './PostDetail';
 export * from './Profile';
 export * from './ProviderProfile';
 export * from './Chat';
+export * from './Messages';

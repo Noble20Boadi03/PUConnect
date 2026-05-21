@@ -6,4 +6,5 @@ export * from './marketPostImages';
 export * from './postDetailMock';
 export * from './providerProfileMock';
 export * from './chatMock';
+export * from './messagesListMock';
 export * from './CardShadow';

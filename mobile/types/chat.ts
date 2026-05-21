@@ -1,4 +1,4 @@
-import type { MarketPostTag } from './market';
+import type { MarketIconName, MarketPostTag } from './market';
 
 export type ChatMessageKind = 'sent' | 'received';
 
@@ -34,4 +34,24 @@ export interface ChatThread {
   participant: ChatParticipant;
   postContext?: ChatPostContext;
   dateGroups: ChatDateGroup[];
+}
+
+export interface ConversationContextLine {
+  icon: MarketIconName;
+  text: string;
+}
+
+/** Row on the Messages inbox screen. */
+export interface ConversationPreview {
+  id: string;
+  providerUsername: string;
+  participant: ChatParticipant;
+  contextLine?: ConversationContextLine;
+  lastMessage: string;
+  timestamp: string;
+  postId?: string;
+  unread?: boolean;
+  unreadCount?: number;
+  isOnline?: boolean;
+  isPinned?: boolean;
 }

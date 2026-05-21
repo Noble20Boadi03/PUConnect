@@ -3,3 +3,4 @@ export * from './ChatHeader';
 export * from './ChatContextBanner';
 export * from './ChatMessageBubble';
 export * from './ChatComposer';
+export * from './ChatOptionsSheet';

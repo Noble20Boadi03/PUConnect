@@ -54,7 +54,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
       accessibilityRole="button"
       accessibilityLabel="More options"
     >
-      <Ionicons name="ellipsis-horizontal" size={22} color={textColor} />
+      <Ionicons name="ellipsis-vertical" size={22} color={textColor} />
     </TouchableOpacity>
   </View>
 );

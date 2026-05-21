@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -17,21 +17,47 @@ import { ChatHeader } from './ChatHeader';
 import { ChatContextBanner } from './ChatContextBanner';
 import { ChatMessageBubble } from './ChatMessageBubble';
 import { ChatComposer } from './ChatComposer';
-import type { ChatThread } from '../../types';
+import { ChatOptionsSheet, type ChatMenuAction } from './ChatOptionsSheet';
+import type { ChatDateGroup, ChatThread } from '../../types';
+
+function formatSentTime(): string {
+  const now = new Date();
+  return now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+function appendSentMessage(groups: ChatDateGroup[], text: string): ChatDateGroup[] {
+  const trimmed = text.trim();
+  if (!trimmed) return groups;
+
+  const next = groups.map((g) => ({ ...g, messages: [...g.messages] }));
+  const lastGroup = next[next.length - 1];
+  const newMessage = {
+    id: `local-${Date.now()}`,
+    kind: 'sent' as const,
+    text: trimmed,
+    time: formatSentTime(),
+  };
+
+  if (lastGroup) {
+    lastGroup.messages.push(newMessage);
+    return next;
+  }
+
+  return [
+    {
+      dateLabel: 'TODAY',
+      messages: [newMessage],
+    },
+  ];
+}
 
 export interface ChatViewProps {
   thread: ChatThread;
   onBack: () => void;
   onOpenPost?: (postId: string) => void;
-  onMoreOptions?: () => void;
 }
 
-export const ChatView: React.FC<ChatViewProps> = ({
-  thread,
-  onBack,
-  onOpenPost,
-  onMoreOptions,
-}) => {
+export const ChatView: React.FC<ChatViewProps> = ({ thread, onBack, onOpenPost }) => {
   const Colors = useThemeColor();
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
@@ -44,6 +70,11 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const sentText = isDark ? '#09090B' : '#FFFFFF';
 
   const [draft, setDraft] = useState('');
+  const [optionsVisible, setOptionsVisible] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const [dateGroups, setDateGroups] = useState<ChatDateGroup[]>(() =>
+    thread.dateGroups.map((g) => ({ ...g, messages: [...g.messages] }))
+  );
 
   const handleOpenPost = useCallback(() => {
     if (!thread.postContext) return;
@@ -53,12 +84,31 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
   const handleMoreOptions = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onMoreOptions?.();
-  }, [onMoreOptions]);
+    setOptionsVisible(true);
+  }, []);
+
+  const handleMenuSelect = useCallback((action: ChatMenuAction) => {
+    if (action !== 'cancel') {
+      // Pure UI — actions are no-ops for now.
+    }
+  }, []);
 
   const handleAttach = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }, []);
+
+  const handleSend = useCallback(() => {
+    const trimmed = draft.trim();
+    if (!trimmed) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setDateGroups((prev) => appendSentMessage(prev, trimmed));
+    setDraft('');
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    });
+  }, [draft]);
+
+  const displayGroups = useMemo(() => dateGroups, [dateGroups]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
@@ -89,12 +139,13 @@ export const ChatView: React.FC<ChatViewProps> = ({
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <ScrollView
+          ref={scrollRef}
           style={styles.messagesScroll}
           contentContainerStyle={styles.messagesContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {thread.dateGroups.map((group) => (
+          {displayGroups.map((group) => (
             <View key={group.dateLabel}>
               <View style={styles.dateSeparator}>
                 <View style={[styles.dateLine, { backgroundColor: subtleBg }]} />
@@ -120,6 +171,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
           value={draft}
           onChangeText={setDraft}
           onAttach={handleAttach}
+          onSend={handleSend}
           cardBg={cardBg}
           subtleBg={subtleBg}
           textColor={Colors.text}
@@ -128,6 +180,12 @@ export const ChatView: React.FC<ChatViewProps> = ({
           bottomInset={insets.bottom}
         />
       </KeyboardAvoidingView>
+
+      <ChatOptionsSheet
+        visible={optionsVisible}
+        onSelect={handleMenuSelect}
+        onClose={() => setOptionsVisible(false)}
+      />
     </SafeAreaView>
   );
 };

@@ -1,49 +1,27 @@
-import React from 'react';
-import { StyleSheet, View, Text, useColorScheme } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useThemeColor } from '../../hooks';
-import { Spacing, Typography } from '../../constants';
+import React, { useCallback } from 'react';
+import { useRouter } from 'expo-router';
+
+import { MessagesInboxView } from '../../components/Messages';
+import { MESSAGES_INBOX_MOCK } from '../../constants/messagesListMock';
+import { buildChatHref } from '../../lib';
+import type { ConversationPreview } from '../../types';
 
 export default function MessagesScreen() {
-  const Colors = useThemeColor();
-  const colorScheme = useColorScheme();
-  const screenBg = colorScheme === 'dark' ? '#09090B' : '#F4F4F5';
+  const router = useRouter();
+
+  const handleConversationPress = useCallback(
+    (conversation: ConversationPreview) => {
+      router.push(
+        buildChatHref(conversation.providerUsername, conversation.postId) as any
+      );
+    },
+    [router]
+  );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: Colors.text }]}>Messages</Text>
-      </View>
-      <View style={styles.emptyState}>
-        <Ionicons name="chatbubbles-outline" size={48} color={Colors.icon + '50'} />
-        <Text style={[styles.emptyText, { color: Colors.icon }]}>No messages yet</Text>
-      </View>
-    </SafeAreaView>
+    <MessagesInboxView
+      conversations={MESSAGES_INBOX_MOCK}
+      onConversationPress={handleConversationPress}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-  },
-  title: {
-    fontSize: Typography.size.xxl,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  emptyText: {
-    fontSize: Typography.size.sm,
-    fontWeight: '500',
-  },
-});
