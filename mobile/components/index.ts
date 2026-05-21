@@ -13,3 +13,4 @@ export * from './MarketTipBanner';
 export * from './PostDetail';
 export * from './Profile';
 export * from './ProviderProfile';
+export * from './Chat';

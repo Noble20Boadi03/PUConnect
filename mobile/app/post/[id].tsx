@@ -7,13 +7,21 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { PostDetailView } from '../../components/PostDetail';
-import { getPostDetailById, normalizeUsernameSlug } from '../../lib';
+import { buildChatHref, getPostDetailById, normalizeUsernameSlug } from '../../lib';
 import { Spacing, Typography } from '../../constants';
 
 export default function PostDetailScreen() {
-  const { id, fromProvider } = useLocalSearchParams<{ id: string; fromProvider?: string }>();
+  const { id, fromProvider, fromChat } = useLocalSearchParams<{
+    id: string;
+    fromProvider?: string;
+    fromChat?: string;
+  }>();
   const hideAuthorProfile =
-    fromProvider === '1' || fromProvider === 'true';
+    fromProvider === '1' ||
+    fromProvider === 'true' ||
+    fromChat === '1' ||
+    fromChat === 'true';
+  const returnToChat = fromChat === '1' || fromChat === 'true';
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -32,8 +40,18 @@ export default function PostDetailScreen() {
   }, [router]);
 
   const handleSendMessage = useCallback(() => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  }, []);
+    if (!post) return;
+    router.push(buildChatHref(post.author.username, post.id) as any);
+  }, [post, router]);
+
+  const handleReturnToChat = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (router.canGoBack()) {
+      router.back();
+    } else if (post) {
+      router.replace(buildChatHref(post.author.username, post.id) as any);
+    }
+  }, [post, router]);
 
   const handleViewProvider = useCallback(
     (username: string) => {
@@ -66,6 +84,8 @@ export default function PostDetailScreen() {
         onSendMessage={handleSendMessage}
         onViewProvider={hideAuthorProfile ? undefined : handleViewProvider}
         hideAuthorProfile={hideAuthorProfile}
+        returnToChat={returnToChat}
+        onReturnToChat={handleReturnToChat}
       />
     </View>
   );

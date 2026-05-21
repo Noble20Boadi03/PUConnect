@@ -34,6 +34,7 @@ export default function RootLayout() {
 
   const inPostDetail = segments[0] === 'post';
   const inProviderProfile = segments[0] === 'provider';
+  const inChat = segments[0] === 'chat';
   const managesOwnChrome = inPostDetail;
 
   // Sync Android navigation bar with theme (post detail manages its own chrome).
@@ -49,14 +50,21 @@ export default function RootLayout() {
     const inAuthGroup = segments[0] === '(auth)';
     const inTabsGroup = segments[0] === '(tabs)';
     const inSettings = segments[0] === 'settings';
-    if (isAuthenticated && !inTabsGroup && !inSettings && !inPostDetail && !inProviderProfile) {
+    if (
+      isAuthenticated &&
+      !inTabsGroup &&
+      !inSettings &&
+      !inPostDetail &&
+      !inProviderProfile &&
+      !inChat
+    ) {
       if (!didRedirectRef.current) {
         didRedirectRef.current = true;
         router.replace('/(tabs)/market' as any);
       }
     } else if (
       !isAuthenticated &&
-      (inTabsGroup || inSettings || inPostDetail || inProviderProfile)
+      (inTabsGroup || inSettings || inPostDetail || inProviderProfile || inChat)
     ) {
       if (!didRedirectRef.current) {
         didRedirectRef.current = true;
@@ -65,7 +73,7 @@ export default function RootLayout() {
     } else {
       didRedirectRef.current = false;
     }
-  }, [isAuthenticated, segments, isLoading, inPostDetail, inProviderProfile]);
+  }, [isAuthenticated, segments, isLoading, inPostDetail, inProviderProfile, inChat]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -76,6 +84,7 @@ export default function RootLayout() {
         <Stack.Screen name="settings" />
         <Stack.Screen name="post/[id]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="provider/[username]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="chat/[username]" options={{ animation: 'slide_from_right' }} />
       </Stack>
       {!inPostDetail ? (
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />

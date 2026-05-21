@@ -5,4 +5,6 @@ export * from './getPostDetailById';
 export * from './getProviderProfileByUsername';
 export * from './normalizeUsername';
 export * from './filterProviderPosts';
+export * from './getChatThread';
+export * from './buildChatHref';
 export * from './systemChrome';

@@ -1,53 +1,59 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, useColorScheme } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { ProviderProfileView } from '../../components/ProviderProfile';
-import { buildChatHref, getProviderProfileByUsername } from '../../lib';
+import { ChatView } from '../../components/Chat';
+import { getChatThread } from '../../lib';
 import { Spacing, Typography } from '../../constants';
 
-export default function ProviderProfileScreen() {
-  const { username } = useLocalSearchParams<{ username: string }>();
+export default function ChatScreen() {
+  const { username, postId } = useLocalSearchParams<{
+    username: string;
+    postId?: string;
+  }>();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
   const textColor = isDark ? '#ECEDEE' : '#11181C';
 
-  const profile =
-    typeof username === 'string' ? getProviderProfileByUsername(username) : undefined;
+  const resolvedPostId = typeof postId === 'string' ? postId : undefined;
+
+  const thread = useMemo(() => {
+    if (typeof username !== 'string') return undefined;
+    return getChatThread(username, resolvedPostId);
+  }, [username, resolvedPostId]);
 
   const handleBack = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/(tabs)/market');
+      router.replace('/(tabs)/messages');
     }
   }, [router]);
 
-  const handlePostPress = useCallback(
-    (postId: string) => {
-      router.push(`/post/${postId}?fromProvider=1` as any);
+  const handleOpenPost = useCallback(
+    (id: string) => {
+      router.push(`/post/${id}?fromProvider=1&fromChat=1` as any);
     },
     [router]
   );
 
-  const handleSendMessage = useCallback(() => {
-    if (!profile) return;
-    router.push(buildChatHref(profile.handle) as any);
-  }, [profile, router]);
+  const handleMoreOptions = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, []);
 
-  if (!profile) {
+  if (!thread) {
     return (
       <SafeAreaView
         style={[styles.notFound, { backgroundColor: screenBg }]}
         edges={['top', 'bottom']}
       >
-        <Text style={[styles.notFoundTitle, { color: textColor }]}>Profile not found</Text>
+        <Text style={[styles.notFoundTitle, { color: textColor }]}>Chat not found</Text>
         <TouchableOpacity style={styles.notFoundBtn} onPress={handleBack}>
           <Ionicons name="arrow-back" size={18} color={textColor} />
           <Text style={[styles.notFoundBtnText, { color: textColor }]}>Go back</Text>
@@ -57,11 +63,11 @@ export default function ProviderProfileScreen() {
   }
 
   return (
-    <ProviderProfileView
-      profile={profile}
+    <ChatView
+      thread={thread}
       onBack={handleBack}
-      onPostPress={handlePostPress}
-      onSendMessage={handleSendMessage}
+      onOpenPost={handleOpenPost}
+      onMoreOptions={handleMoreOptions}
     />
   );
 }

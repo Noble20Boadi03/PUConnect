@@ -31,6 +31,9 @@ export interface PostDetailViewProps {
   onViewProvider?: (username: string) => void;
   /** When true, hides the author/provider block (e.g. opened from their profile). */
   hideAuthorProfile?: boolean;
+  /** Replaces the footer CTA with a back-to-chat action. */
+  returnToChat?: boolean;
+  onReturnToChat?: () => void;
 }
 
 export const PostDetailView: React.FC<PostDetailViewProps> = ({
@@ -39,6 +42,8 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
   onSendMessage,
   onViewProvider,
   hideAuthorProfile = false,
+  returnToChat = false,
+  onReturnToChat,
 }) => {
   const Colors = useThemeColor();
   const insets = useSafeAreaInsets();
@@ -79,6 +84,19 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onSendMessage?.();
   }, [onSendMessage]);
+
+  const handleReturnToChat = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onReturnToChat?.();
+  }, [onReturnToChat]);
+
+  const footerTitle = returnToChat ? 'Return to Chat' : copy.cta;
+  const footerIcon = returnToChat
+    ? ('arrow-back-circle-outline' as const)
+    : isService
+      ? ('chatbubble-outline' as const)
+      : ('hand-right-outline' as const);
+  const footerPress = returnToChat ? handleReturnToChat : handleSendMessage;
 
   const handleViewProvider = useCallback(() => {
     if (!isService) return;
@@ -263,16 +281,10 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
         ]}
       >
         <Button
-          title={copy.cta}
+          title={footerTitle}
           size="lg"
-          onPress={handleSendMessage}
-          leftIcon={
-            <Ionicons
-              name={isService ? 'chatbubble-outline' : 'hand-right-outline'}
-              size={20}
-              color="#FFFFFF"
-            />
-          }
+          onPress={footerPress}
+          leftIcon={<Ionicons name={footerIcon} size={20} color="#FFFFFF" />}
         />
       </View>
     </View>
