@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useMemo } from 'react';
-import { StyleSheet, View, FlatList, ListRenderItem } from 'react-native';
+import { StyleSheet, View, ScrollView } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Spacing } from '../../constants';
 import {
@@ -25,6 +25,65 @@ export interface MarketFeedHeaderProps {
   primaryColor: string;
 }
 
+interface PopularRowProps {
+  item: PopularService;
+  labelBg: string;
+  labelColor: string;
+  onPress: () => void;
+}
+
+const PopularRow = memo(function PopularRow({
+  item,
+  labelBg,
+  labelColor,
+  onPress,
+}: PopularRowProps) {
+  return (
+    <PopularServiceCard
+      item={item}
+      labelBg={labelBg}
+      labelColor={labelColor}
+      onPress={onPress}
+    />
+  );
+});
+
+interface RecentRowProps {
+  item: FeaturedPost;
+  cardBg: string;
+  searchBg: string;
+  textColor: string;
+  iconColor: string;
+  primaryColor: string;
+  borderColor: string;
+  onPress: () => void;
+}
+
+const RecentRow = memo(function RecentRow({
+  item,
+  cardBg,
+  searchBg,
+  textColor,
+  iconColor,
+  primaryColor,
+  borderColor,
+  onPress,
+}: RecentRowProps) {
+  return (
+    <FeaturedPostCard
+      item={item}
+      layout="carousel"
+      onPress={onPress}
+      cardBg={cardBg}
+      subtleBg={searchBg}
+      textColor={textColor}
+      mutedColor={iconColor}
+      primaryColor={primaryColor}
+      borderColor={borderColor}
+    />
+  );
+});
+
 const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
   cardBg,
   searchBg,
@@ -41,37 +100,18 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
     [cardBg]
   );
 
-  const renderPopular: ListRenderItem<PopularService> = useCallback(
-    ({ item }) => (
-      <PopularServiceCard
-        item={item}
-        labelBg={cardBg}
-        labelColor={textColor}
-        onPress={onPress}
-      />
-    ),
-    [cardBg, textColor, onPress]
-  );
-
-  const renderRecent: ListRenderItem<FeaturedPost> = useCallback(
-    ({ item }) => (
-      <FeaturedPostCard
-        item={item}
-        layout="carousel"
-        onPress={onPress}
-        cardBg={cardBg}
-        subtleBg={searchBg}
-        textColor={textColor}
-        mutedColor={iconColor}
-        primaryColor={primaryColor}
-        borderColor={borderColor}
-      />
-    ),
+  const recentCardProps = useMemo(
+    () => ({
+      cardBg,
+      searchBg,
+      textColor,
+      iconColor,
+      primaryColor,
+      borderColor,
+      onPress,
+    }),
     [cardBg, searchBg, textColor, iconColor, primaryColor, borderColor, onPress]
   );
-
-  const popularKey = useCallback((item: PopularService) => item.id, []);
-  const recentKey = useCallback((item: FeaturedPost) => item.id, []);
 
   return (
     <View>
@@ -84,21 +124,24 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
             onActionPress={onPress}
           />
         </View>
-        <FlatList
-          data={POPULAR_SERVICES_MOCK}
-          renderItem={renderPopular}
-          keyExtractor={popularKey}
+        <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           nestedScrollEnabled
           overScrollMode="never"
-          initialNumToRender={5}
-          maxToRenderPerBatch={5}
-          windowSize={3}
-          removeClippedSubviews
-          ItemSeparatorComponent={() => <View style={{ width: POPULAR_SEPARATOR }} />}
           contentContainerStyle={styles.hListContent}
-        />
+        >
+          {POPULAR_SERVICES_MOCK.map((item, index) => (
+            <View key={item.id} style={index > 0 ? styles.hItemGap : undefined}>
+              <PopularRow
+                item={item}
+                labelBg={cardBg}
+                labelColor={textColor}
+                onPress={onPress}
+              />
+            </View>
+          ))}
+        </ScrollView>
       </View>
 
       <View style={styles.block}>
@@ -110,21 +153,19 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
             onActionPress={onPress}
           />
         </View>
-        <FlatList
-          data={RECENTLY_VIEWED_MOCK}
-          renderItem={renderRecent}
-          keyExtractor={recentKey}
+        <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           nestedScrollEnabled
           overScrollMode="never"
-          initialNumToRender={2}
-          maxToRenderPerBatch={2}
-          windowSize={3}
-          removeClippedSubviews
-          ItemSeparatorComponent={() => <View style={{ width: CAROUSEL_SEPARATOR }} />}
           contentContainerStyle={styles.hListContent}
-        />
+        >
+          {RECENTLY_VIEWED_MOCK.map((item, index) => (
+            <View key={item.id} style={index > 0 ? styles.hItemGapWide : undefined}>
+              <RecentRow item={item} {...recentCardProps} />
+            </View>
+          ))}
+        </ScrollView>
       </View>
 
       <View style={styles.paddedBlock}>
@@ -165,6 +206,12 @@ const styles = StyleSheet.create({
   hListContent: {
     paddingHorizontal: H_PAD,
     paddingVertical: Spacing.xs,
+  },
+  hItemGap: {
+    marginLeft: POPULAR_SEPARATOR,
+  },
+  hItemGapWide: {
+    marginLeft: CAROUSEL_SEPARATOR,
   },
 });
 

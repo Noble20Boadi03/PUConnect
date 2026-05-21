@@ -2,8 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   View,
-  FlatList,
-  ListRenderItem,
+  ScrollView,
   useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,12 +12,10 @@ import { useThemeColor } from '../../hooks';
 import { Spacing } from '../../constants';
 import { FEATURED_POSTS_MOCK } from '../../constants';
 import { MarketHeader, MarketFeedHeader, FeaturedPostCard } from '../../components';
-import type { FeaturedPost } from '../../types';
 
 /**
- * Market feed uses a single vertical FlatList (not ScrollView) so scrolling stays smooth.
- * Horizontal rows live in ListHeaderComponent with nested horizontal FlatLists.
- * @see https://reactnative.dev/docs/optimizing-flatlist-configuration
+ * Market uses a single ScrollView (mock data is small) to avoid nested
+ * VirtualizedLists, which cause slow updates and jank after resume.
  */
 export default function MarketScreen() {
   const Colors = useThemeColor();
@@ -86,49 +83,33 @@ export default function MarketScreen() {
     [cardBg, searchBg, Colors.text, Colors.icon, Colors.primary, borderColor]
   );
 
-  const ListHeader = useMemo(
-    () => <MarketFeedHeader {...feedHeaderTheme} />,
-    [feedHeaderTheme]
-  );
-
-  const renderFeatured: ListRenderItem<FeaturedPost> = useCallback(
-    ({ item }) => (
-      <View style={styles.featuredItem}>
-        <FeaturedPostCard
-          item={item}
-          layout="stack"
-          onPress={handleCardPress}
-          {...postCardTheme}
-        />
-      </View>
-    ),
-    [handleCardPress, postCardTheme]
-  );
-
-  const keyExtractor = useCallback((item: FeaturedPost) => item.id, []);
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
       <View style={styles.root}>
         <MarketHeader {...headerTheme} />
 
-        <FlatList
-          data={FEATURED_POSTS_MOCK}
-          renderItem={renderFeatured}
-          keyExtractor={keyExtractor}
-          ListHeaderComponent={ListHeader}
-          style={[styles.list, { backgroundColor: screenBg }]}
-          contentContainerStyle={styles.listContent}
+        <ScrollView
+          style={[styles.scroll, { backgroundColor: screenBg }]}
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled
           overScrollMode="never"
           removeClippedSubviews
-          initialNumToRender={2}
-          maxToRenderPerBatch={2}
-          windowSize={5}
-          updateCellsBatchingPeriod={50}
-        />
+        >
+          <MarketFeedHeader {...feedHeaderTheme} />
+
+          {FEATURED_POSTS_MOCK.map((item) => (
+            <View key={item.id} style={styles.featuredItem}>
+              <FeaturedPostCard
+                item={item}
+                layout="stack"
+                onPress={handleCardPress}
+                {...postCardTheme}
+              />
+            </View>
+          ))}
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
@@ -141,10 +122,10 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
-  list: {
+  scroll: {
     flex: 1,
   },
-  listContent: {
+  scrollContent: {
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.xxl,
   },

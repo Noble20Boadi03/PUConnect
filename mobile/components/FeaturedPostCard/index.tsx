@@ -1,7 +1,9 @@
 import React, { memo } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Dimensions } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, Typography, CARD_SHADOW, CARD_BORDER } from '../../constants';
+import { formatPostPrice } from '../../lib';
 import type { FeaturedPost } from '../../types';
 
 export type FeaturedPostCardLayout = 'stack' | 'carousel';
@@ -21,6 +23,9 @@ export interface FeaturedPostCardProps {
 const SCREEN_WIDTH = Dimensions.get('window').width;
 export const FEATURED_POST_CARD_CAROUSEL_WIDTH = SCREEN_WIDTH * 0.82;
 
+const THUMB_HEIGHT_CAROUSEL = 112;
+const THUMB_HEIGHT_STACK = 128;
+
 const FeaturedPostCardComponent: React.FC<FeaturedPostCardProps> = ({
   item,
   cardBg,
@@ -33,19 +38,19 @@ const FeaturedPostCardComponent: React.FC<FeaturedPostCardProps> = ({
   onPress,
 }) => {
   const isCarousel = layout === 'carousel';
-  const isRequest = item.tag === 'Request';
-  const tagBg = isRequest ? '#F59E0B18' : `${primaryColor}18`;
-  const tagColor = isRequest ? '#F59E0B' : primaryColor;
+  const isService = item.tag === 'Service';
+  const tagBg = isService ? `${primaryColor}18` : '#F59E0B18';
+  const tagColor = isService ? primaryColor : '#F59E0B';
   const timeLabel = item.viewedAt ? `Viewed ${item.viewedAt}` : item.postedAt;
+  const priceLabel = formatPostPrice(item.price);
+  const thumbHeight = isCarousel ? THUMB_HEIGHT_CAROUSEL : THUMB_HEIGHT_STACK;
 
   return (
     <View
       style={[
         styles.cardOuter,
         isCarousel ? styles.cardOuterCarousel : undefined,
-        isCarousel
-          ? { borderColor, ...CARD_BORDER }
-          : undefined,
+        isCarousel ? { borderColor, ...CARD_BORDER } : undefined,
       ]}
     >
       <TouchableOpacity
@@ -53,43 +58,75 @@ const FeaturedPostCardComponent: React.FC<FeaturedPostCardProps> = ({
         onPress={onPress}
         activeOpacity={0.85}
       >
-        <View style={styles.topRow}>
-          <View style={[styles.tag, { backgroundColor: tagBg }]}>
-            <Text style={[styles.tagText, { color: tagColor }]}>{item.tag}</Text>
+        {isService ? (
+          <View style={[styles.thumbnailWrap, { height: thumbHeight, backgroundColor: subtleBg }]}>
+            <Image
+              source={{ uri: item.thumbnail }}
+              style={styles.thumbnail}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              recyclingKey={`market-post-${item.id}`}
+              transition={0}
+            />
           </View>
-          <Text style={[styles.postedAt, { color: mutedColor }]}>{timeLabel}</Text>
-        </View>
+        ) : null}
 
-        <Text style={[styles.title, { color: textColor }]} numberOfLines={2}>
-          {item.title}
-        </Text>
-        <Text
-          style={[styles.description, { color: mutedColor }]}
-          numberOfLines={isCarousel ? 2 : 3}
-        >
-          {item.description}
-        </Text>
+        <View style={[styles.body, isService ? styles.bodyWithThumb : undefined]}>
+          <View style={styles.topRow}>
+            <View style={[styles.tag, { backgroundColor: tagBg }]}>
+              <Text style={[styles.tagText, { color: tagColor }]}>{item.tag}</Text>
+            </View>
+            <Text style={[styles.postedAt, { color: mutedColor }]}>{timeLabel}</Text>
+          </View>
 
-        <View style={[styles.footer, { borderTopColor: subtleBg }]}>
-          <View style={styles.authorRow}>
-            <View style={[styles.avatar, { backgroundColor: primaryColor + '22' }]}>
-              <Text style={[styles.avatarText, { color: primaryColor }]}>
-                {item.authorInitials}
+          <Text style={[styles.title, { color: textColor }]} numberOfLines={2}>
+            {item.title}
+          </Text>
+          <Text
+            style={[styles.description, { color: mutedColor }]}
+            numberOfLines={isCarousel ? 2 : 3}
+          >
+            {item.description}
+          </Text>
+
+          <View style={[styles.footer, { borderTopColor: subtleBg }]}>
+            <View style={styles.authorRow}>
+              <View style={[styles.avatar, { backgroundColor: primaryColor + '22' }]}>
+                <Text style={[styles.avatarText, { color: primaryColor }]}>
+                  {item.authorInitials}
+                </Text>
+              </View>
+              <Text style={[styles.authorName, { color: textColor }]} numberOfLines={1}>
+                {item.authorName}
               </Text>
             </View>
-            <Text style={[styles.authorName, { color: textColor }]} numberOfLines={1}>
-              {item.authorName}
-            </Text>
-          </View>
-          <View style={styles.priceRow}>
-            <Text style={[styles.price, { color: primaryColor }]}>{item.priceLabel}</Text>
-            <Ionicons name="chevron-forward" size={18} color={mutedColor} />
+            <View style={styles.priceRow}>
+              <Text style={[styles.price, { color: primaryColor }]}>{priceLabel}</Text>
+              <Ionicons name="chevron-forward" size={18} color={mutedColor} />
+            </View>
           </View>
         </View>
       </TouchableOpacity>
     </View>
   );
 };
+
+function areFeaturedPostCardPropsEqual(
+  prev: FeaturedPostCardProps,
+  next: FeaturedPostCardProps
+): boolean {
+  return (
+    prev.item === next.item &&
+    prev.layout === next.layout &&
+    prev.cardBg === next.cardBg &&
+    prev.subtleBg === next.subtleBg &&
+    prev.textColor === next.textColor &&
+    prev.mutedColor === next.mutedColor &&
+    prev.primaryColor === next.primaryColor &&
+    prev.borderColor === next.borderColor &&
+    prev.onPress === next.onPress
+  );
+}
 
 const styles = StyleSheet.create({
   cardOuter: {
@@ -106,8 +143,21 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 16,
-    padding: Spacing.md,
     overflow: 'hidden',
+  },
+  thumbnailWrap: {
+    width: '100%',
+    overflow: 'hidden',
+  },
+  thumbnail: {
+    width: '100%',
+    height: '100%',
+  },
+  body: {
+    padding: Spacing.md,
+  },
+  bodyWithThumb: {
+    paddingTop: Spacing.sm + 4,
   },
   topRow: {
     flexDirection: 'row',
@@ -181,6 +231,6 @@ const styles = StyleSheet.create({
   },
 });
 
-export const FeaturedPostCard = memo(FeaturedPostCardComponent);
+export const FeaturedPostCard = memo(FeaturedPostCardComponent, areFeaturedPostCardPropsEqual);
 
 export default FeaturedPostCard;

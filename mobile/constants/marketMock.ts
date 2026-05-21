@@ -1,4 +1,5 @@
 import type { PopularService, FeaturedPost } from '../types/market';
+import { MARKET_POST_THUMBNAILS } from './marketPostImages';
 
 export const POPULAR_SERVICES_MOCK: PopularService[] = [
   {
@@ -42,7 +43,8 @@ export const RECENTLY_VIEWED_MOCK: FeaturedPost[] = [
     authorName: 'Jordan P.',
     authorInitials: 'JP',
     tag: 'Service',
-    priceLabel: '$20/hr',
+    thumbnail: MARKET_POST_THUMBNAILS.tutoring,
+    price: { kind: 'range', min: 20, max: 30 },
     postedAt: '3d ago',
     viewedAt: '2h ago',
   },
@@ -54,7 +56,8 @@ export const RECENTLY_VIEWED_MOCK: FeaturedPost[] = [
     authorName: 'Mia L.',
     authorInitials: 'ML',
     tag: 'Service',
-    priceLabel: '$35',
+    thumbnail: MARKET_POST_THUMBNAILS.design,
+    price: { kind: 'fixed', amount: 35 },
     postedAt: '5d ago',
     viewedAt: 'Yesterday',
   },
@@ -66,7 +69,8 @@ export const RECENTLY_VIEWED_MOCK: FeaturedPost[] = [
     authorName: 'Chris T.',
     authorInitials: 'CT',
     tag: 'Service',
-    priceLabel: '$120',
+    thumbnail: MARKET_POST_THUMBNAILS.development,
+    price: { kind: 'negotiated' },
     postedAt: '2w ago',
     viewedAt: '3d ago',
   },
@@ -78,7 +82,8 @@ export const RECENTLY_VIEWED_MOCK: FeaturedPost[] = [
     authorName: 'Priya N.',
     authorInitials: 'PN',
     tag: 'Service',
-    priceLabel: '$60',
+    thumbnail: MARKET_POST_THUMBNAILS.bootcamp,
+    price: { kind: 'fixed', amount: 50 },
     postedAt: '1w ago',
     viewedAt: '5h ago',
   },
@@ -90,7 +95,8 @@ export const RECENTLY_VIEWED_MOCK: FeaturedPost[] = [
     authorName: 'Sam R.',
     authorInitials: 'SR',
     tag: 'Service',
-    priceLabel: '$18/load',
+    thumbnail: MARKET_POST_THUMBNAILS.laundry,
+    price: { kind: 'fixed', amount: 18 },
     postedAt: '4d ago',
     viewedAt: '1d ago',
   },
@@ -102,7 +108,7 @@ export const RECENTLY_VIEWED_MOCK: FeaturedPost[] = [
     authorName: 'Taylor W.',
     authorInitials: 'TW',
     tag: 'Request',
-    priceLabel: '$50/video',
+    price: { kind: 'range', min: 40, max: 60 },
     postedAt: '6d ago',
     viewedAt: '4d ago',
   },
@@ -117,7 +123,7 @@ export const FEATURED_POSTS_MOCK: FeaturedPost[] = [
     authorName: 'Sarah M.',
     authorInitials: 'SM',
     tag: 'Request',
-    priceLabel: '$200–$400',
+    price: { kind: 'range', min: 200, max: 400 },
     postedAt: '4h ago',
   },
   {
@@ -128,7 +134,8 @@ export const FEATURED_POSTS_MOCK: FeaturedPost[] = [
     authorName: 'Alex K.',
     authorInitials: 'AK',
     tag: 'Service',
-    priceLabel: '$15/page',
+    thumbnail: MARKET_POST_THUMBNAILS.editing,
+    price: { kind: 'fixed', amount: 50 },
     postedAt: '1d ago',
   },
 ];

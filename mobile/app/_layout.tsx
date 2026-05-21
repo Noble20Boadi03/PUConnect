@@ -2,7 +2,7 @@ import { Stack } from "expo-router";
 import { ThemeProvider, DarkTheme, DefaultTheme } from '@react-navigation/native';
 import { useColorScheme, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAuthStore } from '../store';
 import { initializeThemePreference } from '../lib/themePreference';
 import { useRouter, useSegments } from 'expo-router';
@@ -18,10 +18,19 @@ export default function RootLayout() {
   const segments = useSegments();
   const router = useRouter();
 
+  const didRedirectRef = useRef(false);
+
   useEffect(() => {
     initialize();
     initializeThemePreference();
   }, []);
+
+  // Authenticated users skip the landing page — hide splash once auth is ready.
+  useEffect(() => {
+    if (!isLoading) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [isLoading]);
 
   // Sync System Navigation Bar on Android with the theme
   useEffect(() => {
@@ -40,11 +49,17 @@ export default function RootLayout() {
     const inSettings = segments[0] === 'settings';
 
     if (isAuthenticated && !inTabsGroup && !inSettings) {
-      // Redirect authenticated users to the home tabs
-      router.replace('/(tabs)/market' as any);
+      if (!didRedirectRef.current) {
+        didRedirectRef.current = true;
+        router.replace('/(tabs)/market' as any);
+      }
     } else if (!isAuthenticated && (inTabsGroup || inSettings)) {
-      // Redirect unauthenticated users away from protected screens
-      router.replace('/(auth)/login' as any);
+      if (!didRedirectRef.current) {
+        didRedirectRef.current = true;
+        router.replace('/(auth)/login' as any);
+      }
+    } else {
+      didRedirectRef.current = false;
     }
   }, [isAuthenticated, segments, isLoading]);
 
