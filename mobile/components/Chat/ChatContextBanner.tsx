@@ -11,7 +11,11 @@ export interface ChatContextBannerProps {
   textColor: string;
   mutedColor: string;
   primaryColor: string;
-  officialHireActive?: boolean;
+  officialEngagementActive?: boolean;
+  officialEngagementCompleted?: boolean;
+  officialCompletionPending?: boolean;
+  /** Client must review provider's completion request. */
+  officialCompletionNeedsReview?: boolean;
   onPress: () => void;
 }
 
@@ -22,12 +26,16 @@ export const ChatContextBanner: React.FC<ChatContextBannerProps> = ({
   textColor,
   mutedColor,
   primaryColor,
-  officialHireActive = false,
+  officialEngagementActive = false,
+  officialEngagementCompleted = false,
+  officialCompletionPending = false,
+  officialCompletionNeedsReview = false,
   onPress,
 }) => {
   const isService = context.tag === 'Service';
   const badgeBg = isService ? primaryColor + '22' : '#F59E0B22';
   const badgeColor = isService ? primaryColor : '#F59E0B';
+  const officialAccent = isService ? primaryColor : '#F59E0B';
 
   return (
     <TouchableOpacity
@@ -49,10 +57,25 @@ export const ChatContextBanner: React.FC<ChatContextBannerProps> = ({
           <View style={[styles.badge, { backgroundColor: badgeBg }]}>
             <Text style={[styles.badgeText, { color: badgeColor }]}>{context.tag}</Text>
           </View>
-          {officialHireActive ? (
-            <View style={[styles.officialBadge, { backgroundColor: primaryColor + '22' }]}>
-              <Ionicons name="shield-checkmark" size={10} color={primaryColor} />
-              <Text style={[styles.officialBadgeText, { color: primaryColor }]}>Official</Text>
+          {officialEngagementCompleted ? (
+            <View style={[styles.officialBadge, { backgroundColor: officialAccent + '22' }]}>
+              <Ionicons name="checkmark-circle" size={10} color={officialAccent} />
+              <Text style={[styles.officialBadgeText, { color: officialAccent }]}>Complete</Text>
+            </View>
+          ) : officialCompletionNeedsReview ? (
+            <View style={[styles.officialBadge, { backgroundColor: '#F59E0B22' }]}>
+              <Ionicons name="alert-circle" size={10} color="#F59E0B" />
+              <Text style={[styles.officialBadgeText, { color: '#F59E0B' }]}>Review</Text>
+            </View>
+          ) : officialCompletionPending ? (
+            <View style={[styles.officialBadge, { backgroundColor: officialAccent + '22' }]}>
+              <Ionicons name="time-outline" size={10} color={officialAccent} />
+              <Text style={[styles.officialBadgeText, { color: officialAccent }]}>Pending</Text>
+            </View>
+          ) : officialEngagementActive ? (
+            <View style={[styles.officialBadge, { backgroundColor: officialAccent + '22' }]}>
+              <Ionicons name="shield-checkmark" size={10} color={officialAccent} />
+              <Text style={[styles.officialBadgeText, { color: officialAccent }]}>Official</Text>
             </View>
           ) : null}
         </View>

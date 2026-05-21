@@ -2,8 +2,14 @@ import type { MarketIconName, MarketPostTag } from './market';
 
 export type ChatMessageKind = 'sent' | 'received' | 'system';
 
-/** PuConnect-tracked hire tied to the contextual service listing. */
-export type OfficialHireStatus = 'none' | 'active';
+/** PuConnect-tracked official action tied to the contextual listing (service or request). */
+export type OfficialEngagementStatus = 'none' | 'active' | 'completed';
+
+/** Two-party completion: provider requests, client reviews and confirms. */
+export type OfficialCompletionPhase = 'none' | 'pending_review' | 'completed';
+
+/** @deprecated Use OfficialEngagementStatus */
+export type OfficialHireStatus = OfficialEngagementStatus;
 
 export interface ChatMessage {
   id: string;

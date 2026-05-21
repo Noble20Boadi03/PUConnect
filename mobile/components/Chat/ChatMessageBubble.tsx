@@ -13,6 +13,7 @@ export interface ChatMessageBubbleProps {
   mutedColor: string;
   primaryColor: string;
   systemBg: string;
+  systemAccent?: string;
 }
 
 export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
@@ -24,12 +25,15 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
   mutedColor,
   primaryColor,
   systemBg,
+  systemAccent,
 }) => {
+  const accent = systemAccent ?? primaryColor;
+
   if (message.kind === 'system') {
     return (
       <View style={styles.systemRow}>
         <View style={[styles.systemBubble, { backgroundColor: systemBg }]}>
-          <Ionicons name="shield-checkmark" size={14} color={primaryColor} />
+          <Ionicons name="shield-checkmark" size={14} color={accent} />
           <Text style={[styles.systemText, { color: mutedColor }]}>{message.text}</Text>
         </View>
         <Text style={[styles.time, styles.timeSystem, { color: mutedColor }]}>{message.time}</Text>

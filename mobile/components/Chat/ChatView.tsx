@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   StyleSheet,
   View,
   Text,
@@ -13,20 +14,33 @@ import * as Haptics from 'expo-haptics';
 
 import { useThemeColor } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
-import { getProviderServices } from '../../lib';
+import { getProviderServices, isCurrentUserProvider } from '../../lib';
 import { ChatHeader } from './ChatHeader';
 import { ChatContextBanner } from './ChatContextBanner';
 import { ChatMessageBubble } from './ChatMessageBubble';
 import { ChatComposer } from './ChatComposer';
 import { ChatOptionsSheet, type ChatMenuAction } from './ChatOptionsSheet';
 import { ChatAttachmentSheet, type ChatAttachmentAction } from './ChatAttachmentSheet';
-import { ChatOfficialHireSheet } from './ChatOfficialHireSheet';
+import { ChatOfficialEngagementSheet } from './ChatOfficialEngagementSheet';
+import { ChatOfficialDetailsSheet } from './ChatOfficialDetailsSheet';
 import { ProviderServicesSheet } from './ProviderServicesSheet';
-import type { ChatDateGroup, ChatMessage, ChatThread, OfficialHireStatus } from '../../types';
+import type {
+  ChatDateGroup,
+  ChatMessage,
+  ChatThread,
+  OfficialCompletionPhase,
+  OfficialEngagementStatus,
+} from '../../types';
+
+const REQUEST_ACCENT = '#F59E0B';
 
 function formatSentTime(): string {
   const now = new Date();
   return now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+function formatDisplayDate(): string {
+  return new Date().toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function appendMessages(groups: ChatDateGroup[], messages: ChatMessage[]): ChatDateGroup[] {
@@ -98,8 +112,13 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const [optionsVisible, setOptionsVisible] = useState(false);
   const [attachVisible, setAttachVisible] = useState(false);
   const [servicesVisible, setServicesVisible] = useState(false);
-  const [hireSheetVisible, setHireSheetVisible] = useState(false);
-  const [officialHireStatus, setOfficialHireStatus] = useState<OfficialHireStatus>('none');
+  const [engagementSheetVisible, setEngagementSheetVisible] = useState(false);
+  const [detailsSheetVisible, setDetailsSheetVisible] = useState(false);
+  const [officialEngagementStatus, setOfficialEngagementStatus] =
+    useState<OfficialEngagementStatus>('none');
+  const [completionPhase, setCompletionPhase] = useState<OfficialCompletionPhase>('none');
+  const [engagementStartedAt, setEngagementStartedAt] = useState<string | undefined>();
+  const [completionRequestedAt, setCompletionRequestedAt] = useState<string | undefined>();
   const scrollRef = useRef<ScrollView>(null);
   const [dateGroups, setDateGroups] = useState<ChatDateGroup[]>(() =>
     thread.dateGroups.map((g) => ({ ...g, messages: [...g.messages] }))
@@ -121,36 +140,291 @@ export const ChatView: React.FC<ChatViewProps> = ({
     setOptionsVisible(true);
   }, []);
 
-  const canOfficialHire =
-    thread.postContext?.tag === 'Service' && officialHireStatus === 'none';
+  const canOfficialService =
+    thread.postContext?.tag === 'Service' && officialEngagementStatus === 'none';
+  const canOfficialRequest =
+    thread.postContext?.tag === 'Request' && officialEngagementStatus === 'none';
+  const hasOfficialEngagement =
+    officialEngagementStatus === 'active' || officialEngagementStatus === 'completed';
+
+  const userIsProvider = thread.postContext
+    ? isCurrentUserProvider(thread.postContext.tag)
+    : false;
+
+  const contextAccent =
+    thread.postContext?.tag === 'Request' ? REQUEST_ACCENT : Colors.primary;
+
+  const openOfficialDetails = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setDetailsSheetVisible(true);
+  }, []);
+
+  const handleContextBannerPress = useCallback(() => {
+    if (hasOfficialEngagement) {
+      openOfficialDetails();
+      return;
+    }
+    handleOpenPost();
+  }, [hasOfficialEngagement, openOfficialDetails, handleOpenPost]);
+
+  const appendEngagementSystemMessages = useCallback(
+    (messages: ChatMessage[]) => {
+      setDateGroups((prev) => appendMessages(prev, messages));
+      requestAnimationFrame(() => {
+        scrollRef.current?.scrollToEnd({ animated: true });
+      });
+    },
+    []
+  );
+
+  const handleCancelOfficialRequest = useCallback(() => {
+    if (!thread.postContext) return;
+    const ctx = thread.postContext;
+    Alert.alert(
+      'Cancel Official Request?',
+      `This withdraws your official request for “${ctx.title}”. You can start a new official request later if needed.`,
+      [
+        { text: 'Keep Request', style: 'cancel' },
+        {
+          text: 'Cancel Request',
+          style: 'destructive',
+          onPress: () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            setOfficialEngagementStatus('none');
+            setCompletionPhase('none');
+            setCompletionRequestedAt(undefined);
+            setEngagementStartedAt(undefined);
+            appendEngagementSystemMessages([
+              {
+                id: `system-cancel-${Date.now()}`,
+                kind: 'system',
+                text: `Official service request for “${ctx.title}” was cancelled.`,
+                time: formatSentTime(),
+              },
+            ]);
+          },
+        },
+      ]
+    );
+  }, [thread.postContext, appendEngagementSystemMessages]);
+
+  const handleWithdrawOfficialResponse = useCallback(() => {
+    if (!thread.postContext) return;
+    const ctx = thread.postContext;
+    Alert.alert(
+      'Withdraw Official Response?',
+      `This removes your official response to “${ctx.title}”. You can submit a new official response later if needed.`,
+      [
+        { text: 'Keep Response', style: 'cancel' },
+        {
+          text: 'Withdraw',
+          style: 'destructive',
+          onPress: () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            setOfficialEngagementStatus('none');
+            setCompletionPhase('none');
+            setCompletionRequestedAt(undefined);
+            setEngagementStartedAt(undefined);
+            appendEngagementSystemMessages([
+              {
+                id: `system-withdraw-${Date.now()}`,
+                kind: 'system',
+                text: `Official response to “${ctx.title}” was withdrawn.`,
+                time: formatSentTime(),
+              },
+            ]);
+          },
+        },
+      ]
+    );
+  }, [thread.postContext, appendEngagementSystemMessages]);
+
+  const applyProviderCompletionRequest = useCallback(
+    (ctx: NonNullable<ChatThread['postContext']>) => {
+      const providerName = userIsProvider ? 'You' : thread.participant.displayName;
+      const time = formatSentTime();
+      const requestedLabel = formatDisplayDate();
+      setCompletionPhase('pending_review');
+      setCompletionRequestedAt(requestedLabel);
+      const followUp: ChatMessage = userIsProvider
+        ? {
+            id: `sent-completion-req-${Date.now()}`,
+            kind: 'sent',
+            text: `I have requested completion for “${ctx.title}”. Please review the service delivered when you are ready.`,
+            time,
+          }
+        : {
+            id: `recv-completion-req-${Date.now()}`,
+            kind: 'received',
+            text: `I have finished the work for “${ctx.title}”. Please review the service delivered in Official Details and confirm when you are satisfied.`,
+            time,
+          };
+      appendEngagementSystemMessages([
+        {
+          id: `system-completion-req-${Date.now()}`,
+          kind: 'system',
+          text: `${providerName} has requested to mark “${ctx.title}” complete.`,
+          time,
+        },
+        followUp,
+      ]);
+    },
+    [thread.participant.displayName, userIsProvider, appendEngagementSystemMessages]
+  );
+
+  const handleRequestOfficialCompletion = useCallback(() => {
+    if (!thread.postContext || officialEngagementStatus !== 'active' || completionPhase !== 'none') {
+      return;
+    }
+    if (!userIsProvider) return;
+    const ctx = thread.postContext;
+    Alert.alert(
+      'Request Completion?',
+      `Notify ${thread.participant.displayName} that the service for “${ctx.title}” is ready for review. They must confirm before this undertaking is closed.`,
+      [
+        { text: 'Not Yet', style: 'cancel' },
+        {
+          text: 'Request Completion',
+          onPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            applyProviderCompletionRequest(ctx);
+          },
+        },
+      ]
+    );
+  }, [
+    thread.postContext,
+    thread.participant.displayName,
+    officialEngagementStatus,
+    completionPhase,
+    userIsProvider,
+    applyProviderCompletionRequest,
+  ]);
+
+  const handleConfirmOfficialCompletion = useCallback(() => {
+    if (!thread.postContext || completionPhase !== 'pending_review' || userIsProvider) return;
+    const ctx = thread.postContext;
+    Alert.alert(
+      'Confirm Service Delivered?',
+      `Both parties must agree to close this undertaking for “${ctx.title}”. Only confirm if the service met what was agreed.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Confirm Complete',
+          onPress: () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            setOfficialEngagementStatus('completed');
+            setCompletionPhase('completed');
+            const time = formatSentTime();
+            appendEngagementSystemMessages([
+              {
+                id: `system-complete-${Date.now()}`,
+                kind: 'system',
+                text: `Official undertaking for “${ctx.title}” is complete. Both parties agreed.`,
+                time,
+              },
+              {
+                id: `recv-complete-${Date.now()}`,
+                kind: 'received',
+                text: `Thank you for confirming. I have marked our agreement for “${ctx.title}” as complete.`,
+                time,
+              },
+            ]);
+          },
+        },
+      ]
+    );
+  }, [thread.postContext, completionPhase, userIsProvider, appendEngagementSystemMessages]);
+
+  const handleDeclineOfficialCompletion = useCallback(() => {
+    if (!thread.postContext || completionPhase !== 'pending_review' || userIsProvider) return;
+    const ctx = thread.postContext;
+    Alert.alert(
+      'Needs More Work?',
+      `Decline completion for now and let ${thread.participant.displayName} know the service for “${ctx.title}” still needs attention.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Decline for Now',
+          style: 'destructive',
+          onPress: () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            setCompletionPhase('none');
+            setCompletionRequestedAt(undefined);
+            const time = formatSentTime();
+            appendEngagementSystemMessages([
+              {
+                id: `system-decline-${Date.now()}`,
+                kind: 'system',
+                text: `Completion for “${ctx.title}” was declined — more work is needed.`,
+                time,
+              },
+              {
+                id: `recv-decline-${Date.now()}`,
+                kind: 'received',
+                text: `Thanks for the update. I understand more work is needed on “${ctx.title}”. Let me know when you are ready to review again.`,
+                time,
+              },
+            ]);
+          },
+        },
+      ]
+    );
+  }, [thread.postContext, thread.participant.displayName, completionPhase, userIsProvider, appendEngagementSystemMessages]);
 
   const handleMenuSelect = useCallback(
     (action: ChatMenuAction) => {
       if (action === 'browseServices') {
         setServicesVisible(true);
-      } else if (action === 'hireService' && thread.postContext) {
-        setHireSheetVisible(true);
+      } else if (
+        (action === 'officialService' || action === 'officialRequest') &&
+        thread.postContext
+      ) {
+        setEngagementSheetVisible(true);
+      } else if (action === 'cancelOfficialRequest') {
+        handleCancelOfficialRequest();
+      } else if (action === 'withdrawOfficialResponse') {
+        handleWithdrawOfficialResponse();
+      } else if (action === 'viewOfficialDetails' || action === 'reviewOfficialCompletion') {
+        openOfficialDetails();
+      } else if (action === 'requestOfficialCompletion') {
+        handleRequestOfficialCompletion();
       }
     },
-    [thread.postContext]
+    [
+      thread.postContext,
+      handleCancelOfficialRequest,
+      handleWithdrawOfficialResponse,
+      openOfficialDetails,
+      handleRequestOfficialCompletion,
+    ]
   );
 
-  const handleConfirmOfficialHire = useCallback(() => {
+  const handleConfirmOfficialEngagement = useCallback(() => {
     if (!thread.postContext) return;
-    setOfficialHireStatus('active');
+    const ctx = thread.postContext;
+    const isRequest = ctx.tag === 'Request';
+    setOfficialEngagementStatus('active');
+    setCompletionPhase('none');
+    setEngagementStartedAt(formatDisplayDate());
+    setCompletionRequestedAt(undefined);
     const time = formatSentTime();
     setDateGroups((prev) =>
       appendMessages(prev, [
         {
-          id: `system-hire-${Date.now()}`,
+          id: `system-engagement-${Date.now()}`,
           kind: 'system',
-          text: `Official service request started for “${thread.postContext!.title}”.`,
+          text: isRequest
+            ? `Official response submitted for “${ctx.title}”.`
+            : `Official service request started for “${ctx.title}”.`,
           time,
         },
         {
-          id: `recv-hire-${Date.now()}`,
+          id: `recv-engagement-${Date.now()}`,
           kind: 'received',
-          text: `Thanks! I have received your official request for “${thread.postContext!.title}”. I will confirm details shortly.`,
+          text: isRequest
+            ? `Thanks! I received your official response to my request for “${ctx.title}”. I will review and get back to you.`
+            : `Thanks! I have received your official request for “${ctx.title}”. I will confirm details shortly.`,
           time,
         },
       ])
@@ -158,7 +432,30 @@ export const ChatView: React.FC<ChatViewProps> = ({
     requestAnimationFrame(() => {
       scrollRef.current?.scrollToEnd({ animated: true });
     });
-  }, [thread.postContext]);
+
+    if (!isRequest) {
+      const ctx = thread.postContext;
+      const providerName = thread.participant.displayName;
+      setTimeout(() => {
+        setCompletionPhase('pending_review');
+        setCompletionRequestedAt(formatDisplayDate());
+        appendEngagementSystemMessages([
+          {
+            id: `system-provider-req-${Date.now()}`,
+            kind: 'system',
+            text: `${providerName} has requested to mark “${ctx.title}” complete.`,
+            time: formatSentTime(),
+          },
+          {
+            id: `recv-provider-req-${Date.now()}`,
+            kind: 'received',
+            text: `I have finished the work for “${ctx.title}”. Please review the service delivered in Official Details and confirm when you are satisfied.`,
+            time: formatSentTime(),
+          },
+        ]);
+      }, 2800);
+    }
+  }, [thread.postContext, thread.participant.displayName, appendEngagementSystemMessages]);
 
   const handleAttachSelect = useCallback((action: ChatAttachmentAction) => {
     if (action === 'photos' || action === 'documents') {
@@ -203,8 +500,17 @@ export const ChatView: React.FC<ChatViewProps> = ({
           textColor={Colors.text}
           mutedColor={Colors.icon}
           primaryColor={Colors.primary}
-          officialHireActive={officialHireStatus === 'active'}
-          onPress={handleOpenPost}
+          officialEngagementActive={officialEngagementStatus === 'active'}
+          officialEngagementCompleted={officialEngagementStatus === 'completed'}
+          officialCompletionPending={
+            officialEngagementStatus === 'active' && completionPhase === 'pending_review' && userIsProvider
+          }
+          officialCompletionNeedsReview={
+            officialEngagementStatus === 'active' &&
+            completionPhase === 'pending_review' &&
+            !userIsProvider
+          }
+          onPress={handleContextBannerPress}
         />
       ) : null}
 
@@ -238,6 +544,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
                   mutedColor={Colors.icon}
                   primaryColor={Colors.primary}
                   systemBg={subtleBg}
+                  systemAccent={contextAccent}
                 />
               ))}
             </View>
@@ -261,19 +568,41 @@ export const ChatView: React.FC<ChatViewProps> = ({
       <ChatOptionsSheet
         visible={optionsVisible}
         showBrowseServices={!thread.postContext}
-        showHireService={canOfficialHire}
+        showOfficialService={canOfficialService}
+        showOfficialRequest={canOfficialRequest}
+        officialEngagementActive={hasOfficialEngagement}
+        officialEngagementCompleted={officialEngagementStatus === 'completed'}
+        engagementTag={thread.postContext?.tag}
+        completionPhase={completionPhase}
+        isCurrentUserProvider={userIsProvider}
         onSelect={handleMenuSelect}
         onClose={() => setOptionsVisible(false)}
       />
 
       {thread.postContext ? (
-        <ChatOfficialHireSheet
-          visible={hireSheetVisible}
-          context={thread.postContext}
-          providerName={thread.participant.displayName}
-          onConfirm={handleConfirmOfficialHire}
-          onClose={() => setHireSheetVisible(false)}
-        />
+        <>
+          <ChatOfficialEngagementSheet
+            visible={engagementSheetVisible}
+            context={thread.postContext}
+            contactName={thread.participant.displayName}
+            onConfirm={handleConfirmOfficialEngagement}
+            onClose={() => setEngagementSheetVisible(false)}
+          />
+          <ChatOfficialDetailsSheet
+            visible={detailsSheetVisible}
+            context={thread.postContext}
+            contactName={thread.participant.displayName}
+            engagementStatus={officialEngagementStatus}
+            completionPhase={completionPhase}
+            startedAt={engagementStartedAt}
+            completionRequestedAt={completionRequestedAt}
+            onRequestCompletion={handleRequestOfficialCompletion}
+            onConfirmCompletion={handleConfirmOfficialCompletion}
+            onDeclineCompletion={handleDeclineOfficialCompletion}
+            onOpenPost={handleOpenPost}
+            onClose={() => setDetailsSheetVisible(false)}
+          />
+        </>
       ) : null}
 
       <ChatAttachmentSheet

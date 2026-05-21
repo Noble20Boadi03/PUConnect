@@ -7,5 +7,6 @@ export * from './normalizeUsername';
 export * from './filterProviderPosts';
 export * from './getChatThread';
 export * from './buildChatHref';
+export * from './officialEngagement';
 export * from './getProviderServices';
 export * from './systemChrome';

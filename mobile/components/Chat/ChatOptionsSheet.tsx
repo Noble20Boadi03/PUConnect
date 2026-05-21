@@ -12,20 +12,34 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { useThemeColor } from '../../hooks';
+import type { MarketPostTag, OfficialCompletionPhase } from '../../types';
+
+const REQUEST_ACCENT = '#F59E0B';
 
 export type ChatMenuAction =
   | 'browseServices'
-  | 'hireService'
+  | 'officialService'
+  | 'officialRequest'
+  | 'cancelOfficialRequest'
+  | 'withdrawOfficialResponse'
+  | 'viewOfficialDetails'
+  | 'requestOfficialCompletion'
+  | 'reviewOfficialCompletion'
   | 'mute'
   | 'report'
   | 'cancel';
 
 export interface ChatOptionsSheetProps {
   visible: boolean;
-  /** Lists services the provider offers (chat has no post context). */
   showBrowseServices?: boolean;
-  /** Starts a PuConnect official hire for the contextual service listing. */
-  showHireService?: boolean;
+  showOfficialService?: boolean;
+  showOfficialRequest?: boolean;
+  /** Active official engagement — show manage actions instead of initiators. */
+  officialEngagementActive?: boolean;
+  officialEngagementCompleted?: boolean;
+  engagementTag?: MarketPostTag;
+  completionPhase?: OfficialCompletionPhase;
+  isCurrentUserProvider?: boolean;
   onSelect: (action: ChatMenuAction) => void;
   onClose: () => void;
 }
@@ -34,47 +48,112 @@ type MenuItem = {
   key: Exclude<ChatMenuAction, 'cancel'>;
   label: string;
   destructive?: boolean;
-  accent?: boolean;
+  accentColor?: string;
 };
 
 export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
   visible,
   showBrowseServices = false,
-  showHireService = false,
+  showOfficialService = false,
+  showOfficialRequest = false,
+  officialEngagementActive = false,
+  officialEngagementCompleted = false,
+  engagementTag,
+  completionPhase = 'none',
+  isCurrentUserProvider = false,
   onSelect,
   onClose,
 }) => {
   const Colors = useThemeColor();
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = useColorScheme() === 'dark';
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
 
   const menuItems = useMemo(() => {
     const items: MenuItem[] = [];
-    if (showHireService) {
-      items.push({
-        key: 'hireService',
-        label: 'Request Service',
-        accent: true,
-      });
+
+    if (officialEngagementActive || officialEngagementCompleted) {
+      if (!officialEngagementCompleted) {
+        if (engagementTag === 'Service') {
+          items.push({
+            key: 'cancelOfficialRequest',
+            label: 'Cancel Official Request',
+            destructive: true,
+          });
+        } else if (engagementTag === 'Request') {
+          items.push({
+            key: 'withdrawOfficialResponse',
+            label: 'Withdraw Official Response',
+            destructive: true,
+          });
+        }
+        if (completionPhase === 'none' && isCurrentUserProvider) {
+          items.push({
+            key: 'requestOfficialCompletion',
+            label: 'Request Completion',
+            accentColor: engagementTag === 'Request' ? REQUEST_ACCENT : Colors.primary,
+          });
+        }
+        if (completionPhase === 'pending_review' && !isCurrentUserProvider) {
+          items.push({
+            key: 'reviewOfficialCompletion',
+            label: 'Review Service & Confirm',
+            accentColor: engagementTag === 'Request' ? REQUEST_ACCENT : Colors.primary,
+          });
+        }
+      }
+      items.push({ key: 'viewOfficialDetails', label: 'View Official Details' });
+    } else {
+      if (showOfficialService) {
+        items.push({
+          key: 'officialService',
+          label: 'Request Service',
+          accentColor: Colors.primary,
+        });
+      }
+      if (showOfficialRequest) {
+        items.push({
+          key: 'officialRequest',
+          label: 'Submit Official Response',
+          accentColor: REQUEST_ACCENT,
+        });
+      }
     }
+
     if (showBrowseServices) {
       items.push({ key: 'browseServices', label: 'Browse Services' });
     }
     items.push({ key: 'mute', label: 'Mute' });
     items.push({ key: 'report', label: 'Report', destructive: true });
     return items;
-  }, [showBrowseServices, showHireService]);
+  }, [
+    showBrowseServices,
+    showOfficialService,
+    showOfficialRequest,
+    officialEngagementActive,
+    officialEngagementCompleted,
+    engagementTag,
+    completionPhase,
+    isCurrentUserProvider,
+    Colors.primary,
+  ]);
 
   const handlePress = (action: ChatMenuAction) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (action === 'report') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     }
-    if (action === 'hireService') {
+    if (
+      action === 'officialService' ||
+      action === 'officialRequest' ||
+      action === 'requestOfficialCompletion' ||
+      action === 'reviewOfficialCompletion'
+    ) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    if (action === 'cancelOfficialRequest' || action === 'withdrawOfficialResponse') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     }
     onSelect(action);
     onClose();
@@ -115,7 +194,7 @@ export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
                 style={[
                   styles.menuLabel,
                   { color: item.destructive ? Colors.error : Colors.text },
-                  item.accent && { color: Colors.primary, fontWeight: '800' },
+                  item.accentColor && { color: item.accentColor, fontWeight: '800' },
                 ]}
               >
                 {item.label}

@@ -6,4 +6,6 @@ export * from './ChatComposer';
 export * from './ChatOptionsSheet';
 export * from './ChatAttachmentSheet';
 export * from './ProviderServicesSheet';
-export * from './ChatOfficialHireSheet';
+export * from './ChatOfficialEngagementSheet';
+export * from './ChatOfficialDetailsCard';
+export * from './ChatOfficialDetailsSheet';

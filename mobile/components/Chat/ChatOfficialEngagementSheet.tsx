@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Modal,
   StyleSheet,
@@ -13,20 +13,46 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { useThemeColor } from '../../hooks';
-import type { ChatPostContext } from '../../types';
+import type { ChatPostContext, MarketPostTag } from '../../types';
 
-export interface ChatOfficialHireSheetProps {
+const REQUEST_ACCENT = '#F59E0B';
+
+export interface ChatOfficialEngagementSheetProps {
   visible: boolean;
   context: ChatPostContext;
-  providerName: string;
+  /** Service provider or request poster shown in the summary. */
+  contactName: string;
   onConfirm: () => void;
   onClose: () => void;
 }
 
-export const ChatOfficialHireSheet: React.FC<ChatOfficialHireSheetProps> = ({
+function copyForTag(tag: MarketPostTag) {
+  if (tag === 'Request') {
+    return {
+      badgeLabel: 'PuConnect Official Response',
+      title: 'Submit Official Response',
+      body: (name: string) =>
+        `Submit an official response to ${name}'s request. PuConnect will track your proposal so both of you can manage the agreement in the app.`,
+      summaryRole: 'Posted by',
+      confirmLabel: 'Confirm Official Response',
+      confirmIcon: 'hand-right-outline' as const,
+    };
+  }
+  return {
+    badgeLabel: 'PuConnect Official Request',
+    title: 'Request Service',
+    body: (name: string) =>
+      `Start a tracked service request with ${name}. PuConnect will record this hire so both of you can manage the agreement in the app.`,
+    summaryRole: 'Provider',
+    confirmLabel: 'Confirm Official Request',
+    confirmIcon: 'checkmark-circle-outline' as const,
+  };
+}
+
+export const ChatOfficialEngagementSheet: React.FC<ChatOfficialEngagementSheetProps> = ({
   visible,
   context,
-  providerName,
+  contactName,
   onConfirm,
   onClose,
 }) => {
@@ -36,6 +62,15 @@ export const ChatOfficialHireSheet: React.FC<ChatOfficialHireSheetProps> = ({
   const isDark = colorScheme === 'dark';
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
+
+  const isRequest = context.tag === 'Request';
+  const accent = isRequest ? REQUEST_ACCENT : Colors.primary;
+  const copy = useMemo(() => copyForTag(context.tag), [context.tag]);
+  const confirmTextColor = isRequest
+    ? '#FFFFFF'
+    : isDark
+      ? '#09090B'
+      : '#FFFFFF';
 
   const handleConfirm = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -61,46 +96,40 @@ export const ChatOfficialHireSheet: React.FC<ChatOfficialHireSheetProps> = ({
         >
           <View style={[styles.handle, { backgroundColor: subtleBg }]} />
 
-          <View style={[styles.officialBadge, { backgroundColor: Colors.primary + '18' }]}>
-            <Ionicons name="shield-checkmark" size={20} color={Colors.primary} />
-            <Text style={[styles.officialBadgeText, { color: Colors.primary }]}>
-              PuConnect Official Request
-            </Text>
+          <View style={[styles.officialBadge, { backgroundColor: accent + '18' }]}>
+            <Ionicons name="shield-checkmark" size={20} color={accent} />
+            <Text style={[styles.officialBadgeText, { color: accent }]}>{copy.badgeLabel}</Text>
           </View>
 
-          <Text style={[styles.title, { color: Colors.text }]}>Request Service</Text>
-          <Text style={[styles.body, { color: Colors.icon }]}>
-            Start a tracked service request with {providerName}. PuConnect will record this hire
-            so both of you can manage the agreement in the app.
-          </Text>
+          <Text style={[styles.title, { color: Colors.text }]}>{copy.title}</Text>
+          <Text style={[styles.body, { color: Colors.icon }]}>{copy.body(contactName)}</Text>
 
           <View style={[styles.summaryCard, { backgroundColor: subtleBg }]}>
+            <View style={styles.summaryTagRow}>
+              <View style={[styles.tagPill, { backgroundColor: accent + '22' }]}>
+                <Text style={[styles.tagPillText, { color: accent }]}>{context.tag}</Text>
+              </View>
+            </View>
             <Text style={[styles.summaryTitle, { color: Colors.text }]} numberOfLines={2}>
               {context.title}
             </Text>
             {context.priceLabel ? (
-              <Text style={[styles.summaryPrice, { color: Colors.primary }]}>
-                {context.priceLabel}
+              <Text style={[styles.summaryPrice, { color: accent }]}>
+                {isRequest ? `Budget · ${context.priceLabel}` : context.priceLabel}
               </Text>
             ) : null}
             <Text style={[styles.summaryProvider, { color: Colors.icon }]}>
-              Provider · {providerName}
+              {copy.summaryRole} · {contactName}
             </Text>
           </View>
 
           <TouchableOpacity
-            style={[styles.confirmButton, { backgroundColor: Colors.primary }]}
+            style={[styles.confirmButton, { backgroundColor: accent }]}
             onPress={handleConfirm}
             activeOpacity={0.9}
           >
-            <Ionicons
-              name="checkmark-circle-outline"
-              size={22}
-              color={isDark ? '#09090B' : '#FFFFFF'}
-            />
-            <Text style={[styles.confirmLabel, { color: isDark ? '#09090B' : '#FFFFFF' }]}>
-              Confirm Official Request
-            </Text>
+            <Ionicons name={copy.confirmIcon} size={22} color={confirmTextColor} />
+            <Text style={[styles.confirmLabel, { color: confirmTextColor }]}>{copy.confirmLabel}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -172,6 +201,19 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
     marginVertical: Spacing.xs,
   },
+  summaryTagRow: {
+    flexDirection: 'row',
+  },
+  tagPill: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  tagPillText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
   summaryTitle: {
     fontSize: Typography.size.md,
     fontWeight: '700',
@@ -209,4 +251,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ChatOfficialHireSheet;
+export default ChatOfficialEngagementSheet;
