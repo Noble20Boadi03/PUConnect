@@ -34,6 +34,9 @@ export interface PostDetailViewProps {
   /** Replaces the footer CTA with a back-to-chat action. */
   returnToChat?: boolean;
   onReturnToChat?: () => void;
+  /** Service detail opened from chat request flow — primary CTA requests the service. */
+  requestService?: boolean;
+  onRequestService?: () => void;
 }
 
 export const PostDetailView: React.FC<PostDetailViewProps> = ({
@@ -44,6 +47,8 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
   hideAuthorProfile = false,
   returnToChat = false,
   onReturnToChat,
+  requestService = false,
+  onRequestService,
 }) => {
   const Colors = useThemeColor();
   const insets = useSafeAreaInsets();
@@ -90,13 +95,28 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
     onReturnToChat?.();
   }, [onReturnToChat]);
 
-  const footerTitle = returnToChat ? 'Return to Chat' : copy.cta;
+  const handleRequestService = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    onRequestService?.();
+  }, [onRequestService]);
+
+  const footerTitle = returnToChat
+    ? 'Return to Chat'
+    : requestService
+      ? 'Request This Service'
+      : copy.cta;
   const footerIcon = returnToChat
     ? ('arrow-back-circle-outline' as const)
-    : isService
-      ? ('chatbubble-outline' as const)
-      : ('hand-right-outline' as const);
-  const footerPress = returnToChat ? handleReturnToChat : handleSendMessage;
+    : requestService
+      ? ('checkmark-circle-outline' as const)
+      : isService
+        ? ('chatbubble-outline' as const)
+        : ('hand-right-outline' as const);
+  const footerPress = returnToChat
+    ? handleReturnToChat
+    : requestService
+      ? handleRequestService
+      : handleSendMessage;
 
   const handleViewProvider = useCallback(() => {
     if (!isService) return;

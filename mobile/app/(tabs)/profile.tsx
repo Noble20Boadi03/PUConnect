@@ -15,6 +15,7 @@ import * as Haptics from 'expo-haptics';
 import { useThemeColor, useThemeToggle } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { ProfileHeroSection, ProfileInfoRow } from '../../components/Profile';
+import { NotificationBellButton } from '../../components/NotificationBellButton';
 import { useAuthStore } from '../../store';
 
 export default function ProfileScreen() {
@@ -54,12 +55,7 @@ export default function ProfileScreen() {
           >
             <Ionicons name={iconName} size={22} color={Colors.text} />
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.headerButton, { backgroundColor: subtleBg }]}
-            onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-          >
-            <Ionicons name="notifications-outline" size={22} color={Colors.text} />
-          </TouchableOpacity>
+          <NotificationBellButton backgroundColor={subtleBg} iconColor={Colors.text} />
           <TouchableOpacity
             style={[styles.headerButton, { backgroundColor: subtleBg }]}
             onPress={handleOpenSettings}

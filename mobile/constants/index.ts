@@ -7,4 +7,5 @@ export * from './postDetailMock';
 export * from './providerProfileMock';
 export * from './chatMock';
 export * from './messagesListMock';
+export * from './notificationsMock';
 export * from './CardShadow';

@@ -1,6 +1,9 @@
 import type { MarketIconName, MarketPostTag } from './market';
 
-export type ChatMessageKind = 'sent' | 'received';
+export type ChatMessageKind = 'sent' | 'received' | 'system';
+
+/** PuConnect-tracked hire tied to the contextual service listing. */
+export type OfficialHireStatus = 'none' | 'active';
 
 export interface ChatMessage {
   id: string;
@@ -20,6 +23,7 @@ export interface ChatPostContext {
   postId: string;
   title: string;
   tag: MarketPostTag;
+  priceLabel?: string;
 }
 
 export interface ChatParticipant {

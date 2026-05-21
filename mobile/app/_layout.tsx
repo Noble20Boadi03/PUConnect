@@ -35,6 +35,7 @@ export default function RootLayout() {
   const inPostDetail = segments[0] === 'post';
   const inProviderProfile = segments[0] === 'provider';
   const inChat = segments[0] === 'chat';
+  const inNotifications = segments[0] === 'notifications';
   const managesOwnChrome = inPostDetail;
 
   // Sync Android navigation bar with theme (post detail manages its own chrome).
@@ -56,7 +57,8 @@ export default function RootLayout() {
       !inSettings &&
       !inPostDetail &&
       !inProviderProfile &&
-      !inChat
+      !inChat &&
+      !inNotifications
     ) {
       if (!didRedirectRef.current) {
         didRedirectRef.current = true;
@@ -64,7 +66,12 @@ export default function RootLayout() {
       }
     } else if (
       !isAuthenticated &&
-      (inTabsGroup || inSettings || inPostDetail || inProviderProfile || inChat)
+      (inTabsGroup ||
+        inSettings ||
+        inPostDetail ||
+        inProviderProfile ||
+        inChat ||
+        inNotifications)
     ) {
       if (!didRedirectRef.current) {
         didRedirectRef.current = true;
@@ -73,7 +80,7 @@ export default function RootLayout() {
     } else {
       didRedirectRef.current = false;
     }
-  }, [isAuthenticated, segments, isLoading, inPostDetail, inProviderProfile, inChat]);
+  }, [isAuthenticated, segments, isLoading, inPostDetail, inProviderProfile, inChat, inNotifications]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -85,6 +92,7 @@ export default function RootLayout() {
         <Stack.Screen name="post/[id]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="provider/[username]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="chat/[username]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
       </Stack>
       {!inPostDetail ? (
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />

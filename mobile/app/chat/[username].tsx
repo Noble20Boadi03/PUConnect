@@ -49,6 +49,13 @@ export default function ChatScreen() {
     [router]
   );
 
+  const handleOpenPostForRequest = useCallback(
+    (id: string) => {
+      router.push(`/post/${id}?fromProvider=1&fromRequestService=1` as any);
+    },
+    [router]
+  );
+
   if (!thread) {
     return (
       <SafeAreaView
@@ -64,7 +71,14 @@ export default function ChatScreen() {
     );
   }
 
-  return <ChatView thread={thread} onBack={exitToMessages} onOpenPost={handleOpenPost} />;
+  return (
+    <ChatView
+      thread={thread}
+      onBack={exitToMessages}
+      onOpenPost={handleOpenPost}
+      onOpenPostForRequest={handleOpenPostForRequest}
+    />
+  );
 }
 
 const styles = StyleSheet.create({

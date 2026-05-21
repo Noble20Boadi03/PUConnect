@@ -1,5 +1,6 @@
 import { CHAT_TRANSCRIPT_MOCK, DEFAULT_CHAT_TRANSCRIPT } from '../constants/chatMock';
 import type { ChatThread } from '../types/chat';
+import { formatPostPrice } from './formatPostPrice';
 import { getPostDetailById } from './getPostDetailById';
 import { getProviderProfileByUsername } from './getProviderProfileByUsername';
 import { normalizeUsernameSlug } from './normalizeUsername';
@@ -19,6 +20,7 @@ export function getChatThread(
           postId,
           title: post.title,
           tag: post.tag,
+          priceLabel: formatPostPrice(post.price),
         }
       : undefined;
 

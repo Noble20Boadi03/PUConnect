@@ -11,17 +11,23 @@ import { buildChatHref, getPostDetailById, normalizeUsernameSlug } from '../../l
 import { Spacing, Typography } from '../../constants';
 
 export default function PostDetailScreen() {
-  const { id, fromProvider, fromChat } = useLocalSearchParams<{
+  const { id, fromProvider, fromChat, fromRequestService } = useLocalSearchParams<{
     id: string;
     fromProvider?: string;
     fromChat?: string;
+    fromRequestService?: string;
   }>();
   const hideAuthorProfile =
     fromProvider === '1' ||
     fromProvider === 'true' ||
     fromChat === '1' ||
-    fromChat === 'true';
-  const returnToChat = fromChat === '1' || fromChat === 'true';
+    fromChat === 'true' ||
+    fromRequestService === '1' ||
+    fromRequestService === 'true';
+  const returnToChat =
+    (fromChat === '1' || fromChat === 'true') &&
+    !(fromRequestService === '1' || fromRequestService === 'true');
+  const requestService = fromRequestService === '1' || fromRequestService === 'true';
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -51,6 +57,12 @@ export default function PostDetailScreen() {
     } else if (post) {
       router.replace(buildChatHref(post.author.username, post.id) as any);
     }
+  }, [post, router]);
+
+  const handleRequestService = useCallback(() => {
+    if (!post) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    router.replace(buildChatHref(post.author.username, post.id) as any);
   }, [post, router]);
 
   const handleViewProvider = useCallback(
@@ -86,6 +98,8 @@ export default function PostDetailScreen() {
         hideAuthorProfile={hideAuthorProfile}
         returnToChat={returnToChat}
         onReturnToChat={handleReturnToChat}
+        requestService={requestService}
+        onRequestService={handleRequestService}
       />
     </View>
   );

@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { MarketTipBanner } from '../MarketTipBanner';
+import { NotificationBellButton } from '../NotificationBellButton';
 import type { MarketFilter } from '../../types';
 
 const FILTERS: { key: MarketFilter; label: string }[] = [
@@ -55,20 +56,11 @@ const MarketHeaderComponent: React.FC<MarketHeaderProps> = ({
     [onFilterChange]
   );
 
-  const handleNotificationPress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }, []);
-
   return (
     <View style={[styles.headerContainer, { backgroundColor: cardBg }]}>
       <View style={styles.titleRow}>
         <Text style={[styles.appTitle, { color: textColor }]}>PuConnect</Text>
-        <TouchableOpacity
-          style={[styles.notificationButton, { backgroundColor: searchBg }]}
-          onPress={handleNotificationPress}
-        >
-          <Ionicons name="notifications-outline" size={22} color={textColor} />
-        </TouchableOpacity>
+        <NotificationBellButton backgroundColor={searchBg} iconColor={textColor} />
       </View>
 
       <View style={[styles.searchContainer, { backgroundColor: searchBg }]}>
@@ -159,13 +151,6 @@ const styles = StyleSheet.create({
     fontSize: Typography.size.xxl,
     fontWeight: '800',
     letterSpacing: -0.5,
-  },
-  notificationButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   searchContainer: {
     flexDirection: 'row',

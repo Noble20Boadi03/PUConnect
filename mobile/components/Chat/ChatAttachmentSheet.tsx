@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   Modal,
   StyleSheet,
@@ -8,39 +8,42 @@ import {
   Pressable,
   useColorScheme,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { useThemeColor } from '../../hooks';
 
-export type ChatMenuAction =
-  | 'browseServices'
-  | 'hireService'
-  | 'mute'
-  | 'report'
-  | 'cancel';
+export type ChatAttachmentAction = 'photos' | 'documents' | 'cancel';
 
-export interface ChatOptionsSheetProps {
+export interface ChatAttachmentSheetProps {
   visible: boolean;
-  /** Lists services the provider offers (chat has no post context). */
-  showBrowseServices?: boolean;
-  /** Starts a PuConnect official hire for the contextual service listing. */
-  showHireService?: boolean;
-  onSelect: (action: ChatMenuAction) => void;
+  onSelect: (action: ChatAttachmentAction) => void;
   onClose: () => void;
 }
 
-type MenuItem = {
-  key: Exclude<ChatMenuAction, 'cancel'>;
+const ATTACH_ITEMS: {
+  key: Exclude<ChatAttachmentAction, 'cancel'>;
   label: string;
-  destructive?: boolean;
-  accent?: boolean;
-};
+  icon: 'images-outline' | 'document-text-outline';
+  subtitle: string;
+}[] = [
+  {
+    key: 'photos',
+    label: 'Photos',
+    icon: 'images-outline',
+    subtitle: 'Share from your gallery',
+  },
+  {
+    key: 'documents',
+    label: 'Documents',
+    icon: 'document-text-outline',
+    subtitle: 'PDF, Word, and other files',
+  },
+];
 
-export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
+export const ChatAttachmentSheet: React.FC<ChatAttachmentSheetProps> = ({
   visible,
-  showBrowseServices = false,
-  showHireService = false,
   onSelect,
   onClose,
 }) => {
@@ -51,31 +54,8 @@ export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
 
-  const menuItems = useMemo(() => {
-    const items: MenuItem[] = [];
-    if (showHireService) {
-      items.push({
-        key: 'hireService',
-        label: 'Request Service',
-        accent: true,
-      });
-    }
-    if (showBrowseServices) {
-      items.push({ key: 'browseServices', label: 'Browse Services' });
-    }
-    items.push({ key: 'mute', label: 'Mute' });
-    items.push({ key: 'report', label: 'Report', destructive: true });
-    return items;
-  }, [showBrowseServices, showHireService]);
-
-  const handlePress = (action: ChatMenuAction) => {
+  const handlePress = (action: ChatAttachmentAction) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (action === 'report') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    }
-    if (action === 'hireService') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
     onSelect(action);
     onClose();
   };
@@ -97,29 +77,25 @@ export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
           onPress={(e) => e.stopPropagation()}
         >
           <View style={[styles.handle, { backgroundColor: subtleBg }]} />
+          <Text style={[styles.sheetTitle, { color: Colors.text }]}>Attach</Text>
 
-          {menuItems.map((item, index) => (
+          {ATTACH_ITEMS.map((item) => (
             <TouchableOpacity
               key={item.key}
-              style={[
-                styles.menuRow,
-                index < menuItems.length - 1 && {
-                  borderBottomWidth: 1,
-                  borderBottomColor: subtleBg,
-                },
-              ]}
+              style={[styles.optionRow, { backgroundColor: subtleBg }]}
               onPress={() => handlePress(item.key)}
-              activeOpacity={0.7}
+              activeOpacity={0.85}
             >
-              <Text
-                style={[
-                  styles.menuLabel,
-                  { color: item.destructive ? Colors.error : Colors.text },
-                  item.accent && { color: Colors.primary, fontWeight: '800' },
-                ]}
-              >
-                {item.label}
-              </Text>
+              <View style={[styles.optionIcon, { backgroundColor: Colors.primary + '18' }]}>
+                <Ionicons name={item.icon} size={22} color={Colors.primary} />
+              </View>
+              <View style={styles.optionText}>
+                <Text style={[styles.optionLabel, { color: Colors.text }]}>{item.label}</Text>
+                <Text style={[styles.optionSubtitle, { color: Colors.icon }]}>
+                  {item.subtitle}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={Colors.icon} />
             </TouchableOpacity>
           ))}
 
@@ -147,24 +123,49 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     paddingTop: Spacing.sm,
     paddingHorizontal: Spacing.lg,
+    gap: Spacing.sm,
   },
   handle: {
     width: 40,
     height: 4,
     borderRadius: 2,
     alignSelf: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
-  menuRow: {
-    paddingVertical: Spacing.md + 2,
+  sheetTitle: {
+    fontSize: Typography.size.md,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: Spacing.xs,
+  },
+  optionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: 14,
+  },
+  optionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  menuLabel: {
-    fontSize: Typography.size.md,
-    fontWeight: '600',
+  optionText: {
+    flex: 1,
+    gap: 2,
+  },
+  optionLabel: {
+    fontSize: Typography.size.sm,
+    fontWeight: '700',
+  },
+  optionSubtitle: {
+    fontSize: Typography.size.xs,
+    fontWeight: '500',
   },
   cancelRow: {
-    marginTop: Spacing.md,
+    marginTop: Spacing.sm,
     marginBottom: Spacing.sm,
     paddingVertical: Spacing.md,
     borderRadius: 14,
@@ -176,4 +177,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ChatOptionsSheet;
+export default ChatAttachmentSheet;

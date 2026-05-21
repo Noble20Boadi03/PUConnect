@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, View, Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Spacing, Typography } from '../../constants';
 import type { ChatMessage } from '../../types';
 
@@ -10,6 +11,8 @@ export interface ChatMessageBubbleProps {
   receivedBg: string;
   receivedText: string;
   mutedColor: string;
+  primaryColor: string;
+  systemBg: string;
 }
 
 export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
@@ -19,7 +22,21 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
   receivedBg,
   receivedText,
   mutedColor,
+  primaryColor,
+  systemBg,
 }) => {
+  if (message.kind === 'system') {
+    return (
+      <View style={styles.systemRow}>
+        <View style={[styles.systemBubble, { backgroundColor: systemBg }]}>
+          <Ionicons name="shield-checkmark" size={14} color={primaryColor} />
+          <Text style={[styles.systemText, { color: mutedColor }]}>{message.text}</Text>
+        </View>
+        <Text style={[styles.time, styles.timeSystem, { color: mutedColor }]}>{message.time}</Text>
+      </View>
+    );
+  }
+
   const isSent = message.kind === 'sent';
 
   return (
@@ -75,6 +92,31 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginTop: Spacing.xs,
     paddingHorizontal: Spacing.xs,
+  },
+  systemRow: {
+    alignSelf: 'center',
+    alignItems: 'center',
+    maxWidth: '92%',
+    marginBottom: Spacing.md,
+  },
+  systemBubble: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm + 2,
+    borderRadius: 20,
+  },
+  systemText: {
+    flex: 1,
+    fontSize: Typography.size.xs,
+    fontWeight: '600',
+    lineHeight: 17,
+    textAlign: 'center',
+  },
+  timeSystem: {
+    marginTop: Spacing.xs,
+    textAlign: 'center',
   },
 });
 

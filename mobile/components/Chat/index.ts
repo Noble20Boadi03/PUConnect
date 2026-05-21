@@ -4,3 +4,6 @@ export * from './ChatContextBanner';
 export * from './ChatMessageBubble';
 export * from './ChatComposer';
 export * from './ChatOptionsSheet';
+export * from './ChatAttachmentSheet';
+export * from './ProviderServicesSheet';
+export * from './ChatOfficialHireSheet';

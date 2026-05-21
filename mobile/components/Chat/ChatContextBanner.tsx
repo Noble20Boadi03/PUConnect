@@ -11,6 +11,7 @@ export interface ChatContextBannerProps {
   textColor: string;
   mutedColor: string;
   primaryColor: string;
+  officialHireActive?: boolean;
   onPress: () => void;
 }
 
@@ -21,6 +22,7 @@ export const ChatContextBanner: React.FC<ChatContextBannerProps> = ({
   textColor,
   mutedColor,
   primaryColor,
+  officialHireActive = false,
   onPress,
 }) => {
   const isService = context.tag === 'Service';
@@ -43,8 +45,16 @@ export const ChatContextBanner: React.FC<ChatContextBannerProps> = ({
           Discussing:{' '}
           <Text style={[styles.title, { color: textColor }]}>{context.title}</Text>
         </Text>
-        <View style={[styles.badge, { backgroundColor: badgeBg }]}>
-          <Text style={[styles.badgeText, { color: badgeColor }]}>{context.tag}</Text>
+        <View style={styles.badgeRow}>
+          <View style={[styles.badge, { backgroundColor: badgeBg }]}>
+            <Text style={[styles.badgeText, { color: badgeColor }]}>{context.tag}</Text>
+          </View>
+          {officialHireActive ? (
+            <View style={[styles.officialBadge, { backgroundColor: primaryColor + '22' }]}>
+              <Ionicons name="shield-checkmark" size={10} color={primaryColor} />
+              <Text style={[styles.officialBadgeText, { color: primaryColor }]}>Official</Text>
+            </View>
+          ) : null}
         </View>
       </View>
       <Ionicons name="chevron-forward" size={18} color={mutedColor} />
@@ -79,8 +89,13 @@ const styles = StyleSheet.create({
   title: {
     fontWeight: '700',
   },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+  },
   badge: {
-    alignSelf: 'flex-start',
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
     borderRadius: 6,
@@ -89,6 +104,19 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.3,
+  },
+  officialBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  officialBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
 });
 

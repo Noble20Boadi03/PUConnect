@@ -15,6 +15,7 @@ import * as Haptics from 'expo-haptics';
 import { useThemeColor } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { ConversationListItem } from './ConversationListItem';
+import { NotificationBellButton } from '../NotificationBellButton';
 import type { ConversationPreview } from '../../types';
 
 type InboxFilter = 'all' | 'unread';
@@ -22,13 +23,11 @@ type InboxFilter = 'all' | 'unread';
 export interface MessagesInboxViewProps {
   conversations: ConversationPreview[];
   onConversationPress: (conversation: ConversationPreview) => void;
-  onNotifications?: () => void;
 }
 
 export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
   conversations,
   onConversationPress,
-  onNotifications,
 }) => {
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
@@ -82,11 +81,6 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
     if (rest.length > 0) result.push({ title: 'Recent', data: rest });
     return result;
   }, [pinned, rest]);
-
-  const handleNotifications = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onNotifications?.();
-  }, [onNotifications]);
 
   const setInboxFilter = useCallback((next: InboxFilter) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -161,21 +155,7 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
           )}
         </View>
 
-        <TouchableOpacity
-          style={[styles.notifButton, { backgroundColor: listBg }]}
-          onPress={handleNotifications}
-          accessibilityRole="button"
-          accessibilityLabel="Notifications"
-        >
-          <Ionicons name="notifications-outline" size={22} color={Colors.text} />
-          {totalUnread > 0 ? (
-            <View style={[styles.notifBadge, { backgroundColor: Colors.error }]}>
-              <Text style={styles.notifBadgeText}>
-                {totalUnread > 9 ? '9+' : totalUnread}
-              </Text>
-            </View>
-          ) : null}
-        </TouchableOpacity>
+        <NotificationBellButton backgroundColor={listBg} iconColor={Colors.text} size={44} />
       </View>
 
       <View style={styles.toolbar}>
@@ -315,37 +295,6 @@ const styles = StyleSheet.create({
   unreadSummaryText: {
     fontSize: Typography.size.xs,
     fontWeight: '700',
-  },
-  notifButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  notifBadge: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    paddingHorizontal: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
-  notifBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#FFFFFF',
   },
   toolbar: {
     paddingHorizontal: Spacing.lg,
