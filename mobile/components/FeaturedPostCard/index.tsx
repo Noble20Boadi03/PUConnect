@@ -57,6 +57,8 @@ const FeaturedPostCardComponent: React.FC<FeaturedPostCardProps> = ({
         style={[styles.card, { backgroundColor: cardBg }]}
         onPress={onPress}
         activeOpacity={0.85}
+        delayPressIn={50}
+        disabled={!onPress}
       >
         {isService ? (
           <View style={[styles.thumbnailWrap, { height: thumbHeight, backgroundColor: subtleBg }]}>

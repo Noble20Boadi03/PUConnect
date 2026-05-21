@@ -8,6 +8,7 @@ export * from './filterProviderPosts';
 export * from './getChatThread';
 export * from './buildChatHref';
 export * from './buildProviderProfileHref';
+export * from './guardedNavigation';
 export * from './officialEngagement';
 export * from './getProviderServices';
 export * from './systemChrome';

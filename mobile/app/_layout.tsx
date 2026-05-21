@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef } from 'react';
 import { useAuthStore } from '../store';
 import { initializeThemePreference } from '../lib/themePreference';
+import { runGuardedNavigation } from '../lib/guardedNavigation';
 import { useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { applyThemeSystemChrome } from '../lib/systemChrome';
@@ -66,7 +67,9 @@ export default function RootLayout() {
     ) {
       if (!didRedirectRef.current) {
         didRedirectRef.current = true;
-        router.replace('/(tabs)/market' as any);
+        runGuardedNavigation('replace:/(tabs)/market', () => {
+          router.replace('/(tabs)/market' as any);
+        });
       }
     } else if (
       !isAuthenticated &&
@@ -81,7 +84,9 @@ export default function RootLayout() {
     ) {
       if (!didRedirectRef.current) {
         didRedirectRef.current = true;
-        router.replace('/(auth)/login' as any);
+        runGuardedNavigation('replace:/(auth)/login', () => {
+          router.replace('/(auth)/login' as any);
+        });
       }
     } else {
       didRedirectRef.current = false;

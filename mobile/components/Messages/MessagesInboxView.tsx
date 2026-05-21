@@ -356,7 +356,6 @@ const styles = StyleSheet.create({
   },
   listCard: {
     flex: 1,
-    marginHorizontal: Spacing.lg,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     overflow: 'hidden',

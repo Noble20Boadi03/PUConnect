@@ -1,14 +1,14 @@
 import { useState, useCallback } from 'react';
-import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useAuthStore } from '../store';
+import { useAppRouter } from './useAppRouter';
 import type { SettingsLogoutState } from '../types';
 
 /**
  * Logout flow for the Settings screen: custom confirmation, API logout, redirect to login.
  */
 export function useLogout() {
-  const router = useRouter();
+  const router = useAppRouter();
   const logout = useAuthStore((state) => state.logout);
   const [state, setState] = useState<SettingsLogoutState>({
     isLoading: false,
@@ -33,7 +33,7 @@ export function useLogout() {
     try {
       await logout();
       setState({ isLoading: false, error: null, confirmVisible: false });
-      router.replace('/(auth)/login');
+      router.replace('/(auth)/login' as any);
     } catch {
       setState((prev) => ({
         ...prev,

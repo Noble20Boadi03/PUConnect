@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, useColorScheme } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import * as Haptics from 'expo-haptics';
 
 import { PostDetailView } from '../../components/PostDetail';
 import { buildChatHref, buildProviderProfileHref, getPostDetailById } from '../../lib';
+import { useAppRouter } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 
 export default function PostDetailScreen() {
@@ -28,7 +29,7 @@ export default function PostDetailScreen() {
     (fromChat === '1' || fromChat === 'true') &&
     !(fromRequestService === '1' || fromRequestService === 'true');
   const requestService = fromRequestService === '1' || fromRequestService === 'true';
-  const router = useRouter();
+  const router = useAppRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
@@ -41,7 +42,7 @@ export default function PostDetailScreen() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/(tabs)/market');
+      router.replace('/(tabs)/market' as any);
     }
   }, [router]);
 
@@ -54,9 +55,10 @@ export default function PostDetailScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (router.canGoBack()) {
       router.back();
-    } else if (post) {
-      router.replace(buildChatHref(post.author.username, post.id) as any);
+      return;
     }
+    if (!post) return;
+    router.replace(buildChatHref(post.author.username, post.id) as any);
   }, [post, router]);
 
   const handleRequestService = useCallback(() => {

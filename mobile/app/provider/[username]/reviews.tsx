@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, useColorScheme } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -12,11 +12,12 @@ import {
   selectReviewableDeal,
   useProviderReviewsStore,
 } from '../../../store/providerReviewsStore';
+import { useAppRouter } from '../../../hooks';
 import { Spacing, Typography } from '../../../constants';
 
 export default function ProviderReviewsScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
-  const router = useRouter();
+  const router = useAppRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const screenBg = isDark ? '#09090B' : '#F4F4F5';

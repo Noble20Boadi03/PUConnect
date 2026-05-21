@@ -8,18 +8,17 @@ import {
   useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { useThemeColor, useThemeToggle } from '../../hooks';
+import { useAppRouter, useThemeColor, useThemeToggle } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { ProfileHeroSection, ProfileInfoRow } from '../../components/Profile';
 import { NotificationBellButton } from '../../components/NotificationBellButton';
 import { useAuthStore } from '../../store';
 
 export default function ProfileScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -41,7 +40,7 @@ export default function ProfileScreen() {
 
   const handleOpenSettings = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push('/settings');
+    router.push('/settings' as any);
   };
 
   return (

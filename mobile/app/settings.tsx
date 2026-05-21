@@ -10,17 +10,16 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Constants from 'expo-constants';
 
-import { useThemeColor, useLogout } from '../hooks';
+import { useAppRouter, useThemeColor, useLogout } from '../hooks';
 import { Spacing, Typography } from '../constants';
 import { Alert, ConfirmDialog } from '../components';
 
 export default function SettingsScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -46,7 +45,7 @@ export default function SettingsScreen() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/(tabs)/profile');
+      router.replace('/(tabs)/profile' as any);
     }
   };
 

@@ -8,11 +8,10 @@ import {
   useColorScheme
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { useThemeColor } from '../../hooks';
+import { useAppRouter, useThemeColor } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { Button, Alert, KeyboardLayout } from '../../components';
 import Animated, { FadeIn, FadeOut, FadeInDown } from 'react-native-reanimated';
@@ -20,7 +19,7 @@ import { WizardStep, RegisterFormInput } from '../../types';
 import { authService } from '../../services';
 
 export default function RegisterScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   

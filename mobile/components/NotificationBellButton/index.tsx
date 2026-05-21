@@ -1,10 +1,10 @@
 import React, { useCallback } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { useNotificationsStore } from '../../store/notificationsStore';
+import { useAppRouter } from '../../hooks';
 
 export interface NotificationBellButtonProps {
   backgroundColor: string;
@@ -19,7 +19,7 @@ export const NotificationBellButton: React.FC<NotificationBellButtonProps> = ({
   badgeColor = '#FF3B30',
   size = 40,
 }) => {
-  const router = useRouter();
+  const router = useAppRouter();
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
 
   const handlePress = useCallback(() => {

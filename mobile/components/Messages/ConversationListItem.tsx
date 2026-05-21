@@ -53,6 +53,7 @@ const ConversationListItemComponent: React.FC<ConversationListItemProps> = ({
       ]}
       onPress={onPress}
       activeOpacity={0.72}
+      delayPressIn={50}
     >
       <View style={styles.avatarColumn}>
         <View style={[styles.avatarRing, isOnline && { borderColor: '#22C55E' }]}>

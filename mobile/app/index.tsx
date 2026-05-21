@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, Image, TouchableOpacity, useColorScheme, Dimensions, Appearance, ImageSourcePropType } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useThemeColor } from '../hooks';
+import { useAppRouter, useThemeColor } from '../hooks';
 import { Spacing, Typography } from '../constants';
 import { Button } from '../components';
 import { LandingPageSearchParams } from '../types';
@@ -83,7 +83,7 @@ const PaginationDot = ({ isActive, activeColor, inactiveColor }: PaginationDotPr
 };
 
 export default function LandingPage() {
-  const router = useRouter();
+  const router = useAppRouter();
   const { slide, skipSplash } = useLocalSearchParams() as unknown as LandingPageSearchParams;
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();

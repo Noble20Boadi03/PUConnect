@@ -1,12 +1,13 @@
 import React, { useCallback, useMemo } from 'react';
 import { BackHandler, StyleSheet, Text, TouchableOpacity, useColorScheme } from 'react-native';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { ChatView } from '../../components/Chat';
 import { buildProviderProfileHref, getChatThread } from '../../lib';
+import { useAppRouter } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 
 export default function ChatScreen() {
@@ -14,7 +15,7 @@ export default function ChatScreen() {
     username: string;
     postId?: string;
   }>();
-  const router = useRouter();
+  const router = useAppRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const screenBg = isDark ? '#09090B' : '#F4F4F5';

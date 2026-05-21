@@ -1,11 +1,11 @@
 import React, { useCallback } from 'react';
-import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 
 import { NotificationsView } from '../components/Notifications';
+import { useAppRouter } from '../hooks';
 
 export default function NotificationsScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
 
   const handleBack = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

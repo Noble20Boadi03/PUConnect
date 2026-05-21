@@ -7,10 +7,9 @@ import {
   useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 
-import { useThemeColor } from '../../hooks';
+import { useAppRouter, useThemeColor } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { FEATURED_POSTS_MOCK } from '../../constants';
 import { MarketHeader, MarketFeedHeader, FeaturedPostCard } from '../../components';
@@ -22,7 +21,7 @@ import type { FeaturedPost, MarketFilter } from '../../types';
  * VirtualizedLists, which cause slow updates and jank after resume.
  */
 export default function MarketScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';

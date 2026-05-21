@@ -8,13 +8,12 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
 import { ConfirmDialog } from '../ConfirmDialog';
 import { ReviewPromptDialog } from '../ReviewPromptDialog';
-import { useConfirmDialog, useThemeColor } from '../../hooks';
+import { useAppRouter, useConfirmDialog, useThemeColor } from '../../hooks';
 import { useProviderReviewsStore } from '../../store/providerReviewsStore';
 import { Spacing, Typography } from '../../constants';
 import { getProviderServices, isCurrentUserProvider } from '../../lib';
@@ -103,7 +102,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   onOpenPostForRequest,
   onViewProviderProfile,
 }) => {
-  const router = useRouter();
+  const router = useAppRouter();
   const Colors = useThemeColor();
   const insets = useSafeAreaInsets();
   const {
