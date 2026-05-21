@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
+import { GuardedPressable } from '../GuardedPressable';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
@@ -30,7 +31,7 @@ export const NotificationBellButton: React.FC<NotificationBellButtonProps> = ({
   const badgeLabel = unreadCount > 9 ? '9+' : String(unreadCount);
 
   return (
-    <TouchableOpacity
+    <GuardedPressable
       style={[
         styles.button,
         {
@@ -52,7 +53,7 @@ export const NotificationBellButton: React.FC<NotificationBellButtonProps> = ({
           <Text style={styles.badgeText}>{badgeLabel}</Text>
         </View>
       ) : null}
-    </TouchableOpacity>
+    </GuardedPressable>
   );
 };
 

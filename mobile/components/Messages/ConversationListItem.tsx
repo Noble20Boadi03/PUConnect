@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
+import { GuardedPressable } from '../GuardedPressable';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, Typography } from '../../constants';
@@ -45,7 +46,7 @@ const ConversationListItemComponent: React.FC<ConversationListItemProps> = ({
   const badgeLabel = unreadCount && unreadCount > 9 ? '9+' : String(unreadCount ?? '');
 
   return (
-    <TouchableOpacity
+    <GuardedPressable
       style={[
         styles.row,
         unread && { backgroundColor: unreadTint },
@@ -133,7 +134,7 @@ const ConversationListItemComponent: React.FC<ConversationListItemProps> = ({
           ) : null}
         </View>
       </View>
-    </TouchableOpacity>
+    </GuardedPressable>
   );
 };
 

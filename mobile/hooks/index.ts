@@ -3,6 +3,7 @@ export * from './useAuth';
 export * from './useLogout';
 export * from './useConfirmDialog';
 export * from './useGuardedNavigation';
+export * from './useNavigationLock';
 export * from './useAppRouter';
 export * from './useThemeToggle';
 export * from './usePostDetailChrome';

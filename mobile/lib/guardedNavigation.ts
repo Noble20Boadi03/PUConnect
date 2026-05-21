@@ -1,10 +1,62 @@
 import type { Href } from 'expo-router';
 
-/** Prevents duplicate navigations to the same route when buttons are spammed. */
+/** Prevents duplicate navigations when buttons are spammed. */
 const lockUntilByKey = new Map<string, number>();
 
-const DEFAULT_COOLDOWN_MS = 450;
-const BACK_COOLDOWN_MS = 320;
+/** Blocks all navigations briefly so rapid taps cannot stack different routes. */
+const DEFAULT_COOLDOWN_MS = 750;
+const BACK_COOLDOWN_MS = 400;
+
+let globalLockUntil = 0;
+let releaseTimer: ReturnType<typeof setTimeout> | null = null;
+const listeners = new Set<() => void>();
+
+function notifyListeners(): void {
+  listeners.forEach((listener) => listener());
+}
+
+function scheduleGlobalLockRelease(until: number): void {
+  if (releaseTimer) {
+    clearTimeout(releaseTimer);
+  }
+  const delay = Math.max(0, until - Date.now());
+  releaseTimer = setTimeout(() => {
+    releaseTimer = null;
+    if (Date.now() >= globalLockUntil) {
+      notifyListeners();
+    }
+  }, delay);
+}
+
+function acquireLocks(key: string, cooldownMs: number): boolean {
+  const now = Date.now();
+  if (now < globalLockUntil) return false;
+
+  const keyLockedUntil = lockUntilByKey.get(key) ?? 0;
+  if (now < keyLockedUntil) return false;
+
+  const releaseAt = now + cooldownMs;
+  globalLockUntil = Math.max(globalLockUntil, releaseAt);
+  lockUntilByKey.set(key, releaseAt);
+  scheduleGlobalLockRelease(globalLockUntil);
+  notifyListeners();
+  return true;
+}
+
+export function isNavigationLocked(): boolean {
+  return Date.now() < globalLockUntil;
+}
+
+export function subscribeNavigationLock(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+export function getNavigationLockSnapshot(): boolean {
+  return isNavigationLocked();
+}
 
 export function toNavigationKey(href: Href): string {
   if (typeof href === 'string') return href;
@@ -22,11 +74,7 @@ export function runGuardedNavigation(
   action: () => void,
   cooldownMs = DEFAULT_COOLDOWN_MS
 ): void {
-  const now = Date.now();
-  const lockedUntil = lockUntilByKey.get(key) ?? 0;
-  if (now < lockedUntil) return;
-
-  lockUntilByKey.set(key, now + cooldownMs);
+  if (!acquireLocks(key, cooldownMs)) return;
   action();
 }
 

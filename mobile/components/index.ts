@@ -1,4 +1,5 @@
 // Barrel file for components
+export * from './GuardedPressable';
 export * from './Button';
 export * from './Alert';
 export * from './ConfirmDialog';

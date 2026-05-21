@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Dimensions } from 'react-native';
+import { StyleSheet, View, Text, Dimensions } from 'react-native';
+import { GuardedPressable } from '../GuardedPressable';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, Typography, CARD_SHADOW, CARD_BORDER } from '../../constants';
@@ -53,7 +54,7 @@ const FeaturedPostCardComponent: React.FC<FeaturedPostCardProps> = ({
         isCarousel ? { borderColor, ...CARD_BORDER } : undefined,
       ]}
     >
-      <TouchableOpacity
+      <GuardedPressable
         style={[styles.card, { backgroundColor: cardBg }]}
         onPress={onPress}
         activeOpacity={0.85}
@@ -108,7 +109,7 @@ const FeaturedPostCardComponent: React.FC<FeaturedPostCardProps> = ({
             </View>
           </View>
         </View>
-      </TouchableOpacity>
+      </GuardedPressable>
     </View>
   );
 };

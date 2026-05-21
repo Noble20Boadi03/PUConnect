@@ -3,7 +3,6 @@ import {
   StyleSheet,
   View,
   Text,
-  TouchableOpacity,
   ScrollView,
   useColorScheme,
 } from 'react-native';
@@ -15,6 +14,7 @@ import { useThemeColor } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { filterProviderPosts } from '../../lib';
 import { FeaturedPostCard } from '../FeaturedPostCard';
+import { GuardedPressable } from '../GuardedPressable';
 import {
   ProfileHeroSection,
   ProfileInfoRow,
@@ -90,14 +90,14 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity
+        <GuardedPressable
           style={[styles.backButton, { backgroundColor: subtleBg }]}
           onPress={onBack}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
           <Ionicons name="chevron-back" size={22} color={Colors.text} />
-        </TouchableOpacity>
+        </GuardedPressable>
         <Text style={[styles.headerTitle, { color: Colors.text }]} numberOfLines={1}>
           {profile.displayName}
         </Text>
@@ -173,11 +173,11 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
           {canLeaveReview && onLeaveReview ? (
             <>
               <View style={[styles.divider, { backgroundColor: Colors.border + '60' }]} />
-              <TouchableOpacity
+              <GuardedPressable
                 style={styles.leaveReviewRow}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  onLeaveReview();
+                  onLeaveReview?.();
                 }}
                 activeOpacity={0.85}
               >
@@ -186,7 +186,7 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
                   Leave a review for a completed service
                 </Text>
                 <Ionicons name="chevron-forward" size={16} color={Colors.primary} />
-              </TouchableOpacity>
+              </GuardedPressable>
             </>
           ) : null}
           <View style={[styles.divider, { backgroundColor: Colors.border + '60' }]} />

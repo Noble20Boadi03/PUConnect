@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
+import { GuardedPressable } from '../GuardedPressable';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, Typography } from '../../constants';
 
@@ -27,7 +28,7 @@ export const ProfileReviewsSummaryRow: React.FC<ProfileReviewsSummaryRowProps> =
       : 'No reviews yet · tap to see reviews';
 
   return (
-    <TouchableOpacity
+    <GuardedPressable
       style={styles.row}
       onPress={onPress}
       activeOpacity={0.7}
@@ -57,7 +58,7 @@ export const ProfileReviewsSummaryRow: React.FC<ProfileReviewsSummaryRowProps> =
         <Text style={[styles.subtitle, { color: mutedColor }]}>{subtitle}</Text>
       </View>
       <Ionicons name="chevron-forward" size={18} color={mutedColor} />
-    </TouchableOpacity>
+    </GuardedPressable>
   );
 };
 

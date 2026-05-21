@@ -4,7 +4,6 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
   useColorScheme,
   NativeSyntheticEvent,
   NativeScrollEvent,
@@ -19,6 +18,7 @@ import { useThemeColor, usePostDetailChrome } from '../../hooks';
 import { Spacing, Typography, CARD_SHADOW } from '../../constants';
 import { formatPostPrice } from '../../lib';
 import { Button } from '../Button';
+import { GuardedPressable } from '../GuardedPressable';
 import { PostImageGallery } from './PostImageGallery';
 import type { PostDetail } from '../../types';
 
@@ -213,7 +213,7 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
               <View style={[styles.divider, { backgroundColor: divider }]} />
 
               <Text style={[styles.sectionTitle, { color: Colors.text }]}>{copy.personTitle}</Text>
-              <TouchableOpacity
+              <GuardedPressable
                 style={[
                   styles.personCard,
                   { backgroundColor: subtleBg },
@@ -244,7 +244,7 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
                 {isService ? (
                   <Ionicons name="chevron-forward" size={20} color={Colors.icon} />
                 ) : null}
-              </TouchableOpacity>
+              </GuardedPressable>
 
               {isService && post.author.skills && post.author.skills.length > 0 ? (
                 <>
@@ -270,7 +270,7 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
         ]}
         pointerEvents="box-none"
       >
-        <TouchableOpacity
+        <GuardedPressable
           style={[
             styles.iconButton,
             isOverGallery
@@ -287,7 +287,7 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
             size={22}
             color={isOverGallery ? '#FFFFFF' : Colors.text}
           />
-        </TouchableOpacity>
+        </GuardedPressable>
       </View>
 
       <View

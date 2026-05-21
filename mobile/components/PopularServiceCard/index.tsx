@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
+import { GuardedPressable } from '../GuardedPressable';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, Typography, CARD_SHADOW } from '../../constants';
 import type { PopularService } from '../../types';
@@ -18,10 +19,11 @@ const PopularServiceCardComponent: React.FC<PopularServiceCardProps> = ({
   onPress,
 }) => (
   <View style={styles.cardOuter}>
-    <TouchableOpacity
+    <GuardedPressable
       style={styles.cardInner}
       onPress={onPress}
       activeOpacity={0.85}
+      disabled={!onPress}
     >
       <View style={[styles.iconArea, { backgroundColor: item.accentColor }]}>
         <Ionicons name={item.icon} size={32} color="#FFFFFF" />
@@ -31,7 +33,7 @@ const PopularServiceCardComponent: React.FC<PopularServiceCardProps> = ({
           {item.title}
         </Text>
       </View>
-    </TouchableOpacity>
+    </GuardedPressable>
   </View>
 );
 
