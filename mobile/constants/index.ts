@@ -4,4 +4,5 @@ export * from './Android';
 export * from './marketMock';
 export * from './marketPostImages';
 export * from './postDetailMock';
+export * from './providerProfileMock';
 export * from './CardShadow';

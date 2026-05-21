@@ -28,12 +28,17 @@ export interface PostDetailViewProps {
   post: PostDetail;
   onBack: () => void;
   onSendMessage?: () => void;
+  onViewProvider?: (username: string) => void;
+  /** When true, hides the author/provider block (e.g. opened from their profile). */
+  hideAuthorProfile?: boolean;
 }
 
 export const PostDetailView: React.FC<PostDetailViewProps> = ({
   post,
   onBack,
   onSendMessage,
+  onViewProvider,
+  hideAuthorProfile = false,
 }) => {
   const Colors = useThemeColor();
   const insets = useSafeAreaInsets();
@@ -74,6 +79,12 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onSendMessage?.();
   }, [onSendMessage]);
+
+  const handleViewProvider = useCallback(() => {
+    if (!isService) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onViewProvider?.(post.author.username);
+  }, [isService, onViewProvider, post.author.username]);
 
   const footerBottom = Math.max(insets.bottom, Spacing.sm);
 
@@ -159,43 +170,56 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
             ))}
           </View>
 
-          <View style={[styles.divider, { backgroundColor: divider }]} />
-
-          <Text style={[styles.sectionTitle, { color: Colors.text }]}>{copy.personTitle}</Text>
-          <View
-            style={[
-              styles.personCard,
-              { backgroundColor: subtleBg },
-              !isDark && CARD_SHADOW,
-            ]}
-          >
-            <Image
-              source={{ uri: post.author.avatarUrl }}
-              style={styles.personAvatar}
-              contentFit="cover"
-              transition={0}
-            />
-            <View style={styles.personInfo}>
-              <Text style={[styles.personName, { color: Colors.text }]}>
-                {post.author.fullName}
-              </Text>
-              <Text style={[styles.personHandle, { color: Colors.icon }]}>
-                {post.author.username}
-              </Text>
-            </View>
-            {isService ? <Ionicons name="chevron-forward" size={20} color={Colors.icon} /> : null}
-          </View>
-
-          {isService && post.author.skills && post.author.skills.length > 0 ? (
+          {!hideAuthorProfile ? (
             <>
-              <Text style={[styles.skillsHeading, { color: Colors.icon }]}>Skills</Text>
-              <View style={styles.skillsWrap}>
-                {post.author.skills.map((skill) => (
-                  <View key={skill} style={[styles.skillPill, { backgroundColor: tagBg }]}>
-                    <Text style={[styles.skillText, { color: Colors.text }]}>{skill}</Text>
+              <View style={[styles.divider, { backgroundColor: divider }]} />
+
+              <Text style={[styles.sectionTitle, { color: Colors.text }]}>{copy.personTitle}</Text>
+              <TouchableOpacity
+                style={[
+                  styles.personCard,
+                  { backgroundColor: subtleBg },
+                  !isDark && CARD_SHADOW,
+                ]}
+                onPress={isService ? handleViewProvider : undefined}
+                activeOpacity={isService ? 0.85 : 1}
+                disabled={!isService}
+                accessibilityRole={isService ? 'button' : undefined}
+                accessibilityLabel={
+                  isService ? `View ${post.author.fullName}'s profile` : undefined
+                }
+              >
+                <Image
+                  source={{ uri: post.author.avatarUrl }}
+                  style={styles.personAvatar}
+                  contentFit="cover"
+                  transition={0}
+                />
+                <View style={styles.personInfo}>
+                  <Text style={[styles.personName, { color: Colors.text }]}>
+                    {post.author.fullName}
+                  </Text>
+                  <Text style={[styles.personHandle, { color: Colors.icon }]}>
+                    {post.author.username}
+                  </Text>
+                </View>
+                {isService ? (
+                  <Ionicons name="chevron-forward" size={20} color={Colors.icon} />
+                ) : null}
+              </TouchableOpacity>
+
+              {isService && post.author.skills && post.author.skills.length > 0 ? (
+                <>
+                  <Text style={[styles.skillsHeading, { color: Colors.icon }]}>Skills</Text>
+                  <View style={styles.skillsWrap}>
+                    {post.author.skills.map((skill) => (
+                      <View key={skill} style={[styles.skillPill, { backgroundColor: tagBg }]}>
+                        <Text style={[styles.skillText, { color: Colors.text }]}>{skill}</Text>
+                      </View>
+                    ))}
                   </View>
-                ))}
-              </View>
+                </>
+              ) : null}
             </>
           ) : null}
         </View>

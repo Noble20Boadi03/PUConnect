@@ -173,4 +173,38 @@ export const POST_DETAILS_MOCK: Record<string, PostDetail> = {
       skills: ['Academic Writing', 'APA Style', 'Personal Statements'],
     },
   },
+  'jp-req-1': {
+    id: 'jp-req-1',
+    tag: 'Request',
+    title: 'Study partner for Linear Algebra final',
+    images: [REQUEST_HERO],
+    postedDate: 'Mar 19, 2026',
+    categoryTags: ['Mathematics', 'Study Group', 'Finals'],
+    price: { kind: 'negotiated' },
+    fullDescription:
+      'Looking for someone to review practice exams and problem sets twice a week before finals week. Prefer in-person sessions at the library.',
+    hashtags: ['#linearAlgebra', '#studyGroup', '#finals'],
+    author: {
+      fullName: 'Jordan P.',
+      username: '@jordanp',
+      avatarUrl: avatar('jordanp'),
+    },
+  },
+  'ct-req-1': {
+    id: 'ct-req-1',
+    tag: 'Request',
+    title: 'Logo refresh for hackathon team',
+    images: [REQUEST_HERO, REQUEST_ALT],
+    postedDate: 'Mar 10, 2026',
+    categoryTags: ['Branding', 'Design', 'Hackathon'],
+    price: { kind: 'fixed', amount: 25 },
+    fullDescription:
+      'Need a simple wordmark and favicon set before our submission deadline next Friday. Open to minimalist or bold styles.',
+    hashtags: ['#branding', '#logo', '#hackathon'],
+    author: {
+      fullName: 'Chris T.',
+      username: '@christdev',
+      avatarUrl: avatar('christdev'),
+    },
+  },
 };

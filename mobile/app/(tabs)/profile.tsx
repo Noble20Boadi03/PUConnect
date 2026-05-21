@@ -14,6 +14,7 @@ import * as Haptics from 'expo-haptics';
 
 import { useThemeColor, useThemeToggle } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
+import { ProfileHeroSection, ProfileInfoRow } from '../../components/Profile';
 import { useAuthStore } from '../../store';
 
 export default function ProfileScreen() {
@@ -44,7 +45,6 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={[styles.title, { color: Colors.text }]}>Profile</Text>
         <View style={styles.headerActions}>
@@ -73,99 +73,52 @@ export default function ProfileScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Profile Picture & Name Section */}
-        <View style={[styles.profileSection, { backgroundColor: cardBg }]}>
-          {/* Avatar */}
-          <View style={styles.avatarContainer}>
-            <View style={[styles.avatarCircle, { backgroundColor: Colors.primary + '18' }]}>
-              <Text style={[styles.avatarInitials, { color: Colors.primary }]}>{initials}</Text>
-            </View>
-            <TouchableOpacity
-              style={[styles.cameraButton, { backgroundColor: Colors.primary }]}
-              onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-            >
-              <Ionicons name="camera" size={14} color={isDark ? '#09090B' : '#FFFFFF'} />
-            </TouchableOpacity>
-          </View>
+        <ProfileHeroSection
+          variant="owner"
+          displayName={user?.name || 'User'}
+          handle={user?.username ? `@${user.username}` : undefined}
+          initials={initials}
+          cardBg={cardBg}
+          subtleBg={subtleBg}
+          primaryColor={Colors.primary}
+          textColor={Colors.text}
+          mutedColor={Colors.icon}
+          isDark={isDark}
+        />
 
-          {/* Name & Username */}
-          <Text style={[styles.profileName, { color: Colors.text }]}>
-            {user?.name || 'User'}
-          </Text>
-          {user?.username && (
-            <Text style={[styles.profileHandle, { color: Colors.icon }]}>
-              @{user.username}
-            </Text>
-          )}
-
-          {/* Action Buttons Row */}
-          <View style={styles.actionRow}>
-            <TouchableOpacity
-              style={[styles.actionButton, { backgroundColor: Colors.primary }]}
-              onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-            >
-              <Ionicons name="image-outline" size={16} color={isDark ? '#09090B' : '#FFFFFF'} />
-              <Text style={[styles.actionButtonText, { color: isDark ? '#09090B' : '#FFFFFF' }]}>
-                Change Photo
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, { backgroundColor: subtleBg, borderColor: Colors.border, borderWidth: 1 }]}
-              onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-            >
-              <Ionicons name="create-outline" size={16} color={Colors.text} />
-              <Text style={[styles.actionButtonText, { color: Colors.text }]}>Edit Info</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* User Information Card */}
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: Colors.text }]}>Information</Text>
         </View>
         <View style={[styles.infoCard, { backgroundColor: cardBg }]}>
-          {/* Username Row */}
-          <View style={styles.infoRow}>
-            <View style={[styles.infoIconCircle, { backgroundColor: Colors.primary + '15' }]}>
-              <Ionicons name="at" size={18} color={Colors.primary} />
-            </View>
-            <View style={styles.infoContent}>
-              <Text style={[styles.infoLabel, { color: Colors.icon }]}>Username</Text>
-              <Text style={[styles.infoValue, { color: Colors.text }]}>
-                {user?.username ? `@${user.username}` : 'Not set'}
-              </Text>
-            </View>
-          </View>
-
+          <ProfileInfoRow
+            icon="at"
+            iconColor={Colors.primary}
+            iconBg={Colors.primary + '15'}
+            label="Username"
+            value={user?.username ? `@${user.username}` : 'Not set'}
+            textColor={Colors.text}
+            mutedColor={Colors.icon}
+          />
           <View style={[styles.divider, { backgroundColor: Colors.border + '60' }]} />
-
-          {/* Email Row */}
-          <View style={styles.infoRow}>
-            <View style={[styles.infoIconCircle, { backgroundColor: Colors.secondary + '15' }]}>
-              <Ionicons name="mail-outline" size={18} color={Colors.secondary} />
-            </View>
-            <View style={styles.infoContent}>
-              <Text style={[styles.infoLabel, { color: Colors.icon }]}>Email Address</Text>
-              <Text style={[styles.infoValue, { color: Colors.text }]}>
-                {user?.email || 'Not set'}
-              </Text>
-            </View>
-          </View>
-
+          <ProfileInfoRow
+            icon="mail-outline"
+            iconColor={Colors.secondary}
+            iconBg={Colors.secondary + '15'}
+            label="Email Address"
+            value={user?.email || 'Not set'}
+            textColor={Colors.text}
+            mutedColor={Colors.icon}
+          />
           <View style={[styles.divider, { backgroundColor: Colors.border + '60' }]} />
-
-          {/* Role Row */}
-          <View style={styles.infoRow}>
-            <View style={[styles.infoIconCircle, { backgroundColor: '#F59E0B15' }]}>
-              <Ionicons name="shield-checkmark-outline" size={18} color="#F59E0B" />
-            </View>
-            <View style={styles.infoContent}>
-              <Text style={[styles.infoLabel, { color: Colors.icon }]}>Account Type</Text>
-              <Text style={[styles.infoValue, { color: Colors.text }]}>
-                {user?.role === 'admin' ? 'Administrator' : 'Student'}
-              </Text>
-            </View>
-          </View>
+          <ProfileInfoRow
+            icon="shield-checkmark-outline"
+            iconColor="#F59E0B"
+            iconBg="#F59E0B15"
+            label="Account Type"
+            value={user?.role === 'admin' ? 'Administrator' : 'Student'}
+            textColor={Colors.text}
+            mutedColor={Colors.icon}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -203,74 +156,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xxl,
   },
-
-  // --- Profile Section ---
-  profileSection: {
-    borderRadius: 20,
-    padding: Spacing.lg,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  avatarContainer: {
-    position: 'relative',
-    marginBottom: Spacing.md,
-  },
-  avatarCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarInitials: {
-    fontSize: 34,
-    fontWeight: '800',
-  },
-  cameraButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: -2,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-  },
-  profileName: {
-    fontSize: Typography.size.xl,
-    fontWeight: '800',
-    textAlign: 'center',
-  },
-  profileHandle: {
-    fontSize: Typography.size.sm,
-    fontWeight: '500',
-    marginTop: 2,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm + 2,
-    marginTop: Spacing.lg,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs + 2,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
-    borderRadius: 12,
-  },
-  actionButtonText: {
-    fontSize: Typography.size.xs,
-    fontWeight: '600',
-  },
-
-  // --- Information Section ---
   sectionHeader: {
     marginTop: Spacing.lg + 4,
     marginBottom: Spacing.sm + 2,
@@ -288,31 +173,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 6,
     elevation: 2,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md - 2,
-    paddingVertical: Spacing.sm + 2,
-  },
-  infoIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  infoContent: {
-    flex: 1,
-  },
-  infoLabel: {
-    fontSize: Typography.size.xs,
-    fontWeight: '500',
-    marginBottom: 1,
-  },
-  infoValue: {
-    fontSize: Typography.size.sm,
-    fontWeight: '600',
   },
   divider: {
     height: 1,

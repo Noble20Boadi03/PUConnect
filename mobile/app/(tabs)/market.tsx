@@ -46,7 +46,7 @@ export default function MarketScreen() {
   const handleCardPress = useCallback(
     (post: FeaturedPost) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      router.push(`/post/${post.id}`);
+      router.push(`/post/${post.id}` as any);
     },
     [router]
   );

@@ -1,26 +1,24 @@
 import React, { useCallback } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, useColorScheme } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, useColorScheme } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { PostDetailView } from '../../components/PostDetail';
-import { getPostDetailById, normalizeUsernameSlug } from '../../lib';
+import { ProviderProfileView } from '../../components/ProviderProfile';
+import { getProviderProfileByUsername } from '../../lib';
 import { Spacing, Typography } from '../../constants';
 
-export default function PostDetailScreen() {
-  const { id, fromProvider } = useLocalSearchParams<{ id: string; fromProvider?: string }>();
-  const hideAuthorProfile =
-    fromProvider === '1' || fromProvider === 'true';
+export default function ProviderProfileScreen() {
+  const { username } = useLocalSearchParams<{ username: string }>();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
   const textColor = isDark ? '#ECEDEE' : '#11181C';
 
-  const post = typeof id === 'string' ? getPostDetailById(id) : undefined;
+  const profile =
+    typeof username === 'string' ? getProviderProfileByUsername(username) : undefined;
 
   const handleBack = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -31,50 +29,43 @@ export default function PostDetailScreen() {
     }
   }, [router]);
 
-  const handleSendMessage = useCallback(() => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  }, []);
-
-  const handleViewProvider = useCallback(
-    (username: string) => {
-      router.push(`/provider/${normalizeUsernameSlug(username)}` as any);
+  const handlePostPress = useCallback(
+    (postId: string) => {
+      router.push(`/post/${postId}?fromProvider=1` as any);
     },
     [router]
   );
 
-  if (!post) {
+  const handleSendMessage = useCallback(() => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }, []);
+
+  if (!profile) {
     return (
       <SafeAreaView
         style={[styles.notFound, { backgroundColor: screenBg }]}
         edges={['top', 'bottom']}
       >
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-        <Text style={[styles.notFoundTitle, { color: textColor }]}>Post not found</Text>
+        <Text style={[styles.notFoundTitle, { color: textColor }]}>Profile not found</Text>
         <TouchableOpacity style={styles.notFoundBtn} onPress={handleBack}>
           <Ionicons name="arrow-back" size={18} color={textColor} />
-          <Text style={[styles.notFoundBtnText, { color: textColor }]}>Back to Market</Text>
+          <Text style={[styles.notFoundBtnText, { color: textColor }]}>Go back</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
   }
 
   return (
-    <View style={[styles.screen, { backgroundColor: screenBg }]}>
-      <PostDetailView
-        post={post}
-        onBack={handleBack}
-        onSendMessage={handleSendMessage}
-        onViewProvider={hideAuthorProfile ? undefined : handleViewProvider}
-        hideAuthorProfile={hideAuthorProfile}
-      />
-    </View>
+    <ProviderProfileView
+      profile={profile}
+      onBack={handleBack}
+      onPostPress={handlePostPress}
+      onSendMessage={handleSendMessage}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
   notFound: {
     flex: 1,
     justifyContent: 'center',

@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useColorScheme } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import type { MarketIconName } from '../types';
 import { toggleThemePreference } from '../lib/themePreference';
 
 /**
@@ -9,7 +10,7 @@ import { toggleThemePreference } from '../lib/themePreference';
 export function useThemeToggle() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const iconName = isDark ? 'sunny-outline' : 'moon-outline';
+  const iconName: MarketIconName = isDark ? 'sunny-outline' : 'moon-outline';
 
   const handleToggle = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

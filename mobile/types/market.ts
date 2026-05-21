@@ -54,6 +54,22 @@ export interface PostAuthor {
   skills?: string[];
 }
 
+/** Filter for posts on a public user / provider profile. */
+export type ProviderPostsTab = 'services' | 'requests';
+
+/** Public profile shown when viewing a provider from a service post. */
+export interface ProviderProfile {
+  /** URL slug without @, e.g. jordanp */
+  username: string;
+  displayName: string;
+  /** Display handle, e.g. @jordanp */
+  handle: string;
+  avatarUrl: string;
+  bio: string;
+  skills: string[];
+  posts: FeaturedPost[];
+}
+
 /** Full-screen post detail (service or request). */
 export interface PostDetail {
   id: string;

@@ -11,3 +11,5 @@ export * from './MarketHeader';
 export * from './MarketFeedHeader';
 export * from './MarketTipBanner';
 export * from './PostDetail';
+export * from './Profile';
+export * from './ProviderProfile';
