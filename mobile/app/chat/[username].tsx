@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { ChatView } from '../../components/Chat';
-import { getChatThread } from '../../lib';
+import { buildProviderProfileHref, getChatThread } from '../../lib';
 import { Spacing, Typography } from '../../constants';
 
 export default function ChatScreen() {
@@ -56,6 +56,12 @@ export default function ChatScreen() {
     [router]
   );
 
+  const handleViewProviderProfile = useCallback(() => {
+    if (typeof username !== 'string') return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push(buildProviderProfileHref(username) as any);
+  }, [username, router]);
+
   if (!thread) {
     return (
       <SafeAreaView
@@ -77,6 +83,7 @@ export default function ChatScreen() {
       onBack={exitToMessages}
       onOpenPost={handleOpenPost}
       onOpenPostForRequest={handleOpenPostForRequest}
+      onViewProviderProfile={handleViewProviderProfile}
     />
   );
 }

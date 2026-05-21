@@ -25,6 +25,7 @@ export type ChatMenuAction =
   | 'viewOfficialDetails'
   | 'requestOfficialCompletion'
   | 'reviewOfficialCompletion'
+  | 'viewProviderProfile'
   | 'mute'
   | 'report'
   | 'cancel';
@@ -34,6 +35,8 @@ export interface ChatOptionsSheetProps {
   showBrowseServices?: boolean;
   showOfficialService?: boolean;
   showOfficialRequest?: boolean;
+  /** Service provider profile (same entry as from service post detail). */
+  showViewProviderProfile?: boolean;
   /** Active official engagement — show manage actions instead of initiators. */
   officialEngagementActive?: boolean;
   officialEngagementCompleted?: boolean;
@@ -56,6 +59,7 @@ export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
   showBrowseServices = false,
   showOfficialService = false,
   showOfficialRequest = false,
+  showViewProviderProfile = false,
   officialEngagementActive = false,
   officialEngagementCompleted = false,
   engagementTag,
@@ -121,6 +125,10 @@ export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
       }
     }
 
+    if (showViewProviderProfile) {
+      items.push({ key: 'viewProviderProfile', label: 'View Provider Profile' });
+    }
+
     if (showBrowseServices) {
       items.push({ key: 'browseServices', label: 'Browse Services' });
     }
@@ -131,6 +139,7 @@ export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
     showBrowseServices,
     showOfficialService,
     showOfficialRequest,
+    showViewProviderProfile,
     officialEngagementActive,
     officialEngagementCompleted,
     engagementTag,

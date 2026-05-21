@@ -34,6 +34,8 @@ export default function RootLayout() {
 
   const inPostDetail = segments[0] === 'post';
   const inProviderProfile = segments[0] === 'provider';
+  const inProviderReviews = inProviderProfile && segments[2] === 'reviews';
+  const inProviderReviewForm = inProviderProfile && segments[2] === 'review';
   const inChat = segments[0] === 'chat';
   const inNotifications = segments[0] === 'notifications';
   const managesOwnChrome = inPostDetail;
@@ -57,6 +59,8 @@ export default function RootLayout() {
       !inSettings &&
       !inPostDetail &&
       !inProviderProfile &&
+      !inProviderReviews &&
+      !inProviderReviewForm &&
       !inChat &&
       !inNotifications
     ) {
@@ -70,6 +74,8 @@ export default function RootLayout() {
         inSettings ||
         inPostDetail ||
         inProviderProfile ||
+        inProviderReviews ||
+        inProviderReviewForm ||
         inChat ||
         inNotifications)
     ) {
@@ -80,7 +86,17 @@ export default function RootLayout() {
     } else {
       didRedirectRef.current = false;
     }
-  }, [isAuthenticated, segments, isLoading, inPostDetail, inProviderProfile, inChat, inNotifications]);
+  }, [
+    isAuthenticated,
+    segments,
+    isLoading,
+    inPostDetail,
+    inProviderProfile,
+    inProviderReviews,
+    inProviderReviewForm,
+    inChat,
+    inNotifications,
+  ]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -91,6 +107,14 @@ export default function RootLayout() {
         <Stack.Screen name="settings" />
         <Stack.Screen name="post/[id]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="provider/[username]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen
+          name="provider/[username]/reviews"
+          options={{ animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
+          name="provider/[username]/review"
+          options={{ animation: 'slide_from_right' }}
+        />
         <Stack.Screen name="chat/[username]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
       </Stack>

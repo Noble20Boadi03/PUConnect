@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { PostDetailView } from '../../components/PostDetail';
-import { buildChatHref, getPostDetailById, normalizeUsernameSlug } from '../../lib';
+import { buildChatHref, buildProviderProfileHref, getPostDetailById } from '../../lib';
 import { Spacing, Typography } from '../../constants';
 
 export default function PostDetailScreen() {
@@ -67,7 +67,7 @@ export default function PostDetailScreen() {
 
   const handleViewProvider = useCallback(
     (username: string) => {
-      router.push(`/provider/${normalizeUsernameSlug(username)}` as any);
+      router.push(buildProviderProfileHref(username) as any);
     },
     [router]
   );

@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
-  Alert,
   StyleSheet,
   View,
   Text,
@@ -9,10 +8,14 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
-import { useThemeColor } from '../../hooks';
+import { ConfirmDialog } from '../ConfirmDialog';
+import { ReviewPromptDialog } from '../ReviewPromptDialog';
+import { useConfirmDialog, useThemeColor } from '../../hooks';
+import { useProviderReviewsStore } from '../../store/providerReviewsStore';
 import { Spacing, Typography } from '../../constants';
 import { getProviderServices, isCurrentUserProvider } from '../../lib';
 import { ChatHeader } from './ChatHeader';
@@ -89,6 +92,8 @@ export interface ChatViewProps {
   onOpenPost?: (postId: string) => void;
   /** Post detail from request-service picker (no profile, request CTA). */
   onOpenPostForRequest?: (postId: string) => void;
+  /** Opens `/provider/{slug}` — same route as service post detail. */
+  onViewProviderProfile?: () => void;
 }
 
 export const ChatView: React.FC<ChatViewProps> = ({
@@ -96,9 +101,20 @@ export const ChatView: React.FC<ChatViewProps> = ({
   onBack,
   onOpenPost,
   onOpenPostForRequest,
+  onViewProviderProfile,
 }) => {
+  const router = useRouter();
   const Colors = useThemeColor();
   const insets = useSafeAreaInsets();
+  const {
+    showConfirm,
+    confirmVisible,
+    confirmOptions,
+    handleConfirm: handleConfirmDialog,
+    handleCancel: handleCancelDialog,
+  } = useConfirmDialog();
+  const recordCompletedDeal = useProviderReviewsStore((s) => s.recordCompletedDeal);
+  const dismissReviewPrompt = useProviderReviewsStore((s) => s.dismissReviewPrompt);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -119,6 +135,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const [completionPhase, setCompletionPhase] = useState<OfficialCompletionPhase>('none');
   const [engagementStartedAt, setEngagementStartedAt] = useState<string | undefined>();
   const [completionRequestedAt, setCompletionRequestedAt] = useState<string | undefined>();
+  const [reviewPromptVisible, setReviewPromptVisible] = useState(false);
+  const [pendingReviewDealId, setPendingReviewDealId] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
   const [dateGroups, setDateGroups] = useState<ChatDateGroup[]>(() =>
     thread.dateGroups.map((g) => ({ ...g, messages: [...g.messages] }))
@@ -144,6 +162,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
     thread.postContext?.tag === 'Service' && officialEngagementStatus === 'none';
   const canOfficialRequest =
     thread.postContext?.tag === 'Request' && officialEngagementStatus === 'none';
+  const showViewProviderProfile =
+    !thread.postContext || thread.postContext.tag === 'Service';
   const hasOfficialEngagement =
     officialEngagementStatus === 'active' || officialEngagementStatus === 'completed';
 
@@ -177,67 +197,67 @@ export const ChatView: React.FC<ChatViewProps> = ({
     []
   );
 
-  const handleCancelOfficialRequest = useCallback(() => {
-    if (!thread.postContext) return;
-    const ctx = thread.postContext;
-    Alert.alert(
-      'Cancel Official Request?',
-      `This withdraws your official request for “${ctx.title}”. You can start a new official request later if needed.`,
-      [
-        { text: 'Keep Request', style: 'cancel' },
-        {
-          text: 'Cancel Request',
-          style: 'destructive',
-          onPress: () => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            setOfficialEngagementStatus('none');
-            setCompletionPhase('none');
-            setCompletionRequestedAt(undefined);
-            setEngagementStartedAt(undefined);
-            appendEngagementSystemMessages([
-              {
-                id: `system-cancel-${Date.now()}`,
-                kind: 'system',
-                text: `Official service request for “${ctx.title}” was cancelled.`,
-                time: formatSentTime(),
-              },
-            ]);
-          },
-        },
-      ]
-    );
-  }, [thread.postContext, appendEngagementSystemMessages]);
+  const promptOptionalReview = useCallback(
+    (dealId: string) => {
+      setPendingReviewDealId(dealId);
+      setReviewPromptVisible(true);
+    },
+    []
+  );
 
-  const handleWithdrawOfficialResponse = useCallback(() => {
+  const handleCancelOfficialRequest = useCallback(async () => {
     if (!thread.postContext) return;
     const ctx = thread.postContext;
-    Alert.alert(
-      'Withdraw Official Response?',
-      `This removes your official response to “${ctx.title}”. You can submit a new official response later if needed.`,
-      [
-        { text: 'Keep Response', style: 'cancel' },
-        {
-          text: 'Withdraw',
-          style: 'destructive',
-          onPress: () => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            setOfficialEngagementStatus('none');
-            setCompletionPhase('none');
-            setCompletionRequestedAt(undefined);
-            setEngagementStartedAt(undefined);
-            appendEngagementSystemMessages([
-              {
-                id: `system-withdraw-${Date.now()}`,
-                kind: 'system',
-                text: `Official response to “${ctx.title}” was withdrawn.`,
-                time: formatSentTime(),
-              },
-            ]);
-          },
-        },
-      ]
-    );
-  }, [thread.postContext, appendEngagementSystemMessages]);
+    const confirmed = await showConfirm({
+      title: 'Cancel Official Request?',
+      message: `This withdraws your official request for “${ctx.title}”. You can start a new official request later if needed.`,
+      confirmLabel: 'Cancel Request',
+      cancelLabel: 'Keep Request',
+      variant: 'destructive',
+      icon: 'close-circle-outline',
+    });
+    if (!confirmed) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    setOfficialEngagementStatus('none');
+    setCompletionPhase('none');
+    setCompletionRequestedAt(undefined);
+    setEngagementStartedAt(undefined);
+    appendEngagementSystemMessages([
+      {
+        id: `system-cancel-${Date.now()}`,
+        kind: 'system',
+        text: `Official service request for “${ctx.title}” was cancelled.`,
+        time: formatSentTime(),
+      },
+    ]);
+  }, [thread.postContext, showConfirm, appendEngagementSystemMessages]);
+
+  const handleWithdrawOfficialResponse = useCallback(async () => {
+    if (!thread.postContext) return;
+    const ctx = thread.postContext;
+    const confirmed = await showConfirm({
+      title: 'Withdraw Official Response?',
+      message: `This removes your official response to “${ctx.title}”. You can submit a new official response later if needed.`,
+      confirmLabel: 'Withdraw',
+      cancelLabel: 'Keep Response',
+      variant: 'destructive',
+      icon: 'arrow-undo-outline',
+    });
+    if (!confirmed) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    setOfficialEngagementStatus('none');
+    setCompletionPhase('none');
+    setCompletionRequestedAt(undefined);
+    setEngagementStartedAt(undefined);
+    appendEngagementSystemMessages([
+      {
+        id: `system-withdraw-${Date.now()}`,
+        kind: 'system',
+        text: `Official response to “${ctx.title}” was withdrawn.`,
+        time: formatSentTime(),
+      },
+    ]);
+  }, [thread.postContext, showConfirm, appendEngagementSystemMessages]);
 
   const applyProviderCompletionRequest = useCallback(
     (ctx: NonNullable<ChatThread['postContext']>) => {
@@ -272,105 +292,142 @@ export const ChatView: React.FC<ChatViewProps> = ({
     [thread.participant.displayName, userIsProvider, appendEngagementSystemMessages]
   );
 
-  const handleRequestOfficialCompletion = useCallback(() => {
+  const handleRequestOfficialCompletion = useCallback(async () => {
     if (!thread.postContext || officialEngagementStatus !== 'active' || completionPhase !== 'none') {
       return;
     }
     if (!userIsProvider) return;
     const ctx = thread.postContext;
-    Alert.alert(
-      'Request Completion?',
-      `Notify ${thread.participant.displayName} that the service for “${ctx.title}” is ready for review. They must confirm before this undertaking is closed.`,
-      [
-        { text: 'Not Yet', style: 'cancel' },
-        {
-          text: 'Request Completion',
-          onPress: () => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            applyProviderCompletionRequest(ctx);
-          },
-        },
-      ]
-    );
+    const confirmed = await showConfirm({
+      title: 'Request Completion?',
+      message: `Notify ${thread.participant.displayName} that the service for “${ctx.title}” is ready for review. They must confirm before this undertaking is closed.`,
+      confirmLabel: 'Request Completion',
+      cancelLabel: 'Not Yet',
+      icon: 'checkmark-done-outline',
+    });
+    if (!confirmed) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    applyProviderCompletionRequest(ctx);
   }, [
     thread.postContext,
     thread.participant.displayName,
     officialEngagementStatus,
     completionPhase,
     userIsProvider,
+    showConfirm,
     applyProviderCompletionRequest,
   ]);
 
-  const handleConfirmOfficialCompletion = useCallback(() => {
-    if (!thread.postContext || completionPhase !== 'pending_review' || userIsProvider) return;
-    const ctx = thread.postContext;
-    Alert.alert(
-      'Confirm Service Delivered?',
-      `Both parties must agree to close this undertaking for “${ctx.title}”. Only confirm if the service met what was agreed.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
+  const completeUndertakingAsClient = useCallback(
+    (ctx: NonNullable<ChatThread['postContext']>) => {
+      setOfficialEngagementStatus('completed');
+      setCompletionPhase('completed');
+      const time = formatSentTime();
+      appendEngagementSystemMessages([
         {
-          text: 'Confirm Complete',
-          onPress: () => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            setOfficialEngagementStatus('completed');
-            setCompletionPhase('completed');
-            const time = formatSentTime();
-            appendEngagementSystemMessages([
-              {
-                id: `system-complete-${Date.now()}`,
-                kind: 'system',
-                text: `Official undertaking for “${ctx.title}” is complete. Both parties agreed.`,
-                time,
-              },
-              {
-                id: `recv-complete-${Date.now()}`,
-                kind: 'received',
-                text: `Thank you for confirming. I have marked our agreement for “${ctx.title}” as complete.`,
-                time,
-              },
-            ]);
-          },
+          id: `system-complete-${Date.now()}`,
+          kind: 'system',
+          text: `Official undertaking for “${ctx.title}” is complete. Both parties agreed.`,
+          time,
         },
-      ]
-    );
-  }, [thread.postContext, completionPhase, userIsProvider, appendEngagementSystemMessages]);
+        {
+          id: `recv-complete-${Date.now()}`,
+          kind: 'received',
+          text: `Thank you for confirming. I have marked our agreement for “${ctx.title}” as complete.`,
+          time,
+        },
+      ]);
+      const dealId = recordCompletedDeal({
+        revieweeUsername: thread.providerUsername,
+        postId: ctx.postId,
+        postTitle: ctx.title,
+        completedAt: formatDisplayDate(),
+      });
+      promptOptionalReview(dealId);
+    },
+    [
+      thread.providerUsername,
+      appendEngagementSystemMessages,
+      recordCompletedDeal,
+      promptOptionalReview,
+    ]
+  );
 
-  const handleDeclineOfficialCompletion = useCallback(() => {
+  const handleConfirmOfficialCompletion = useCallback(async () => {
     if (!thread.postContext || completionPhase !== 'pending_review' || userIsProvider) return;
     const ctx = thread.postContext;
-    Alert.alert(
-      'Needs More Work?',
-      `Decline completion for now and let ${thread.participant.displayName} know the service for “${ctx.title}” still needs attention.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Decline for Now',
-          style: 'destructive',
-          onPress: () => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            setCompletionPhase('none');
-            setCompletionRequestedAt(undefined);
-            const time = formatSentTime();
-            appendEngagementSystemMessages([
-              {
-                id: `system-decline-${Date.now()}`,
-                kind: 'system',
-                text: `Completion for “${ctx.title}” was declined — more work is needed.`,
-                time,
-              },
-              {
-                id: `recv-decline-${Date.now()}`,
-                kind: 'received',
-                text: `Thanks for the update. I understand more work is needed on “${ctx.title}”. Let me know when you are ready to review again.`,
-                time,
-              },
-            ]);
-          },
-        },
-      ]
+    const confirmed = await showConfirm({
+      title: 'Confirm Service Delivered?',
+      message: `Both parties must agree to close this undertaking for “${ctx.title}”. Only confirm if the service met what was agreed.`,
+      confirmLabel: 'Confirm Complete',
+      cancelLabel: 'Cancel',
+      icon: 'checkmark-circle-outline',
+    });
+    if (!confirmed) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    completeUndertakingAsClient(ctx);
+  }, [
+    thread.postContext,
+    completionPhase,
+    userIsProvider,
+    showConfirm,
+    completeUndertakingAsClient,
+  ]);
+
+  const handleDeclineOfficialCompletion = useCallback(async () => {
+    if (!thread.postContext || completionPhase !== 'pending_review' || userIsProvider) return;
+    const ctx = thread.postContext;
+    const confirmed = await showConfirm({
+      title: 'Needs More Work?',
+      message: `Decline completion for now and let ${thread.participant.displayName} know the service for “${ctx.title}” still needs attention.`,
+      confirmLabel: 'Decline for Now',
+      cancelLabel: 'Cancel',
+      variant: 'destructive',
+      icon: 'alert-circle-outline',
+    });
+    if (!confirmed) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    setCompletionPhase('none');
+    setCompletionRequestedAt(undefined);
+    const time = formatSentTime();
+    appendEngagementSystemMessages([
+      {
+        id: `system-decline-${Date.now()}`,
+        kind: 'system',
+        text: `Completion for “${ctx.title}” was declined — more work is needed.`,
+        time,
+      },
+      {
+        id: `recv-decline-${Date.now()}`,
+        kind: 'received',
+        text: `Thanks for the update. I understand more work is needed on “${ctx.title}”. Let me know when you are ready to review again.`,
+        time,
+      },
+    ]);
+  }, [
+    thread.postContext,
+    thread.participant.displayName,
+    completionPhase,
+    userIsProvider,
+    showConfirm,
+    appendEngagementSystemMessages,
+  ]);
+
+  const handleReviewNow = useCallback(() => {
+    if (!thread.postContext) return;
+    setReviewPromptVisible(false);
+    router.push(
+      `/provider/${thread.providerUsername}/review?postId=${encodeURIComponent(thread.postContext.postId)}` as any
     );
-  }, [thread.postContext, thread.participant.displayName, completionPhase, userIsProvider, appendEngagementSystemMessages]);
+  }, [thread.postContext, thread.providerUsername, router]);
+
+  const handleReviewLater = useCallback(() => {
+    if (pendingReviewDealId) {
+      dismissReviewPrompt(pendingReviewDealId);
+    }
+    setReviewPromptVisible(false);
+    setPendingReviewDealId(null);
+  }, [pendingReviewDealId, dismissReviewPrompt]);
 
   const handleMenuSelect = useCallback(
     (action: ChatMenuAction) => {
@@ -389,6 +446,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
         openOfficialDetails();
       } else if (action === 'requestOfficialCompletion') {
         handleRequestOfficialCompletion();
+      } else if (action === 'viewProviderProfile') {
+        onViewProviderProfile?.();
       }
     },
     [
@@ -397,6 +456,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
       handleWithdrawOfficialResponse,
       openOfficialDetails,
       handleRequestOfficialCompletion,
+      onViewProviderProfile,
     ]
   );
 
@@ -570,6 +630,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
         showBrowseServices={!thread.postContext}
         showOfficialService={canOfficialService}
         showOfficialRequest={canOfficialRequest}
+        showViewProviderProfile={showViewProviderProfile}
         officialEngagementActive={hasOfficialEngagement}
         officialEngagementCompleted={officialEngagementStatus === 'completed'}
         engagementTag={thread.postContext?.tag}
@@ -617,6 +678,28 @@ export const ChatView: React.FC<ChatViewProps> = ({
         services={providerServices}
         onSelectService={(postId) => onOpenPostForRequest?.(postId)}
         onClose={() => setServicesVisible(false)}
+      />
+
+      {confirmOptions ? (
+        <ConfirmDialog
+          visible={confirmVisible}
+          title={confirmOptions.title}
+          message={confirmOptions.message}
+          confirmLabel={confirmOptions.confirmLabel}
+          cancelLabel={confirmOptions.cancelLabel}
+          variant={confirmOptions.variant}
+          icon={confirmOptions.icon}
+          onConfirm={handleConfirmDialog}
+          onCancel={handleCancelDialog}
+        />
+      ) : null}
+
+      <ReviewPromptDialog
+        visible={reviewPromptVisible}
+        providerName={thread.participant.displayName}
+        serviceTitle={thread.postContext?.title ?? 'this service'}
+        onReviewNow={handleReviewNow}
+        onLater={handleReviewLater}
       />
     </SafeAreaView>
   );

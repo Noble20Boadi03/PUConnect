@@ -1,15 +1,20 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, useColorScheme } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { ProviderProfileView } from '../../components/ProviderProfile';
-import { buildChatHref, getProviderProfileByUsername } from '../../lib';
-import { Spacing, Typography } from '../../constants';
+import { ProviderReviewsView } from '../../../components/ProviderReviews';
+import { getProviderProfileByUsername } from '../../../lib';
+import {
+  selectCanReviewProvider,
+  selectReviewableDeal,
+  useProviderReviewsStore,
+} from '../../../store/providerReviewsStore';
+import { Spacing, Typography } from '../../../constants';
 
-export default function ProviderProfileScreen() {
+export default function ProviderReviewsScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
   const router = useRouter();
   const colorScheme = useColorScheme();
@@ -20,36 +25,36 @@ export default function ProviderProfileScreen() {
   const profile =
     typeof username === 'string' ? getProviderProfileByUsername(username) : undefined;
 
+  const submittedReviews = useProviderReviewsStore((s) => s.submittedReviews);
+  const completedDeals = useProviderReviewsStore((s) => s.completedDeals);
+
+  const canLeaveReview = useMemo(
+    () =>
+      profile
+        ? selectCanReviewProvider(completedDeals, submittedReviews, profile.username)
+        : false,
+    [profile, completedDeals, submittedReviews]
+  );
+
   const handleBack = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (router.canGoBack()) {
       router.back();
+    } else if (profile) {
+      router.replace(`/provider/${profile.username}` as any);
     } else {
-      router.replace('/(tabs)/market');
+      router.replace('/(tabs)/market' as any);
     }
-  }, [router]);
-
-  const handlePostPress = useCallback(
-    (postId: string) => {
-      router.push(`/post/${postId}?fromProvider=1` as any);
-    },
-    [router]
-  );
-
-  const handleSendMessage = useCallback(() => {
-    if (!profile) return;
-    router.push(buildChatHref(profile.handle) as any);
-  }, [profile, router]);
-
-  const handleOpenReviews = useCallback(() => {
-    if (!profile) return;
-    router.push(`/provider/${profile.username}/reviews` as any);
-  }, [profile, router]);
+  }, [router, profile]);
 
   const handleLeaveReview = useCallback(() => {
     if (!profile) return;
-    router.push(`/provider/${profile.username}/review` as any);
-  }, [profile, router]);
+    const deal = selectReviewableDeal(completedDeals, submittedReviews, profile.username);
+    if (!deal) return;
+    router.push(
+      `/provider/${profile.username}/review?postId=${encodeURIComponent(deal.postId)}` as any
+    );
+  }, [profile, completedDeals, submittedReviews, router]);
 
   if (!profile) {
     return (
@@ -67,13 +72,11 @@ export default function ProviderProfileScreen() {
   }
 
   return (
-    <ProviderProfileView
-      profile={profile}
+    <ProviderReviewsView
+      revieweeUsername={profile.username}
+      displayName={profile.displayName}
       onBack={handleBack}
-      onPostPress={handlePostPress}
-      onSendMessage={handleSendMessage}
-      onOpenReviews={handleOpenReviews}
-      onLeaveReview={handleLeaveReview}
+      onLeaveReview={canLeaveReview ? handleLeaveReview : undefined}
     />
   );
 }

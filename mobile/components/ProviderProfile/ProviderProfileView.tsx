@@ -18,8 +18,14 @@ import { FeaturedPostCard } from '../FeaturedPostCard';
 import {
   ProfileHeroSection,
   ProfileInfoRow,
+  ProfileReviewsSummaryRow,
   ProfileSegmentedTabs,
 } from '../Profile';
+import {
+  selectCanReviewProvider,
+  selectSummaryForProvider,
+  useProviderReviewsStore,
+} from '../../store/providerReviewsStore';
 import type { ProviderPostsTab, ProviderProfile } from '../../types';
 
 export interface ProviderProfileViewProps {
@@ -27,6 +33,8 @@ export interface ProviderProfileViewProps {
   onBack: () => void;
   onPostPress?: (postId: string) => void;
   onSendMessage?: () => void;
+  onOpenReviews?: () => void;
+  onLeaveReview?: () => void;
 }
 
 export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
@@ -34,6 +42,8 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
   onBack,
   onPostPress,
   onSendMessage,
+  onOpenReviews,
+  onLeaveReview,
 }) => {
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
@@ -57,6 +67,19 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
   const filteredPosts = useMemo(
     () => filterProviderPosts(profile.posts, activeTab),
     [profile.posts, activeTab]
+  );
+
+  const submittedReviews = useProviderReviewsStore((s) => s.submittedReviews);
+  const completedDeals = useProviderReviewsStore((s) => s.completedDeals);
+
+  const reviewSummary = useMemo(
+    () => selectSummaryForProvider(submittedReviews, profile.username),
+    [submittedReviews, profile.username]
+  );
+
+  const canLeaveReview = useMemo(
+    () => selectCanReviewProvider(completedDeals, submittedReviews, profile.username),
+    [completedDeals, submittedReviews, profile.username]
   );
 
   const handleSendMessage = useCallback(() => {
@@ -147,6 +170,36 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
               </View>
             </>
           ) : null}
+          {canLeaveReview && onLeaveReview ? (
+            <>
+              <View style={[styles.divider, { backgroundColor: Colors.border + '60' }]} />
+              <TouchableOpacity
+                style={styles.leaveReviewRow}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  onLeaveReview();
+                }}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="create-outline" size={18} color={Colors.primary} />
+                <Text style={[styles.leaveReviewText, { color: Colors.primary }]}>
+                  Leave a review for a completed service
+                </Text>
+                <Ionicons name="chevron-forward" size={16} color={Colors.primary} />
+              </TouchableOpacity>
+            </>
+          ) : null}
+          <View style={[styles.divider, { backgroundColor: Colors.border + '60' }]} />
+          <ProfileReviewsSummaryRow
+            averageRating={reviewSummary.averageRating}
+            reviewCount={reviewSummary.reviewCount}
+            textColor={Colors.text}
+            mutedColor={Colors.icon}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onOpenReviews?.();
+            }}
+          />
         </View>
 
         <View style={styles.sectionHeader}>
@@ -280,6 +333,18 @@ const styles = StyleSheet.create({
   skillText: {
     fontSize: Typography.size.xs,
     fontWeight: '600',
+  },
+  leaveReviewRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.sm + 4,
+    paddingHorizontal: Spacing.xs,
+  },
+  leaveReviewText: {
+    flex: 1,
+    fontSize: Typography.size.sm,
+    fontWeight: '700',
   },
   postsList: {
     marginTop: Spacing.md,

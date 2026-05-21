@@ -2,6 +2,7 @@
 export * from './Button';
 export * from './Alert';
 export * from './ConfirmDialog';
+export * from './ReviewPromptDialog';
 export * from './KeyboardLayout';
 export * from './SectionHeader';
 export * from './PopularServiceCard';
@@ -13,6 +14,7 @@ export * from './MarketTipBanner';
 export * from './PostDetail';
 export * from './Profile';
 export * from './ProviderProfile';
+export * from './ProviderReviews';
 export * from './Chat';
 export * from './Messages';
 export * from './NotificationBellButton';
