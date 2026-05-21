@@ -2,22 +2,27 @@ import React, { useState, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   View,
+  Text,
   ScrollView,
   useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 
 import { useThemeColor } from '../../hooks';
-import { Spacing } from '../../constants';
+import { Spacing, Typography } from '../../constants';
 import { FEATURED_POSTS_MOCK } from '../../constants';
 import { MarketHeader, MarketFeedHeader, FeaturedPostCard } from '../../components';
+import { filterMarketPosts } from '../../lib';
+import type { FeaturedPost, MarketFilter } from '../../types';
 
 /**
  * Market uses a single ScrollView (mock data is small) to avoid nested
  * VirtualizedLists, which cause slow updates and jank after resume.
  */
 export default function MarketScreen() {
+  const router = useRouter();
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -28,14 +33,41 @@ export default function MarketScreen() {
   const borderColor = isDark ? '#30363D' : 'rgba(0, 0, 0, 0.08)';
 
   const [showMarketTip, setShowMarketTip] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<MarketFilter>('all');
 
   const dismissTip = useCallback(() => {
     setShowMarketTip(false);
   }, []);
 
-  const handleCardPress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  const handleFilterChange = useCallback((filter: MarketFilter) => {
+    setActiveFilter(filter);
   }, []);
+
+  const handleCardPress = useCallback(
+    (post: FeaturedPost) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      router.push(`/post/${post.id}`);
+    },
+    [router]
+  );
+
+  const showDiscoverySections = activeFilter === 'all';
+
+  const filteredPosts = useMemo(
+    () => filterMarketPosts(FEATURED_POSTS_MOCK, activeFilter),
+    [activeFilter]
+  );
+
+  const emptyMessage = useMemo(() => {
+    switch (activeFilter) {
+      case 'services':
+        return 'No service posts match this filter yet.';
+      case 'requests':
+        return 'No request posts match this filter yet.';
+      default:
+        return 'No posts to show right now.';
+    }
+  }, [activeFilter]);
 
   const headerTheme = useMemo(
     () => ({
@@ -47,6 +79,8 @@ export default function MarketScreen() {
       searchBg,
       showTip: showMarketTip,
       onDismissTip: dismissTip,
+      activeFilter,
+      onFilterChange: handleFilterChange,
     }),
     [
       Colors.text,
@@ -57,6 +91,8 @@ export default function MarketScreen() {
       searchBg,
       showMarketTip,
       dismissTip,
+      activeFilter,
+      handleFilterChange,
     ]
   );
 
@@ -67,8 +103,18 @@ export default function MarketScreen() {
       textColor: Colors.text,
       iconColor: Colors.icon,
       primaryColor: Colors.primary,
+      showDiscoverySections,
+      onPostPress: handleCardPress,
     }),
-    [cardBg, searchBg, Colors.text, Colors.icon, Colors.primary]
+    [
+      cardBg,
+      searchBg,
+      Colors.text,
+      Colors.icon,
+      Colors.primary,
+      showDiscoverySections,
+      handleCardPress,
+    ]
   );
 
   const postCardTheme = useMemo(
@@ -99,16 +145,22 @@ export default function MarketScreen() {
         >
           <MarketFeedHeader {...feedHeaderTheme} />
 
-          {FEATURED_POSTS_MOCK.map((item) => (
-            <View key={item.id} style={styles.featuredItem}>
-              <FeaturedPostCard
-                item={item}
-                layout="stack"
-                onPress={handleCardPress}
-                {...postCardTheme}
-              />
+          {filteredPosts.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={[styles.emptyText, { color: Colors.icon }]}>{emptyMessage}</Text>
             </View>
-          ))}
+          ) : (
+            filteredPosts.map((item) => (
+              <View key={item.id} style={styles.featuredItem}>
+                <FeaturedPostCard
+                  item={item}
+                  layout="stack"
+                  onPress={() => handleCardPress(item)}
+                  {...postCardTheme}
+                />
+              </View>
+            ))
+          )}
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -131,5 +183,16 @@ const styles = StyleSheet.create({
   },
   featuredItem: {
     paddingHorizontal: Spacing.lg,
+  },
+  emptyState: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xl,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: Typography.size.sm,
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

@@ -7,7 +7,7 @@ import { useAuthStore } from '../store';
 import { initializeThemePreference } from '../lib/themePreference';
 import { useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import * as NavigationBar from 'expo-navigation-bar';
+import { applyThemeSystemChrome } from '../lib/systemChrome';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -32,14 +32,14 @@ export default function RootLayout() {
     }
   }, [isLoading]);
 
-  // Sync System Navigation Bar on Android with the theme
+  const inPostDetail = segments[0] === 'post';
+
+  // Sync Android navigation bar with theme (post detail manages its own chrome).
   useEffect(() => {
-    if (Platform.OS === 'android') {
-      const isDark = colorScheme === 'dark';
-      // Set style of navigation bar buttons (dark buttons on light bg, light buttons on dark bg)
-      NavigationBar.setButtonStyleAsync(isDark ? 'light' : 'dark');
+    if (Platform.OS === 'android' && !inPostDetail) {
+      void applyThemeSystemChrome(colorScheme === 'dark');
     }
-  }, [colorScheme]);
+  }, [colorScheme, inPostDetail]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -47,13 +47,12 @@ export default function RootLayout() {
     const inAuthGroup = segments[0] === '(auth)';
     const inTabsGroup = segments[0] === '(tabs)';
     const inSettings = segments[0] === 'settings';
-
-    if (isAuthenticated && !inTabsGroup && !inSettings) {
+    if (isAuthenticated && !inTabsGroup && !inSettings && !inPostDetail) {
       if (!didRedirectRef.current) {
         didRedirectRef.current = true;
         router.replace('/(tabs)/market' as any);
       }
-    } else if (!isAuthenticated && (inTabsGroup || inSettings)) {
+    } else if (!isAuthenticated && (inTabsGroup || inSettings || inPostDetail)) {
       if (!didRedirectRef.current) {
         didRedirectRef.current = true;
         router.replace('/(auth)/login' as any);
@@ -61,7 +60,7 @@ export default function RootLayout() {
     } else {
       didRedirectRef.current = false;
     }
-  }, [isAuthenticated, segments, isLoading]);
+  }, [isAuthenticated, segments, isLoading, inPostDetail]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -70,8 +69,11 @@ export default function RootLayout() {
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="settings" />
+        <Stack.Screen name="post/[id]" options={{ animation: 'slide_from_right' }} />
       </Stack>
-      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+      {!inPostDetail ? (
+        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+      ) : null}
     </ThemeProvider>
   );
 }

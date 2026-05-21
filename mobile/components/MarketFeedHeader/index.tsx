@@ -23,6 +23,9 @@ export interface MarketFeedHeaderProps {
   textColor: string;
   iconColor: string;
   primaryColor: string;
+  /** When false, only the Featured Posts heading is shown (filter active). */
+  showDiscoverySections: boolean;
+  onPostPress: (post: FeaturedPost) => void;
 }
 
 interface PopularRowProps {
@@ -56,7 +59,7 @@ interface RecentRowProps {
   iconColor: string;
   primaryColor: string;
   borderColor: string;
-  onPress: () => void;
+  onPostPress: (post: FeaturedPost) => void;
 }
 
 const RecentRow = memo(function RecentRow({
@@ -67,13 +70,13 @@ const RecentRow = memo(function RecentRow({
   iconColor,
   primaryColor,
   borderColor,
-  onPress,
+  onPostPress,
 }: RecentRowProps) {
   return (
     <FeaturedPostCard
       item={item}
       layout="carousel"
-      onPress={onPress}
+      onPress={() => onPostPress(item)}
       cardBg={cardBg}
       subtleBg={searchBg}
       textColor={textColor}
@@ -90,6 +93,8 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
   textColor,
   iconColor,
   primaryColor,
+  showDiscoverySections,
+  onPostPress,
 }) => {
   const onPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -108,73 +113,77 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
       iconColor,
       primaryColor,
       borderColor,
-      onPress,
+      onPostPress,
     }),
-    [cardBg, searchBg, textColor, iconColor, primaryColor, borderColor, onPress]
+    [cardBg, searchBg, textColor, iconColor, primaryColor, borderColor, onPostPress]
   );
 
   return (
     <View>
-      <View style={styles.block}>
-        <View style={styles.heading}>
-          <SectionHeader
-            title="Popular Services"
-            titleColor={textColor}
-            actionColor={primaryColor}
-            onActionPress={onPress}
-          />
-        </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          nestedScrollEnabled
-          overScrollMode="never"
-          contentContainerStyle={styles.hListContent}
-        >
-          {POPULAR_SERVICES_MOCK.map((item, index) => (
-            <View key={item.id} style={index > 0 ? styles.hItemGap : undefined}>
-              <PopularRow
-                item={item}
-                labelBg={cardBg}
-                labelColor={textColor}
-                onPress={onPress}
+      {showDiscoverySections ? (
+        <>
+          <View style={styles.block}>
+            <View style={styles.heading}>
+              <SectionHeader
+                title="Popular Services"
+                titleColor={textColor}
+                actionColor={primaryColor}
+                onActionPress={onPress}
               />
             </View>
-          ))}
-        </ScrollView>
-      </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              nestedScrollEnabled
+              overScrollMode="never"
+              contentContainerStyle={styles.hListContent}
+            >
+              {POPULAR_SERVICES_MOCK.map((item, index) => (
+                <View key={item.id} style={index > 0 ? styles.hItemGap : undefined}>
+                  <PopularRow
+                    item={item}
+                    labelBg={cardBg}
+                    labelColor={textColor}
+                    onPress={onPress}
+                  />
+                </View>
+              ))}
+            </ScrollView>
+          </View>
 
-      <View style={styles.block}>
-        <View style={styles.heading}>
-          <SectionHeader
-            title="Recently Viewed"
-            titleColor={textColor}
-            actionColor={primaryColor}
-            onActionPress={onPress}
-          />
-        </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          nestedScrollEnabled
-          overScrollMode="never"
-          contentContainerStyle={styles.hListContent}
-        >
-          {RECENTLY_VIEWED_MOCK.map((item, index) => (
-            <View key={item.id} style={index > 0 ? styles.hItemGapWide : undefined}>
-              <RecentRow item={item} {...recentCardProps} />
+          <View style={styles.block}>
+            <View style={styles.heading}>
+              <SectionHeader
+                title="Recently Viewed"
+                titleColor={textColor}
+                actionColor={primaryColor}
+                onActionPress={onPress}
+              />
             </View>
-          ))}
-        </ScrollView>
-      </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              nestedScrollEnabled
+              overScrollMode="never"
+              contentContainerStyle={styles.hListContent}
+            >
+              {RECENTLY_VIEWED_MOCK.map((item, index) => (
+                <View key={item.id} style={index > 0 ? styles.hItemGapWide : undefined}>
+                  <RecentRow item={item} {...recentCardProps} />
+                </View>
+              ))}
+            </ScrollView>
+          </View>
 
-      <View style={styles.paddedBlock}>
-        <MarketPromoBanner
-          title={MARKET_PROMO.title}
-          subtitle={MARKET_PROMO.subtitle}
-          primaryColor={primaryColor}
-        />
-      </View>
+          <View style={styles.paddedBlock}>
+            <MarketPromoBanner
+              title={MARKET_PROMO.title}
+              subtitle={MARKET_PROMO.subtitle}
+              primaryColor={primaryColor}
+            />
+          </View>
+        </>
+      ) : null}
 
       <View style={[styles.paddedBlock, styles.featuredHeading]}>
         <SectionHeader

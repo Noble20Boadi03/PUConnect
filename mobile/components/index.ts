@@ -10,3 +10,4 @@ export * from './MarketPromoBanner';
 export * from './MarketHeader';
 export * from './MarketFeedHeader';
 export * from './MarketTipBanner';
+export * from './PostDetail';

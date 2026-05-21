@@ -11,10 +11,9 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { MarketTipBanner } from '../MarketTipBanner';
+import type { MarketFilter } from '../../types';
 
-type FilterOption = 'all' | 'services' | 'requests';
-
-const FILTERS: { key: FilterOption; label: string }[] = [
+const FILTERS: { key: MarketFilter; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'services', label: 'Services' },
   { key: 'requests', label: 'Requests' },
@@ -29,6 +28,8 @@ export interface MarketHeaderProps {
   searchBg: string;
   showTip: boolean;
   onDismissTip: () => void;
+  activeFilter: MarketFilter;
+  onFilterChange: (filter: MarketFilter) => void;
 }
 
 const MarketHeaderComponent: React.FC<MarketHeaderProps> = ({
@@ -40,15 +41,19 @@ const MarketHeaderComponent: React.FC<MarketHeaderProps> = ({
   searchBg,
   showTip,
   onDismissTip,
+  activeFilter,
+  onFilterChange,
 }) => {
   const isDark = useColorScheme() === 'dark';
-  const [activeFilter, setActiveFilter] = React.useState<FilterOption>('all');
   const [searchQuery, setSearchQuery] = React.useState('');
 
-  const handleFilterPress = useCallback((filter: FilterOption) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setActiveFilter(filter);
-  }, []);
+  const handleFilterPress = useCallback(
+    (filter: MarketFilter) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onFilterChange(filter);
+    },
+    [onFilterChange]
+  );
 
   const handleNotificationPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

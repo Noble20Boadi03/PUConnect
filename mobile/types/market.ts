@@ -17,6 +17,9 @@ export type PostPrice =
 
 export type MarketPostTag = 'Service' | 'Request';
 
+/** Market header filter pills — controls the vertical post feed. */
+export type MarketFilter = 'all' | 'services' | 'requests';
+
 interface MarketPostBase {
   id: string;
   title: string;
@@ -42,3 +45,26 @@ export interface RequestPost extends MarketPostBase {
 }
 
 export type FeaturedPost = ServicePost | RequestPost;
+
+export interface PostAuthor {
+  fullName: string;
+  username: string;
+  avatarUrl: string;
+  /** Shown on service detail only — the person offering the service. */
+  skills?: string[];
+}
+
+/** Full-screen post detail (service or request). */
+export interface PostDetail {
+  id: string;
+  tag: MarketPostTag;
+  title: string;
+  /** One or more images attached to the listing. */
+  images: string[];
+  postedDate: string;
+  categoryTags: string[];
+  price: PostPrice;
+  fullDescription: string;
+  hashtags: string[];
+  author: PostAuthor;
+}
