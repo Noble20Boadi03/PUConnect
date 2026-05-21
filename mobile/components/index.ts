@@ -20,3 +20,4 @@ export * from './Chat';
 export * from './Messages';
 export * from './NotificationBellButton';
 export * from './Notifications';
+export * from './Explore';
