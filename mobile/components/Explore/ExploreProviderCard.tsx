@@ -6,161 +6,119 @@ import { Spacing, Typography, CARD_BORDER } from '../../constants';
 import { GuardedPressable } from '../GuardedPressable';
 import type { ExploreProvider } from '../../types/explore';
 
+/** Default gold star for ratings (not category-colored). */
+export const EXPLORE_RATING_STAR_COLOR = '#F59E0B';
+
 export interface ExploreProviderCardProps {
   provider: ExploreProvider;
   cardBg: string;
-  subtleBg: string;
+  borderColor: string;
   textColor: string;
   mutedColor: string;
-  primaryColor: string;
-  accentColor: string;
-  isLast?: boolean;
   onPress?: (provider: ExploreProvider) => void;
 }
 
 const ExploreProviderCardComponent: React.FC<ExploreProviderCardProps> = ({
   provider,
   cardBg,
-  subtleBg,
+  borderColor,
   textColor,
   mutedColor,
-  primaryColor,
-  accentColor,
-  isLast = false,
   onPress,
-}) => {
-  const reviewLabel = `${provider.reviewCount} review${provider.reviewCount === 1 ? '' : 's'}`;
+}) => (
+  <GuardedPressable
+    style={[
+      styles.card,
+      { backgroundColor: cardBg, borderColor },
+      CARD_BORDER,
+    ]}
+    onPress={onPress ? () => onPress(provider) : undefined}
+    activeOpacity={0.72}
+    disabled={!onPress}
+    accessibilityRole="button"
+    accessibilityLabel={`${provider.displayName}, ${provider.averageRating} stars`}
+  >
+    <Image
+      source={{ uri: provider.avatarUrl }}
+      style={styles.avatar}
+      contentFit="cover"
+      transition={0}
+    />
 
-  return (
-    <GuardedPressable
-      style={[
-        styles.card,
-        { backgroundColor: cardBg },
-        !isLast && styles.cardSpacing,
-        CARD_BORDER,
-      ]}
-      onPress={onPress ? () => onPress(provider) : undefined}
-      activeOpacity={0.88}
-      disabled={!onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${provider.displayName}, ${provider.averageRating} stars, ${reviewLabel}`}
-    >
-      <Image
-        source={{ uri: provider.avatarUrl }}
-        style={[styles.avatar, { borderColor: subtleBg }]}
-        contentFit="cover"
-        transition={0}
-      />
-
-      <View style={styles.content}>
-        <View style={styles.nameBlock}>
-          <Text style={[styles.name, { color: textColor }]} numberOfLines={1}>
-            {provider.displayName}
-          </Text>
-          <Text style={[styles.handle, { color: mutedColor }]} numberOfLines={1}>
-            {provider.handle}
-          </Text>
-        </View>
-
-        <View style={styles.ratingRow}>
-          <Ionicons name="star" size={14} color={accentColor} />
-          <Text style={[styles.ratingValue, { color: textColor }]}>
+    <View style={styles.content}>
+      <View style={styles.nameRow}>
+        <Text style={[styles.name, { color: textColor }]} numberOfLines={1}>
+          {provider.displayName}
+        </Text>
+        <View style={styles.ratingWrap}>
+          <Ionicons name="star" size={14} color={EXPLORE_RATING_STAR_COLOR} />
+          <Text style={[styles.rating, { color: textColor }]}>
             {provider.averageRating.toFixed(1)}
           </Text>
-          <Text style={[styles.reviewCount, { color: mutedColor }]}>{reviewLabel}</Text>
-        </View>
-
-        <Text style={[styles.skillTitle, { color: textColor }]} numberOfLines={2}>
-          {provider.skillTitle}
-        </Text>
-
-        <View style={styles.tagsWrap}>
-          {provider.expertiseTags.map((tag) => (
-            <View
-              key={tag}
-              style={[styles.tag, { backgroundColor: primaryColor + '14' }]}
-            >
-              <Text style={[styles.tagText, { color: primaryColor }]}>{tag}</Text>
-            </View>
-          ))}
         </View>
       </View>
 
-      <Ionicons name="chevron-forward" size={18} color={mutedColor} style={styles.chevron} />
-    </GuardedPressable>
-  );
-};
+      <Text style={[styles.handle, { color: mutedColor }]} numberOfLines={1}>
+        {provider.handle}
+      </Text>
+
+      <Text style={[styles.skill, { color: mutedColor }]} numberOfLines={1}>
+        {provider.skillTitle}
+      </Text>
+    </View>
+
+    <Ionicons name="chevron-forward" size={18} color={mutedColor} />
+  </GuardedPressable>
+);
 
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: Spacing.md,
-    borderRadius: 16,
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
     gap: Spacing.md,
-  },
-  cardSpacing: {
-    marginBottom: Spacing.md,
+    minHeight: 76,
+    borderRadius: 14,
   },
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 2,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
   },
   content: {
     flex: 1,
     minWidth: 0,
-    gap: 6,
+    gap: 4,
   },
-  nameBlock: {
-    gap: 2,
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
   },
   name: {
+    flex: 1,
     fontSize: Typography.size.md,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: -0.2,
   },
-  handle: {
-    fontSize: Typography.size.xs,
-    fontWeight: '500',
-  },
-  ratingRow: {
+  ratingWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
-  ratingValue: {
+  rating: {
     fontSize: Typography.size.sm,
     fontWeight: '700',
   },
-  reviewCount: {
-    fontSize: Typography.size.xs,
+  handle: {
+    fontSize: Typography.size.sm,
     fontWeight: '500',
   },
-  skillTitle: {
+  skill: {
     fontSize: Typography.size.sm,
-    fontWeight: '600',
-    lineHeight: 20,
-  },
-  tagsWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginTop: 2,
-  },
-  tag: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  tagText: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.4,
-  },
-  chevron: {
-    marginTop: Spacing.xs,
+    fontWeight: '500',
   },
 });
 

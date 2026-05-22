@@ -11,18 +11,19 @@ import type {
   ExploreProvider,
 } from '../../types/explore';
 
+const CARD_GAP = 6;
+
 export interface ExplorePeoplePanelProps {
   categories: ExploreCategory[];
   providers: ExploreProvider[];
   activeFilter: ExploreCategoryFilter;
   onFilterChange: (filter: ExploreCategoryFilter) => void;
   cardBg: string;
-  subtleBg: string;
   textColor: string;
   mutedColor: string;
   primaryColor: string;
   borderColor: string;
-  onProviderPress?: (provider: ExploreProvider) => void;
+  onProviderPress: (provider: ExploreProvider) => void;
 }
 
 export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
@@ -31,7 +32,6 @@ export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
   activeFilter,
   onFilterChange,
   cardBg,
-  subtleBg,
   textColor,
   mutedColor,
   primaryColor,
@@ -42,12 +42,6 @@ export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
     () => filterExploreProviders(providers, activeFilter),
     [providers, activeFilter]
   );
-
-  const categoryAccentById = useMemo(() => {
-    const map = new Map<string, string>();
-    categories.forEach((c) => map.set(c.id, c.accentColor));
-    return map;
-  }, [categories]);
 
   const emptyMessage = useMemo(() => {
     if (activeFilter === 'all') return 'No providers to show right now.';
@@ -60,7 +54,7 @@ export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
   const handleProviderPress = useCallback(
     (provider: ExploreProvider) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      onProviderPress?.(provider);
+      onProviderPress(provider);
     },
     [onProviderPress]
   );
@@ -87,20 +81,19 @@ export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
             <Text style={[styles.emptyText, { color: mutedColor }]}>{emptyMessage}</Text>
           </View>
         ) : (
-          filtered.map((provider, index) => (
-            <ExploreProviderCard
-              key={provider.username}
-              provider={provider}
-              cardBg={cardBg}
-              subtleBg={subtleBg}
-              textColor={textColor}
-              mutedColor={mutedColor}
-              primaryColor={primaryColor}
-              accentColor={categoryAccentById.get(provider.categoryId) ?? primaryColor}
-              isLast={index === filtered.length - 1}
-              onPress={onProviderPress ? handleProviderPress : undefined}
-            />
-          ))
+          <View style={styles.list}>
+            {filtered.map((provider) => (
+              <ExploreProviderCard
+                key={provider.username}
+                provider={provider}
+                cardBg={cardBg}
+                borderColor={borderColor}
+                textColor={textColor}
+                mutedColor={mutedColor}
+                onPress={handleProviderPress}
+              />
+            ))}
+          </View>
         )}
       </ScrollView>
     </View>
@@ -117,6 +110,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xxl,
+  },
+  list: {
+    gap: CARD_GAP,
   },
   emptyState: {
     paddingVertical: Spacing.xl,

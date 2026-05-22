@@ -1,22 +1,19 @@
 import React from 'react';
-import { StyleSheet, View, Text, ScrollView } from 'react-native';
-import { Spacing, Typography } from '../../constants';
+import { StyleSheet, View, ScrollView } from 'react-native';
+import { Spacing } from '../../constants';
 import { ExploreCategoryCard } from './ExploreCategoryCard';
 import type { ExploreCategory } from '../../types/explore';
 
+const HORIZONTAL_PAD = Spacing.lg;
+const LIST_GAP = Spacing.sm + 4;
+
 export interface ExploreCategoriesPanelProps {
   categories: ExploreCategory[];
-  cardBg: string;
-  textColor: string;
-  mutedColor: string;
   onCategoryPress?: (category: ExploreCategory) => void;
 }
 
 export const ExploreCategoriesPanel: React.FC<ExploreCategoriesPanelProps> = ({
   categories,
-  cardBg,
-  textColor,
-  mutedColor,
   onCategoryPress,
 }) => (
   <ScrollView
@@ -25,20 +22,15 @@ export const ExploreCategoriesPanel: React.FC<ExploreCategoriesPanelProps> = ({
     showsVerticalScrollIndicator={false}
     keyboardShouldPersistTaps="handled"
   >
-    <Text style={[styles.sectionHint, { color: mutedColor }]}>
-      Browse campus services by area — tap a category to drill into subcategories and filters
-      (coming soon).
-    </Text>
-    {categories.map((category) => (
-      <ExploreCategoryCard
-        key={category.id}
-        category={category}
-        cardBg={cardBg}
-        textColor={textColor}
-        mutedColor={mutedColor}
-        onPress={onCategoryPress}
-      />
-    ))}
+    <View style={styles.list}>
+      {categories.map((category) => (
+        <ExploreCategoryCard
+          key={category.id}
+          category={category}
+          onPress={onCategoryPress}
+        />
+      ))}
+    </View>
   </ScrollView>
 );
 
@@ -47,14 +39,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: HORIZONTAL_PAD,
     paddingBottom: Spacing.xxl,
   },
-  sectionHint: {
-    fontSize: Typography.size.sm,
-    fontWeight: '500',
-    lineHeight: 20,
-    marginBottom: Spacing.md,
+  list: {
+    gap: LIST_GAP,
   },
 });
 

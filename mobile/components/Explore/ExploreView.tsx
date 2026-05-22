@@ -3,7 +3,8 @@ import { StyleSheet, View, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
-import { useThemeColor } from '../../hooks';
+import { useAppRouter, useThemeColor } from '../../hooks';
+import { buildProviderProfileHref } from '../../lib';
 import { EXPLORE_CATEGORIES_MOCK, EXPLORE_PROVIDERS_MOCK } from '../../constants/exploreMock';
 import { ExploreHeader } from './ExploreHeader';
 import { ExploreTopTabs } from './ExploreTopTabs';
@@ -29,6 +30,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   onCategoryPress,
   onProviderPress,
 }) => {
+  const router = useAppRouter();
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -49,6 +51,17 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
     [onCategoryPress]
   );
 
+  const handleProviderPress = useCallback(
+    (provider: ExploreProvider) => {
+      if (onProviderPress) {
+        onProviderPress(provider);
+        return;
+      }
+      router.push(buildProviderProfileHref(provider.username) as any);
+    },
+    [onProviderPress, router]
+  );
+
   const tabTheme = useMemo(
     () => ({
       subtleBg,
@@ -61,13 +74,12 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   const peopleTheme = useMemo(
     () => ({
       cardBg,
-      subtleBg,
       textColor: Colors.text,
       mutedColor: Colors.icon,
       primaryColor: Colors.primary,
       borderColor,
     }),
-    [cardBg, subtleBg, Colors.text, Colors.icon, Colors.primary, borderColor]
+    [cardBg, Colors.text, Colors.icon, Colors.primary, borderColor]
   );
 
   return (
@@ -84,9 +96,6 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
         {activeTab === 'categories' ? (
           <ExploreCategoriesPanel
             categories={categories}
-            cardBg={cardBg}
-            textColor={Colors.text}
-            mutedColor={Colors.icon}
             onCategoryPress={onCategoryPress ? handleCategoryPress : undefined}
           />
         ) : (
@@ -95,7 +104,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
             providers={providers}
             activeFilter={peopleFilter}
             onFilterChange={setPeopleFilter}
-            onProviderPress={onProviderPress}
+            onProviderPress={handleProviderPress}
             {...peopleTheme}
           />
         )}

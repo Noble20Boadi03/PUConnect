@@ -1,5 +1,5 @@
 import type { ExploreCategory, ExploreProvider } from '../types/explore';
-import { MARKET_POST_THUMBNAILS } from './marketPostImages';
+import { EXPLORE_CATEGORY_IMAGES } from './exploreCategoryImages';
 
 const avatar = (seed: string) => `https://i.pravatar.cc/256?u=${seed}`;
 
@@ -10,7 +10,7 @@ export const EXPLORE_CATEGORIES_MOCK: ExploreCategory[] = [
     pillLabel: 'Tutoring',
     description:
       'Math, science, writing help, exam prep, and study partners for tough courses.',
-    imageUrl: MARKET_POST_THUMBNAILS.tutoring,
+    imageUrl: EXPLORE_CATEGORY_IMAGES.tutoring,
     accentColor: '#7C3AED',
   },
   {
@@ -19,7 +19,7 @@ export const EXPLORE_CATEGORIES_MOCK: ExploreCategory[] = [
     pillLabel: 'Tech',
     description:
       'Websites, apps, debugging, portfolio builds, and campus tool prototypes.',
-    imageUrl: MARKET_POST_THUMBNAILS.development,
+    imageUrl: EXPLORE_CATEGORY_IMAGES.tech,
     accentColor: '#2563EB',
   },
   {
@@ -28,7 +28,7 @@ export const EXPLORE_CATEGORIES_MOCK: ExploreCategory[] = [
     pillLabel: 'Design',
     description:
       'Posters, branding, UI mockups, photography, and social media assets.',
-    imageUrl: MARKET_POST_THUMBNAILS.design,
+    imageUrl: EXPLORE_CATEGORY_IMAGES.design,
     accentColor: '#EA580C',
   },
   {
@@ -37,7 +37,7 @@ export const EXPLORE_CATEGORIES_MOCK: ExploreCategory[] = [
     pillLabel: 'Career',
     description:
       'Resume reviews, interview prep, LinkedIn polish, and personal statements.',
-    imageUrl: MARKET_POST_THUMBNAILS.editing,
+    imageUrl: EXPLORE_CATEGORY_IMAGES.career,
     accentColor: '#059669',
   },
   {
@@ -46,7 +46,7 @@ export const EXPLORE_CATEGORIES_MOCK: ExploreCategory[] = [
     pillLabel: 'Campus',
     description:
       'Laundry runs, deliveries, moving help, and other on-campus logistics.',
-    imageUrl: MARKET_POST_THUMBNAILS.laundry,
+    imageUrl: EXPLORE_CATEGORY_IMAGES.campus,
     accentColor: '#DB2777',
   },
 ];
