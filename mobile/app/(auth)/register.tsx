@@ -144,19 +144,18 @@ export default function RegisterScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]}>
-      <KeyboardLayout contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
-        <View style={styles.header}>
-            <TouchableOpacity 
-              style={[styles.backButton, { backgroundColor: cardBg }]} 
-              onPress={handleBack}
-            >
-              <Ionicons name="chevron-back" size={20} color={Colors.text} />
-            </TouchableOpacity>
-          </View>
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={[styles.backButton, { backgroundColor: cardBg }]}
+          onPress={handleBack}
+        >
+          <Ionicons name="chevron-back" size={20} color={Colors.text} />
+        </TouchableOpacity>
+      </View>
 
-          {/* Card */}
-          <Animated.View 
+      <KeyboardLayout style={styles.keyboard} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.centeredBody}>
+          <Animated.View
             entering={FadeInDown.delay(150).duration(500).springify()}
             style={[styles.card, { backgroundColor: cardBg }]}
           >
@@ -190,7 +189,7 @@ export default function RegisterScreen() {
             </View>
 
             {/* Form */}
-            <View style={styles.formContainer}>
+            <View>
               {errorMsg && (
                 <Alert
                   type="error"
@@ -424,8 +423,9 @@ export default function RegisterScreen() {
 
             </View>
           </Animated.View>
-        </KeyboardLayout>
-      </SafeAreaView>
+        </View>
+      </KeyboardLayout>
+    </SafeAreaView>
     );
   }
 
@@ -433,16 +433,22 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  keyboard: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
+  },
+  centeredBody: {
+    flexGrow: 1,
     justifyContent: 'center',
+    paddingVertical: Spacing.lg,
   },
   header: {
+    paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     alignItems: 'flex-start',
-    marginBottom: Spacing.md,
   },
   backButton: {
     width: 36,
@@ -496,9 +502,6 @@ const styles = StyleSheet.create({
   },
   stepBarActive: {
     width: 32,
-  },
-  formContainer: {
-    flex: 1,
   },
   inputWrapper: {
     marginBottom: Spacing.md,

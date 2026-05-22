@@ -87,16 +87,17 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]}>
-      <KeyboardLayout contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-            <TouchableOpacity 
-              style={[styles.backButton, { backgroundColor: cardBg }]} 
-              onPress={handleBack}
-            >
-              <Ionicons name="chevron-back" size={20} color={Colors.text} />
-            </TouchableOpacity>
-          </View>
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={[styles.backButton, { backgroundColor: cardBg }]}
+          onPress={handleBack}
+        >
+          <Ionicons name="chevron-back" size={20} color={Colors.text} />
+        </TouchableOpacity>
+      </View>
 
+      <KeyboardLayout style={styles.keyboard} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.centeredBody}>
           <View style={[styles.card, { backgroundColor: cardBg }]}>
             <View style={styles.titleContainer}>
               <Text style={[styles.title, { color: Colors.primary }]}>Login here</Text>
@@ -115,7 +116,7 @@ export default function LoginScreen() {
               />
             )}
 
-            <View style={styles.formContainer}>
+            <View>
               {errorMsg && (
                 <Alert
                   type="error"
@@ -217,7 +218,7 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.footerContainer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
             >
               <Text style={[styles.adminLoginText, { color: Colors.icon }]}>
@@ -225,8 +226,8 @@ export default function LoginScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-
-        </KeyboardLayout>
+        </View>
+      </KeyboardLayout>
       </SafeAreaView>
     );
   }
@@ -235,16 +236,22 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  keyboard: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
+  },
+  centeredBody: {
+    flexGrow: 1,
     justifyContent: 'center',
+    paddingVertical: Spacing.lg,
   },
   header: {
+    paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     alignItems: 'flex-start',
-    marginBottom: Spacing.md,
   },
   backButton: {
     width: 36,
@@ -278,9 +285,6 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: Typography.size.sm,
     fontWeight: '400',
-  },
-  formContainer: {
-    flex: 1,
   },
   inputWrapper: {
     marginBottom: Spacing.md,
@@ -323,7 +327,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   footerContainer: {
-    marginTop: Spacing.xxl,
+    marginTop: Spacing.xl,
     alignItems: 'center',
   },
   adminLoginText: {

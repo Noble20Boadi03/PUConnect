@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
+import { isAxiosError } from 'axios';
 import { User, LogoutResult } from '../types';
 import { AUTH_TOKEN_KEY } from '../constants';
-import { settingsService } from '../services';
+import { authService, settingsService } from '../services';
 
 interface AuthState {
   user: User | null;
@@ -43,9 +44,23 @@ export const useAuthStore = create<AuthState>((set) => ({
   initialize: async () => {
     try {
       const token = await SecureStore.getItemAsync(TOKEN_KEY);
-      set({ token, isAuthenticated: !!token, isLoading: false });
-    } catch (e) {
-      set({ isLoading: false });
+      if (!token) {
+        set({ token: null, user: null, isAuthenticated: false, isLoading: false });
+        return;
+      }
+
+      try {
+        const user = await authService.getMe();
+        set({ user, token, isAuthenticated: true, isLoading: false });
+      } catch (error) {
+        const status = isAxiosError(error) ? error.response?.status : undefined;
+        if (status === 401 || status === 403) {
+          await SecureStore.deleteItemAsync(TOKEN_KEY);
+        }
+        set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+      }
+    } catch {
+      set({ user: null, token: null, isAuthenticated: false, isLoading: false });
     }
   },
   clearSession: async () => {

@@ -3,7 +3,7 @@ import { ThemeProvider, DarkTheme, DefaultTheme } from '@react-navigation/native
 import { useColorScheme, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useAuthStore } from '../store';
 import { initializeThemePreference } from '../lib/themePreference';
 import { runGuardedNavigation } from '../lib/guardedNavigation';
@@ -19,8 +19,6 @@ export default function RootLayout() {
   const { isAuthenticated, isLoading, initialize } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
-
-  const didRedirectRef = useRef(false);
 
   useEffect(() => {
     initialize();
@@ -68,12 +66,9 @@ export default function RootLayout() {
       !inNotifications &&
       !inCategoryDetail
     ) {
-      if (!didRedirectRef.current) {
-        didRedirectRef.current = true;
-        runGuardedNavigation('replace:/(tabs)/market', () => {
-          router.replace('/(tabs)/market' as any);
-        });
-      }
+      runGuardedNavigation('replace:/(tabs)/market', () => {
+        router.replace('/(tabs)/market' as any);
+      });
     } else if (
       !isAuthenticated &&
       (inTabsGroup ||
@@ -86,14 +81,9 @@ export default function RootLayout() {
         inNotifications ||
         inCategoryDetail)
     ) {
-      if (!didRedirectRef.current) {
-        didRedirectRef.current = true;
-        runGuardedNavigation('replace:/(auth)/login', () => {
-          router.replace('/(auth)/login' as any);
-        });
-      }
-    } else {
-      didRedirectRef.current = false;
+      runGuardedNavigation('replace:/(auth)/login', () => {
+        router.replace('/(auth)/login' as any);
+      });
     }
   }, [
     isAuthenticated,

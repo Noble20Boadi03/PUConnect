@@ -31,7 +31,9 @@ apiClient.interceptors.response.use(
   (error) => {
     // Handle global errors like 401 Unauthorized
     if (error.response?.status === 401) {
-      // Logic for logout or token refresh
+      void import('../store/authStore').then(({ useAuthStore }) => {
+        void useAuthStore.getState().clearSession();
+      });
     }
     return Promise.reject(error);
   }
