@@ -79,7 +79,7 @@ export const NewPostTagsSection: React.FC<NewPostTagsSectionProps> = ({
       <Text style={[styles.label, { color: mutedColor }]}>Tags (optional)</Text>
       <Text style={[styles.hint, { color: mutedColor }]}>
         {isProvider && postType === 'Service'
-          ? 'Select tags based on the services you offer.'
+          ? 'Select tags that may be relevant to this post.'
           : 'Tags are grouped by the help categories you selected.'}
       </Text>
       {tagGroups.map((group) => (

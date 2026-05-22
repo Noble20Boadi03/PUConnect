@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
@@ -8,7 +8,6 @@ import { useAppRouter } from '../../hooks';
 import { FeaturedPostCard } from '../FeaturedPostCard';
 import { ProfileSegmentedTabs } from './ProfileSegmentedTabs';
 import { ProfileProviderGate } from './ProfileProviderGate';
-import { ProfileCreateFab } from './ProfileCreateFab';
 import type { FeaturedPost, ProviderPostsTab } from '../../types';
 
 export interface ProfilePostsSectionProps {
@@ -62,6 +61,21 @@ export const ProfilePostsSection: React.FC<ProfilePostsSectionProps> = ({
     <View style={styles.sectionWrap}>
       <View style={styles.sectionHeader}>
         <Text style={[styles.sectionTitle, { color: textColor }]}>Posts</Text>
+        {showFab ? (
+          <TouchableOpacity
+            style={[styles.createButton, { backgroundColor: primaryColor }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              handleCreatePress();
+            }}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Create post"
+          >
+            <Ionicons name="add" size={16} color="#FFFFFF" />
+            <Text style={[styles.createButtonText, { color: '#FFFFFF' }]}>New</Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
       <ProfileSegmentedTabs
         activeTab={activeTab}
@@ -108,10 +122,6 @@ export const ProfilePostsSection: React.FC<ProfilePostsSectionProps> = ({
           ))
         )}
       </View>
-
-      {showFab ? (
-        <ProfileCreateFab primaryColor={primaryColor} onPress={handleCreatePress} />
-      ) : null}
     </View>
   );
 };
@@ -123,12 +133,27 @@ const styles = StyleSheet.create({
     paddingBottom: 72,
   },
   sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginTop: Spacing.lg + 4,
     marginBottom: Spacing.sm + 2,
     paddingHorizontal: Spacing.xs,
   },
   sectionTitle: {
     fontSize: Typography.size.md,
+    fontWeight: '700',
+  },
+  createButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 2,
+  },
+  createButtonText: {
+    fontSize: Typography.size.xs,
     fontWeight: '700',
   },
   postsList: {
