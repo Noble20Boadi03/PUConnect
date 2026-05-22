@@ -40,6 +40,7 @@ export interface NewPostViewProps {
 export const NewPostView: React.FC<NewPostViewProps> = ({ onPublished }) => {
   const params = useLocalSearchParams() as NewPostSearchParams;
   const isProvider = useProfileStore((s) => s.isProvider);
+  const providerServiceIds = useProfileStore((s) => s.providerServiceIds);
   const providerTags = useProfileStore((s) => s.providerTags);
 
   const Colors = useThemeColor();
@@ -80,6 +81,10 @@ export const NewPostView: React.FC<NewPostViewProps> = ({ onPublished }) => {
       setSelectedTags([]);
       if (next === 'Request') {
         setImagesError(null);
+      }
+      if (next === 'Service') {
+        setHelpCategoryIds([]);
+        setHelpCategoryError(null);
       }
     },
     []
@@ -141,8 +146,8 @@ export const NewPostView: React.FC<NewPostViewProps> = ({ onPublished }) => {
     onPublished,
   ]);
 
-  const showHelpCategory = postType === 'Request' && !isProvider;
-  const showTags = isProvider || (!isProvider && helpCategoryIds.length > 0);
+  const showHelpCategory = postType === 'Request';
+  const showTags = (postType === 'Service' && isProvider) || helpCategoryIds.length > 0;
 
   return (
     <KeyboardLayout contentContainerStyle={styles.scrollContent}>
@@ -242,7 +247,7 @@ export const NewPostView: React.FC<NewPostViewProps> = ({ onPublished }) => {
           <NewPostTagsSection
             postType={postType}
             isProvider={isProvider}
-            providerTags={providerTags}
+            providerServiceIds={providerServiceIds}
             helpCategoryIds={helpCategoryIds}
             selectedTags={selectedTags}
             onChange={setSelectedTags}

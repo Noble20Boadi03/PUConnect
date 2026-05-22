@@ -9,9 +9,9 @@ import type { NewPostType } from '../../types/newPost';
 export interface NewPostTagsSectionProps {
   postType: NewPostType;
   isProvider: boolean;
-  /** Provider expertise tags from profile setup. */
-  providerTags: string[];
-  /** Selected help category service ids (requests by non-providers). */
+  /** Provider's offered service IDs from profile setup. */
+  providerServiceIds: string[];
+  /** Selected help category service ids (requests). */
   helpCategoryIds: string[];
   selectedTags: string[];
   onChange: (tags: string[]) => void;
@@ -25,7 +25,7 @@ export interface NewPostTagsSectionProps {
 export const NewPostTagsSection: React.FC<NewPostTagsSectionProps> = ({
   postType,
   isProvider,
-  providerTags,
+  providerServiceIds,
   helpCategoryIds,
   selectedTags,
   onChange,
@@ -39,12 +39,11 @@ export const NewPostTagsSection: React.FC<NewPostTagsSectionProps> = ({
   const selectedSet = new Set(selectedTags);
 
   const tagGroups = useMemo(() => {
-    if (isProvider) {
-      if (providerTags.length === 0) return [];
-      return [{ serviceId: 'profile', serviceTitle: 'Your expertise', tags: providerTags }];
+    if (isProvider && postType === 'Service') {
+      return getTagGroupsForServices(providerServiceIds);
     }
     return getTagGroupsForServices(helpCategoryIds);
-  }, [isProvider, providerTags, helpCategoryIds]);
+  }, [isProvider, postType, providerServiceIds, helpCategoryIds]);
 
   const toggleTag = (tag: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -55,17 +54,17 @@ export const NewPostTagsSection: React.FC<NewPostTagsSectionProps> = ({
     }
   };
 
-  if (isProvider && providerTags.length === 0) {
+  if (isProvider && postType === 'Service' && providerServiceIds.length === 0) {
     return (
       <View style={[styles.emptyBox, { backgroundColor: subtleBg, borderColor }]}>
         <Text style={[styles.emptyText, { color: mutedColor }]}>
-          Add expertise tags in Edit Info → Provider Profile to tag your {postType === 'Service' ? 'service' : 'request'} posts.
+          Add services in Edit Info → Provider Profile to tag your service posts.
         </Text>
       </View>
     );
   }
 
-  if (!isProvider && helpCategoryIds.length === 0) {
+  if (postType === 'Request' && helpCategoryIds.length === 0) {
     return (
       <View style={[styles.emptyBox, { backgroundColor: subtleBg, borderColor }]}>
         <Text style={[styles.emptyText, { color: mutedColor }]}>
@@ -79,8 +78,8 @@ export const NewPostTagsSection: React.FC<NewPostTagsSectionProps> = ({
     <View style={styles.wrap}>
       <Text style={[styles.label, { color: mutedColor }]}>Tags (optional)</Text>
       <Text style={[styles.hint, { color: mutedColor }]}>
-        {isProvider
-          ? 'Select tags that match your provider profile.'
+        {isProvider && postType === 'Service'
+          ? 'Select tags based on the services you offer.'
           : 'Tags are grouped by the help categories you selected.'}
       </Text>
       {tagGroups.map((group) => (
