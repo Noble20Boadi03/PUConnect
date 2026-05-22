@@ -4,6 +4,7 @@ import { isAxiosError } from 'axios';
 import { User, LogoutResult } from '../types';
 import { AUTH_TOKEN_KEY } from '../constants';
 import { authService, settingsService } from '../services';
+import { useProfileStore } from './profileStore';
 
 interface AuthState {
   user: User | null;
@@ -65,6 +66,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
   clearSession: async () => {
     await SecureStore.deleteItemAsync(TOKEN_KEY);
+    await useProfileStore.getState().clearProviderProfile();
+    useProfileStore.setState({ hydrated: false });
     set({ user: null, token: null, isAuthenticated: false });
   },
   logout: async () => {
@@ -79,6 +82,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         apiReached: false,
       };
     }
+    await useProfileStore.getState().clearProviderProfile();
+    useProfileStore.setState({ hydrated: false });
     set({ user: null, token: null, isAuthenticated: false });
     return result;
   },

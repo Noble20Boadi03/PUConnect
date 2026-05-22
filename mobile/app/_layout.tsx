@@ -4,7 +4,7 @@ import { useColorScheme, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { useEffect } from 'react';
-import { useAuthStore } from '../store';
+import { useAuthStore, useProfileStore } from '../store';
 import { initializeThemePreference } from '../lib/themePreference';
 import { runGuardedNavigation } from '../lib/guardedNavigation';
 import { useRouter, useSegments } from 'expo-router';
@@ -16,7 +16,8 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const { isAuthenticated, isLoading, initialize } = useAuthStore();
+  const { isAuthenticated, isLoading, initialize, user } = useAuthStore();
+  const hydrateProfile = useProfileStore((s) => s.hydrate);
   const segments = useSegments();
   const router = useRouter();
 
@@ -24,6 +25,12 @@ export default function RootLayout() {
     initialize();
     initializeThemePreference();
   }, []);
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      void hydrateProfile(user);
+    }
+  }, [isLoading, isAuthenticated, user, hydrateProfile]);
 
   // Authenticated users skip the landing page — hide splash once auth is ready.
   useEffect(() => {
@@ -39,6 +46,7 @@ export default function RootLayout() {
   const inChat = segments[0] === 'chat';
   const inNotifications = segments[0] === 'notifications';
   const inCategoryDetail = String(segments[0]) === 'category';
+  const inEditInfo = segments[0] === 'edit-info';
   const managesOwnChrome = inPostDetail;
 
   // Sync Android navigation bar with theme (post detail manages its own chrome).
@@ -58,6 +66,7 @@ export default function RootLayout() {
       isAuthenticated &&
       !inTabsGroup &&
       !inSettings &&
+      !inEditInfo &&
       !inPostDetail &&
       !inProviderProfile &&
       !inProviderReviews &&
@@ -73,6 +82,7 @@ export default function RootLayout() {
       !isAuthenticated &&
       (inTabsGroup ||
         inSettings ||
+        inEditInfo ||
         inPostDetail ||
         inProviderProfile ||
         inProviderReviews ||
@@ -96,6 +106,7 @@ export default function RootLayout() {
     inChat,
     inNotifications,
     inCategoryDetail,
+    inEditInfo,
   ]);
 
   return (
@@ -106,6 +117,7 @@ export default function RootLayout() {
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="settings" />
+          <Stack.Screen name="edit-info" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="post/[id]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="provider/[username]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -20,14 +20,8 @@ import {
   ProfilePostsSection,
 } from '../../components/Profile';
 import { NotificationBellButton } from '../../components/NotificationBellButton';
-import { useAuthStore } from '../../store';
-import { getProfilePostsForUser } from '../../lib';
-import type { User } from '../../types';
-
-function getAccountTypeLabel(user: User | null | undefined): string {
-  if (user?.role === 'admin') return 'Administrator';
-  return 'Regular';
-}
+import { useAuthStore, useProfileStore } from '../../store';
+import { getAccountTypeLabel, getProfilePostsForUser } from '../../lib';
 
 export default function ProfileScreen() {
   const router = useAppRouter();
@@ -38,10 +32,18 @@ export default function ProfileScreen() {
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
 
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const isProvider = useProfileStore((s) => s.isProvider);
+  const hydrated = useProfileStore((s) => s.hydrated);
+  const hydrate = useProfileStore((s) => s.hydrate);
+
   const { iconName, handleToggle } = useThemeToggle();
   const { avatarUri, sheetVisible, openSheet, closeSheet, handleSheetSelect } =
     useChangeProfilePhoto(user?.avatarUrl);
+
+  useEffect(() => {
+    void hydrate(user);
+  }, [user, hydrate]);
 
   const initials = user?.name
     ? user.name
@@ -68,8 +70,19 @@ export default function ProfileScreen() {
 
   const handleEditInfo = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // Profile edit flow — coming soon
-  }, []);
+    router.push('/edit-info' as any);
+  }, [router]);
+
+  const handleBecomeProvider = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/edit-info' as any);
+  }, [router]);
+
+  if (!hydrated) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']} />
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
@@ -141,7 +154,7 @@ export default function ProfileScreen() {
             iconColor="#F59E0B"
             iconBg="#F59E0B15"
             label="Account Type"
-            value={getAccountTypeLabel(user)}
+            value={getAccountTypeLabel(user, isProvider)}
             textColor={Colors.text}
             mutedColor={Colors.icon}
           />
@@ -149,12 +162,14 @@ export default function ProfileScreen() {
 
         <ProfilePostsSection
           posts={posts}
+          isProvider={isProvider}
           cardBg={cardBg}
           subtleBg={subtleBg}
           textColor={Colors.text}
           mutedColor={Colors.icon}
           primaryColor={Colors.primary}
           onPostPress={handlePostPress}
+          onBecomeProvider={handleBecomeProvider}
         />
       </ScrollView>
 

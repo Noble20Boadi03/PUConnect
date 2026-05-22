@@ -19,3 +19,4 @@ export * from './safeAreaInsets';
 export * from './officialEngagement';
 export * from './getProviderServices';
 export * from './systemChrome';
+export * from './editInfoForm';

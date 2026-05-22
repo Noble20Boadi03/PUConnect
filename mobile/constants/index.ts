@@ -1,5 +1,6 @@
 export * from './Theme';
 export * from './Auth';
+export * from './Profile';
 export * from './Android';
 export * from './marketMock';
 export * from './marketPostImages';
@@ -10,4 +11,5 @@ export * from './messagesListMock';
 export * from './notificationsMock';
 export * from './exploreMock';
 export * from './exploreCategoryServicesMock';
+export * from './editInfoServices';
 export * from './CardShadow';

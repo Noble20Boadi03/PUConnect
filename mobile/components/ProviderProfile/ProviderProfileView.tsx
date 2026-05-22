@@ -192,6 +192,8 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
 
         <ProfilePostsSection
           posts={profile.posts}
+          isProvider
+          showCreateFab={false}
           cardBg={cardBg}
           subtleBg={subtleBg}
           textColor={Colors.text}

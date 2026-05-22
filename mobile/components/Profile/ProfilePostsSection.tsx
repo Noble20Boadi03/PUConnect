@@ -1,33 +1,45 @@
 import React, { useMemo, useState } from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { filterProviderPosts } from '../../lib';
 import { FeaturedPostCard } from '../FeaturedPostCard';
 import { ProfileSegmentedTabs } from './ProfileSegmentedTabs';
+import { ProfileProviderGate } from './ProfileProviderGate';
+import { ProfileCreateFab } from './ProfileCreateFab';
 import type { FeaturedPost, ProviderPostsTab } from '../../types';
 
 export interface ProfilePostsSectionProps {
   posts: FeaturedPost[];
+  /** Owner profile: gates services tab + FAB when false. Public provider profiles should pass true. */
+  isProvider?: boolean;
   cardBg: string;
   subtleBg: string;
   textColor: string;
   mutedColor: string;
   primaryColor: string;
   onPostPress?: (postId: string) => void;
+  onBecomeProvider?: () => void;
+  /** Hide create FAB on public provider pages. */
+  showCreateFab?: boolean;
 }
 
 export const ProfilePostsSection: React.FC<ProfilePostsSectionProps> = ({
   posts,
+  isProvider = true,
   cardBg,
   subtleBg,
   textColor,
   mutedColor,
   primaryColor,
   onPostPress,
+  onBecomeProvider = () => {},
+  showCreateFab = true,
 }) => {
-  const defaultTab: ProviderPostsTab = posts.some((p) => p.tag === 'Service') ? 'services' : 'requests';
+  const defaultTab: ProviderPostsTab = isProvider && posts.some((p) => p.tag === 'Service')
+    ? 'services'
+    : 'requests';
   const [activeTab, setActiveTab] = useState<ProviderPostsTab>(defaultTab);
 
   const filteredPosts = useMemo(
@@ -35,8 +47,21 @@ export const ProfilePostsSection: React.FC<ProfilePostsSectionProps> = ({
     [posts, activeTab]
   );
 
+  const showProviderGate = activeTab === 'services' && !isProvider;
+  const showFab =
+    showCreateFab && (activeTab === 'requests' || (activeTab === 'services' && isProvider));
+
+  const handleCreatePress = () => {
+    const kind = activeTab === 'services' ? 'service' : 'request';
+    Alert.alert(
+      'Create post',
+      `Post creation for ${kind} listings will connect to the API soon.`,
+      [{ text: 'OK' }]
+    );
+  };
+
   return (
-    <>
+    <View style={styles.sectionWrap}>
       <View style={styles.sectionHeader}>
         <Text style={[styles.sectionTitle, { color: textColor }]}>Posts</Text>
       </View>
@@ -46,14 +71,25 @@ export const ProfilePostsSection: React.FC<ProfilePostsSectionProps> = ({
         subtleBg={subtleBg}
         cardBg={cardBg}
         textColor={textColor}
+        servicesEnabled={isProvider}
       />
       <View style={styles.postsList}>
-        {filteredPosts.length === 0 ? (
+        {showProviderGate ? (
+          <ProfileProviderGate
+            cardBg={cardBg}
+            textColor={textColor}
+            mutedColor={mutedColor}
+            primaryColor={primaryColor}
+            onBecomeProvider={onBecomeProvider}
+          />
+        ) : filteredPosts.length === 0 ? (
           <View style={[styles.emptyCard, { backgroundColor: cardBg }]}>
             <Ionicons name="file-tray-outline" size={28} color={mutedColor} />
             <Text style={[styles.emptyTitle, { color: textColor }]}>No posts yet</Text>
             <Text style={[styles.emptyBody, { color: mutedColor }]}>
-              {`No ${activeTab === 'services' ? 'services' : 'requests'} to show yet.`}
+              {activeTab === 'services'
+                ? 'Create a service listing to appear here.'
+                : 'Create a request to find help from peers on campus.'}
             </Text>
           </View>
         ) : (
@@ -74,11 +110,20 @@ export const ProfilePostsSection: React.FC<ProfilePostsSectionProps> = ({
           ))
         )}
       </View>
-    </>
+
+      {showFab ? (
+        <ProfileCreateFab primaryColor={primaryColor} onPress={handleCreatePress} />
+      ) : null}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  sectionWrap: {
+    position: 'relative',
+    minHeight: 200,
+    paddingBottom: 72,
+  },
   sectionHeader: {
     marginTop: Spacing.lg + 4,
     marginBottom: Spacing.sm + 2,

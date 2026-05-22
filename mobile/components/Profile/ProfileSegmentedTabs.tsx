@@ -15,6 +15,8 @@ export interface ProfileSegmentedTabsProps {
   subtleBg: string;
   cardBg: string;
   textColor: string;
+  /** When false, Services tab is shown dimmed (user can still open it to see provider setup). */
+  servicesEnabled?: boolean;
 }
 
 export const ProfileSegmentedTabs: React.FC<ProfileSegmentedTabsProps> = ({
@@ -23,14 +25,22 @@ export const ProfileSegmentedTabs: React.FC<ProfileSegmentedTabsProps> = ({
   subtleBg,
   cardBg,
   textColor,
+  servicesEnabled = true,
 }) => (
   <View style={[styles.wrap, { backgroundColor: subtleBg }]}>
     {TABS.map((tab) => {
       const isActive = activeTab === tab.key;
+      const isServices = tab.key === 'services';
+      const dimmed = isServices && !servicesEnabled;
+
       return (
         <TouchableOpacity
           key={tab.key}
-          style={[styles.tab, isActive && { backgroundColor: cardBg }]}
+          style={[
+            styles.tab,
+            isActive && { backgroundColor: cardBg },
+            dimmed && styles.tabDisabled,
+          ]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             onTabChange(tab.key);
@@ -40,7 +50,13 @@ export const ProfileSegmentedTabs: React.FC<ProfileSegmentedTabsProps> = ({
           <Text
             style={[
               styles.tabLabel,
-              { color: isActive ? textColor : textColor + '99' },
+              {
+                color: dimmed
+                  ? textColor + '44'
+                  : isActive
+                    ? textColor
+                    : textColor + '99',
+              },
               isActive && styles.tabLabelActive,
             ]}
           >
@@ -64,6 +80,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.sm + 2,
     borderRadius: 10,
+  },
+  tabDisabled: {
+    opacity: 0.55,
   },
   tabLabel: {
     fontSize: Typography.size.sm,

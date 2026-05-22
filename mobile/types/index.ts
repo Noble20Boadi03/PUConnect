@@ -6,3 +6,4 @@ export * from './market';
 export * from './chat';
 export * from './review';
 export * from './explore';
+export * from './profile';
