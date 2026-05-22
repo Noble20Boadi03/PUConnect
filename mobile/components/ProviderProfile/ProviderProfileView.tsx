@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -12,21 +12,19 @@ import * as Haptics from 'expo-haptics';
 
 import { useThemeColor } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
-import { filterProviderPosts } from '../../lib';
-import { FeaturedPostCard } from '../FeaturedPostCard';
 import { GuardedPressable } from '../GuardedPressable';
 import {
   ProfileHeroSection,
   ProfileInfoRow,
   ProfileReviewsSummaryRow,
-  ProfileSegmentedTabs,
+  ProfilePostsSection,
 } from '../Profile';
 import {
   selectCanReviewProvider,
   selectSummaryForProvider,
   useProviderReviewsStore,
 } from '../../store/providerReviewsStore';
-import type { ProviderPostsTab, ProviderProfile } from '../../types';
+import type { ProviderProfile } from '../../types';
 
 export interface ProviderProfileViewProps {
   profile: ProviderProfile;
@@ -52,22 +50,12 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
 
-  const defaultTab: ProviderPostsTab = profile.posts.some((p) => p.tag === 'Service')
-    ? 'services'
-    : 'requests';
-  const [activeTab, setActiveTab] = useState<ProviderPostsTab>(defaultTab);
-
   const initials = profile.displayName
     .split(' ')
     .map((n) => n[0])
     .join('')
     .toUpperCase()
     .slice(0, 2);
-
-  const filteredPosts = useMemo(
-    () => filterProviderPosts(profile.posts, activeTab),
-    [profile.posts, activeTab]
-  );
 
   const submittedReviews = useProviderReviewsStore((s) => s.submittedReviews);
   const completedDeals = useProviderReviewsStore((s) => s.completedDeals);
@@ -202,44 +190,15 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
           />
         </View>
 
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: Colors.text }]}>Posts</Text>
-        </View>
-        <ProfileSegmentedTabs
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          subtleBg={subtleBg}
+        <ProfilePostsSection
+          posts={profile.posts}
           cardBg={cardBg}
+          subtleBg={subtleBg}
           textColor={Colors.text}
+          mutedColor={Colors.icon}
+          primaryColor={Colors.primary}
+          onPostPress={onPostPress}
         />
-
-        <View style={styles.postsList}>
-          {filteredPosts.length === 0 ? (
-            <View style={[styles.emptyCard, { backgroundColor: cardBg }]}>
-              <Ionicons name="file-tray-outline" size={28} color={Colors.icon} />
-              <Text style={[styles.emptyTitle, { color: Colors.text }]}>No posts yet</Text>
-              <Text style={[styles.emptyBody, { color: Colors.icon }]}>
-                {`No ${activeTab === 'services' ? 'services' : 'requests'} to show yet.`}
-              </Text>
-            </View>
-          ) : (
-            filteredPosts.map((post) => (
-              <FeaturedPostCard
-                key={post.id}
-                item={post}
-                cardBg={cardBg}
-                subtleBg={subtleBg}
-                textColor={Colors.text}
-                mutedColor={Colors.icon}
-                primaryColor={Colors.primary}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  onPostPress?.(post.id);
-                }}
-              />
-            ))
-          )}
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -345,26 +304,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: Typography.size.sm,
     fontWeight: '700',
-  },
-  postsList: {
-    marginTop: Spacing.md,
-  },
-  emptyCard: {
-    borderRadius: 16,
-    padding: Spacing.xl,
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginTop: Spacing.sm,
-  },
-  emptyTitle: {
-    fontSize: Typography.size.md,
-    fontWeight: '700',
-  },
-  emptyBody: {
-    fontSize: Typography.size.sm,
-    fontWeight: '500',
-    textAlign: 'center',
-    lineHeight: 20,
   },
 });
 

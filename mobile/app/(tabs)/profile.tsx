@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -11,11 +11,23 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { useAppRouter, useThemeColor, useThemeToggle } from '../../hooks';
+import { useAppRouter, useThemeColor, useThemeToggle, useChangeProfilePhoto } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
-import { ProfileHeroSection, ProfileInfoRow } from '../../components/Profile';
+import {
+  ProfileHeroSection,
+  ProfileInfoRow,
+  ProfileChangePhotoSheet,
+  ProfilePostsSection,
+} from '../../components/Profile';
 import { NotificationBellButton } from '../../components/NotificationBellButton';
 import { useAuthStore } from '../../store';
+import { getProfilePostsForUser } from '../../lib';
+import type { User } from '../../types';
+
+function getAccountTypeLabel(user: User | null | undefined): string {
+  if (user?.role === 'admin') return 'Administrator';
+  return 'Regular';
+}
 
 export default function ProfileScreen() {
   const router = useAppRouter();
@@ -28,6 +40,8 @@ export default function ProfileScreen() {
 
   const { user } = useAuthStore();
   const { iconName, handleToggle } = useThemeToggle();
+  const { avatarUri, sheetVisible, openSheet, closeSheet, handleSheetSelect } =
+    useChangeProfilePhoto(user?.avatarUrl);
 
   const initials = user?.name
     ? user.name
@@ -38,10 +52,24 @@ export default function ProfileScreen() {
         .slice(0, 2)
     : '?';
 
+  const posts = useMemo(() => getProfilePostsForUser(user), [user]);
+
   const handleOpenSettings = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push('/settings' as any);
   };
+
+  const handlePostPress = useCallback(
+    (postId: string) => {
+      router.push(`/post/${postId}` as any);
+    },
+    [router]
+  );
+
+  const handleEditInfo = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Profile edit flow — coming soon
+  }, []);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
@@ -72,6 +100,7 @@ export default function ProfileScreen() {
           variant="owner"
           displayName={user?.name || 'User'}
           handle={user?.username ? `@${user.username}` : undefined}
+          avatarUrl={avatarUri}
           initials={initials}
           cardBg={cardBg}
           subtleBg={subtleBg}
@@ -79,6 +108,8 @@ export default function ProfileScreen() {
           textColor={Colors.text}
           mutedColor={Colors.icon}
           isDark={isDark}
+          onChangePhoto={openSheet}
+          onEditInfo={handleEditInfo}
         />
 
         <View style={styles.sectionHeader}>
@@ -110,12 +141,28 @@ export default function ProfileScreen() {
             iconColor="#F59E0B"
             iconBg="#F59E0B15"
             label="Account Type"
-            value={user?.role === 'admin' ? 'Administrator' : 'Student'}
+            value={getAccountTypeLabel(user)}
             textColor={Colors.text}
             mutedColor={Colors.icon}
           />
         </View>
+
+        <ProfilePostsSection
+          posts={posts}
+          cardBg={cardBg}
+          subtleBg={subtleBg}
+          textColor={Colors.text}
+          mutedColor={Colors.icon}
+          primaryColor={Colors.primary}
+          onPostPress={handlePostPress}
+        />
       </ScrollView>
+
+      <ProfileChangePhotoSheet
+        visible={sheetVisible}
+        onClose={closeSheet}
+        onSelect={handleSheetSelect}
+      />
     </SafeAreaView>
   );
 }

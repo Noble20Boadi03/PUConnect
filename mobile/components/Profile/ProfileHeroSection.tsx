@@ -61,17 +61,6 @@ export const ProfileHeroSection: React.FC<ProfileHeroSectionProps> = ({
             <Text style={[styles.avatarInitials, { color: primaryColor }]}>{initials}</Text>
           )}
         </View>
-        {isOwner ? (
-          <TouchableOpacity
-            style={[styles.cameraButton, { backgroundColor: primaryColor }]}
-            onPress={() => {
-              fireHaptic();
-              onChangePhoto?.();
-            }}
-          >
-            <Ionicons name="camera" size={14} color={ctaOnDark} />
-          </TouchableOpacity>
-        ) : null}
       </View>
 
       <Text style={[styles.profileName, { color: textColor }]}>{displayName}</Text>
@@ -152,18 +141,6 @@ const styles = StyleSheet.create({
   avatarInitials: {
     fontSize: 34,
     fontWeight: '800',
-  },
-  cameraButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: -2,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
   },
   profileName: {
     fontSize: Typography.size.xl,

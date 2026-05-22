@@ -68,7 +68,17 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user: null, token: null, isAuthenticated: false });
   },
   logout: async () => {
-    const result = await settingsService.logout();
+    let result: LogoutResult;
+    try {
+      result = await settingsService.logout();
+    } catch {
+      await SecureStore.deleteItemAsync(TOKEN_KEY).catch(() => {});
+      result = {
+        success: true,
+        message: 'Signed out on this device.',
+        apiReached: false,
+      };
+    }
     set({ user: null, token: null, isAuthenticated: false });
     return result;
   },

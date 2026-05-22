@@ -7,3 +7,4 @@ export * from './useNavigationLock';
 export * from './useAppRouter';
 export * from './useThemeToggle';
 export * from './usePostDetailChrome';
+export * from './useChangeProfilePhoto';

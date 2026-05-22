@@ -3,6 +3,7 @@ export * from './formatPostPrice';
 export * from './filterMarketPosts';
 export * from './getPostDetailById';
 export * from './getProviderProfileByUsername';
+export * from './getProfilePosts';
 export * from './normalizeUsername';
 export * from './filterProviderPosts';
 export * from './getChatThread';
