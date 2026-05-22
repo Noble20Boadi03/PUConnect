@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
 import { useAppRouter, useThemeColor } from '../../hooks';
-import { buildProviderProfileHref } from '../../lib';
+import { buildExploreCategoryHref, buildProviderProfileHref } from '../../lib';
 import { EXPLORE_CATEGORIES_MOCK, EXPLORE_PROVIDERS_MOCK } from '../../constants/exploreMock';
 import { ExploreHeader } from './ExploreHeader';
 import { ExploreTopTabs } from './ExploreTopTabs';
@@ -46,9 +46,13 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   const handleCategoryPress = useCallback(
     (category: ExploreCategory) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      onCategoryPress?.(category);
+      if (onCategoryPress) {
+        onCategoryPress(category);
+        return;
+      }
+      router.pushStack(buildExploreCategoryHref(category.id));
     },
-    [onCategoryPress]
+    [onCategoryPress, router]
   );
 
   const handleProviderPress = useCallback(
@@ -96,7 +100,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
         {activeTab === 'categories' ? (
           <ExploreCategoriesPanel
             categories={categories}
-            onCategoryPress={onCategoryPress ? handleCategoryPress : undefined}
+            onCategoryPress={handleCategoryPress}
           />
         ) : (
           <ExplorePeoplePanel

@@ -2,6 +2,7 @@ import { Stack } from "expo-router";
 import { ThemeProvider, DarkTheme, DefaultTheme } from '@react-navigation/native';
 import { useColorScheme, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { useEffect, useRef } from 'react';
 import { useAuthStore } from '../store';
 import { initializeThemePreference } from '../lib/themePreference';
@@ -39,6 +40,7 @@ export default function RootLayout() {
   const inProviderReviewForm = inProviderProfile && segments[2] === 'review';
   const inChat = segments[0] === 'chat';
   const inNotifications = segments[0] === 'notifications';
+  const inCategoryDetail = String(segments[0]) === 'category';
   const managesOwnChrome = inPostDetail;
 
   // Sync Android navigation bar with theme (post detail manages its own chrome).
@@ -63,7 +65,8 @@ export default function RootLayout() {
       !inProviderReviews &&
       !inProviderReviewForm &&
       !inChat &&
-      !inNotifications
+      !inNotifications &&
+      !inCategoryDetail
     ) {
       if (!didRedirectRef.current) {
         didRedirectRef.current = true;
@@ -80,7 +83,8 @@ export default function RootLayout() {
         inProviderReviews ||
         inProviderReviewForm ||
         inChat ||
-        inNotifications)
+        inNotifications ||
+        inCategoryDetail)
     ) {
       if (!didRedirectRef.current) {
         didRedirectRef.current = true;
@@ -101,31 +105,35 @@ export default function RootLayout() {
     inProviderReviewForm,
     inChat,
     inNotifications,
+    inCategoryDetail,
   ]);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="settings" />
-        <Stack.Screen name="post/[id]" options={{ animation: 'slide_from_right' }} />
-        <Stack.Screen name="provider/[username]" options={{ animation: 'slide_from_right' }} />
-        <Stack.Screen
-          name="provider/[username]/reviews"
-          options={{ animation: 'slide_from_right' }}
-        />
-        <Stack.Screen
-          name="provider/[username]/review"
-          options={{ animation: 'slide_from_right' }}
-        />
-        <Stack.Screen name="chat/[username]" options={{ animation: 'slide_from_right' }} />
-        <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
-      </Stack>
-      {!inPostDetail ? (
-        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-      ) : null}
-    </ThemeProvider>
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="settings" />
+          <Stack.Screen name="post/[id]" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="provider/[username]" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen
+            name="provider/[username]/reviews"
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="provider/[username]/review"
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen name="chat/[username]" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="category" options={{ animation: 'slide_from_right' }} />
+        </Stack>
+        {!managesOwnChrome ? (
+          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+        ) : null}
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

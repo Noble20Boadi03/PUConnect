@@ -9,4 +9,5 @@ export * from './chatMock';
 export * from './messagesListMock';
 export * from './notificationsMock';
 export * from './exploreMock';
+export * from './exploreCategoryServicesMock';
 export * from './CardShadow';

@@ -6,3 +6,5 @@ export * from './ExploreCategoryFilterPills';
 export * from './ExploreProviderCard';
 export * from './ExploreCategoriesPanel';
 export * from './ExplorePeoplePanel';
+export * from './ExploreTagFilterPills';
+export * from './ExploreServiceProvidersPanel';
