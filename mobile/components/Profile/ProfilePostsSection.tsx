@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { StyleSheet, View, Text, Alert } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { filterProviderPosts } from '../../lib';
+import { useAppRouter } from '../../hooks';
 import { FeaturedPostCard } from '../FeaturedPostCard';
 import { ProfileSegmentedTabs } from './ProfileSegmentedTabs';
 import { ProfileProviderGate } from './ProfileProviderGate';
@@ -37,6 +38,7 @@ export const ProfilePostsSection: React.FC<ProfilePostsSectionProps> = ({
   onBecomeProvider = () => {},
   showCreateFab = true,
 }) => {
+  const router = useAppRouter();
   const defaultTab: ProviderPostsTab = isProvider && posts.some((p) => p.tag === 'Service')
     ? 'services'
     : 'requests';
@@ -52,12 +54,8 @@ export const ProfilePostsSection: React.FC<ProfilePostsSectionProps> = ({
     showCreateFab && (activeTab === 'requests' || (activeTab === 'services' && isProvider));
 
   const handleCreatePress = () => {
-    const kind = activeTab === 'services' ? 'service' : 'request';
-    Alert.alert(
-      'Create post',
-      `Post creation for ${kind} listings will connect to the API soon.`,
-      [{ text: 'OK' }]
-    );
+    const type = activeTab === 'services' ? 'service' : 'request';
+    router.push(`/new-post?type=${type}` as any);
   };
 
   return (

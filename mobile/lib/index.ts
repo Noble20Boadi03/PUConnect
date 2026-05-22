@@ -20,3 +20,4 @@ export * from './officialEngagement';
 export * from './getProviderServices';
 export * from './systemChrome';
 export * from './editInfoForm';
+export * from './newPostForm';

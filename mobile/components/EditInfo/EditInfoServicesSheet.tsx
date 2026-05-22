@@ -21,6 +21,8 @@ export interface EditInfoServicesSheetProps {
   selectedIds: string[];
   onToggleService: (serviceId: string) => void;
   onClose: () => void;
+  title?: string;
+  subtitle?: string;
 }
 
 export const EditInfoServicesSheet: React.FC<EditInfoServicesSheetProps> = ({
@@ -28,6 +30,8 @@ export const EditInfoServicesSheet: React.FC<EditInfoServicesSheetProps> = ({
   selectedIds,
   onToggleService,
   onClose,
+  title = 'Services you offer',
+  subtitle = 'Select all campus services that match what you provide.',
 }) => {
   const Colors = useThemeColor();
   const insets = useSafeAreaInsets();
@@ -57,10 +61,8 @@ export const EditInfoServicesSheet: React.FC<EditInfoServicesSheetProps> = ({
           onPress={(e) => e.stopPropagation()}
         >
           <View style={[styles.handle, { backgroundColor: subtleBg }]} />
-          <Text style={[styles.sheetTitle, { color: Colors.text }]}>Services you offer</Text>
-          <Text style={[styles.sheetSubtitle, { color: Colors.icon }]}>
-            Select all campus services that match what you provide.
-          </Text>
+          <Text style={[styles.sheetTitle, { color: Colors.text }]}>{title}</Text>
+          <Text style={[styles.sheetSubtitle, { color: Colors.icon }]}>{subtitle}</Text>
 
           <ScrollView
             style={styles.scroll}

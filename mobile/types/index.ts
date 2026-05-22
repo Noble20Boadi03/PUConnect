@@ -7,3 +7,4 @@ export * from './chat';
 export * from './review';
 export * from './explore';
 export * from './profile';
+export * from './newPost';

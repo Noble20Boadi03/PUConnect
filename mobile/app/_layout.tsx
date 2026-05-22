@@ -47,6 +47,7 @@ export default function RootLayout() {
   const inNotifications = segments[0] === 'notifications';
   const inCategoryDetail = String(segments[0]) === 'category';
   const inEditInfo = segments[0] === 'edit-info';
+  const inNewPost = segments[0] === 'new-post';
   const managesOwnChrome = inPostDetail;
 
   // Sync Android navigation bar with theme (post detail manages its own chrome).
@@ -67,6 +68,7 @@ export default function RootLayout() {
       !inTabsGroup &&
       !inSettings &&
       !inEditInfo &&
+      !inNewPost &&
       !inPostDetail &&
       !inProviderProfile &&
       !inProviderReviews &&
@@ -83,6 +85,7 @@ export default function RootLayout() {
       (inTabsGroup ||
         inSettings ||
         inEditInfo ||
+        inNewPost ||
         inPostDetail ||
         inProviderProfile ||
         inProviderReviews ||
@@ -107,6 +110,7 @@ export default function RootLayout() {
     inNotifications,
     inCategoryDetail,
     inEditInfo,
+    inNewPost,
   ]);
 
   return (
@@ -118,6 +122,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="settings" />
           <Stack.Screen name="edit-info" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="new-post" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="post/[id]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="provider/[username]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen

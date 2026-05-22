@@ -15,6 +15,7 @@ export * from './MarketTipBanner';
 export * from './PostDetail';
 export * from './Profile';
 export * from './EditInfo';
+export * from './NewPost';
 export * from './ProviderProfile';
 export * from './ProviderReviews';
 export * from './Chat';
