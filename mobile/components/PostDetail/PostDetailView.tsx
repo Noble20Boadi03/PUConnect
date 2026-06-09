@@ -24,14 +24,20 @@ import { PostImageGallery } from './PostImageGallery';
 import type { PostDetail } from '../../types';
 
 const FOOTER_BODY = 60;
+const OWNER_FOOTER_BODY = 132;
 
 export interface PostDetailViewProps {
   post: PostDetail;
   onBack: () => void;
   onSendMessage?: () => void;
   onViewProvider?: (username: string) => void;
-  /** When true, hides the author/provider block (e.g. opened from their profile). */
+  /** When true, hides the author/provider block (e.g. opened from chat or owner profile). */
   hideAuthorProfile?: boolean;
+  /** Creator view — hides author block and shows edit / hide / delete actions. */
+  ownerView?: boolean;
+  onEdit?: () => void;
+  onHide?: () => void;
+  onDelete?: () => void;
   /** Replaces the footer CTA with a back-to-chat action. */
   returnToChat?: boolean;
   onReturnToChat?: () => void;
@@ -46,6 +52,10 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
   onSendMessage,
   onViewProvider,
   hideAuthorProfile = false,
+  ownerView = false,
+  onEdit,
+  onHide,
+  onDelete,
   returnToChat = false,
   onReturnToChat,
   requestService = false,
@@ -101,6 +111,21 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
     onRequestService?.();
   }, [onRequestService]);
 
+  const handleEdit = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    onEdit?.();
+  }, [onEdit]);
+
+  const handleHide = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onHide?.();
+  }, [onHide]);
+
+  const handleDelete = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onDelete?.();
+  }, [onDelete]);
+
   const footerTitle = returnToChat
     ? 'Return to Chat'
     : requestService
@@ -126,6 +151,7 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
   }, [isService, onViewProvider, post.author.username]);
 
   const footerBottom = getSafeAreaBottom(insets.bottom);
+  const footerHeight = ownerView ? OWNER_FOOTER_BODY : FOOTER_BODY;
 
   const onScroll = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -144,7 +170,7 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
         onScroll={onScroll}
         scrollEventThrottle={16}
         contentContainerStyle={{
-          paddingBottom: FOOTER_BODY + footerBottom + Spacing.lg,
+          paddingBottom: footerHeight + footerBottom + Spacing.lg,
         }}
       >
         <PostImageGallery
@@ -301,12 +327,45 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
           },
         ]}
       >
-        <Button
-          title={footerTitle}
-          size="lg"
-          onPress={footerPress}
-          leftIcon={<Ionicons name={footerIcon} size={20} color="#FFFFFF" />}
-        />
+        {ownerView ? (
+          <View style={styles.ownerActions}>
+            <Button
+              title="Edit Post"
+              size="lg"
+              onPress={handleEdit}
+              leftIcon={<Ionicons name="create-outline" size={20} color="#FFFFFF" />}
+            />
+            <View style={styles.ownerSecondaryRow}>
+              <GuardedPressable
+                style={[styles.ownerSecondaryButton, { borderColor: Colors.primary }]}
+                onPress={handleHide}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel="Hide post"
+              >
+                <Ionicons name="eye-off-outline" size={18} color={Colors.primary} />
+                <Text style={[styles.ownerSecondaryLabel, { color: Colors.primary }]}>Hide</Text>
+              </GuardedPressable>
+              <GuardedPressable
+                style={[styles.ownerSecondaryButton, styles.ownerDeleteButton]}
+                onPress={handleDelete}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel="Delete post"
+              >
+                <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                <Text style={[styles.ownerSecondaryLabel, styles.ownerDeleteLabel]}>Delete</Text>
+              </GuardedPressable>
+            </View>
+          </View>
+        ) : (
+          <Button
+            title={footerTitle}
+            size="lg"
+            onPress={footerPress}
+            leftIcon={<Ionicons name={footerIcon} size={20} color="#FFFFFF" />}
+          />
+        )}
       </View>
     </View>
   );
@@ -503,6 +562,33 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.sm + 4,
     borderTopWidth: 1,
     zIndex: 10,
+  },
+  ownerActions: {
+    gap: Spacing.sm,
+  },
+  ownerSecondaryRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  ownerSecondaryButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.sm + 2,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  ownerDeleteButton: {
+    borderColor: '#EF4444',
+  },
+  ownerSecondaryLabel: {
+    fontSize: Typography.size.sm,
+    fontWeight: Typography.weight.semibold as any,
+  },
+  ownerDeleteLabel: {
+    color: '#EF4444',
   },
 });
 

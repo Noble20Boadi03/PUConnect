@@ -63,7 +63,7 @@ export default function ProfileScreen() {
 
   const handlePostPress = useCallback(
     (postId: string) => {
-      router.push(`/post/${postId}` as any);
+      router.push(`/post/${postId}?fromOwner=1` as any);
     },
     [router]
   );
@@ -168,6 +168,7 @@ export default function ProfileScreen() {
           textColor={Colors.text}
           mutedColor={Colors.icon}
           primaryColor={Colors.primary}
+          hideAuthorOnCards
           onPostPress={handlePostPress}
           onBecomeProvider={handleBecomeProvider}
         />

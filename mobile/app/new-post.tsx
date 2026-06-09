@@ -1,14 +1,18 @@
 import React, { useCallback } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { NewPostView } from '../components/NewPost';
 import { useAppRouter, useThemeColor } from '../hooks';
 import { Spacing, Typography } from '../constants';
+import type { NewPostSearchParams } from '../types/newPost';
 
 export default function NewPostScreen() {
+  const params = useLocalSearchParams() as NewPostSearchParams;
+  const isEditing = typeof params.editId === 'string' && params.editId.length > 0;
   const router = useAppRouter();
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
@@ -36,7 +40,9 @@ export default function NewPostScreen() {
         >
           <Ionicons name="chevron-back" size={22} color={Colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: Colors.text }]}>New post</Text>
+        <Text style={[styles.title, { color: Colors.text }]}>
+          {isEditing ? 'Edit post' : 'New post'}
+        </Text>
         <View style={styles.headerSpacer} />
       </View>
 

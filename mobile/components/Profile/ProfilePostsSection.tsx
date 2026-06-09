@@ -23,6 +23,8 @@ export interface ProfilePostsSectionProps {
   onBecomeProvider?: () => void;
   /** Hide create FAB on public provider pages. */
   showCreateFab?: boolean;
+  /** Hide author avatar/name on post cards (signed-in owner profile). */
+  hideAuthorOnCards?: boolean;
 }
 
 export const ProfilePostsSection: React.FC<ProfilePostsSectionProps> = ({
@@ -36,6 +38,7 @@ export const ProfilePostsSection: React.FC<ProfilePostsSectionProps> = ({
   onPostPress,
   onBecomeProvider = () => {},
   showCreateFab = true,
+  hideAuthorOnCards = false,
 }) => {
   const router = useAppRouter();
   const defaultTab: ProviderPostsTab = isProvider && posts.some((p) => p.tag === 'Service')
@@ -114,6 +117,7 @@ export const ProfilePostsSection: React.FC<ProfilePostsSectionProps> = ({
               textColor={textColor}
               mutedColor={mutedColor}
               primaryColor={primaryColor}
+              showAuthor={!hideAuthorOnCards}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 onPostPress?.(post.id);

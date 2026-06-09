@@ -7,4 +7,5 @@ export type NewPostType = MarketPostTag;
 
 export interface NewPostSearchParams {
   type?: 'service' | 'request';
+  editId?: string;
 }

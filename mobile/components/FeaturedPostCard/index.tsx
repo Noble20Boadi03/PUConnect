@@ -18,6 +18,8 @@ export interface FeaturedPostCardProps {
   primaryColor: string;
   borderColor?: string;
   layout?: FeaturedPostCardLayout;
+  /** When false, hides the author avatar and name in the card footer (owner profile lists). */
+  showAuthor?: boolean;
   onPress?: () => void;
 }
 
@@ -36,6 +38,7 @@ const FeaturedPostCardComponent: React.FC<FeaturedPostCardProps> = ({
   primaryColor,
   borderColor = 'rgba(0, 0, 0, 0.08)',
   layout = 'stack',
+  showAuthor = true,
   onPress,
 }) => {
   const isCarousel = layout === 'carousel';
@@ -93,20 +96,29 @@ const FeaturedPostCardComponent: React.FC<FeaturedPostCardProps> = ({
           </Text>
 
           <View style={[styles.footer, { borderTopColor: subtleBg }]}>
-            <View style={styles.authorRow}>
-              <View style={[styles.avatar, { backgroundColor: primaryColor + '22' }]}>
-                <Text style={[styles.avatarText, { color: primaryColor }]}>
-                  {item.authorInitials}
-                </Text>
+            {showAuthor ? (
+              <>
+                <View style={styles.authorRow}>
+                  <View style={[styles.avatar, { backgroundColor: primaryColor + '22' }]}>
+                    <Text style={[styles.avatarText, { color: primaryColor }]}>
+                      {item.authorInitials}
+                    </Text>
+                  </View>
+                  <Text style={[styles.authorName, { color: textColor }]} numberOfLines={1}>
+                    {item.authorName}
+                  </Text>
+                </View>
+                <View style={styles.priceRow}>
+                  <Text style={[styles.price, { color: primaryColor }]}>{priceLabel}</Text>
+                  <Ionicons name="chevron-forward" size={18} color={mutedColor} />
+                </View>
+              </>
+            ) : (
+              <View style={styles.priceOnlyRow}>
+                <Text style={[styles.price, { color: primaryColor }]}>{priceLabel}</Text>
+                <Ionicons name="chevron-forward" size={18} color={mutedColor} />
               </View>
-              <Text style={[styles.authorName, { color: textColor }]} numberOfLines={1}>
-                {item.authorName}
-              </Text>
-            </View>
-            <View style={styles.priceRow}>
-              <Text style={[styles.price, { color: primaryColor }]}>{priceLabel}</Text>
-              <Ionicons name="chevron-forward" size={18} color={mutedColor} />
-            </View>
+            )}
           </View>
         </View>
       </GuardedPressable>
@@ -127,6 +139,7 @@ function areFeaturedPostCardPropsEqual(
     prev.mutedColor === next.mutedColor &&
     prev.primaryColor === next.primaryColor &&
     prev.borderColor === next.borderColor &&
+    prev.showAuthor === next.showAuthor &&
     prev.onPress === next.onPress
   );
 }
@@ -227,6 +240,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
+  },
+  priceOnlyRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   price: {
     fontSize: Typography.size.sm,

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, useColorScheme } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -7,44 +7,60 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { PostDetailView } from '../../components/PostDetail';
+import { Alert, ConfirmDialog } from '../../components';
 import { buildChatHref, buildProviderProfileHref, getPostDetailById } from '../../lib';
-import { useAppRouter } from '../../hooks';
+import { useAppRouter, useConfirmDialog } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
+import { useAuthStore } from '../../store';
+
+function isTruthyParam(value: string | undefined): boolean {
+  return value === '1' || value === 'true';
+}
 
 export default function PostDetailScreen() {
-  const { id, fromProvider, fromChat, fromRequestService } = useLocalSearchParams<{
+  const { id, fromProvider, fromChat, fromRequestService, fromOwner } = useLocalSearchParams<{
     id: string;
     fromProvider?: string;
     fromChat?: string;
     fromRequestService?: string;
+    fromOwner?: string;
   }>();
+  const ownerView = isTruthyParam(fromOwner);
   const hideAuthorProfile =
-    fromProvider === '1' ||
-    fromProvider === 'true' ||
-    fromChat === '1' ||
-    fromChat === 'true' ||
-    fromRequestService === '1' ||
-    fromRequestService === 'true';
-  const returnToChat =
-    (fromChat === '1' || fromChat === 'true') &&
-    !(fromRequestService === '1' || fromRequestService === 'true');
-  const requestService = fromRequestService === '1' || fromRequestService === 'true';
+    ownerView ||
+    isTruthyParam(fromProvider) ||
+    isTruthyParam(fromChat) ||
+    isTruthyParam(fromRequestService);
+  const returnToChat = isTruthyParam(fromChat) && !isTruthyParam(fromRequestService);
+  const requestService = isTruthyParam(fromRequestService);
   const router = useAppRouter();
+  const user = useAuthStore((s) => s.user);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
   const textColor = isDark ? '#ECEDEE' : '#11181C';
 
-  const post = typeof id === 'string' ? getPostDetailById(id) : undefined;
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const {
+    showConfirm,
+    confirmVisible,
+    confirmOptions,
+    handleConfirm,
+    handleCancel,
+  } = useConfirmDialog();
+
+  const post = typeof id === 'string' ? getPostDetailById(id, user) : undefined;
 
   const handleBack = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (router.canGoBack()) {
       router.back();
+    } else if (ownerView) {
+      router.replace('/(tabs)/profile' as any);
     } else {
       router.replace('/(tabs)/market' as any);
     }
-  }, [router]);
+  }, [router, ownerView]);
 
   const handleSendMessage = useCallback(() => {
     if (!post) return;
@@ -74,6 +90,48 @@ export default function PostDetailScreen() {
     [router]
   );
 
+  const handleEdit = useCallback(() => {
+    if (!post) return;
+    const type = post.tag === 'Service' ? 'service' : 'request';
+    router.push(`/new-post?editId=${post.id}&type=${type}` as any);
+  }, [post, router]);
+
+  const handleHide = useCallback(async () => {
+    if (!post) return;
+    const confirmed = await showConfirm({
+      title: 'Hide Post',
+      message:
+        'This post will be hidden from the market feed. You can unhide it later from your profile.',
+      confirmLabel: 'Hide Post',
+      cancelLabel: 'Cancel',
+      icon: 'eye-off-outline',
+    });
+    if (!confirmed) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setActionMessage('Post hidden from the market. It remains on your profile.');
+    setTimeout(() => {
+      handleBack();
+    }, 1200);
+  }, [post, showConfirm, handleBack]);
+
+  const handleDelete = useCallback(async () => {
+    if (!post) return;
+    const confirmed = await showConfirm({
+      title: 'Delete Post',
+      message: 'This will permanently remove the post from your profile and the market.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      variant: 'destructive',
+      icon: 'trash-outline',
+    });
+    if (!confirmed) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setActionMessage('Post deleted.');
+    setTimeout(() => {
+      handleBack();
+    }, 900);
+  }, [post, showConfirm, handleBack]);
+
   if (!post) {
     return (
       <SafeAreaView
@@ -84,7 +142,9 @@ export default function PostDetailScreen() {
         <Text style={[styles.notFoundTitle, { color: textColor }]}>Post not found</Text>
         <TouchableOpacity style={styles.notFoundBtn} onPress={handleBack}>
           <Ionicons name="arrow-back" size={18} color={textColor} />
-          <Text style={[styles.notFoundBtnText, { color: textColor }]}>Back to Market</Text>
+          <Text style={[styles.notFoundBtnText, { color: textColor }]}>
+            {ownerView ? 'Back to Profile' : 'Back to Market'}
+          </Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -92,12 +152,36 @@ export default function PostDetailScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: screenBg }]}>
+      {confirmOptions ? (
+        <ConfirmDialog
+          visible={confirmVisible}
+          title={confirmOptions.title}
+          message={confirmOptions.message}
+          confirmLabel={confirmOptions.confirmLabel}
+          cancelLabel={confirmOptions.cancelLabel}
+          variant={confirmOptions.variant}
+          icon={confirmOptions.icon}
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+        />
+      ) : null}
+
+      {actionMessage ? (
+        <View style={styles.actionAlertWrap} pointerEvents="none">
+          <Alert type="success" message={actionMessage} />
+        </View>
+      ) : null}
+
       <PostDetailView
         post={post}
         onBack={handleBack}
         onSendMessage={handleSendMessage}
         onViewProvider={hideAuthorProfile ? undefined : handleViewProvider}
         hideAuthorProfile={hideAuthorProfile}
+        ownerView={ownerView}
+        onEdit={handleEdit}
+        onHide={handleHide}
+        onDelete={handleDelete}
         returnToChat={returnToChat}
         onReturnToChat={handleReturnToChat}
         requestService={requestService}
@@ -110,6 +194,13 @@ export default function PostDetailScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
+  },
+  actionAlertWrap: {
+    position: 'absolute',
+    top: Spacing.xl + 48,
+    left: Spacing.lg,
+    right: Spacing.lg,
+    zIndex: 20,
   },
   notFound: {
     flex: 1,
