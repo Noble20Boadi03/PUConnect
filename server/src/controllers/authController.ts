@@ -3,8 +3,6 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import prisma from '../config/db';
 
-const VALID_THEME_PREFERENCES = ['light', 'dark'] as const;
-
 /**
  * Maps a database user to the public API user shape.
  */
@@ -15,7 +13,6 @@ const toPublicUser = (user: {
   username: string;
   role: string;
   avatarUrl: string;
-  themePreference: string;
 }) => ({
   id: user.id,
   name: user.name,
@@ -23,7 +20,6 @@ const toPublicUser = (user: {
   username: user.username,
   role: user.role,
   avatarUrl: user.avatarUrl,
-  themePreference: user.themePreference,
 });
 
 /**
@@ -203,42 +199,6 @@ export const getMe = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * Update authenticated user preferences.
- * @route PATCH /api/auth/preferences
- */
-export const updatePreferences = async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).user.id;
-    const { themePreference } = req.body;
-
-    if (!themePreference || !VALID_THEME_PREFERENCES.includes(themePreference)) {
-      return res.status(400).json({
-        status: 400,
-        message: 'Please provide a valid themePreference ("light" or "dark").',
-      });
-    }
-
-    const user = await prisma.user.update({
-      where: { id: userId },
-      data: { themePreference },
-    });
-
-    return res.status(200).json({
-      status: 200,
-      message: 'Preferences updated successfully.',
-      data: {
-        themePreference: user.themePreference,
-      },
-    });
-  } catch (error) {
-    console.error('UpdatePreferences Error:', error);
-    return res.status(500).json({
-      status: 500,
-      message: 'Server error updating preferences. Please try again.',
-    });
-  }
-};
 
 /**
  * Log out user (for custom manual auth, we verify/clear client tokens).
