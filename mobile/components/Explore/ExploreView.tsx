@@ -42,6 +42,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
 
   const [activeTab, setActiveTab] = useState<ExploreTab>('categories');
   const [peopleFilter, setPeopleFilter] = useState<ExploreCategoryFilter>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleCategoryPress = useCallback(
     (category: ExploreCategory) => {
@@ -65,6 +66,10 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
     },
     [onProviderPress, router]
   );
+
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
 
   const tabTheme = useMemo(
     () => ({
@@ -109,6 +114,8 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
             activeFilter={peopleFilter}
             onFilterChange={setPeopleFilter}
             onProviderPress={handleProviderPress}
+            searchQuery={searchQuery}
+            onSearchChange={handleSearchChange}
             {...peopleTheme}
           />
         )}

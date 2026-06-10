@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
-import { StyleSheet, View, Text, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { filterExploreProviders } from '../../lib/filterExploreProviders';
@@ -24,6 +25,8 @@ export interface ExplorePeoplePanelProps {
   primaryColor: string;
   borderColor: string;
   onProviderPress: (provider: ExploreProvider) => void;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
 }
 
 export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
@@ -37,10 +40,12 @@ export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
   primaryColor,
   borderColor,
   onProviderPress,
+  searchQuery,
+  onSearchChange,
 }) => {
   const filtered = useMemo(
-    () => filterExploreProviders(providers, activeFilter),
-    [providers, activeFilter]
+    () => filterExploreProviders(providers, activeFilter, searchQuery),
+    [providers, activeFilter, searchQuery]
   );
 
   const emptyMessage = useMemo(() => {
@@ -61,6 +66,24 @@ export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
 
   return (
     <View style={styles.root}>
+      <View style={[styles.searchContainer, { backgroundColor: cardBg }]}>
+        <Ionicons name="search-outline" size={20} color={mutedColor} />
+        <TextInput
+          style={[styles.searchInput, { color: textColor }]}
+          placeholder="Search providers, skills..."
+          placeholderTextColor={mutedColor}
+          value={searchQuery}
+          onChangeText={onSearchChange}
+          autoCapitalize="none"
+          returnKeyType="search"
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => onSearchChange('')}>
+            <Ionicons name="close-circle" size={18} color={mutedColor} />
+          </TouchableOpacity>
+        )}
+      </View>
+
       <ExploreCategoryFilterPills
         categories={categories}
         activeFilter={activeFilter}
@@ -103,6 +126,21 @@ export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    paddingHorizontal: Spacing.sm + 4,
+    height: 44,
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.sm + 4,
+    gap: Spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: Typography.size.sm,
+    height: '100%',
   },
   scroll: {
     flex: 1,

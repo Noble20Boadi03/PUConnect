@@ -33,6 +33,7 @@ export default function MarketScreen() {
 
   const [showMarketTip, setShowMarketTip] = useState(true);
   const [activeFilter, setActiveFilter] = useState<MarketFilter>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const dismissTip = useCallback(() => {
     setShowMarketTip(false);
@@ -40,6 +41,10 @@ export default function MarketScreen() {
 
   const handleFilterChange = useCallback((filter: MarketFilter) => {
     setActiveFilter(filter);
+  }, []);
+
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
   }, []);
 
   const handleCardPress = useCallback(
@@ -50,11 +55,11 @@ export default function MarketScreen() {
     [router]
   );
 
-  const showDiscoverySections = activeFilter === 'all';
+  const showDiscoverySections = activeFilter === 'all' && !searchQuery;
 
   const filteredPosts = useMemo(
-    () => filterMarketPosts(FEATURED_POSTS_MOCK, activeFilter),
-    [activeFilter]
+    () => filterMarketPosts(FEATURED_POSTS_MOCK, activeFilter, searchQuery),
+    [activeFilter, searchQuery]
   );
 
   const emptyMessage = useMemo(() => {
@@ -80,6 +85,8 @@ export default function MarketScreen() {
       onDismissTip: dismissTip,
       activeFilter,
       onFilterChange: handleFilterChange,
+      searchQuery,
+      onSearchChange: handleSearchChange,
     }),
     [
       Colors.text,
@@ -92,6 +99,8 @@ export default function MarketScreen() {
       dismissTip,
       activeFilter,
       handleFilterChange,
+      searchQuery,
+      handleSearchChange,
     ]
   );
 

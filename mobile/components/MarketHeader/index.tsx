@@ -31,6 +31,8 @@ export interface MarketHeaderProps {
   onDismissTip: () => void;
   activeFilter: MarketFilter;
   onFilterChange: (filter: MarketFilter) => void;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
 }
 
 const MarketHeaderComponent: React.FC<MarketHeaderProps> = ({
@@ -44,9 +46,10 @@ const MarketHeaderComponent: React.FC<MarketHeaderProps> = ({
   onDismissTip,
   activeFilter,
   onFilterChange,
+  searchQuery,
+  onSearchChange,
 }) => {
   const isDark = useColorScheme() === 'dark';
-  const [searchQuery, setSearchQuery] = React.useState('');
 
   const handleFilterPress = useCallback(
     (filter: MarketFilter) => {
@@ -70,12 +73,12 @@ const MarketHeaderComponent: React.FC<MarketHeaderProps> = ({
           placeholder="Search Services or Requests"
           placeholderTextColor={iconColor + '90'}
           value={searchQuery}
-          onChangeText={setSearchQuery}
+          onChangeText={onSearchChange}
           autoCapitalize="none"
           returnKeyType="search"
         />
         {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery('')}>
+          <TouchableOpacity onPress={() => onSearchChange('')}>
             <Ionicons name="close-circle" size={18} color={iconColor} />
           </TouchableOpacity>
         )}
