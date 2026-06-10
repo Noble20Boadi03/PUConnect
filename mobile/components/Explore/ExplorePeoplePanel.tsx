@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { StyleSheet, View, Text, ScrollView, TextInput, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet, View, Text, ScrollView } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { filterExploreProviders } from '../../lib/filterExploreProviders';
@@ -25,8 +24,7 @@ export interface ExplorePeoplePanelProps {
   primaryColor: string;
   borderColor: string;
   onProviderPress: (provider: ExploreProvider) => void;
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
+  searchQuery?: string;
 }
 
 export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
@@ -40,8 +38,7 @@ export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
   primaryColor,
   borderColor,
   onProviderPress,
-  searchQuery,
-  onSearchChange,
+  searchQuery = '',
 }) => {
   const filtered = useMemo(
     () => filterExploreProviders(providers, activeFilter, searchQuery),
@@ -49,12 +46,13 @@ export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
   );
 
   const emptyMessage = useMemo(() => {
+    if (searchQuery) return 'No providers match your search.';
     if (activeFilter === 'all') return 'No providers to show right now.';
     const cat = categories.find((c) => c.id === activeFilter);
     return cat
       ? `No providers in ${cat.title} yet.`
       : 'No providers match this filter.';
-  }, [activeFilter, categories]);
+  }, [activeFilter, categories, searchQuery]);
 
   const handleProviderPress = useCallback(
     (provider: ExploreProvider) => {
@@ -66,24 +64,6 @@ export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
 
   return (
     <View style={styles.root}>
-      <View style={[styles.searchContainer, { backgroundColor: cardBg }]}>
-        <Ionicons name="search-outline" size={20} color={mutedColor} />
-        <TextInput
-          style={[styles.searchInput, { color: textColor }]}
-          placeholder="Search providers, skills..."
-          placeholderTextColor={mutedColor}
-          value={searchQuery}
-          onChangeText={onSearchChange}
-          autoCapitalize="none"
-          returnKeyType="search"
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => onSearchChange('')}>
-            <Ionicons name="close-circle" size={18} color={mutedColor} />
-          </TouchableOpacity>
-        )}
-      </View>
-
       <ExploreCategoryFilterPills
         categories={categories}
         activeFilter={activeFilter}
@@ -126,21 +106,6 @@ export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 12,
-    paddingHorizontal: Spacing.sm + 4,
-    height: 44,
-    marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.sm + 4,
-    gap: Spacing.sm,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: Typography.size.sm,
-    height: '100%',
   },
   scroll: {
     flex: 1,

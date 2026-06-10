@@ -10,12 +10,14 @@ export interface ExploreHeaderProps {
   textColor: string;
   buttonBg: string;
   onSearchPress?: () => void;
+  hideSearchIcon?: boolean;
 }
 
 const ExploreHeaderComponent: React.FC<ExploreHeaderProps> = ({
   textColor,
   buttonBg,
   onSearchPress,
+  hideSearchIcon = false,
 }) => {
   const handleSearchPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -26,14 +28,16 @@ const ExploreHeaderComponent: React.FC<ExploreHeaderProps> = ({
     <View style={styles.header}>
       <Text style={[styles.title, { color: textColor }]}>Explore</Text>
       <View style={styles.actions}>
-        <GuardedPressable
-          style={[styles.iconButton, { backgroundColor: buttonBg }]}
-          onPress={handleSearchPress}
-          accessibilityRole="button"
-          accessibilityLabel="Search"
-        >
-          <Ionicons name="search-outline" size={22} color={textColor} />
-        </GuardedPressable>
+        {!hideSearchIcon && (
+          <GuardedPressable
+            style={[styles.iconButton, { backgroundColor: buttonBg }]}
+            onPress={handleSearchPress}
+            accessibilityRole="button"
+            accessibilityLabel="Search"
+          >
+            <Ionicons name="search-outline" size={22} color={textColor} />
+          </GuardedPressable>
+        )}
         <NotificationBellButton backgroundColor={buttonBg} iconColor={textColor} size={44} />
       </View>
     </View>
