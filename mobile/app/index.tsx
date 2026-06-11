@@ -155,7 +155,7 @@ export default function LandingPage() {
       borderRadius: 22,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: Colors.background + 'E6',
+      backgroundColor: 'white',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
