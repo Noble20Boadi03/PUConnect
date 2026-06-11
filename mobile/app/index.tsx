@@ -52,7 +52,7 @@ const ONBOARDING_DATA: OnboardingSlide[] = [
   {
     id: 3,
     title: "Offer Your",
-    highlight: "Skills",
+    highlight: "Services",
     subtitle: "Upgrade your account to provide services, build your portfolio, and earn.",
     image: require('../assets/images/onboarding-3.jpg'),
   },

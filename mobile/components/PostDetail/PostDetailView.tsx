@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -18,6 +18,7 @@ import { useThemeColor, usePostDetailChrome } from '../../hooks';
 import { Spacing, Typography, CARD_SHADOW } from '../../constants';
 import { formatPostPrice } from '../../lib';
 import { getSafeAreaBottom } from '../../lib/safeAreaInsets';
+import { getExploreCategoryFromPostTags, getExploreServicesForPost } from '../../lib/mapPostToExplore';
 import { Button } from '../Button';
 import { GuardedPressable } from '../GuardedPressable';
 import { PostImageGallery } from './PostImageGallery';
@@ -77,6 +78,9 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
   const badgeBg = isService ? Colors.primary + '22' : '#F59E0B22';
   const badgeColor = isService ? Colors.primary : '#F59E0B';
   const amountLabel = formatPostPrice(post.price);
+  
+  const exploreCategory = useMemo(() => getExploreCategoryFromPostTags(post.categoryTags), [post.categoryTags]);
+  const exploreServices = useMemo(() => getExploreServicesForPost(post.categoryTags), [post.categoryTags]);
 
   const copy = isService
     ? {
@@ -193,13 +197,30 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
 
           <Text style={[styles.title, { color: Colors.text }]}>{post.title}</Text>
 
-          <View style={styles.categoryRow}>
-            {post.categoryTags.map((tag) => (
-              <View key={tag} style={[styles.categoryPill, { backgroundColor: tagBg }]}>
-                <Text style={[styles.categoryText, { color: Colors.text }]}>{tag}</Text>
+          {isService && exploreCategory ? (
+            <View style={[styles.categorySection, { backgroundColor: subtleBg }]}>
+              <View style={styles.categoryHeader}>
+                <Ionicons 
+                  name={exploreCategory.iconName} 
+                  size={20} 
+                  color={exploreCategory.accentColor} 
+                />
+                <Text style={[styles.categoryTitle, { color: Colors.text }]}>
+                  {exploreCategory.title}
+                </Text>
               </View>
-            ))}
-          </View>
+            </View>
+          ) : !isService && exploreServices.length > 0 ? (
+            <View style={styles.servicesRow}>
+              {exploreServices.map((service) => (
+                <View key={service.id} style={[styles.servicePill, { backgroundColor: tagBg }]}>
+                  <Text style={[styles.serviceText, { color: Colors.text }]}>
+                    {service.title}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
 
           <View style={[styles.amountCard, { backgroundColor: subtleBg }]}>
             <View style={[styles.amountIconWrap, { backgroundColor: accentColor + '22' }]}>
@@ -275,7 +296,9 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
 
               {isService && post.author.skills && post.author.skills.length > 0 ? (
                 <>
-                  <Text style={[styles.skillsHeading, { color: Colors.icon }]}>Skills</Text>
+                  <Text style={[styles.skillsHeading, { color: Colors.icon }]}>
+                    {post.author.skills.length === 1 ? 'Service' : 'Services'}
+                  </Text>
                   <View style={styles.skillsWrap}>
                     {post.author.skills.map((skill) => (
                       <View key={skill} style={[styles.skillPill, { backgroundColor: tagBg }]}>
@@ -430,18 +453,33 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     marginBottom: Spacing.md,
   },
-  categoryRow: {
+  categorySection: {
+    padding: Spacing.md,
+    borderRadius: 16,
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  categoryTitle: {
+    fontSize: Typography.size.sm,
+    fontWeight: '700',
+  },
+  servicesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.sm,
     marginBottom: Spacing.md,
   },
-  categoryPill: {
+  servicePill: {
     paddingHorizontal: Spacing.sm + 4,
     paddingVertical: Spacing.xs,
     borderRadius: 20,
   },
-  categoryText: {
+  serviceText: {
     fontSize: Typography.size.xs,
     fontWeight: '600',
   },

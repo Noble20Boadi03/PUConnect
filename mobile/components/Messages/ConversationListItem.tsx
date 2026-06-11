@@ -17,6 +17,10 @@ export interface ConversationListItemProps {
   onlineBorderColor: string;
   isLast?: boolean;
   onPress: () => void;
+  selectionMode?: boolean;
+  isSelected?: boolean;
+  onSelectToggle?: () => void;
+  onLongPress?: () => void;
 }
 
 const ConversationListItemComponent: React.FC<ConversationListItemProps> = ({
@@ -30,6 +34,10 @@ const ConversationListItemComponent: React.FC<ConversationListItemProps> = ({
   onlineBorderColor,
   isLast = false,
   onPress,
+  selectionMode = false,
+  isSelected = false,
+  onSelectToggle,
+  onLongPress,
 }) => {
   const {
     participant,
@@ -49,25 +57,36 @@ const ConversationListItemComponent: React.FC<ConversationListItemProps> = ({
     <GuardedPressable
       style={[
         styles.row,
-        unread && { backgroundColor: unreadTint },
+        unread && !isSelected && { backgroundColor: unreadTint },
+        isSelected && { backgroundColor: primaryColor + '12' },
         !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: dividerColor },
       ]}
-      onPress={onPress}
+      onPress={selectionMode && onSelectToggle ? onSelectToggle : onPress}
+      onLongPress={onLongPress}
+      delayLongPress={450}
       activeOpacity={0.72}
       delayPressIn={50}
     >
       <View style={styles.avatarColumn}>
-        <View style={[styles.avatarRing, isOnline && { borderColor: '#22C55E' }]}>
-          <Image
-            source={{ uri: participant.avatarUrl }}
-            style={styles.avatar}
-            contentFit="cover"
-            transition={0}
-          />
-        </View>
-        {isOnline ? (
-          <View style={[styles.onlineDot, { borderColor: onlineBorderColor }]} />
-        ) : null}
+        {isSelected ? (
+          <View style={[styles.avatarRing, styles.selectedRing]}>
+            <Ionicons name="checkmark-circle" size={48} color="#22C55E" style={styles.selectedIcon} />
+          </View>
+        ) : (
+          <>
+            <View style={[styles.avatarRing, isOnline && { borderColor: '#22C55E' }]}>
+              <Image
+                source={{ uri: participant.avatarUrl }}
+                style={styles.avatar}
+                contentFit="cover"
+                transition={0}
+              />
+            </View>
+            {isOnline ? (
+              <View style={[styles.onlineDot, { borderColor: onlineBorderColor }]} />
+            ) : null}
+          </>
+        )}
       </View>
 
       <View style={styles.content}>
@@ -158,6 +177,15 @@ const styles = StyleSheet.create({
     padding: 2,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  selectedRing: {
+    backgroundColor: 'transparent',
+  },
+  selectedIcon: {
+    margin: 0,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    overflow: 'hidden',
   },
   avatar: {
     width: 52,

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -7,15 +7,19 @@ import {
   TouchableOpacity,
   TextInput,
   useColorScheme,
+  BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useNavigation } from 'expo-router';
 
 import { useThemeColor } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { ConversationListItem } from './ConversationListItem';
 import { NotificationBellButton } from '../NotificationBellButton';
+import { MessagesSelectionActionBar } from './MessagesSelectionActionBar';
+import { MessagesSelectionMoreSheet } from './MessagesSelectionMoreSheet';
 import type { ConversationPreview } from '../../types';
 
 type InboxFilter = 'all' | 'unread';
@@ -42,6 +46,53 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
 
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<InboxFilter>('all');
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showMoreSheet, setShowMoreSheet] = useState(false);
+  
+  const isSelectionMode = selectedIds.length > 0;
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    navigation.setOptions({
+      tabBarStyle: isSelectionMode
+        ? { display: 'none' }
+        : undefined, // undefined resets to default from _layout
+    });
+  }, [navigation, isSelectionMode]);
+
+  useEffect(() => {
+    if (!isSelectionMode) return;
+    const onBackPress = () => {
+      setSelectedIds([]);
+      return true;
+    };
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => subscription.remove();
+  }, [isSelectionMode]);
+
+  const toggleSelection = useCallback((id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedIds([]);
+  }, []);
+
+  const allSelected = selectedIds.length === conversations.length && conversations.length > 0;
+  
+  const toggleSelectAll = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (allSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(conversations.map((c) => c.id));
+    }
+  }, [conversations, allSelected]);
 
   const totalUnread = useMemo(
     () =>
@@ -107,6 +158,10 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
         dividerColor={dividerColor}
         onlineBorderColor={listBg}
         isLast={index === section.data.length - 1}
+        selectionMode={isSelectionMode}
+        isSelected={selectedIds.includes(item.id)}
+        onSelectToggle={() => toggleSelection(item.id)}
+        onLongPress={() => toggleSelection(item.id)}
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           onConversationPress(item);
@@ -121,6 +176,9 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
       contextPillBg,
       dividerColor,
       listBg,
+      isSelectionMode,
+      selectedIds,
+      toggleSelection,
       onConversationPress,
     ]
   );
@@ -138,130 +196,174 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
-      <View style={styles.header}>
-        <View style={styles.titleBlock}>
-          <Text style={[styles.title, { color: Colors.text }]}>Messages</Text>
-          {totalUnread > 0 ? (
-            <View style={[styles.unreadSummary, { backgroundColor: Colors.primary + '22' }]}>
-              <Text style={[styles.unreadSummaryText, { color: Colors.primary }]}>
-                {totalUnread} unread
+    <View style={[styles.rootContainer, { backgroundColor: screenBg }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
+        <View style={styles.header}>
+          {isSelectionMode ? (
+            <View style={styles.selectionHeader}>
+              <TouchableOpacity onPress={clearSelection} style={styles.backArrow}>
+                <Ionicons name="arrow-back" size={24} color={Colors.text} />
+              </TouchableOpacity>
+              <Text style={[styles.selectionCount, { color: Colors.text }]}>
+                {selectedIds.length} selected
               </Text>
             </View>
           ) : (
-            <Text style={[styles.subtitle, { color: Colors.icon }]}>
-              {conversations.length} conversations
-            </Text>
+            <>
+              <View style={styles.titleBlock}>
+                <Text style={[styles.title, { color: Colors.text }]}>Messages</Text>
+                {totalUnread > 0 ? (
+                  <View style={[styles.unreadSummary, { backgroundColor: Colors.primary + '22' }]}>
+                    <Text style={[styles.unreadSummaryText, { color: Colors.primary }]}>
+                      {totalUnread} unread
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={[styles.subtitle, { color: Colors.icon }]}>
+                    {conversations.length} conversations
+                  </Text>
+                )}
+              </View>
+              <NotificationBellButton backgroundColor={listBg} iconColor={Colors.text} size={44} />
+            </>
           )}
         </View>
 
-        <NotificationBellButton backgroundColor={listBg} iconColor={Colors.text} size={44} />
-      </View>
+        <View style={styles.toolbar}>
+          <View style={[styles.searchBar, { backgroundColor: listBg }]}>
+            <Ionicons name="search-outline" size={20} color={Colors.icon} />
+            <TextInput
+              style={[styles.searchInput, { color: Colors.text }]}
+              placeholder="Search messages"
+              placeholderTextColor={Colors.icon}
+              value={query}
+              onChangeText={setQuery}
+              returnKeyType="search"
+              clearButtonMode="while-editing"
+            />
+            {query.length > 0 ? (
+              <TouchableOpacity
+                onPress={() => setQuery('')}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="close-circle" size={18} color={Colors.icon} />
+              </TouchableOpacity>
+            ) : null}
+          </View>
 
-      <View style={styles.toolbar}>
-        <View style={[styles.searchBar, { backgroundColor: listBg }]}>
-          <Ionicons name="search-outline" size={20} color={Colors.icon} />
-          <TextInput
-            style={[styles.searchInput, { color: Colors.text }]}
-            placeholder="Search messages"
-            placeholderTextColor={Colors.icon}
-            value={query}
-            onChangeText={setQuery}
-            returnKeyType="search"
-            clearButtonMode="while-editing"
-          />
-          {query.length > 0 ? (
+          <View style={[styles.filterRow, { backgroundColor: subtleBg }]}>
             <TouchableOpacity
-              onPress={() => setQuery('')}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={[styles.filterChip, filter === 'all' && { backgroundColor: listBg }]}
+              onPress={() => setInboxFilter('all')}
+              activeOpacity={0.85}
             >
-              <Ionicons name="close-circle" size={18} color={Colors.icon} />
+              <Text
+                style={[
+                  styles.filterLabel,
+                  { color: filter === 'all' ? Colors.text : Colors.icon },
+                  filter === 'all' && styles.filterLabelActive,
+                ]}
+              >
+                All
+              </Text>
             </TouchableOpacity>
-          ) : null}
+            <TouchableOpacity
+              style={[styles.filterChip, filter === 'unread' && { backgroundColor: listBg }]}
+              onPress={() => setInboxFilter('unread')}
+              activeOpacity={0.85}
+            >
+              <Text
+                style={[
+                  styles.filterLabel,
+                  { color: filter === 'unread' ? Colors.text : Colors.icon },
+                  filter === 'unread' && styles.filterLabelActive,
+                ]}
+              >
+                Unread
+              </Text>
+              {totalUnread > 0 ? (
+                <View style={[styles.filterBadge, { backgroundColor: Colors.primary }]}>
+                  <Text
+                    style={[
+                      styles.filterBadgeText,
+                      { color: isDark ? '#09090B' : '#FFFFFF' },
+                    ]}
+                  >
+                    {totalUnread}
+                  </Text>
+                </View>
+              ) : null}
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <View style={[styles.filterRow, { backgroundColor: subtleBg }]}>
-          <TouchableOpacity
-            style={[styles.filterChip, filter === 'all' && { backgroundColor: listBg }]}
-            onPress={() => setInboxFilter('all')}
-            activeOpacity={0.85}
-          >
-            <Text
-              style={[
-                styles.filterLabel,
-                { color: filter === 'all' ? Colors.text : Colors.icon },
-                filter === 'all' && styles.filterLabelActive,
-              ]}
-            >
-              All
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.filterChip, filter === 'unread' && { backgroundColor: listBg }]}
-            onPress={() => setInboxFilter('unread')}
-            activeOpacity={0.85}
-          >
-            <Text
-              style={[
-                styles.filterLabel,
-                { color: filter === 'unread' ? Colors.text : Colors.icon },
-                filter === 'unread' && styles.filterLabelActive,
-              ]}
-            >
-              Unread
-            </Text>
-            {totalUnread > 0 ? (
-              <View style={[styles.filterBadge, { backgroundColor: Colors.primary }]}>
-                <Text
-                  style={[
-                    styles.filterBadgeText,
-                    { color: isDark ? '#09090B' : '#FFFFFF' },
-                  ]}
-                >
-                  {totalUnread}
+        <View style={[styles.listCard, { backgroundColor: listBg }]}>
+          <SectionList
+            sections={sections}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            renderSectionHeader={renderSectionHeader}
+            stickySectionHeadersEnabled={false}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={
+              [
+                sections.length === 0 ? styles.listEmptyContent : styles.listContent,
+                isSelectionMode && { paddingBottom: Spacing.xxl + 80 } // Add extra padding for selection action bar
+              ]
+            }
+            ListEmptyComponent={
+              <View style={styles.emptyState}>
+                <View style={[styles.emptyIconWrap, { backgroundColor: subtleBg }]}>
+                  <Ionicons name="chatbubbles-outline" size={32} color={Colors.icon} />
+                </View>
+                <Text style={[styles.emptyTitle, { color: Colors.text }]}>
+                  {query || filter === 'unread' ? 'No matches' : 'No messages yet'}
+                </Text>
+                <Text style={[styles.emptyBody, { color: Colors.icon }]}>
+                  {query
+                    ? 'Try a different name, topic, or keyword.'
+                    : filter === 'unread'
+                      ? 'You are all caught up.'
+                      : 'Start a conversation from a service or provider profile.'}
                 </Text>
               </View>
-            ) : null}
-          </TouchableOpacity>
+            }
+          />
         </View>
-      </View>
+      </SafeAreaView>
 
-      <View style={[styles.listCard, { backgroundColor: listBg }]}>
-        <SectionList
-          sections={sections}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          renderSectionHeader={renderSectionHeader}
-          stickySectionHeadersEnabled={false}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={
-            sections.length === 0 ? styles.listEmptyContent : styles.listContent
-          }
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <View style={[styles.emptyIconWrap, { backgroundColor: subtleBg }]}>
-                <Ionicons name="chatbubbles-outline" size={32} color={Colors.icon} />
-              </View>
-              <Text style={[styles.emptyTitle, { color: Colors.text }]}>
-                {query || filter === 'unread' ? 'No matches' : 'No messages yet'}
-              </Text>
-              <Text style={[styles.emptyBody, { color: Colors.icon }]}>
-                {query
-                  ? 'Try a different name, topic, or keyword.'
-                  : filter === 'unread'
-                    ? 'You are all caught up.'
-                    : 'Start a conversation from a service or provider profile.'}
-              </Text>
-            </View>
-          }
-        />
-      </View>
-    </SafeAreaView>
+      <MessagesSelectionActionBar
+        isVisible={isSelectionMode}
+        onPin={() => { clearSelection(); }}
+        onMute={() => { clearSelection(); }}
+        onDelete={() => { clearSelection(); }}
+        onMarkRead={() => { clearSelection(); }}
+        onMore={() => setShowMoreSheet(true)}
+      />
+
+      <MessagesSelectionMoreSheet
+        isVisible={showMoreSheet}
+        onDismiss={() => setShowMoreSheet(false)}
+        onToggleSelectAll={toggleSelectAll}
+        allSelected={allSelected}
+        onViewProfile={
+          selectedIds.length === 1
+            ? () => {
+                // Future profile navigation
+                clearSelection();
+              }
+            : undefined
+        }
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  rootContainer: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
@@ -272,6 +374,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.sm,
     paddingBottom: Spacing.md,
+  },
+  selectionHeader: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    height: 44, // Match approx height of Title + subtitle
+  },
+  backArrow: {
+    padding: Spacing.xs,
+    marginLeft: -Spacing.xs,
+  },
+  selectionCount: {
+    fontSize: Typography.size.lg,
+    fontWeight: '700',
   },
   titleBlock: {
     flex: 1,

@@ -143,7 +143,9 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
                   <Ionicons name="sparkles-outline" size={18} color="#F59E0B" />
                 </View>
                 <View style={styles.skillsContent}>
-                  <Text style={[styles.skillsLabel, { color: Colors.icon }]}>Skills</Text>
+                  <Text style={[styles.skillsLabel, { color: Colors.icon }]}>
+                    {profile.skills.length === 1 ? 'Service' : 'Services'}
+                  </Text>
                   <View style={styles.skillsWrap}>
                     {profile.skills.map((skill) => (
                       <View
