@@ -210,3 +210,28 @@ export const logout = async (req: Request, res: Response) => {
     message: 'Logged out successfully.',
   });
 };
+
+/**
+ * Delete authenticated user's account permanently.
+ * @route DELETE /api/auth/delete-account
+ */
+export const deleteAccount = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+
+    await prisma.user.delete({
+      where: { id: userId },
+    });
+
+    return res.status(200).json({
+      status: 200,
+      message: 'Account deleted successfully.',
+    });
+  } catch (error) {
+    console.error('DeleteAccount Error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error deleting account. Please try again.',
+    });
+  }
+};

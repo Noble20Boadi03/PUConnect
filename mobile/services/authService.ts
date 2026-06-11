@@ -53,6 +53,15 @@ export const authService = {
     const response = await apiClient.get<ApiResponse<User>>('/auth/me');
     return response.data.data;
   },
+
+  /**
+   * Deletes the authenticated user's account permanently.
+   * @route DELETE /api/auth/delete-account
+   */
+  async deleteAccount(): Promise<LogoutResponse> {
+    const response = await apiClient.delete<LogoutResponse>('/auth/delete-account');
+    return response.data;
+  },
 };
 
 export default authService;

@@ -16,6 +16,7 @@ interface AuthState {
   login: (user: User, token: string) => Promise<void>;
   initialize: () => Promise<void>;
   logout: () => Promise<LogoutResult>;
+  deleteAccount: () => Promise<LogoutResult>;
   clearSession: () => Promise<void>;
   isFirstLoginSession: boolean;
   setFirstLoginSession: (value: boolean) => void;
@@ -86,6 +87,28 @@ export const useAuthStore = create<AuthState>((set) => ({
         apiReached: false,
       };
     }
+    await useProfileStore.getState().clearProviderProfile();
+    useProfileStore.setState({ hydrated: false });
+    set({ user: null, token: null, isAuthenticated: false });
+    return result;
+  },
+  deleteAccount: async () => {
+    let result: LogoutResult;
+    let apiReached = false;
+    let message = 'Account deleted successfully.';
+
+    try {
+      const response = await authService.deleteAccount();
+      apiReached = true;
+      message = response.message ?? message;
+      result = { success: true, message, apiReached };
+    } catch {
+      message = 'Could not reach the server. Please try again.';
+      result = { success: false, message, apiReached: false };
+      return result;
+    }
+
+    await SecureStore.deleteItemAsync(TOKEN_KEY).catch(() => {});
     await useProfileStore.getState().clearProviderProfile();
     useProfileStore.setState({ hydrated: false });
     set({ user: null, token: null, isAuthenticated: false });

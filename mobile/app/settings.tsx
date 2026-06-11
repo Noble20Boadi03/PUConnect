@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Constants from 'expo-constants';
 
-import { useAppRouter, useThemeColor, useLogout } from '../hooks';
+import { useAppRouter, useThemeColor, useLogout, useDeleteAccount } from '../hooks';
 import { Spacing, Typography } from '../constants';
 import { Alert, ConfirmDialog } from '../components';
 
@@ -28,14 +28,24 @@ export default function SettingsScreen() {
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
 
   const {
-    isLoading,
-    error,
-    confirmVisible,
+    isLoading: isLoggingOut,
+    error: logoutError,
+    confirmVisible: logoutConfirmVisible,
     openLogoutDialog,
     closeLogoutDialog,
     confirmLogout,
-    clearError,
+    clearError: clearLogoutError,
   } = useLogout();
+
+  const {
+    isLoading: isDeletingAccount,
+    error: deleteAccountError,
+    confirmVisible: deleteAccountConfirmVisible,
+    openDeleteAccountDialog,
+    closeDeleteAccountDialog,
+    confirmDeleteAccount,
+    clearError: clearDeleteAccountError,
+  } = useDeleteAccount();
 
   const appVersion = Constants.expoConfig?.version ?? '1.0.0';
   const platformLabel = Platform.OS === 'ios' ? 'ios' : 'android';
@@ -53,18 +63,36 @@ export default function SettingsScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
+  const error = logoutError || deleteAccountError;
+  const clearError = () => {
+    clearLogoutError();
+    clearDeleteAccountError();
+  };
+  const isLoading = isLoggingOut || isDeletingAccount;
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
       <ConfirmDialog
-        visible={confirmVisible}
+        visible={logoutConfirmVisible}
         title="Log Out"
         message="Are you sure you want to sign out of PuConnect?"
         confirmLabel="Log Out"
         cancelLabel="Cancel"
         variant="destructive"
-        isLoading={isLoading}
+        isLoading={isLoggingOut}
         onConfirm={confirmLogout}
         onCancel={closeLogoutDialog}
+      />
+      <ConfirmDialog
+        visible={deleteAccountConfirmVisible}
+        title="Delete Account"
+        message="Are you sure you want to permanently delete your account? This action cannot be undone."
+        confirmLabel="Delete Account"
+        cancelLabel="Cancel"
+        variant="destructive"
+        isLoading={isDeletingAccount}
+        onConfirm={confirmDeleteAccount}
+        onCancel={closeDeleteAccountDialog}
       />
       <View style={styles.header}>
         <TouchableOpacity
@@ -118,13 +146,32 @@ export default function SettingsScreen() {
           activeOpacity={0.7}
           disabled={isLoading}
         >
-          {isLoading ? (
+          {isLoggingOut ? (
             <ActivityIndicator size="small" color={Colors.error} />
           ) : (
             <Ionicons name="log-out-outline" size={20} color={Colors.error} />
           )}
           <Text style={[styles.logoutText, { color: Colors.error }]}>
-            {isLoading ? 'Signing out...' : 'Log Out'}
+            {isLoggingOut ? 'Signing out...' : 'Log Out'}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.deleteButton,
+            { borderColor: Colors.error + '35', opacity: isLoading ? 0.6 : 1, backgroundColor: Colors.error + '10' },
+          ]}
+          onPress={openDeleteAccountDialog}
+          activeOpacity={0.7}
+          disabled={isLoading}
+        >
+          {isDeletingAccount ? (
+            <ActivityIndicator size="small" color={Colors.error} />
+          ) : (
+            <Ionicons name="trash-outline" size={20} color={Colors.error} />
+          )}
+          <Text style={[styles.deleteText, { color: Colors.error }]}>
+            {isDeletingAccount ? 'Deleting...' : 'Delete Account'}
           </Text>
         </TouchableOpacity>
 
@@ -212,6 +259,20 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xl,
   },
   logoutText: {
+    fontSize: Typography.size.sm,
+    fontWeight: '600',
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.sm + 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: Spacing.md,
+  },
+  deleteText: {
     fontSize: Typography.size.sm,
     fontWeight: '600',
   },
