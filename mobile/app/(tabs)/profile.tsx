@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xxl,
+    paddingBottom: 120,
   },
   sectionHeader: {
     marginTop: Spacing.lg + 4,

@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xxl,
+    paddingBottom: 120,
   },
   featuredItem: {
     paddingHorizontal: Spacing.lg,

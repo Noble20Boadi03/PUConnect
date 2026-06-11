@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: HORIZONTAL_PAD,
-    paddingBottom: Spacing.xxl,
+    paddingBottom: 120,
   },
   list: {
     gap: LIST_GAP,

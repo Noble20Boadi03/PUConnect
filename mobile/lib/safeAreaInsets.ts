@@ -30,13 +30,3 @@ export function getSafeAreaBottom(insetBottom: number): number {
   return Spacing.sm;
 }
 
-/** Bottom padding inside the tab bar (keeps icons above the system navigation bar). */
-export function getTabBarBottomPadding(insetBottom: number): number {
-  return Math.max(getSafeAreaBottom(insetBottom), Spacing.sm);
-}
-
-/** Total tab bar height including safe-area padding. */
-export function getTabBarHeight(insetBottom: number): number {
-  const baseHeight = Platform.OS === 'ios' ? 49 : 56;
-  return baseHeight + getTabBarBottomPadding(insetBottom);
-}

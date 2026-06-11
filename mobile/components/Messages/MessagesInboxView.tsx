@@ -56,9 +56,14 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
   useEffect(() => {
     navigation.setOptions({
       tabBarStyle: isSelectionMode
-        ? { display: 'none' }
-        : undefined, // undefined resets to default from _layout
+        ? { display: 'none' as const }
+        : undefined, // resets to the screenOptions default from _layout
     });
+    // Clean up on unmount: ensure the tab bar reappears if user navigates away
+    // while in selection mode.
+    return () => {
+      navigation.setOptions({ tabBarStyle: undefined });
+    };
   }, [navigation, isSelectionMode]);
 
   useEffect(() => {
@@ -494,11 +499,11 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   listContent: {
-    paddingBottom: Spacing.xxl,
+    paddingBottom: 120,
   },
   listEmptyContent: {
     flexGrow: 1,
-    paddingBottom: Spacing.xxl,
+    paddingBottom: 120,
   },
   emptyState: {
     flex: 1,

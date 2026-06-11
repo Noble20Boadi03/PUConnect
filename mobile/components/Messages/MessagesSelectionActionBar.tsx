@@ -4,8 +4,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useThemeColor } from '../../hooks';
-import { getTabBarHeight } from '../../lib/safeAreaInsets';
+
 import { Spacing } from '../../constants';
+
+const TAB_BAR_BASE_HEIGHT = 56; // Must match (tabs)/_layout.tsx Android base height
 
 export interface MessagesSelectionActionBarProps {
   isVisible: boolean;
@@ -31,10 +33,10 @@ export const MessagesSelectionActionBar: React.FC<MessagesSelectionActionBarProp
 
   const tabBarBg = isDark ? '#111113' : '#FFFFFF';
   const tabBarBorder = isDark ? '#1E1E21' : '#F0F0F2';
-  const tabBarHeight = getTabBarHeight(insets.bottom);
+  const barHeight = TAB_BAR_BASE_HEIGHT + insets.bottom;
 
   const [mounted, setMounted] = useState(isVisible);
-  const translateY = useRef(new Animated.Value(tabBarHeight)).current;
+  const translateY = useRef(new Animated.Value(barHeight)).current;
 
   useEffect(() => {
     if (isVisible) {
@@ -47,13 +49,13 @@ export const MessagesSelectionActionBar: React.FC<MessagesSelectionActionBarProp
       }).start();
     } else {
       Animated.timing(translateY, {
-        toValue: tabBarHeight,
+        toValue: barHeight,
         duration: 150,
         easing: Easing.in(Easing.ease),
         useNativeDriver: true,
       }).start(() => setMounted(false));
     }
-  }, [isVisible, tabBarHeight, translateY]);
+  }, [isVisible, barHeight, translateY]);
 
   if (!mounted) return null;
 
@@ -62,7 +64,7 @@ export const MessagesSelectionActionBar: React.FC<MessagesSelectionActionBarProp
       style={[
         styles.container,
         {
-          height: tabBarHeight,
+          height: barHeight,
           backgroundColor: tabBarBg,
           borderTopColor: tabBarBorder,
           paddingBottom: Math.max(insets.bottom, Spacing.sm),
