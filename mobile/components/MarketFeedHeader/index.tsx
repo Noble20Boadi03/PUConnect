@@ -12,6 +12,8 @@ import { PopularServiceCard } from '../PopularServiceCard';
 import { FeaturedPostCard } from '../FeaturedPostCard';
 import { MarketPromoBanner } from '../MarketPromoBanner';
 import type { PopularService, FeaturedPost } from '../../types';
+import { useAppRouter } from '../../hooks';
+
 
 const H_PAD = Spacing.lg;
 const POPULAR_SEPARATOR = Spacing.sm + 4;
@@ -96,9 +98,24 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
   showDiscoverySections,
   onPostPress,
 }) => {
+  const router = useAppRouter();
+
   const onPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }, []);
+
+  const onSeeAllPopular = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/(tabs)/explore' as any);
+  }, [router]);
+
+  const onPopularServicePress = useCallback(
+    (item: PopularService) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      router.push(`/category/${item.categoryId}/service/${item.id}` as any);
+    },
+    [router]
+  );
 
   const borderColor = useMemo(
     () => (cardBg === '#18181B' ? '#30363D' : 'rgba(0, 0, 0, 0.08)'),
@@ -128,7 +145,7 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
                 title="Popular Services"
                 titleColor={textColor}
                 actionColor={primaryColor}
-                onActionPress={onPress}
+                onActionPress={onSeeAllPopular}
               />
             </View>
             <ScrollView
@@ -144,7 +161,7 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
                     item={item}
                     labelBg={cardBg}
                     labelColor={textColor}
-                    onPress={onPress}
+                    onPress={() => onPopularServicePress(item)}
                   />
                 </View>
               ))}

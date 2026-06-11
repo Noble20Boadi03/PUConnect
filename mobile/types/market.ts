@@ -5,6 +5,7 @@ export type MarketIconName = ComponentProps<typeof Ionicons>['name'];
 
 export interface PopularService {
   id: string;
+  categoryId: string;
   title: string;
   icon: MarketIconName;
   accentColor: string;
