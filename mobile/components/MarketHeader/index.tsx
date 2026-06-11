@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   useColorScheme,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -63,7 +64,14 @@ const MarketHeaderComponent: React.FC<MarketHeaderProps> = ({
     <View style={[styles.headerContainer, { backgroundColor: cardBg }]}>
       <View style={styles.titleRow}>
         <Text style={[styles.appTitle, { color: textColor }]}>PuConnect</Text>
-        <NotificationBellButton backgroundColor={searchBg} iconColor={textColor} />
+        <View style={styles.rightIcons}>
+          <Image 
+            source={require('../../assets/images/logo.png')} 
+            style={styles.logo} 
+            resizeMode="contain" 
+          />
+          <NotificationBellButton backgroundColor={searchBg} iconColor={textColor} />
+        </View>
       </View>
 
       <View style={[styles.searchContainer, { backgroundColor: searchBg }]}>
@@ -149,6 +157,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: Spacing.md,
+  },
+  rightIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  logo: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
   },
   appTitle: {
     fontSize: Typography.size.xxl,
