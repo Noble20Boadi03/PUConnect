@@ -16,7 +16,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const { isAuthenticated, isLoading, initialize, user } = useAuthStore();
+  const { isAuthenticated, isLoading, initialize, user, isFirstLoginSession } = useAuthStore();
   const hydrateProfile = useProfileStore((s) => s.hydrate);
   const segments = useSegments();
   const router = useRouter();
@@ -48,6 +48,7 @@ export default function RootLayout() {
   const inCategoryDetail = String(segments[0]) === 'category';
   const inEditInfo = segments[0] === 'edit-info';
   const inNewPost = segments[0] === 'new-post';
+  const inPhotoSetup = segments[0] === '(auth)' && segments[1] === 'photo-setup';
   const managesOwnChrome = inPostDetail;
 
   // Sync Android navigation bar with theme (post detail manages its own chrome).
@@ -63,8 +64,14 @@ export default function RootLayout() {
     const inAuthGroup = segments[0] === '(auth)';
     const inTabsGroup = segments[0] === '(tabs)';
     const inSettings = segments[0] === 'settings';
-    if (
+
+    if (isAuthenticated && isFirstLoginSession && !inPhotoSetup) {
+      runGuardedNavigation('replace:/(auth)/photo-setup', () => {
+        router.replace('/(auth)/photo-setup' as any);
+      });
+    } else if (
       isAuthenticated &&
+      !isFirstLoginSession &&
       !inTabsGroup &&
       !inSettings &&
       !inEditInfo &&
@@ -100,6 +107,7 @@ export default function RootLayout() {
     }
   }, [
     isAuthenticated,
+    isFirstLoginSession,
     segments,
     isLoading,
     inPostDetail,
@@ -111,6 +119,7 @@ export default function RootLayout() {
     inCategoryDetail,
     inEditInfo,
     inNewPost,
+    inPhotoSetup,
   ]);
 
   return (

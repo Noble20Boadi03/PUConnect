@@ -60,6 +60,11 @@ export default function LoginScreen() {
     
     try {
       const response = await authService.login({ emailOrUsername: emailOrUsername.trim(), password });
+      
+      if (registered === 'true') {
+        useAuthStore.getState().setFirstLoginSession(true);
+      }
+      
       await login(response.user, response.token);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error: any) {

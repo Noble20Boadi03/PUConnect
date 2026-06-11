@@ -17,6 +17,8 @@ interface AuthState {
   initialize: () => Promise<void>;
   logout: () => Promise<LogoutResult>;
   clearSession: () => Promise<void>;
+  isFirstLoginSession: boolean;
+  setFirstLoginSession: (value: boolean) => void;
 }
 
 const TOKEN_KEY = AUTH_TOKEN_KEY;
@@ -29,6 +31,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: null,
   isAuthenticated: false,
   isLoading: true,
+  isFirstLoginSession: false,
+  setFirstLoginSession: (value) => set({ isFirstLoginSession: value }),
   setUser: (user) => set({ user, isAuthenticated: !!user }),
   setToken: async (token) => {
     if (token) {
