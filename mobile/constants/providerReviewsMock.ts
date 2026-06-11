@@ -2,6 +2,28 @@ import type { ProviderReview } from '../types/review';
 
 /** Seed reviews shown on provider profile pages (in addition to user-submitted reviews). */
 export const PROVIDER_REVIEWS_MOCK: Record<string, ProviderReview[]> = {
+  you: [
+    {
+      id: 'rev-you-1',
+      revieweeUsername: 'you',
+      authorDisplayName: 'Jordan P.',
+      authorInitials: 'JP',
+      rating: 5,
+      comment: 'Excellent tutoring session! Concepts finally clicked, and scheduling was super easy.',
+      serviceTitle: 'Campus tutoring — math & physics',
+      createdAt: 'Jun 5, 2026',
+    },
+    {
+      id: 'rev-you-2',
+      revieweeUsername: 'you',
+      authorDisplayName: 'Mia L.',
+      authorInitials: 'ML',
+      rating: 4,
+      comment: 'Resume review was detailed and helpful for the upcoming career fair!',
+      serviceTitle: 'Resume & cover letter review',
+      createdAt: 'May 28, 2026',
+    },
+  ],
   jordanp: [
     {
       id: 'rev-jp-1',
@@ -17,8 +39,8 @@ export const PROVIDER_REVIEWS_MOCK: Record<string, ProviderReview[]> = {
     {
       id: 'rev-jp-2',
       revieweeUsername: 'jordanp',
-      authorDisplayName: 'Sam K.',
-      authorInitials: 'SK',
+      authorDisplayName: 'Sam R.',
+      authorInitials: 'SR',
       rating: 4,
       comment: 'Very patient and prepared. Would book again before finals.',
       serviceTitle: 'STEM Tutoring',

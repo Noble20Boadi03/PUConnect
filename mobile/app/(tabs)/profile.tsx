@@ -18,9 +18,14 @@ import {
   ProfileInfoRow,
   ProfileChangePhotoSheet,
   ProfilePostsSection,
+  ProfileReviewsSummaryRow,
 } from '../../components/Profile';
 import { NotificationBellButton } from '../../components/NotificationBellButton';
 import { useAuthStore, useProfileStore } from '../../store';
+import {
+  selectSummaryForProvider,
+  useProviderReviewsStore,
+} from '../../store/providerReviewsStore';
 import { getAccountTypeLabel, getProfilePostsForUser } from '../../lib';
 
 export default function ProfileScreen() {
@@ -36,6 +41,13 @@ export default function ProfileScreen() {
   const isProvider = useProfileStore((s) => s.isProvider);
   const hydrated = useProfileStore((s) => s.hydrated);
   const hydrate = useProfileStore((s) => s.hydrate);
+
+  const submittedReviews = useProviderReviewsStore((s) => s.submittedReviews);
+
+  const reviewSummary = useMemo(() => {
+    if (!user?.username) return { averageRating: 0, reviewCount: 0 };
+    return selectSummaryForProvider(submittedReviews, user.username);
+  }, [user?.username, submittedReviews]);
 
   const { iconName, handleToggle } = useThemeToggle();
   const { avatarUri, sheetVisible, openSheet, closeSheet, handleSheetSelect } =
@@ -77,6 +89,12 @@ export default function ProfileScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push('/edit-info' as any);
   }, [router]);
+
+  const handleOpenReviews = useCallback(() => {
+    if (!user?.username) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push(`/provider/${user.username}/reviews` as any);
+  }, [user?.username, router]);
 
   if (!hydrated) {
     return (
@@ -158,6 +176,18 @@ export default function ProfileScreen() {
             textColor={Colors.text}
             mutedColor={Colors.icon}
           />
+          {isProvider ? (
+            <>
+              <View style={[styles.divider, { backgroundColor: Colors.border + '60' }]} />
+              <ProfileReviewsSummaryRow
+                averageRating={reviewSummary.averageRating}
+                reviewCount={reviewSummary.reviewCount}
+                textColor={Colors.text}
+                mutedColor={Colors.icon}
+                onPress={handleOpenReviews}
+              />
+            </>
+          ) : null}
         </View>
 
         <ProfilePostsSection

@@ -7,7 +7,7 @@ export interface SectionHeaderProps {
   actionLabel?: string;
   onActionPress?: () => void;
   titleColor: string;
-  actionColor: string;
+  actionColor?: string;
 }
 
 export const SectionHeader: React.FC<SectionHeaderProps> = ({

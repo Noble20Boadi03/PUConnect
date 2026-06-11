@@ -182,8 +182,6 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
               <SectionHeader
                 title="Recently Viewed"
                 titleColor={textColor}
-                actionColor={primaryColor}
-                onActionPress={onPress}
               />
             </View>
             <ScrollView

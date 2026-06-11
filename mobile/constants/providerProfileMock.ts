@@ -16,6 +16,16 @@ function postsForAuthor(displayName: string, extraIds: string[] = []): ProviderP
 }
 
 export const PROVIDER_PROFILES_MOCK: Record<string, ProviderProfile> = {
+  you: {
+    username: 'you',
+    displayName: 'You',
+    handle: '@you',
+    avatarUrl: avatar('you'),
+    bio:
+      'Passionate about helping peers on campus! I offer tutoring, resume reviews, and design help — let’s connect.',
+    skills: ['Math Tutoring', 'Resume Writing', 'Graphic Design'],
+    posts: postsForAuthor('You'),
+  },
   emilyl: {
     username: 'emilyl',
     displayName: 'Emily L.',
