@@ -6,12 +6,13 @@ import {
   POPULAR_SERVICES_MOCK,
   RECENTLY_VIEWED_MOCK,
   MARKET_PROMO,
+  FEATURED_POSTS_MOCK,
 } from '../../constants';
 import { SectionHeader } from '../SectionHeader';
 import { PopularServiceCard } from '../PopularServiceCard';
 import { FeaturedPostCard } from '../FeaturedPostCard';
 import { MarketPromoBanner } from '../MarketPromoBanner';
-import type { PopularService, FeaturedPost } from '../../types';
+import type { PopularService, FeaturedPost, MarketFilter } from '../../types';
 import { useAppRouter } from '../../hooks';
 
 
@@ -28,6 +29,8 @@ export interface MarketFeedHeaderProps {
   /** When false, only the Featured Posts heading is shown (filter active). */
   showDiscoverySections: boolean;
   onPostPress: (post: FeaturedPost) => void;
+  onSeeAllServicesPress?: () => void;
+  onSeeAllRequestsPress?: () => void;
 }
 
 interface PopularRowProps {
@@ -97,6 +100,8 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
   primaryColor,
   showDiscoverySections,
   onPostPress,
+  onSeeAllServicesPress,
+  onSeeAllRequestsPress,
 }) => {
   const router = useAppRouter();
 
@@ -134,6 +139,10 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
     }),
     [cardBg, searchBg, textColor, iconColor, primaryColor, borderColor, onPostPress]
   );
+
+  // Split posts into services and requests
+  const servicePosts = useMemo(() => FEATURED_POSTS_MOCK.filter(p => p.tag === 'Service'), []);
+  const requestPosts = useMemo(() => FEATURED_POSTS_MOCK.filter(p => p.tag === 'Request'), []);
 
   return (
     <View>
@@ -199,17 +208,62 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
               primaryColor={primaryColor}
             />
           </View>
+
+          {/* Services Subsection */}
+          {servicePosts.length > 0 && (
+            <View style={styles.block}>
+              <View style={styles.heading}>
+                <SectionHeader
+                  title="Services"
+                  titleColor={textColor}
+                  actionColor={primaryColor}
+                  onActionPress={onSeeAllServicesPress}
+                />
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                nestedScrollEnabled
+                overScrollMode="never"
+                contentContainerStyle={styles.hListContent}
+              >
+                {servicePosts.map((item, index) => (
+                  <View key={item.id} style={index > 0 ? styles.hItemGapWide : undefined}>
+                    <RecentRow item={item} {...recentCardProps} />
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          {/* Requests Subsection */}
+          {requestPosts.length > 0 && (
+            <View style={styles.block}>
+              <View style={styles.heading}>
+                <SectionHeader
+                  title="Requests"
+                  titleColor={textColor}
+                  actionColor={primaryColor}
+                  onActionPress={onSeeAllRequestsPress}
+                />
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                nestedScrollEnabled
+                overScrollMode="never"
+                contentContainerStyle={styles.hListContent}
+              >
+                {requestPosts.map((item, index) => (
+                  <View key={item.id} style={index > 0 ? styles.hItemGapWide : undefined}>
+                    <RecentRow item={item} {...recentCardProps} />
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          )}
         </>
       ) : null}
-
-      <View style={[styles.paddedBlock, styles.featuredHeading]}>
-        <SectionHeader
-          title="Featured Posts"
-          titleColor={textColor}
-          actionColor={primaryColor}
-          onActionPress={onPress}
-        />
-      </View>
     </View>
   );
 };

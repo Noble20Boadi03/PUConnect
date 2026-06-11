@@ -16,6 +16,96 @@ function postsForAuthor(displayName: string, extraIds: string[] = []): ProviderP
 }
 
 export const PROVIDER_PROFILES_MOCK: Record<string, ProviderProfile> = {
+  emilyl: {
+    username: 'emilyl',
+    displayName: 'Emily L.',
+    handle: '@emilyl',
+    avatarUrl: avatar('emilyl'),
+    bio:
+      'Chemistry senior helping with organic chemistry, biochem, and lab reports! Flexible evening and weekend library or Zoom sessions.',
+    skills: ['Organic Chemistry', 'Biochem', 'Lab Reports'],
+    posts: postsForAuthor('Emily L.'),
+  },
+  zoem: {
+    username: 'zoem',
+    displayName: 'Zoe M.',
+    handle: '@zoem',
+    avatarUrl: avatar('zoem'),
+    bio:
+      'Social media creator specializing in Instagram Reels/TikToks, carousels, and stories for student orgs and small businesses.',
+    skills: ['Instagram', 'TikTok', 'Canva', 'Content Strategy'],
+    posts: postsForAuthor('Zoe M.'),
+  },
+  davidr: {
+    username: 'davidr',
+    displayName: 'David R.',
+    handle: '@davidr',
+    avatarUrl: avatar('davidr'),
+    bio:
+      'Career Services peer advisor with a 95% interview success rate — I polish resumes, LinkedIn profiles, and interview prep.',
+    skills: ['Resume Writing', 'LinkedIn Optimization', 'Interview Prep'],
+    posts: postsForAuthor('David R.'),
+  },
+  jamies: {
+    username: 'jamies',
+    displayName: 'Jamie S.',
+    handle: '@jamies',
+    avatarUrl: avatar('jamies'),
+    bio:
+      'Grocery shopping, delivery, and dorm organizing help! I free up your time so you can focus on classes and exams.',
+    skills: ['Reliability', 'On-time Delivery', 'Organized Shopping'],
+    posts: postsForAuthor('Jamie S.'),
+  },
+  morganh: {
+    username: 'morganh',
+    displayName: 'Morgan H.',
+    handle: '@morganh',
+    avatarUrl: avatar('morganh'),
+    bio:
+      'Full-stack developer building web apps with React, Next.js, Node.js, and Firebase — let’s bring your project idea to life!',
+    skills: ['React', 'Next.js', 'Node.js', 'Firebase'],
+    posts: postsForAuthor('Morgan H.'),
+  },
+  kevinb: {
+    username: 'kevinb',
+    displayName: 'Kevin B.',
+    handle: '@kevinb',
+    avatarUrl: avatar('kevinb'),
+    bio:
+      'Computer science student graduating in June — seeking photographer for graduation photos and friends for a study group!',
+    skills: ['Java', 'Python', 'Problem Solving'],
+    posts: postsForAuthor('Kevin B.'),
+  },
+  lisac: {
+    username: 'lisac',
+    displayName: 'Lisa C.',
+    handle: '@lisac',
+    avatarUrl: avatar('lisac'),
+    bio:
+      'New off-campus resident looking for moving help this weekend! Open to paid help and snack trades.',
+    skills: ['Event Planning', 'Organization', 'Writing'],
+    posts: postsForAuthor('Lisa C.'),
+  },
+  ryant: {
+    username: 'ryant',
+    displayName: 'Ryan T.',
+    handle: '@ryant',
+    avatarUrl: avatar('ryant'),
+    bio:
+      'CS 101 student looking for a study group — let’s learn together and ace our midterm!',
+    skills: ['Python Basics', 'Team Work', 'Note Taking'],
+    posts: postsForAuthor('Ryan T.'),
+  },
+  ninaw: {
+    username: 'ninaw',
+    displayName: 'Nina W.',
+    handle: '@ninaw',
+    avatarUrl: avatar('ninaw'),
+    bio:
+      'Golden retriever mom looking for a responsible student to walk Charlie twice a week near campus quad!',
+    skills: ['Animal Care', 'Photography', 'Writing'],
+    posts: postsForAuthor('Nina W.'),
+  },
   jordanp: {
     username: 'jordanp',
     displayName: 'Jordan P.',

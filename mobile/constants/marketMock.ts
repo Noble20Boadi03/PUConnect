@@ -120,8 +120,83 @@ export const RECENTLY_VIEWED_MOCK: FeaturedPost[] = [
 ];
 
 export const FEATURED_POSTS_MOCK: FeaturedPost[] = [
+  // Services
   {
     id: '1',
+    title: 'Professional essay editing & proofreading',
+    description:
+      'English major offering fast turnaround on research papers, personal statements, and lab reports.',
+    authorName: 'Alex K.',
+    authorInitials: 'AK',
+    tag: 'Service',
+    thumbnail: MARKET_POST_THUMBNAILS.editing,
+    price: { kind: 'fixed', amount: 50 },
+    postedAt: '1d ago',
+  },
+  {
+    id: '3',
+    title: 'Organic Chemistry Tutoring',
+    description:
+      'Chemistry senior here to help you through mechanisms, reactions, and lab reports. Flexible scheduling.',
+    authorName: 'Emily L.',
+    authorInitials: 'EL',
+    tag: 'Service',
+    thumbnail: MARKET_POST_THUMBNAILS.tutoring,
+    price: { kind: 'fixed', amount: 25 },
+    postedAt: '2d ago',
+  },
+  {
+    id: '4',
+    title: 'Social Media Content Creation',
+    description:
+      'Creative student specializing in Instagram and TikTok content for clubs and small businesses on campus.',
+    authorName: 'Zoe M.',
+    authorInitials: 'ZM',
+    tag: 'Service',
+    thumbnail: MARKET_POST_THUMBNAILS.design,
+    price: { kind: 'range', min: 30, max: 75 },
+    postedAt: '4d ago',
+  },
+  {
+    id: '5',
+    title: 'LinkedIn Profile Optimization',
+    description:
+      'Career Services peer advisor with a 95% success rate in helping students land interviews.',
+    authorName: 'David R.',
+    authorInitials: 'DR',
+    tag: 'Service',
+    thumbnail: MARKET_POST_THUMBNAILS.editing,
+    price: { kind: 'fixed', amount: 40 },
+    postedAt: '5d ago',
+  },
+  {
+    id: '6',
+    title: 'Grocery Shopping & Delivery',
+    description:
+      'Free up your time! I’ll shop for you and deliver right to your dorm or apartment on campus.',
+    authorName: 'Jamie S.',
+    authorInitials: 'JS',
+    tag: 'Service',
+    thumbnail: MARKET_POST_THUMBNAILS.laundry,
+    price: { kind: 'fixed', amount: 15 },
+    postedAt: '1w ago',
+  },
+  {
+    id: '7',
+    title: 'Full-Stack Web Development',
+    description:
+      'Build your next project with React, Node.js, and Firebase. Let’s bring your idea to life!',
+    authorName: 'Morgan H.',
+    authorInitials: 'MH',
+    tag: 'Service',
+    thumbnail: MARKET_POST_THUMBNAILS.development,
+    price: { kind: 'range', min: 100, max: 300 },
+    postedAt: '1w ago',
+  },
+
+  // Requests
+  {
+    id: '2',
     title: 'Need a developer for campus marketplace MVP',
     description:
       'Looking for a student developer to help finish our React Native app before demo day. Flexible hours on campus.',
@@ -132,16 +207,48 @@ export const FEATURED_POSTS_MOCK: FeaturedPost[] = [
     postedAt: '4h ago',
   },
   {
-    id: '2',
-    title: 'Professional essay editing & proofreading',
+    id: '8',
+    title: 'Seeking photography for graduation',
     description:
-      'English major offering fast turnaround on research papers, personal statements, and lab reports.',
-    authorName: 'Alex K.',
-    authorInitials: 'AK',
-    tag: 'Service',
-    thumbnail: MARKET_POST_THUMBNAILS.editing,
-    price: { kind: 'fixed', amount: 50 },
+      'Graduating in June and need professional-looking photos for LinkedIn and family. Looking for a student photographer.',
+    authorName: 'Kevin B.',
+    authorInitials: 'KB',
+    tag: 'Request',
+    price: { kind: 'negotiated' },
     postedAt: '1d ago',
+  },
+  {
+    id: '9',
+    title: 'Need help moving into off-campus apartment',
+    description:
+      'Looking for a few helpers to move boxes and furniture this weekend. Willing to pay per person/hour.',
+    authorName: 'Lisa C.',
+    authorInitials: 'LC',
+    tag: 'Request',
+    price: { kind: 'range', min: 15, max: 25 },
+    postedAt: '2d ago',
+  },
+  {
+    id: '10',
+    title: 'Looking for study group for CS 101',
+    description:
+      'Need peers to study with for upcoming midterm! We can meet in the library or online.',
+    authorName: 'Ryan T.',
+    authorInitials: 'RT',
+    tag: 'Request',
+    price: { kind: 'negotiated' },
+    postedAt: '3d ago',
+  },
+  {
+    id: '11',
+    title: 'Need someone to walk my dog on campus',
+    description:
+      'Looking for a responsible student to walk my golden retriever twice a week near the campus quad.',
+    authorName: 'Nina W.',
+    authorInitials: 'NW',
+    tag: 'Request',
+    price: { kind: 'fixed', amount: 20 },
+    postedAt: '4d ago',
   },
 ];
 

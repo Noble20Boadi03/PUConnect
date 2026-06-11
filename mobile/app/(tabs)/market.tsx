@@ -55,6 +55,16 @@ export default function MarketScreen() {
     [router]
   );
 
+  const handleSeeAllServices = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setActiveFilter('services');
+  }, []);
+
+  const handleSeeAllRequests = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setActiveFilter('requests');
+  }, []);
+
   const showDiscoverySections = activeFilter === 'all' && !searchQuery;
 
   const filteredPosts = useMemo(
@@ -113,6 +123,8 @@ export default function MarketScreen() {
       primaryColor: Colors.primary,
       showDiscoverySections,
       onPostPress: handleCardPress,
+      onSeeAllServicesPress: handleSeeAllServices,
+      onSeeAllRequestsPress: handleSeeAllRequests,
     }),
     [
       cardBg,
@@ -122,6 +134,8 @@ export default function MarketScreen() {
       Colors.primary,
       showDiscoverySections,
       handleCardPress,
+      handleSeeAllServices,
+      handleSeeAllRequests,
     ]
   );
 
@@ -153,11 +167,11 @@ export default function MarketScreen() {
         >
           <MarketFeedHeader {...feedHeaderTheme} />
 
-          {filteredPosts.length === 0 ? (
+          {!showDiscoverySections && filteredPosts.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={[styles.emptyText, { color: Colors.icon }]}>{emptyMessage}</Text>
             </View>
-          ) : (
+          ) : !showDiscoverySections ? (
             filteredPosts.map((item) => (
               <View key={item.id} style={styles.featuredItem}>
                 <FeaturedPostCard
@@ -168,7 +182,7 @@ export default function MarketScreen() {
                 />
               </View>
             ))
-          )}
+          ) : null}
         </ScrollView>
       </View>
     </SafeAreaView>
