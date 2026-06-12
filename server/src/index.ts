@@ -2,6 +2,14 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes';
+import exploreRoutes from './routes/exploreRoutes';
+import postRoutes from './routes/postRoutes';
+import profileRoutes from './routes/profileRoutes';
+import providerServiceRoutes from './routes/providerServiceRoutes';
+import serviceRequestRoutes from './routes/serviceRequestRoutes';
+import chatRoutes from './routes/chatRoutes';
+import reviewRoutes from './routes/reviewRoutes';
+import notificationRoutes from './routes/notificationRoutes';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -22,6 +30,14 @@ app.use(express.json());
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/explore', exploreRoutes);
+app.use('/api/posts', postRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/provider-services', providerServiceRoutes);
+app.use('/api/service-requests', serviceRequestRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Base Health Check Route
 app.get('/', (req, res) => {

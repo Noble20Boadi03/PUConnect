@@ -3,10 +3,14 @@
   "version": "1.0.0",
   "description": "Backend API Server for PUConnect with Custom Authentication",
   "main": "dist/index.js",
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "seed": "prisma db seed"
   },
   "dependencies": {
     "@prisma/client": "^5.12.1",
