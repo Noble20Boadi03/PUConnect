@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { StyleSheet, View, Text, useColorScheme } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,17 +6,39 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { ExploreServiceProvidersPanel } from '../../../../components/Explore/ExploreServiceProvidersPanel';
-import { EXPLORE_PROVIDERS_MOCK } from '../../../../constants/exploreMock';
 import {
   buildProviderProfileHref,
-  getExploreCategoryServiceById,
   getSafeAreaBottom,
   getScreenTopPadding,
 } from '../../../../lib';
 import { useAppRouter, useThemeColor } from '../../../../hooks';
 import { GuardedPressable } from '../../../../components/GuardedPressable';
 import { Spacing, Typography } from '../../../../constants';
-import type { ExploreProvider, ExploreServiceTagFilter } from '../../../../types/explore';
+import type { ExploreProvider, ExploreServiceTagFilter, ExploreCategoryService } from '../../../../types/explore';
+import type { DbCategoryService, User } from '../../../../types';
+import { exploreService } from '../../../../services';
+
+// Mapping functions
+const mapDbCategoryServiceToExploreCategoryService = (dbService: DbCategoryService): ExploreCategoryService => ({
+  id: dbService.id,
+  categoryId: dbService.categoryId,
+  title: dbService.title,
+  description: dbService.description,
+  filterTags: dbService.filterTags,
+});
+
+const mapUserToExploreProvider = (user: User): ExploreProvider => ({
+  username: user.username,
+  displayName: user.name,
+  handle: user.username,
+  avatarUrl: user.avatarUrl,
+  categoryId: (user as any).categoryId || 'tutoring',
+  skillTitle: (user as any).skillTitle || 'Service Provider',
+  expertiseTags: (user as any).expertiseTags || [],
+  serviceIds: (user as any).serviceIds || [],
+  averageRating: 4.8,
+  reviewCount: 12,
+});
 
 export default function CategoryServiceProvidersScreen() {
   const { id, serviceId } = useLocalSearchParams<{ id: string; serviceId: string }>();
@@ -31,7 +53,9 @@ export default function CategoryServiceProvidersScreen() {
   const insets = useSafeAreaInsets();
   const topPadding = getScreenTopPadding(insets.top);
 
-  const service = getExploreCategoryServiceById(id, serviceId);
+  const [service, setService] = useState<ExploreCategoryService | undefined>();
+  const [providers, setProviders] = useState<ExploreProvider[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeTagFilter, setActiveTagFilter] = useState<ExploreServiceTagFilter>('all');
 
   const handleBack = useCallback(() => {
@@ -54,6 +78,34 @@ export default function CategoryServiceProvidersScreen() {
     },
     [router]
   );
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id || !serviceId) return;
+      try {
+        const [servicesData, providersData] = await Promise.all([
+          exploreService.getCategoryServices(),
+          exploreService.getExploreProviders(),
+        ]);
+
+        const foundService = servicesData.find((s: DbCategoryService) => s.id === serviceId);
+        if (foundService) {
+          setService(mapDbCategoryServiceToExploreCategoryService(foundService));
+        }
+        setProviders(providersData.map(mapUserToExploreProvider));
+      } catch (error) {
+        console.error('Error fetching service data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id, serviceId]);
+
+  if (loading) {
+    return null;
+  }
 
   if (!service) {
     return (
@@ -103,7 +155,7 @@ export default function CategoryServiceProvidersScreen() {
 
       <ExploreServiceProvidersPanel
         service={service}
-        providers={EXPLORE_PROVIDERS_MOCK}
+        providers={providers}
         activeTagFilter={activeTagFilter}
         onTagFilterChange={setActiveTagFilter}
         cardBg={cardBg}

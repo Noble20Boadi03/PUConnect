@@ -2,7 +2,22 @@
  * Design tokens for the application.
  */
 
-export const Colors = {
+export interface ThemeColors {
+  text: string;
+  background: string;
+  tint: string;
+  icon: string;
+  tabIconDefault: string;
+  tabIconSelected: string;
+  primary: string;
+  secondary: string;
+  error: string;
+  border: string;
+  card: string;
+  shimmer: string;
+}
+
+export const Colors: { light: ThemeColors; dark: ThemeColors } = {
   light: {
     text: '#11181C',
     background: '#FFFFFF',
@@ -14,6 +29,8 @@ export const Colors = {
     secondary: '#5856D6',
     error: '#FF3B30',
     border: '#E1E4E8',
+    card: '#F4F4F5',
+    shimmer: '#E5E7EB',
   },
   dark: {
     text: '#ECEDEE',
@@ -26,6 +43,8 @@ export const Colors = {
     secondary: '#5E5CE6',
     error: '#FF453A',
     border: '#30363D',
+    card: '#1E1E21',
+    shimmer: '#2F2F33',
   },
 };
 
