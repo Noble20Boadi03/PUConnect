@@ -65,6 +65,9 @@ export default function RootLayout() {
     const inTabsGroup = segments[0] === '(tabs)';
     const inSettings = segments[0] === 'settings';
 
+    const inChangePassword = segments[0] === 'change-password';
+    const inResetPassword = segments[0] === 'reset-password';
+
     if (isAuthenticated && isFirstLoginSession && !inPhotoSetup) {
       runGuardedNavigation('replace:/(auth)/photo-setup', () => {
         router.replace('/(auth)/photo-setup' as any);
@@ -82,7 +85,9 @@ export default function RootLayout() {
       !inProviderReviewForm &&
       !inChat &&
       !inNotifications &&
-      !inCategoryDetail
+      !inCategoryDetail &&
+      !inChangePassword &&
+      !inResetPassword
     ) {
       runGuardedNavigation('replace:/(tabs)/market', () => {
         router.replace('/(tabs)/market' as any);
@@ -99,7 +104,9 @@ export default function RootLayout() {
         inProviderReviewForm ||
         inChat ||
         inNotifications ||
-        inCategoryDetail)
+        inCategoryDetail ||
+        inChangePassword ||
+        inResetPassword)
     ) {
       runGuardedNavigation('replace:/(auth)/login', () => {
         router.replace('/(auth)/login' as any);
@@ -130,6 +137,8 @@ export default function RootLayout() {
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="settings" />
+          <Stack.Screen name="change-password" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="reset-password" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="edit-info" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="new-post" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="post/[id]" options={{ animation: 'slide_from_right' }} />

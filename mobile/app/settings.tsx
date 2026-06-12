@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -14,9 +14,10 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Constants from 'expo-constants';
 
-import { useAppRouter, useThemeColor, useLogout, useDeleteAccount } from '../hooks';
+import { useAppRouter, useThemeColor, useLogout, useDeleteAccount, useAuth } from '../hooks';
 import { Spacing, Typography } from '../constants';
 import { Alert, ConfirmDialog } from '../components';
+import { authService } from '../services';
 
 export default function SettingsScreen() {
   const router = useAppRouter();
@@ -26,6 +27,11 @@ export default function SettingsScreen() {
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
+
+  const { user } = useAuth();
+  const [resetConfirmVisible, setResetConfirmVisible] = useState(false);
+  const [isSendingOTP, setIsSendingOTP] = useState(false);
+  const [otpError, setOtpError] = useState<string | null>(null);
 
   const {
     isLoading: isLoggingOut,
@@ -61,15 +67,54 @@ export default function SettingsScreen() {
 
   const handleResetPassword = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push('/change-password' as any);
+    setOtpError(null);
+    setResetConfirmVisible(true);
   };
 
-  const error = logoutError || deleteAccountError;
+  const closeResetConfirm = () => {
+    if (isSendingOTP) return;
+    setResetConfirmVisible(false);
+  };
+
+  const confirmResetPassword = async () => {
+    const emailOrUsername = user?.email || user?.username;
+    if (!emailOrUsername) {
+      setOtpError('No email or username found for the user.');
+      setResetConfirmVisible(false);
+      return;
+    }
+
+    setIsSendingOTP(true);
+    setOtpError(null);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    try {
+      await authService.forgotPassword(emailOrUsername);
+      setIsSendingOTP(false);
+      setResetConfirmVisible(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      
+      // Navigate to reset password page, passing email
+      router.push({
+        pathname: '/reset-password',
+        params: { emailOrUsername }
+      });
+    } catch (err: any) {
+      console.error('Settings Send OTP Error:', err);
+      setIsSendingOTP(false);
+      setResetConfirmVisible(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setOtpError(err.response?.data?.message || 'Failed to send reset OTP. Please try again.');
+    }
+  };
+
+  const error = logoutError || deleteAccountError || otpError;
   const clearError = () => {
     clearLogoutError();
     clearDeleteAccountError();
+    setOtpError(null);
   };
-  const isLoading = isLoggingOut || isDeletingAccount;
+  const isLoading = isLoggingOut || isDeletingAccount || isSendingOTP;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
@@ -94,6 +139,17 @@ export default function SettingsScreen() {
         isLoading={isDeletingAccount}
         onConfirm={confirmDeleteAccount}
         onCancel={closeDeleteAccountDialog}
+      />
+      <ConfirmDialog
+        visible={resetConfirmVisible}
+        title="Reset Password"
+        message={`We will send a 6-digit OTP code to your registered email (${user?.email || ''}) to reset your password. You will stay signed in on this device.`}
+        confirmLabel="Send OTP"
+        cancelLabel="Cancel"
+        variant="default"
+        isLoading={isSendingOTP}
+        onConfirm={confirmResetPassword}
+        onCancel={closeResetConfirm}
       />
       <View style={styles.header}>
         <TouchableOpacity
