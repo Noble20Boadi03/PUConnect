@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { CategoryDetailView } from '../../components/CategoryDetail';
+import { CategoryDetailView, CategoryDetailViewSkeleton } from '../../components/CategoryDetail';
 import {
   buildExploreServiceHref,
   getSafeAreaBottom,
@@ -95,7 +95,7 @@ export default function CategoryDetailScreen() {
   }, [id]);
 
   if (loading) {
-    return null;
+    return <CategoryDetailViewSkeleton />;
   }
 
   if (!category) {

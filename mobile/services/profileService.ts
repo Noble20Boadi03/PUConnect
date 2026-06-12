@@ -21,6 +21,15 @@ export const profileService = {
   },
 
   /**
+   * Fetches a public user profile by username.
+   * @route GET /api/profile/:username
+   */
+  async getPublicProfile(username: string): Promise<any> {
+    const response = await apiClient.get<ApiResponse<any>>(`/profile/${username}`);
+    return response.data.data;
+  },
+
+  /**
    * Persists the user's theme preference on the server.
    * @route PATCH /api/auth/preferences
    */

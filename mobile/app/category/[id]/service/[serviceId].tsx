@@ -6,6 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { ExploreServiceProvidersPanel } from '../../../../components/Explore/ExploreServiceProvidersPanel';
+import { ExploreServiceProvidersPanelSkeleton } from '../../../../components/Explore/ExploreServiceProvidersPanelSkeleton';
+import { Shimmer } from '../../../../components/Shimmer';
 import {
   buildProviderProfileHref,
   getSafeAreaBottom,
@@ -104,7 +106,28 @@ export default function CategoryServiceProvidersScreen() {
   }, [id, serviceId]);
 
   if (loading) {
-    return null;
+    return (
+      <View
+        style={[
+          styles.container,
+          {
+            backgroundColor: screenBg,
+            paddingTop: topPadding,
+            paddingBottom: getSafeAreaBottom(insets.bottom),
+          },
+        ]}
+      >
+        <View style={styles.header}>
+          <View
+            style={[styles.backButton, { backgroundColor: subtleBg }]}
+          />
+          <Shimmer width="60%" height={24} borderRadius={4} />
+          <View style={styles.headerSpacer} />
+        </View>
+
+        <ExploreServiceProvidersPanelSkeleton />
+      </View>
+    );
   }
 
   if (!service) {
