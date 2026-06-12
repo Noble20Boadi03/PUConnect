@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, useColorScheme } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -8,10 +8,16 @@ import * as Haptics from 'expo-haptics';
 
 import { PostDetailView } from '../../components/PostDetail';
 import { Alert, ConfirmDialog } from '../../components';
-import { buildChatHref, buildProviderProfileHref, getPostDetailById } from '../../lib';
+import {
+  buildChatHref,
+  buildProviderProfileHref,
+  getPostDetailById,
+  getExploreCategoryFromPostTags,
+} from '../../lib';
 import { useAppRouter, useConfirmDialog } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
-import { useAuthStore } from '../../store';
+import { useAuthStore, useProfileStore } from '../../store';
+import { EDIT_INFO_SERVICE_OPTIONS } from '../../constants/editInfoServices';
 
 function isTruthyParam(value: string | undefined): boolean {
   return value === '1' || value === 'true';
@@ -35,6 +41,8 @@ export default function PostDetailScreen() {
   const requestService = isTruthyParam(fromRequestService);
   const router = useAppRouter();
   const user = useAuthStore((s) => s.user);
+  const isProvider = useProfileStore((s) => s.isProvider);
+  const providerServiceIds = useProfileStore((s) => s.providerServiceIds);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
@@ -51,6 +59,45 @@ export default function PostDetailScreen() {
 
   const post = typeof id === 'string' ? getPostDetailById(id, user) : undefined;
 
+  // Check if user is eligible to respond to this request
+  const eligibility = useMemo(() => {
+    if (!post || post.tag !== 'Request') {
+      return { canRespond: true, reason: null as string | null };
+    }
+
+    // Check if user is a provider
+    if (!isProvider) {
+      return {
+        canRespond: false,
+        reason: 'Become a provider to respond to requests',
+      };
+    }
+
+    // Check category matching
+    const requestCategory = getExploreCategoryFromPostTags(post.categoryTags);
+    if (!requestCategory) {
+      return { canRespond: false, reason: 'No category found for request' };
+    }
+
+    // Get provider's service categories
+    const providerCategories = new Set(
+      providerServiceIds.map((serviceId) => {
+        const service = EDIT_INFO_SERVICE_OPTIONS.find((s) => s.id === serviceId);
+        return service?.categoryId;
+      }).filter(Boolean) as string[]
+    );
+
+    // Check if provider has any service in the request's category
+    if (!providerCategories.has(requestCategory.id)) {
+      return {
+        canRespond: false,
+        reason: `Your services don't match the "${requestCategory.title}" category`,
+      };
+    }
+
+    return { canRespond: true, reason: null };
+  }, [post, isProvider, providerServiceIds]);
+
   const handleBack = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (router.canGoBack()) {
@@ -62,10 +109,37 @@ export default function PostDetailScreen() {
     }
   }, [router, ownerView]);
 
-  const handleSendMessage = useCallback(() => {
+  const handleSendMessage = useCallback(async () => {
     if (!post) return;
+
+    // Check eligibility for request posts
+    if (post.tag === 'Request' && !eligibility.canRespond) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
+      if (!isProvider) {
+        // Prompt to become a provider
+        const confirmed = await showConfirm({
+          title: 'Become a Provider',
+          message: 'You need to set up your provider profile to respond to service requests on the marketplace.',
+          confirmLabel: 'Set Up Profile',
+          cancelLabel: 'Not Now',
+          icon: 'person-add-outline',
+        });
+
+        if (confirmed) {
+          router.push('/edit-info' as any);
+        }
+      } else {
+        // Show category mismatch error
+        setActionMessage(eligibility.reason);
+        setTimeout(() => setActionMessage(null), 3000);
+      }
+      return;
+    }
+
+    // Proceed with sending message
     router.push(buildChatHref(post.author.username, post.id) as any);
-  }, [post, router]);
+  }, [post, router, eligibility, isProvider, showConfirm]);
 
   const handleReturnToChat = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -186,6 +260,8 @@ export default function PostDetailScreen() {
         onReturnToChat={handleReturnToChat}
         requestService={requestService}
         onRequestService={handleRequestService}
+        actionDisabled={post?.tag === 'Request' && !eligibility.canRespond}
+        disabledReason={post?.tag === 'Request' ? (eligibility.reason ?? undefined) : undefined}
       />
     </View>
   );

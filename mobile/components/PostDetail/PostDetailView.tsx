@@ -45,6 +45,10 @@ export interface PostDetailViewProps {
   /** Service detail opened from chat request flow — primary CTA requests the service. */
   requestService?: boolean;
   onRequestService?: () => void;
+  /** Disables the primary CTA button (e.g. user not eligible to respond) */
+  actionDisabled?: boolean;
+  /** Reason why action is disabled (shown below button if provided) */
+  disabledReason?: string | null;
 }
 
 export const PostDetailView: React.FC<PostDetailViewProps> = ({
@@ -61,6 +65,8 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
   onReturnToChat,
   requestService = false,
   onRequestService,
+  actionDisabled = false,
+  disabledReason,
 }) => {
   const Colors = useThemeColor();
   const insets = useSafeAreaInsets();
@@ -382,12 +388,20 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
             </View>
           </View>
         ) : (
-          <Button
-            title={footerTitle}
-            size="lg"
-            onPress={footerPress}
-            leftIcon={<Ionicons name={footerIcon} size={20} color="#FFFFFF" />}
-          />
+          <View style={styles.actionContainer}>
+            <Button
+              title={footerTitle}
+              size="lg"
+              onPress={footerPress}
+              leftIcon={<Ionicons name={footerIcon} size={20} color="#FFFFFF" />}
+              disabled={actionDisabled}
+            />
+            {disabledReason ? (
+              <Text style={[styles.disabledReason, { color: Colors.icon }]}>
+                {disabledReason}
+              </Text>
+            ) : null}
+          </View>
         )}
       </View>
     </View>
@@ -627,6 +641,14 @@ const styles = StyleSheet.create({
   },
   ownerDeleteLabel: {
     color: '#EF4444',
+  },
+  actionContainer: {
+    gap: Spacing.sm,
+  },
+  disabledReason: {
+    fontSize: Typography.size.xs,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });
 
