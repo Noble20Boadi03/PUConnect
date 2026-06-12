@@ -17,16 +17,19 @@ export interface ApiMessageResponse {
 
 import type { ThemePreference } from './theme';
 
+export type UserRole = 'user' | 'provider' | 'admin';
+
 /**
- * Common User interface.
+ * Common User interface matching Prisma schema.
  */
 export interface User {
   id: string;
   email: string;
   name: string;
-  username?: string;
-  role?: 'user' | 'admin';
-  avatarUrl?: string;
+  username: string;
+  role: UserRole;
+  avatarUrl: string;
+  bio: string;
   themePreference?: ThemePreference;
 }
 
