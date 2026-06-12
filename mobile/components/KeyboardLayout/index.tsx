@@ -10,7 +10,6 @@ import {
   ScrollViewProps,
   View,
 } from 'react-native';
-import { useHeaderHeight } from '@react-navigation/elements';
 
 interface KeyboardLayoutProps extends ScrollViewProps {
   children: React.ReactNode;
@@ -30,14 +29,11 @@ export const KeyboardLayout: React.FC<KeyboardLayoutProps> = ({
   keyboardVerticalOffset,
   ...scrollViewProps
 }) => {
-  const headerHeight = useHeaderHeight();
-  const offset = keyboardVerticalOffset ?? (Platform.OS === 'ios' ? headerHeight : 0);
-
   return (
     <KeyboardAvoidingView
       style={[styles.container, style]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={offset}
+      keyboardVerticalOffset={keyboardVerticalOffset}
     >
       <ScrollView
         style={styles.scrollView}

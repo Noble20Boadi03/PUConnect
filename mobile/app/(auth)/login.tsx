@@ -191,7 +191,10 @@ export default function LoginScreen() {
 
               <TouchableOpacity 
                 style={styles.forgotPasswordContainer}
-                onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push('/(auth)/forgot-password' as any);
+                }}
               >
                 <Text style={[styles.forgotPasswordText, { color: Colors.primary }]}>
                   Forgot Password

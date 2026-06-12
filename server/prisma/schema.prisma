@@ -9,15 +9,17 @@ generator client {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  username  String   @unique
-  password  String
-  role             String   @default("user")
-  avatarUrl        String   @default("")
-  createdAt        DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id                   String   @id @default(uuid())
+  name                 String
+  email                String   @unique
+  username             String   @unique
+  password             String
+  role                 String   @default("user")
+  avatarUrl            String   @default("")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  otpCode              String?
+  otpExpires           DateTime?
+  
   @@map("users")
 }

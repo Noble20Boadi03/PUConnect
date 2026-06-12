@@ -62,6 +62,51 @@ export const authService = {
     const response = await apiClient.delete<LogoutResponse>('/auth/delete-account');
     return response.data;
   },
+
+  /**
+   * Revokes the authenticated user's provider status.
+   * @route PATCH /api/auth/revoke-provider
+   */
+  async revokeProviderStatus(): Promise<LogoutResponse> {
+    const response = await apiClient.patch<LogoutResponse>('/auth/revoke-provider');
+    return response.data;
+  },
+
+  /**
+   * Sends a password reset OTP to user's email.
+   * @route POST /api/auth/forgot-password
+   */
+  async forgotPassword(emailOrUsername: string): Promise<ApiResponse<null>> {
+    const response = await apiClient.post<ApiResponse<null>>('/auth/forgot-password', { emailOrUsername });
+    return response.data;
+  },
+
+  /**
+   * Verifies if a password reset OTP is valid.
+   * @route POST /api/auth/verify-otp
+   */
+  async verifyOTP(emailOrUsername: string, otp: string): Promise<ApiResponse<null>> {
+    const response = await apiClient.post<ApiResponse<null>>('/auth/verify-otp', { emailOrUsername, otp });
+    return response.data;
+  },
+
+  /**
+   * Resets user's password using valid OTP
+   * @route POST /api/auth/reset-password
+   */
+  async resetPassword(emailOrUsername: string, otp: string, newPassword: string, confirmPassword: string): Promise<ApiResponse<null>> {
+    const response = await apiClient.post<ApiResponse<null>>('/auth/reset-password', { emailOrUsername, otp, newPassword, confirmPassword });
+    return response.data;
+  },
+
+  /**
+   * Changes authenticated user's password
+   * @route POST /api/auth/change-password
+   */
+  async changePassword(currentPassword: string, newPassword: string, confirmNewPassword: string): Promise<ApiResponse<null>> {
+    const response = await apiClient.post<ApiResponse<null>>('/auth/change-password', { currentPassword, newPassword, confirmNewPassword });
+    return response.data;
+  },
 };
 
 export default authService;

@@ -61,6 +61,7 @@ export default function SettingsScreen() {
 
   const handleResetPassword = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/change-password' as any);
   };
 
   const error = logoutError || deleteAccountError;

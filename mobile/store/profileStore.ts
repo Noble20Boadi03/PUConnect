@@ -4,6 +4,7 @@ import { PROVIDER_PROFILE_STORAGE_KEY } from '../constants';
 import { EXPLORE_PROVIDERS_MOCK } from '../constants/exploreMock';
 import { getProviderProfileByUsername } from '../lib/getProviderProfileByUsername';
 import { isValidProviderProfile } from '../lib/editInfoForm';
+import { authService } from '../services';
 import type { ProviderProfileDraft, User } from '../types';
 
 interface StoredProviderProfile extends ProviderProfileDraft {
@@ -19,6 +20,7 @@ interface ProfileState {
   hydrate: (user: User | null | undefined) => Promise<void>;
   saveProviderProfile: (draft: ProviderProfileDraft) => Promise<void>;
   clearProviderProfile: () => Promise<void>;
+  revokeProviderProfile: () => Promise<void>;
 }
 
 async function readStored(): Promise<StoredProviderProfile | null> {
@@ -112,6 +114,17 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
   },
 
   clearProviderProfile: async () => {
+    await writeStored(null);
+    set({
+      isProvider: false,
+      providerBio: '',
+      providerServiceIds: [],
+      providerTags: [],
+    });
+  },
+
+  revokeProviderProfile: async () => {
+    await authService.revokeProviderStatus();
     await writeStored(null);
     set({
       isProvider: false,

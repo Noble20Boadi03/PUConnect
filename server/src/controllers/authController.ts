@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import prisma from '../config/db';
+import { emailService } from '../services/emailService';
 
 /**
  * Maps a database user to the public API user shape.
@@ -232,6 +233,285 @@ export const deleteAccount = async (req: Request, res: Response) => {
     return res.status(500).json({
       status: 500,
       message: 'Server error deleting account. Please try again.',
+    });
+  }
+};
+
+/**
+ * Revoke provider status for authenticated user.
+ * @route PATCH /api/auth/revoke-provider
+ */
+export const revokeProviderStatus = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { role: 'user' },
+    });
+
+    return res.status(200).json({
+      status: 200,
+      message: 'Provider status revoked successfully.',
+    });
+  } catch (error) {
+    console.error('RevokeProvider Error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error revoking provider status. Please try again.',
+    });
+  }
+};
+
+/**
+ * Generate a random 6-digit OTP code
+ */
+const generateOTP = (): string => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+/**
+ * Send password reset OTP to user's email.
+ * @route POST /api/auth/forgot-password
+ */
+export const forgotPassword = async (req: Request, res: Response) => {
+  try {
+    const { emailOrUsername } = req.body;
+    if (!emailOrUsername) {
+      return res.status(400).json({
+        status: 400,
+        message: 'Please provide your email or username.',
+      });
+    }
+
+    // Find user by email or username
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: emailOrUsername.toLowerCase() },
+          { username: emailOrUsername.toLowerCase() },
+        ],
+      },
+    });
+
+    // Even if user doesn't exist, return success (security best practice)
+    if (!user) {
+      return res.status(200).json({
+        status: 200,
+        message: 'If an account exists with that email or username, a password reset OTP has been sent.',
+      });
+    }
+
+    // Generate 6-digit OTP (expires in 10 minutes)
+    const otpCode = generateOTP();
+
+    // Save OTP and expiration to user record
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        otpCode: otpCode,
+        otpExpires: new Date(Date.now() + 600000), // 10 minutes from now
+      },
+    });
+
+    // Send OTP email
+    await emailService.sendPasswordResetEmail(user.email, otpCode);
+
+    return res.status(200).json({
+      status: 200,
+      message: 'If an account exists with that email or username, a password reset OTP has been sent.',
+    });
+  } catch (error) {
+    console.error('ForgotPassword Error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error processing password reset request. Please try again.',
+    });
+  }
+};
+
+/**
+ * Verify if a password reset OTP is valid.
+ * @route POST /api/auth/verify-otp
+ */
+export const verifyOTP = async (req: Request, res: Response) => {
+  try {
+    const { emailOrUsername, otp } = req.body;
+    if (!emailOrUsername || !otp) {
+      return res.status(400).json({
+        status: 400,
+        message: 'Please provide email/username and OTP.',
+      });
+    }
+
+    // Find user by email or username and check OTP/expiry
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: emailOrUsername.toLowerCase() },
+          { username: emailOrUsername.toLowerCase() },
+        ],
+        otpCode: otp,
+        otpExpires: { gt: new Date() }, // OTP not expired
+      },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        status: 400,
+        message: 'Invalid or expired OTP.',
+      });
+    }
+
+    return res.status(200).json({
+      status: 200,
+      message: 'OTP is valid.',
+    });
+  } catch (error) {
+    console.error('VerifyOTP Error:', error);
+    return res.status(400).json({
+      status: 400,
+      message: 'Invalid or expired OTP.',
+    });
+  }
+};
+
+/**
+ * Reset user password using valid OTP.
+ * @route POST /api/auth/reset-password
+ */
+export const resetPassword = async (req: Request, res: Response) => {
+  try {
+    const { emailOrUsername, otp, newPassword, confirmPassword } = req.body;
+    
+    if (!emailOrUsername || !otp || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        status: 400,
+        message: 'Please fill in all fields.',
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        status: 400,
+        message: 'Passwords do not match.',
+      });
+    }
+    
+    // Find user
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: emailOrUsername.toLowerCase() },
+          { username: emailOrUsername.toLowerCase() },
+        ],
+        otpCode: otp,
+        otpExpires: { gt: new Date() },
+      },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        status: 400,
+        message: 'Invalid or expired OTP.',
+      });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update password and clear OTP
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        otpCode: null,
+        otpExpires: null,
+      },
+    });
+
+    return res.status(200).json({
+      status: 200,
+      message: 'Password reset successfully. You can now log in with your new password.',
+    });
+  } catch (error) {
+    console.error('ResetPassword Error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error resetting password. Please try again.',
+    });
+  }
+};
+
+/**
+ * Change authenticated user's password
+ * @route POST /api/auth/change-password
+ */
+export const changePassword = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const { currentPassword, newPassword, confirmNewPassword } = req.body;
+
+    // Validate request body
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      return res.status(400).json({
+        status: 400,
+        message: 'Please fill in all fields.',
+      });
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      return res.status(400).json({
+        status: 400,
+        message: 'New passwords do not match.',
+      });
+    }
+
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status: 404,
+        message: 'User not found.',
+      });
+    }
+
+    // Verify current password
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        status: 401,
+        message: 'Current password is incorrect.',
+      });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update user password and clear any reset tokens
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        password: hashedPassword,
+        otpCode: null,
+        otpExpires: null,
+      },
+    });
+
+    return res.status(200).json({
+      status: 200,
+      message: 'Password changed successfully!',
+    });
+  } catch (error) {
+    console.error('ChangePassword Error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error while changing password. Please try again.',
     });
   }
 };

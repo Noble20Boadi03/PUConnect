@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, View, Text, useColorScheme } from 'react-native';
+import { StyleSheet, View, Text, useColorScheme, TouchableOpacity, ActivityIndicator } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { Ionicons } from '@expo/vector-icons';
 import { KeyboardLayout } from '../KeyboardLayout';
 import { Button } from '../Button';
 import { Alert } from '../Alert';
+import { ConfirmDialog } from '../ConfirmDialog';
 import { Spacing, Typography } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useAuthStore, useProfileStore } from '../../store';
@@ -36,6 +38,7 @@ export const EditInfoView: React.FC<EditInfoViewProps> = ({ onSaved }) => {
   const savedTags = useProfileStore((s) => s.providerTags);
   const saveProviderProfile = useProfileStore((s) => s.saveProviderProfile);
   const clearProviderProfile = useProfileStore((s) => s.clearProviderProfile);
+  const revokeProviderProfile = useProfileStore((s) => s.revokeProviderProfile);
 
   const { firstName: initialFirst, lastName: initialLast } = splitDisplayName(user?.name);
 
@@ -55,6 +58,8 @@ export const EditInfoView: React.FC<EditInfoViewProps> = ({ onSaved }) => {
   const [bioError, setBioError] = useState<string | null>(null);
   const [servicesError, setServicesError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [revokeConfirmVisible, setRevokeConfirmVisible] = useState(false);
+  const [isRevoking, setIsRevoking] = useState(false);
 
   const draftHasProviderData = hasProviderSectionData(bio, selectedServiceIds, selectedTags);
   const providerLocked = isProvider || draftHasProviderData;
@@ -159,8 +164,47 @@ export const EditInfoView: React.FC<EditInfoViewProps> = ({ onSaved }) => {
     onSaved,
   ]);
 
+  const handleOpenRevokeDialog = useCallback(() => {
+    if (isSaving || isRevoking) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setRevokeConfirmVisible(true);
+  }, [isSaving, isRevoking]);
+
+  const handleCloseRevokeDialog = useCallback(() => {
+    if (isRevoking) return;
+    setRevokeConfirmVisible(false);
+  }, [isRevoking]);
+
+  const handleConfirmRevoke = useCallback(async () => {
+    setIsRevoking(true);
+
+    try {
+      await revokeProviderProfile();
+      setRevokeConfirmVisible(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setSaveMessage('Provider status revoked successfully.');
+    } catch {
+      setRevokeConfirmVisible(false);
+      setSaveMessage('Something went wrong while revoking provider status. Please try again.');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setIsRevoking(false);
+    }
+  }, [revokeProviderProfile]);
+
   return (
     <KeyboardLayout contentContainerStyle={styles.scrollContent}>
+      <ConfirmDialog
+        visible={revokeConfirmVisible}
+        title="Revoke Provider Status"
+        message="Are you sure you want to revoke your provider status? This will remove your provider profile and services from public view."
+        confirmLabel="Revoke"
+        cancelLabel="Cancel"
+        variant="destructive"
+        isLoading={isRevoking}
+        onConfirm={handleConfirmRevoke}
+        onCancel={handleCloseRevokeDialog}
+      />
       <Text style={[styles.screenSubtitle, { color: Colors.icon }]}>
         Edit your account details.
       </Text>
@@ -257,12 +301,33 @@ export const EditInfoView: React.FC<EditInfoViewProps> = ({ onSaved }) => {
 
       {saveMessage ? (
         <Alert
-          type={saveMessage.includes('complete') || saveMessage.includes('required') || saveMessage.includes('Select') ? 'error' : 'success'}
+          type={saveMessage.includes('complete') || saveMessage.includes('required') || saveMessage.includes('Select') || saveMessage.includes('wrong') ? 'error' : 'success'}
           message={saveMessage}
           dismissible
           onDismiss={() => setSaveMessage(null)}
         />
       ) : null}
+
+      {isProvider && (
+        <TouchableOpacity
+          style={[
+            styles.revokeButton,
+            { borderColor: Colors.error + '35', opacity: isSaving || isRevoking ? 0.7 : 1 },
+          ]}
+          onPress={handleOpenRevokeDialog}
+          activeOpacity={0.7}
+          disabled={isSaving || isRevoking}
+        >
+          {isRevoking ? (
+            <ActivityIndicator size="small" color={Colors.error} />
+          ) : (
+            <Ionicons name="trash-outline" size={20} color={Colors.error} />
+          )}
+          <Text style={[styles.revokeText, { color: Colors.error }]}>
+            {isRevoking ? 'Revoking...' : 'Revoke Provider Status'}
+          </Text>
+        </TouchableOpacity>
+      )}
 
       <Button
         title="Save Changes"
@@ -270,7 +335,7 @@ export const EditInfoView: React.FC<EditInfoViewProps> = ({ onSaved }) => {
         size="md"
         onPress={handleSave}
         isLoading={isSaving}
-        disabled={isSaving}
+        disabled={isSaving || isRevoking}
         style={styles.saveButton}
       />
     </KeyboardLayout>
@@ -305,6 +370,20 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xl,
     width: '100%',
     borderRadius: 12,
+  },
+  revokeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.sm + 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: Spacing.md,
+  },
+  revokeText: {
+    fontSize: Typography.size.sm,
+    fontWeight: '600',
   },
 });
 
