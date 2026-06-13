@@ -9,6 +9,8 @@ import {
   useColorScheme,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +18,7 @@ import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useProviderReviewsStore } from '../../store/providerReviewsStore';
+import { reviewService } from '../../services';
 import type { CompletedDeal } from '../../types/review';
 
 export interface SubmitProviderReviewViewProps {
@@ -43,32 +46,52 @@ export const SubmitProviderReviewView: React.FC<SubmitProviderReviewViewProps> =
   const submitReview = useProviderReviewsStore((s) => s.submitReview);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSelectRating = useCallback((value: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setRating(value);
   }, []);
 
-  const handleSubmit = useCallback(() => {
-    if (rating < 1 || !comment.trim()) return;
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    submitReview({
-      revieweeUsername,
-      authorDisplayName: 'You',
-      authorInitials: 'YO',
-      rating,
-      comment: comment.trim(),
-      serviceTitle: deal.postTitle,
-      createdAt: new Date().toLocaleDateString([], {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }),
-    });
-    onSubmitted();
-  }, [rating, comment, submitReview, revieweeUsername, deal.postTitle, onSubmitted]);
+  const handleSubmit = useCallback(async () => {
+    if (rating < 1 || !comment.trim() || isSubmitting) return;
+    setIsSubmitting(true);
+    
+    try {
+      await reviewService.createReview({
+        revieweeUsername,
+        rating,
+        comment: comment.trim(),
+        serviceTitle: deal.postTitle,
+      });
+      
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      
+      submitReview({
+        revieweeUsername,
+        authorDisplayName: 'You',
+        authorInitials: 'YO',
+        rating,
+        comment: comment.trim(),
+        serviceTitle: deal.postTitle,
+        createdAt: new Date().toLocaleDateString([], {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        }),
+      });
+      
+      onSubmitted();
+    } catch (err) {
+      console.error('Error submitting review:', err);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Error', 'Failed to submit your review. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [rating, comment, isSubmitting, submitReview, revieweeUsername, deal.postTitle, onSubmitted]);
 
-  const canSubmit = rating >= 1 && comment.trim().length > 0;
+  const canSubmit = rating >= 1 && comment.trim().length > 0 && !isSubmitting;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>

@@ -25,6 +25,8 @@ export interface ProviderReviewsViewProps {
   displayName: string;
   onBack: () => void;
   onLeaveReview?: () => void;
+  reviews?: any[]; // We'll type this properly
+  summary?: any; // We'll type this properly
 }
 
 function ReviewCard({
@@ -75,6 +77,8 @@ export const ProviderReviewsView: React.FC<ProviderReviewsViewProps> = ({
   displayName,
   onBack,
   onLeaveReview,
+  reviews: propReviews,
+  summary: propSummary,
 }) => {
   const Colors = useThemeColor();
   const isDark = useColorScheme() === 'dark';
@@ -86,14 +90,16 @@ export const ProviderReviewsView: React.FC<ProviderReviewsViewProps> = ({
   const submittedReviews = useProviderReviewsStore((s) => s.submittedReviews);
   const completedDeals = useProviderReviewsStore((s) => s.completedDeals);
 
-  const reviews = useMemo(
-    () => selectReviewsForProvider(submittedReviews, revieweeUsername),
-    [submittedReviews, revieweeUsername]
-  );
-  const summary = useMemo(
-    () => selectSummaryForProvider(submittedReviews, revieweeUsername),
-    [submittedReviews, revieweeUsername]
-  );
+  const reviews = useMemo(() => {
+    if (propReviews) return propReviews;
+    return selectReviewsForProvider(submittedReviews, revieweeUsername);
+  }, [propReviews, submittedReviews, revieweeUsername]);
+  
+  const summary = useMemo(() => {
+    if (propSummary) return propSummary;
+    return selectSummaryForProvider(submittedReviews, revieweeUsername);
+  }, [propSummary, submittedReviews, revieweeUsername]);
+
   const showLeaveReview = useMemo(
     () => selectCanReviewProvider(completedDeals, submittedReviews, revieweeUsername) && onLeaveReview,
     [completedDeals, submittedReviews, revieweeUsername, onLeaveReview]

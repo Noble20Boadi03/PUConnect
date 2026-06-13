@@ -142,6 +142,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     });
 
     // Update auth store with new user data
+    const { useAuthStore } = await import('./authStore');
     useAuthStore.getState().setUser(updatedUser);
 
     // Update local state and storage
@@ -160,6 +161,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     
     // Update auth store to refresh user data
     const updatedUser = await authService.getMe();
+    const { useAuthStore } = await import('./authStore');
     useAuthStore.getState().setUser(updatedUser);
 
     // Clear local storage and state
@@ -177,6 +179,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     
     // Update auth store to refresh user data
     const updatedUser = await authService.getMe();
+    const { useAuthStore } = await import('./authStore');
     useAuthStore.getState().setUser(updatedUser);
     
     await writeStored(null);

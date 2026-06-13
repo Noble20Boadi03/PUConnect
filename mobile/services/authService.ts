@@ -73,13 +73,14 @@ export const authService = {
   },
 
   /**
-   * Updates the authenticated user's profile (name, username, email).
+   * Updates the authenticated user's profile (name, username, email, avatarUrl).
    * @route PATCH /api/auth/update-profile
    */
   async updateProfile(data: {
     name?: string;
     username?: string;
     email?: string;
+    avatarUrl?: string;
   }): Promise<User> {
     const response = await apiClient.patch<ApiResponse<User>>('/auth/update-profile', data);
     return response.data.data;

@@ -4,3 +4,5 @@ export * from './exploreService';
 export * from './postService';
 export * from './settingsService';
 export * from './profileService';
+export * from './reviewService';
+export * from './uploadService';

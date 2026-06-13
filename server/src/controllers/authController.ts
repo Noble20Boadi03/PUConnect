@@ -452,13 +452,13 @@ export const resetPassword = async (req: Request, res: Response) => {
 };
 
 /**
- * Update authenticated user's profile (name, username, email).
+ * Update authenticated user's profile (name, username, email, avatarUrl).
  * @route PATCH /api/auth/update-profile
  */
 export const updateProfile = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
-    const { name, username, email } = req.body;
+    const { name, username, email, avatarUrl } = req.body;
 
     // Prepare update data
     const updateData: any = {};
@@ -495,6 +495,7 @@ export const updateProfile = async (req: Request, res: Response) => {
       }
       updateData.email = email.toLowerCase();
     }
+    if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl;
 
     // Update user
     const updatedUser = await prisma.user.update({

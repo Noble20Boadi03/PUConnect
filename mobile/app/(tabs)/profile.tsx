@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -18,20 +18,18 @@ import {
   ProfileHeroSection,
   ProfileInfoRow,
   ProfileChangePhotoSheet,
+  ProfilePhotoPreviewModal,
   ProfilePostsSection,
   ProfileReviewsSummaryRow,
   ProfileViewSkeleton,
 } from '../../components/Profile';
 import { NotificationBellButton } from '../../components/NotificationBellButton';
 import { useAuthStore, useProfileStore } from '../../store';
-import {
-  selectSummaryForProvider,
-  useProviderReviewsStore,
-} from '../../store/providerReviewsStore';
 import { getAccountTypeLabel } from '../../lib';
 import { mapDbPostToFeaturedPost } from '../../lib/mapDbPost';
 import { profileService } from '../../services';
 import type { FeaturedPost } from '../../types';
+import type { DbReview } from '../../services/reviewService';
 
 export default function ProfileScreen() {
   const router = useAppRouter();
@@ -48,19 +46,31 @@ export default function ProfileScreen() {
   const hydrate = useProfileStore((s) => s.hydrate);
 
   const [posts, setPosts] = useState<FeaturedPost[]>([]);
+  const [receivedReviews, setReceivedReviews] = useState<DbReview[]>([]);
   const [postsLoading, setPostsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const submittedReviews = useProviderReviewsStore((s) => s.submittedReviews);
-
-  const reviewSummary = useMemo(() => {
-    if (!user?.username) return { averageRating: 0, reviewCount: 0 };
-    return selectSummaryForProvider(submittedReviews, user.username);
-  }, [user?.username, submittedReviews]);
+  // Compute review summary from receivedReviews
+  const reviewSummary = receivedReviews.length === 0 
+    ? { averageRating: 0, reviewCount: 0 }
+    : {
+        averageRating: Math.round((receivedReviews.reduce((sum, r) => sum + r.rating, 0) / receivedReviews.length) * 10) / 10,
+        reviewCount: receivedReviews.length
+      };
 
   const { iconName, handleToggle } = useThemeToggle();
-  const { avatarUri, sheetVisible, openSheet, closeSheet, handleSheetSelect } =
-    useChangeProfilePhoto(user?.avatarUrl);
+  const {
+    avatarUri,
+    sheetVisible,
+    previewVisible,
+    previewUri,
+    openSheet,
+    closeSheet,
+    closePreview,
+    handleSheetSelect,
+    handleConfirmPhoto,
+    isLoading: photoUploading,
+  } = useChangeProfilePhoto(user?.avatarUrl);
 
   useEffect(() => {
     void hydrate(user);
@@ -69,6 +79,7 @@ export default function ProfileScreen() {
   const fetchPosts = useCallback(async (isRefresh = false) => {
     if (!user?.username) {
       setPosts([]);
+      setReceivedReviews([]);
       setPostsLoading(false);
       return;
     }
@@ -82,10 +93,13 @@ export default function ProfileScreen() {
     try {
       const profile = await profileService.getPublicProfile(user.username);
       const apiPosts = Array.isArray(profile?.posts) ? profile.posts : [];
+      const reviews = Array.isArray(profile?.receivedReviews) ? profile.receivedReviews : [];
       setPosts(apiPosts.map(mapDbPostToFeaturedPost));
+      setReceivedReviews(reviews);
     } catch (error) {
-      console.error('Error fetching profile posts:', error);
+      console.error('Error fetching profile:', error);
       setPosts([]);
+      setReceivedReviews([]);
     } finally {
       setPostsLoading(false);
       setRefreshing(false);
@@ -251,6 +265,15 @@ export default function ProfileScreen() {
         onClose={closeSheet}
         onSelect={handleSheetSelect}
       />
+      {previewUri && (
+        <ProfilePhotoPreviewModal
+          visible={previewVisible}
+          imageUri={previewUri}
+          isLoading={photoUploading}
+          onConfirm={handleConfirmPhoto}
+          onCancel={closePreview}
+        />
+      )}
     </SafeAreaView>
   );
 }

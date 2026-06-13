@@ -71,6 +71,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
   clearSession: async () => {
     await SecureStore.deleteItemAsync(TOKEN_KEY);
+    const { useProfileStore } = await import('./profileStore');
     await useProfileStore.getState().clearProviderProfile();
     useProfileStore.setState({ hydrated: false });
     set({ user: null, token: null, isAuthenticated: false });
@@ -87,6 +88,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         apiReached: false,
       };
     }
+    const { useProfileStore } = await import('./profileStore');
     await useProfileStore.getState().clearProviderProfile();
     useProfileStore.setState({ hydrated: false });
     set({ user: null, token: null, isAuthenticated: false });
@@ -109,6 +111,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
 
     await SecureStore.deleteItemAsync(TOKEN_KEY).catch(() => {});
+    const { useProfileStore } = await import('./profileStore');
     await useProfileStore.getState().clearProviderProfile();
     useProfileStore.setState({ hydrated: false });
     set({ user: null, token: null, isAuthenticated: false });

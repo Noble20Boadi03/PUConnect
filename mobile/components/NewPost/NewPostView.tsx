@@ -16,7 +16,7 @@ import {
   validateNewPostForm,
 } from '../../lib/newPostForm';
 import { parsePostPrice } from '../../lib/mapDbPost';
-import { postService } from '../../services';
+import { postService, uploadService } from '../../services';
 import { NewPostTypePicker } from './NewPostTypePicker';
 import { NewPostPriceSection } from './NewPostPriceSection';
 import { NewPostImageUploader } from './NewPostImageUploader';
@@ -174,16 +174,28 @@ export const NewPostView: React.FC<NewPostViewProps> = ({ onPublished }) => {
     setPublishMessage(null);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    const payload = {
-      title: title.trim(),
-      description: description.trim(),
-      tag: postType,
-      price: buildPostPriceFromForm({ priceKind, fixedAmount, rangeMin, rangeMax }),
-      images: imageUris,
-      hashtags: selectedTags,
-    };
-
     try {
+      // Upload images first (only local URIs, skip already uploaded ones)
+      const uploadedImages = await Promise.all(
+        imageUris.map(async (uri) => {
+          // Check if it's already a remote URL (starts with http/https)
+          if (uri.startsWith('http://') || uri.startsWith('https://')) {
+            return uri;
+          }
+          // If it's a local URI, upload it
+          return uploadService.uploadImage(uri);
+        })
+      );
+
+      const payload = {
+        title: title.trim(),
+        description: description.trim(),
+        tag: postType,
+        price: buildPostPriceFromForm({ priceKind, fixedAmount, rangeMin, rangeMax }),
+        images: uploadedImages,
+        hashtags: selectedTags,
+      };
+
       if (isEditing && typeof params.editId === 'string') {
         await postService.updatePost(params.editId, payload);
         setPublishMessage('Your post was updated.');

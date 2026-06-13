@@ -1,12 +1,12 @@
-import React, { useCallback, useMemo } from 'react';
-import { StyleSheet, Text, TouchableOpacity, useColorScheme } from 'react-native';
+import React, { useCallback, useMemo, useEffect, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, useColorScheme, ActivityIndicator, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { SubmitProviderReviewView } from '../../../components/ProviderReviews';
-import { getProviderProfileByUsername } from '../../../lib';
+import { mapApiProfileToProviderProfile } from '../../../lib';
 import {
   selectCanReviewProvider,
   selectReviewableDeal,
@@ -14,6 +14,8 @@ import {
 } from '../../../store/providerReviewsStore';
 import { useAppRouter } from '../../../hooks';
 import { Spacing, Typography } from '../../../constants';
+import { profileService } from '../../../services';
+import type { ProviderProfile } from '../../../types';
 
 export default function SubmitProviderReviewScreen() {
   const { username, postId } = useLocalSearchParams<{ username: string; postId?: string }>();
@@ -23,11 +25,32 @@ export default function SubmitProviderReviewScreen() {
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
   const textColor = isDark ? '#ECEDEE' : '#11181C';
 
-  const profile =
-    typeof username === 'string' ? getProviderProfileByUsername(username) : undefined;
+  const [profile, setProfile] = useState<ProviderProfile | undefined>();
+  const [loading, setLoading] = useState(true);
 
   const completedDeals = useProviderReviewsStore((s) => s.completedDeals);
   const submittedReviews = useProviderReviewsStore((s) => s.submittedReviews);
+
+  useEffect(() => {
+    async function fetchProfile() {
+      if (typeof username !== 'string') {
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        const data = await profileService.getPublicProfile(username);
+        setProfile(mapApiProfileToProviderProfile(data));
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+        setProfile(undefined);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProfile();
+  }, [username]);
 
   const deal = useMemo(() => {
     if (!profile) return undefined;
@@ -63,6 +86,14 @@ export default function SubmitProviderReviewScreen() {
     if (!profile) return;
     router.replace(`/provider/${profile.username}/reviews` as any);
   }, [profile, router]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.loading, { backgroundColor: screenBg }]} edges={['top']}>
+        <ActivityIndicator size="large" color={isDark ? '#FFFFFF' : '#000000'} />
+      </SafeAreaView>
+    );
+  }
 
   if (!profile) {
     return (
@@ -111,6 +142,11 @@ export default function SubmitProviderReviewScreen() {
 }
 
 const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   notFound: {
     flex: 1,
     justifyContent: 'center',
