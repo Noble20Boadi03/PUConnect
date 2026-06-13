@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, logout, getMe, deleteAccount, revokeProviderStatus, forgotPassword, verifyOTP, resetPassword, changePassword } from '../controllers/authController';
+import { register, login, logout, getMe, deleteAccount, revokeProviderStatus, forgotPassword, verifyOTP, resetPassword, changePassword, updateProfile, updateProviderProfile } from '../controllers/authController';
 import { protect } from '../middlewares/authMiddleware';
 
 const router = Router();
@@ -17,5 +17,7 @@ router.get('/me', protect, getMe);
 router.delete('/delete-account', protect, deleteAccount);
 router.patch('/revoke-provider', protect, revokeProviderStatus);
 router.post('/change-password', protect, changePassword);
+router.patch('/update-profile', protect, updateProfile);
+router.patch('/update-provider-profile', protect, updateProviderProfile);
 
 export default router;

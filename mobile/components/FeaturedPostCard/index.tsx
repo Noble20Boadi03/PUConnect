@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Spacing, Typography, CARD_SHADOW, CARD_BORDER } from '../../constants';
 import { formatPostPrice } from '../../lib';
 import type { FeaturedPost } from '../../types';
+import { FeaturedPostCardSkeleton } from './FeaturedPostCardSkeleton';
 
 export type FeaturedPostCardLayout = 'stack' | 'carousel';
 
@@ -254,5 +255,5 @@ const styles = StyleSheet.create({
 });
 
 export const FeaturedPostCard = memo(FeaturedPostCardComponent, areFeaturedPostCardPropsEqual);
-
+export { FeaturedPostCardSkeleton };
 export default FeaturedPostCard;

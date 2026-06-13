@@ -16,6 +16,7 @@ export interface ApiMessageResponse {
 }
 
 import type { ThemePreference } from './theme';
+import type { ExploreCategoryId } from './explore';
 
 export type UserRole = 'user' | 'provider' | 'admin';
 
@@ -30,6 +31,10 @@ export interface User {
   role: UserRole;
   avatarUrl: string;
   bio: string;
+  categoryId?: ExploreCategoryId;
+  skillTitle?: string;
+  expertiseTags: string[];
+  serviceIds: string[];
   themePreference?: ThemePreference;
 }
 

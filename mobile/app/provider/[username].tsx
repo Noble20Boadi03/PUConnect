@@ -4,14 +4,14 @@ import {
   Text,
   TouchableOpacity,
   useColorScheme,
-  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { ProviderProfileView } from '../../components/ProviderProfile';
+import { ProviderProfileView, ProviderProfileViewSkeleton } from '../../components/ProviderProfile';
 import { buildChatHref, mapApiProfileToProviderProfile } from '../../lib';
 import { useAppRouter } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
@@ -28,38 +28,39 @@ export default function ProviderProfileScreen() {
 
   const [profile, setProfile] = useState<ProviderProfile | undefined>();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
+  const fetchData = useCallback(async (isRefresh = false) => {
     if (typeof username !== 'string') {
       setLoading(false);
       return;
     }
 
-    let cancelled = false;
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
 
-    const fetchProfile = async () => {
-      try {
-        const data = await profileService.getPublicProfile(username);
-        if (!cancelled) {
-          setProfile(mapApiProfileToProviderProfile(data));
-        }
-      } catch (error) {
-        console.error('Error fetching provider profile:', error);
-        if (!cancelled) {
-          setProfile(undefined);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    void fetchProfile();
-    return () => {
-      cancelled = true;
-    };
+    try {
+      const data = await profileService.getPublicProfile(username);
+      setProfile(mapApiProfileToProviderProfile(data));
+    } catch (error) {
+      console.error('Error fetching provider profile:', error);
+      setProfile(undefined);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, [username]);
+
+  const onRefresh = useCallback(() => {
+    fetchData(true);
+  }, [fetchData]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleBack = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -93,14 +94,7 @@ export default function ProviderProfileScreen() {
   }, [profile, router]);
 
   if (loading) {
-    return (
-      <SafeAreaView
-        style={[styles.loading, { backgroundColor: screenBg }]}
-        edges={['top', 'bottom']}
-      >
-        <ActivityIndicator size="large" color={textColor} />
-      </SafeAreaView>
-    );
+    return <ProviderProfileViewSkeleton />;
   }
 
   if (!profile) {
@@ -126,6 +120,9 @@ export default function ProviderProfileScreen() {
       onSendMessage={handleSendMessage}
       onOpenReviews={handleOpenReviews}
       onLeaveReview={handleLeaveReview}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
     />
   );
 }

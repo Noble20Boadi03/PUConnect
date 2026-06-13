@@ -1,5 +1,15 @@
+// ExploreView component with refreshControl support
 import React, { useCallback, useMemo, useState, useRef } from 'react';
-import { StyleSheet, View, useColorScheme, TextInput, TouchableOpacity, Animated, Text as RNText } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  useColorScheme,
+  TextInput,
+  TouchableOpacity,
+  Animated,
+  Text as RNText,
+  RefreshControlProps,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -24,6 +34,7 @@ export interface ExploreViewProps {
   providers?: ExploreProvider[];
   onCategoryPress?: (category: ExploreCategory) => void;
   onProviderPress?: (provider: ExploreProvider) => void;
+  refreshControl?: React.ReactElement<RefreshControlProps>;
 }
 
 export const ExploreView: React.FC<ExploreViewProps> = ({
@@ -31,6 +42,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   providers = EXPLORE_PROVIDERS_MOCK,
   onCategoryPress,
   onProviderPress,
+  refreshControl,
 }) => {
   const router = useAppRouter();
   const Colors = useThemeColor();
@@ -173,12 +185,14 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
             onFilterChange={setPeopleFilter}
             onProviderPress={handleProviderPress}
             searchQuery={searchQuery}
+            refreshControl={refreshControl}
             {...peopleTheme}
           />
         ) : (
           <ExploreCategoriesPanel
             categories={categories}
             onCategoryPress={handleCategoryPress}
+            refreshControl={refreshControl}
           />
         )}
       </View>

@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   useColorScheme,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,6 +20,7 @@ import {
   ProfileChangePhotoSheet,
   ProfilePostsSection,
   ProfileReviewsSummaryRow,
+  ProfileViewSkeleton,
 } from '../../components/Profile';
 import { NotificationBellButton } from '../../components/NotificationBellButton';
 import { useAuthStore, useProfileStore } from '../../store';
@@ -46,6 +48,8 @@ export default function ProfileScreen() {
   const hydrate = useProfileStore((s) => s.hydrate);
 
   const [posts, setPosts] = useState<FeaturedPost[]>([]);
+  const [postsLoading, setPostsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const submittedReviews = useProviderReviewsStore((s) => s.submittedReviews);
 
@@ -62,34 +66,39 @@ export default function ProfileScreen() {
     void hydrate(user);
   }, [user, hydrate]);
 
-  useEffect(() => {
+  const fetchPosts = useCallback(async (isRefresh = false) => {
     if (!user?.username) {
       setPosts([]);
+      setPostsLoading(false);
       return;
     }
 
-    let cancelled = false;
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setPostsLoading(true);
+    }
 
-    const fetchPosts = async () => {
-      try {
-        const profile = await profileService.getPublicProfile(user.username);
-        if (!cancelled) {
-          const apiPosts = Array.isArray(profile?.posts) ? profile.posts : [];
-          setPosts(apiPosts.map(mapDbPostToFeaturedPost));
-        }
-      } catch (error) {
-        console.error('Error fetching profile posts:', error);
-        if (!cancelled) {
-          setPosts([]);
-        }
-      }
-    };
-
-    void fetchPosts();
-    return () => {
-      cancelled = true;
-    };
+    try {
+      const profile = await profileService.getPublicProfile(user.username);
+      const apiPosts = Array.isArray(profile?.posts) ? profile.posts : [];
+      setPosts(apiPosts.map(mapDbPostToFeaturedPost));
+    } catch (error) {
+      console.error('Error fetching profile posts:', error);
+      setPosts([]);
+    } finally {
+      setPostsLoading(false);
+      setRefreshing(false);
+    }
   }, [user?.username]);
+
+  const onRefresh = useCallback(() => {
+    fetchPosts(true);
+  }, [fetchPosts]);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
 
   const initials = user?.name
     ? user.name
@@ -128,10 +137,8 @@ export default function ProfileScreen() {
     router.push(`/provider/${user.username}/reviews` as any);
   }, [user?.username, router]);
 
-  if (!hydrated) {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']} />
-    );
+  if (!hydrated || postsLoading) {
+    return <ProfileViewSkeleton />;
   }
 
   return (
@@ -158,6 +165,9 @@ export default function ProfileScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
         <ProfileHeroSection
           variant="owner"

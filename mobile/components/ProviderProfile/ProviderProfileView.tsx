@@ -5,6 +5,7 @@ import {
   Text,
   ScrollView,
   useColorScheme,
+  RefreshControlProps,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,6 +34,7 @@ export interface ProviderProfileViewProps {
   onSendMessage?: () => void;
   onOpenReviews?: () => void;
   onLeaveReview?: () => void;
+  refreshControl?: React.ReactElement<RefreshControlProps>;
 }
 
 export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
@@ -42,6 +44,7 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
   onSendMessage,
   onOpenReviews,
   onLeaveReview,
+  refreshControl,
 }) => {
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
@@ -95,6 +98,7 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={refreshControl}
       >
         <ProfileHeroSection
           variant="public"

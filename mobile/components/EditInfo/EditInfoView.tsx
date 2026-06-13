@@ -9,6 +9,7 @@ import { ConfirmDialog } from '../ConfirmDialog';
 import { Spacing, Typography } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useAuthStore, useProfileStore } from '../../store';
+import { authService } from '../../services';
 import {
   hasProviderSectionData,
   pruneTagsForServices,
@@ -42,6 +43,16 @@ export const EditInfoView: React.FC<EditInfoViewProps> = ({ onSaved }) => {
 
   const { firstName: initialFirst, lastName: initialLast } = splitDisplayName(user?.name);
 
+  const [initialValues, setInitialValues] = useState({
+    firstName: initialFirst,
+    lastName: initialLast,
+    username: user?.username ?? '',
+    email: user?.email ?? '',
+    bio: savedBio,
+    selectedServiceIds: savedServiceIds,
+    selectedTags: savedTags,
+  });
+
   const [firstName, setFirstName] = useState(initialFirst);
   const [lastName, setLastName] = useState(initialLast);
   const [username, setUsername] = useState(user?.username ?? '');
@@ -49,6 +60,16 @@ export const EditInfoView: React.FC<EditInfoViewProps> = ({ onSaved }) => {
   const [bio, setBio] = useState(savedBio);
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>(savedServiceIds);
   const [selectedTags, setSelectedTags] = useState<string[]>(savedTags);
+
+  // Check if any values have changed
+  const hasChanges =
+    firstName.trim() !== initialValues.firstName.trim() ||
+    lastName.trim() !== initialValues.lastName.trim() ||
+    username.trim() !== initialValues.username.trim() ||
+    email.trim() !== initialValues.email.trim() ||
+    bio.trim() !== initialValues.bio.trim() ||
+    JSON.stringify(selectedServiceIds.sort()) !== JSON.stringify(initialValues.selectedServiceIds.sort()) ||
+    JSON.stringify(selectedTags.sort()) !== JSON.stringify(initialValues.selectedTags.sort());
 
   const [focusedField, setFocusedField] = useState<FocusField>(null);
   const [providerExpanded, setProviderExpanded] = useState(
@@ -70,6 +91,15 @@ export const EditInfoView: React.FC<EditInfoViewProps> = ({ onSaved }) => {
 
   useEffect(() => {
     const { firstName: f, lastName: l } = splitDisplayName(user?.name);
+    const newInitialValues = {
+      firstName: f,
+      lastName: l,
+      username: user?.username ?? '',
+      email: user?.email ?? '',
+      bio: savedBio,
+      selectedServiceIds: savedServiceIds,
+      selectedTags: savedTags,
+    };
     setFirstName(f);
     setLastName(l);
     setUsername(user?.username ?? '');
@@ -77,6 +107,7 @@ export const EditInfoView: React.FC<EditInfoViewProps> = ({ onSaved }) => {
     setBio(savedBio);
     setSelectedServiceIds(savedServiceIds);
     setSelectedTags(savedTags);
+    setInitialValues(newInitialValues);
     if (isProvider || hasProviderSectionData(savedBio, savedServiceIds, savedTags)) {
       setProviderExpanded(true);
     }
@@ -125,6 +156,18 @@ export const EditInfoView: React.FC<EditInfoViewProps> = ({ onSaved }) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
+      // Update the main profile (name, username, email)
+      const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+      const updatedUser = await authService.updateProfile({
+        name: fullName,
+        username: username.trim(),
+        email: email.trim(),
+      });
+
+      // Update auth store with new user data
+      useAuthStore.getState().setUser(updatedUser);
+
+      // Update provider profile if needed
       if (draftHasProviderData) {
         await saveProviderProfile({
           bio: bio.trim(),
@@ -302,6 +345,7 @@ export const EditInfoView: React.FC<EditInfoViewProps> = ({ onSaved }) => {
       {saveMessage ? (
         <Alert
           type={saveMessage.includes('complete') || saveMessage.includes('required') || saveMessage.includes('Select') || saveMessage.includes('wrong') ? 'error' : 'success'}
+          title={saveMessage.includes('complete') || saveMessage.includes('required') || saveMessage.includes('Select') || saveMessage.includes('wrong') ? "Oops!" : "Success!"}
           message={saveMessage}
           dismissible
           onDismiss={() => setSaveMessage(null)}
@@ -335,7 +379,7 @@ export const EditInfoView: React.FC<EditInfoViewProps> = ({ onSaved }) => {
         size="md"
         onPress={handleSave}
         isLoading={isSaving}
-        disabled={isSaving || isRevoking}
+        disabled={isSaving || isRevoking || !hasChanges}
         style={styles.saveButton}
       />
     </KeyboardLayout>

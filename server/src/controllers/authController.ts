@@ -247,7 +247,14 @@ export const revokeProviderStatus = async (req: Request, res: Response) => {
 
     await prisma.user.update({
       where: { id: userId },
-      data: { role: 'user' },
+      data: {
+        role: 'user',
+        bio: '',
+        categoryId: null,
+        skillTitle: null,
+        expertiseTags: [],
+        serviceIds: [],
+      },
     });
 
     return res.status(200).json({
@@ -440,6 +447,112 @@ export const resetPassword = async (req: Request, res: Response) => {
     return res.status(500).json({
       status: 500,
       message: 'Server error resetting password. Please try again.',
+    });
+  }
+};
+
+/**
+ * Update authenticated user's profile (name, username, email).
+ * @route PATCH /api/auth/update-profile
+ */
+export const updateProfile = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const { name, username, email } = req.body;
+
+    // Prepare update data
+    const updateData: any = {};
+    if (name) updateData.name = name;
+    if (username) {
+      // Check if username is already taken by another user
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          username: username.toLowerCase(),
+          NOT: { id: userId },
+        },
+      });
+      if (existingUser) {
+        return res.status(400).json({
+          status: 400,
+          message: 'This username is already taken.',
+        });
+      }
+      updateData.username = username.toLowerCase();
+    }
+    if (email) {
+      // Check if email is already taken by another user
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          email: email.toLowerCase(),
+          NOT: { id: userId },
+        },
+      });
+      if (existingUser) {
+        return res.status(400).json({
+          status: 400,
+          message: 'This email is already registered.',
+        });
+      }
+      updateData.email = email.toLowerCase();
+    }
+
+    // Update user
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    return res.status(200).json({
+      status: 200,
+      message: 'Profile updated successfully.',
+      data: toPublicUser(updatedUser),
+    });
+  } catch (error) {
+    console.error('UpdateProfile Error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error updating profile. Please try again.',
+    });
+  }
+};
+
+/**
+ * Update authenticated user's provider profile (bio, categoryId, skillTitle, expertiseTags, serviceIds, role).
+ * @route PATCH /api/auth/update-provider-profile
+ */
+export const updateProviderProfile = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const { bio, categoryId, skillTitle, expertiseTags, serviceIds } = req.body;
+
+    // Prepare update data
+    const updateData: any = {};
+    if (bio !== undefined) updateData.bio = bio;
+    if (categoryId !== undefined) updateData.categoryId = categoryId;
+    if (skillTitle !== undefined) updateData.skillTitle = skillTitle;
+    if (expertiseTags !== undefined) updateData.expertiseTags = expertiseTags;
+    if (serviceIds !== undefined) updateData.serviceIds = serviceIds;
+    // If we're providing provider profile data, set role to provider
+    if (Object.keys(updateData).length > 0) {
+      updateData.role = 'provider';
+    }
+
+    // Update user
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    return res.status(200).json({
+      status: 200,
+      message: 'Provider profile updated successfully.',
+      data: toPublicUser(updatedUser),
+    });
+  } catch (error) {
+    console.error('UpdateProviderProfile Error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error updating provider profile. Please try again.',
     });
   }
 };

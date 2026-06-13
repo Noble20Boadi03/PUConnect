@@ -1,12 +1,12 @@
 import React, { useCallback, useState, useMemo, useEffect } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, useColorScheme, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, useColorScheme, RefreshControl } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { PostDetailView } from '../../components/PostDetail';
+import { PostDetailView, PostDetailViewSkeleton } from '../../components/PostDetail';
 import { Alert, ConfirmDialog } from '../../components';
 import {
   buildChatHref,
@@ -53,6 +53,7 @@ export default function PostDetailScreen() {
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [post, setPost] = useState<PostDetail | undefined>();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const {
     showConfirm,
     confirmVisible,
@@ -61,37 +62,37 @@ export default function PostDetailScreen() {
     handleCancel,
   } = useConfirmDialog();
 
-  useEffect(() => {
+  const fetchData = useCallback(async (isRefresh = false) => {
     if (typeof id !== 'string') {
       setLoading(false);
       return;
     }
 
-    let cancelled = false;
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
 
-    const fetchPost = async () => {
-      try {
-        const data = await postService.getPostById(id);
-        if (!cancelled) {
-          setPost(mapDbPostToPostDetail(data));
-        }
-      } catch (error) {
-        console.error('Error fetching post detail:', error);
-        if (!cancelled) {
-          setPost(undefined);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    void fetchPost();
-    return () => {
-      cancelled = true;
-    };
+    try {
+      const data = await postService.getPostById(id);
+      setPost(mapDbPostToPostDetail(data));
+    } catch (error) {
+      console.error('Error fetching post detail:', error);
+      setPost(undefined);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, [id]);
+
+  const onRefresh = useCallback(() => {
+    fetchData(true);
+  }, [fetchData]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // Check if user is eligible to respond to this request
   const eligibility = useMemo(() => {
@@ -250,15 +251,7 @@ export default function PostDetailScreen() {
   }, [post, id, showConfirm, handleBack]);
 
   if (loading) {
-    return (
-      <SafeAreaView
-        style={[styles.notFound, { backgroundColor: screenBg }]}
-        edges={['top', 'bottom']}
-      >
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-        <ActivityIndicator size="large" color={textColor} />
-      </SafeAreaView>
-    );
+    return <PostDetailViewSkeleton />;
   }
 
   if (!post) {
@@ -317,6 +310,9 @@ export default function PostDetailScreen() {
         onRequestService={handleRequestService}
         actionDisabled={post?.tag === 'Request' && !eligibility.canRespond}
         disabledReason={post?.tag === 'Request' ? (eligibility.reason ?? undefined) : undefined}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       />
     </View>
   );

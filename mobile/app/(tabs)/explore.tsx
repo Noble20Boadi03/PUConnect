@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, ScrollView, useColorScheme } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { StyleSheet, View, ScrollView, useColorScheme, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ExploreView,
@@ -42,6 +42,7 @@ export default function ExploreScreen() {
   const [categories, setCategories] = useState<ExploreCategory[]>([]);
   const [providers, setProviders] = useState<ExploreProvider[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<ExploreTab>('categories');
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -49,25 +50,35 @@ export default function ExploreScreen() {
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [categoriesData, providersData] = await Promise.all([
-          exploreService.getCategories(),
-          exploreService.getExploreProviders(),
-        ]);
+  const fetchData = useCallback(async (isRefresh = false) => {
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+    try {
+      const [categoriesData, providersData] = await Promise.all([
+        exploreService.getCategories(),
+        exploreService.getExploreProviders(),
+      ]);
 
-        setCategories(categoriesData.map(mapDbCategoryToExploreCategory));
-        setProviders(providersData.map(mapUserToExploreProvider));
-      } catch (error) {
-        console.error('Error fetching explore data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+      setCategories(categoriesData.map(mapDbCategoryToExploreCategory));
+      setProviders(providersData.map(mapUserToExploreProvider));
+    } catch (error) {
+      console.error('Error fetching explore data:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
+
+  const onRefresh = useCallback(() => {
+    fetchData(true);
+  }, [fetchData]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   if (loading) {
     return (
@@ -103,7 +114,15 @@ export default function ExploreScreen() {
     );
   }
 
-  return <ExploreView categories={categories} providers={providers} />;
+  return (
+    <ExploreView
+      categories={categories}
+      providers={providers}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    />
+  );
 }
 
 const styles = StyleSheet.create({

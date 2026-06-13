@@ -5,14 +5,14 @@ import {
   Text,
   ScrollView,
   useColorScheme,
-  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
 import { useAppRouter, useThemeColor } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
-import { MarketHeader, MarketFeedHeader, FeaturedPostCard } from '../../components';
+import { MarketHeader, MarketFeedHeader, FeaturedPostCard, MarketViewSkeleton } from '../../components';
 import { filterMarketPosts, mapDbPostToFeaturedPost } from '../../lib';
 import { postService } from '../../services';
 import type { FeaturedPost, MarketFilter } from '../../types';
@@ -34,38 +34,38 @@ export default function MarketScreen() {
 
   const [posts, setPosts] = useState<FeaturedPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showMarketTip, setShowMarketTip] = useState(true);
   const [activeFilter, setActiveFilter] = useState<MarketFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchPosts = async () => {
-      try {
-        setLoadError(null);
-        const data = await postService.getPosts();
-        if (!cancelled) {
-          setPosts(data.map(mapDbPostToFeaturedPost));
-        }
-      } catch (error) {
-        console.error('Error fetching market posts:', error);
-        if (!cancelled) {
-          setLoadError('Could not load market posts. Pull to refresh by revisiting this tab.');
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    void fetchPosts();
-    return () => {
-      cancelled = true;
-    };
+  const fetchData = useCallback(async (isRefresh = false) => {
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+    try {
+      setLoadError(null);
+      const data = await postService.getPosts();
+      setPosts(data.map(mapDbPostToFeaturedPost));
+    } catch (error) {
+      console.error('Error fetching market posts:', error);
+      setLoadError('Could not load market posts. Pull to refresh by revisiting this tab.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
+
+  const onRefresh = useCallback(() => {
+    fetchData(true);
+  }, [fetchData]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const dismissTip = useCallback(() => {
     setShowMarketTip(false);
@@ -186,13 +186,7 @@ export default function MarketScreen() {
   );
 
   if (loading) {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
-        <View style={styles.loadingState}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-        </View>
-      </SafeAreaView>
-    );
+    return <MarketViewSkeleton />;
   }
 
   return (
@@ -208,6 +202,9 @@ export default function MarketScreen() {
           nestedScrollEnabled
           overScrollMode="never"
           removeClippedSubviews
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         >
           {loadError ? (
             <View style={styles.errorState}>

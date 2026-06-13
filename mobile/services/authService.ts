@@ -73,6 +73,34 @@ export const authService = {
   },
 
   /**
+   * Updates the authenticated user's profile (name, username, email).
+   * @route PATCH /api/auth/update-profile
+   */
+  async updateProfile(data: {
+    name?: string;
+    username?: string;
+    email?: string;
+  }): Promise<User> {
+    const response = await apiClient.patch<ApiResponse<User>>('/auth/update-profile', data);
+    return response.data.data;
+  },
+
+  /**
+   * Updates the authenticated user's provider profile.
+   * @route PATCH /api/auth/update-provider-profile
+   */
+  async updateProviderProfile(data: {
+    bio?: string;
+    categoryId?: string;
+    skillTitle?: string;
+    expertiseTags?: string[];
+    serviceIds?: string[];
+  }): Promise<User> {
+    const response = await apiClient.patch<ApiResponse<User>>('/auth/update-provider-profile', data);
+    return response.data.data;
+  },
+
+  /**
    * Sends a password reset OTP to user's email.
    * @route POST /api/auth/forgot-password
    */

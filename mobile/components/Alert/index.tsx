@@ -1,7 +1,7 @@
-import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, useColorScheme } from 'react-native';
+import React, { useEffect } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, useColorScheme, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { useThemeColor } from '../../hooks';
@@ -15,46 +15,60 @@ export interface AlertProps {
   dismissible?: boolean;
   onDismiss?: () => void;
   visible?: boolean;
+  autoDismiss?: boolean;
+  autoDismissDuration?: number;
+  buttonText?: string;
 }
 
 export const Alert: React.FC<AlertProps> = ({
   type,
   title,
   message,
-  dismissible = false,
+  dismissible = true,
   onDismiss,
   visible = true,
+  autoDismiss = false,
+  autoDismissDuration = 4000,
+  buttonText = "OK",
 }) => {
   const colorScheme = useColorScheme();
   const Colors = useThemeColor();
   const isDark = colorScheme === 'dark';
 
-  if (!visible) return null;
+  // Auto-dismiss logic
+  useEffect(() => {
+    if (visible && autoDismiss && onDismiss) {
+      const timer = setTimeout(() => {
+        onDismiss();
+      }, autoDismissDuration);
+      return () => clearTimeout(timer);
+    }
+  }, [visible, autoDismiss, autoDismissDuration, onDismiss]);
 
   // Curated premium alert color configurations
   const alertStyles = {
     error: {
-      bg: isDark ? '#271C1C' : '#FEF2F2',
-      border: '#EF4444',
-      text: isDark ? '#FCA5A5' : '#B91C1C',
+      bg: isDark ? '#1E1E1E' : '#FFFFFF',
+      accent: '#EF4444',
+      text: isDark ? '#E5E5E5' : '#171717',
       icon: 'alert-circle' as const,
     },
     success: {
-      bg: isDark ? '#14271B' : '#F0FDF4',
-      border: Colors.primary || '#22C55E',
-      text: isDark ? '#A7F3D0' : '#15803D',
+      bg: isDark ? '#1E1E1E' : '#FFFFFF',
+      accent: Colors.primary || '#22C55E',
+      text: isDark ? '#E5E5E5' : '#171717',
       icon: 'checkmark-circle' as const,
     },
     info: {
-      bg: isDark ? '#1C2538' : '#EFF6FF',
-      border: '#3B82F6',
-      text: isDark ? '#93C5FD' : '#1D4ED8',
+      bg: isDark ? '#1E1E1E' : '#FFFFFF',
+      accent: '#3B82F6',
+      text: isDark ? '#E5E5E5' : '#171717',
       icon: 'information-circle' as const,
     },
     warning: {
-      bg: isDark ? '#2D2214' : '#FFFBEB',
-      border: '#F59E0B',
-      text: isDark ? '#FDE047' : '#B45309',
+      bg: isDark ? '#1E1E1E' : '#FFFFFF',
+      accent: '#F59E0B',
+      text: isDark ? '#E5E5E5' : '#171717',
       icon: 'warning' as const,
     },
   };
@@ -68,71 +82,122 @@ export const Alert: React.FC<AlertProps> = ({
     }
   };
 
+  if (!visible) return null;
+
   return (
-    <Animated.View
-      entering={FadeInDown.duration(300).springify().damping(18)}
-      exiting={FadeOut.duration(200)}
-      style={[
-        styles.container,
-        {
-          backgroundColor: styleConfig.bg,
-          borderColor: styleConfig.border,
-        },
-      ]}
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
+      onRequestClose={handleDismiss}
     >
-      <Ionicons
-        name={styleConfig.icon}
-        size={20}
-        color={styleConfig.border}
-        style={styles.icon}
-      />
-      <View style={styles.contentContainer}>
-        {title ? (
-          <Text style={[styles.title, { color: styleConfig.text }]}>{title}</Text>
-        ) : null}
-        <Text style={[styles.message, { color: styleConfig.text + 'E6' }]}>
-          {message}
-        </Text>
-      </View>
-      {dismissible && (
-        <TouchableOpacity onPress={handleDismiss} style={styles.closeButton}>
-          <Ionicons name="close" size={16} color={styleConfig.text} />
-        </TouchableOpacity>
-      )}
-    </Animated.View>
+      <Animated.View
+        style={styles.overlay}
+        entering={FadeIn.duration(200)}
+        exiting={FadeOut.duration(200)}
+      >
+        <Animated.View
+          entering={ZoomIn.duration(300).springify().damping(18)}
+          exiting={ZoomOut.duration(200)}
+          style={[
+            styles.alertCard,
+            {
+              backgroundColor: styleConfig.bg,
+              borderColor: isDark ? '#333333' : '#E5E5E5',
+            },
+          ]}
+        >
+          <Ionicons
+            name={styleConfig.icon}
+            size={48}
+            color={styleConfig.accent}
+            style={styles.icon}
+          />
+          <View style={styles.contentContainer}>
+            {title ? (
+              <Text style={[styles.title, { color: styleConfig.text }]}>
+                {title}
+              </Text>
+            ) : null}
+            <Text style={[styles.message, { color: isDark ? styleConfig.text + 'CC' : '#525252' }]}>
+              {message}
+            </Text>
+          </View>
+          <View style={styles.divider} />
+          <TouchableOpacity
+            onPress={handleDismiss}
+            style={[styles.button, { borderColor: styleConfig.accent }]}
+          >
+            <Text style={[styles.buttonText, { color: styleConfig.accent }]}>
+              {buttonText}
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  alertCard: {
+    width: '80%',
+    maxWidth: 360,
+    borderRadius: 24,
     borderWidth: 1,
-    borderRadius: 12,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
-    gap: Spacing.sm,
+    padding: Spacing.xl,
+    alignItems: 'center',
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 12,
   },
   icon: {
-    marginTop: 1,
+    marginBottom: Spacing.lg,
   },
   contentContainer: {
-    flex: 1,
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
   },
   title: {
-    fontSize: Typography.size.sm,
+    fontSize: Typography.size.xl,
     fontWeight: '700',
-    marginBottom: 2,
+    marginBottom: Spacing.sm,
+    textAlign: 'center',
   },
   message: {
-    fontSize: Typography.size.xs,
-    lineHeight: 16,
-    fontWeight: '500',
+    fontSize: Typography.size.md,
+    lineHeight: 22,
+    fontWeight: '400',
+    textAlign: 'center',
   },
-  closeButton: {
-    padding: 2,
-    marginTop: -2,
-    marginRight: -4,
+  divider: {
+    width: '100%',
+    height: 1,
+    backgroundColor: '#333333',
+    marginBottom: Spacing.lg,
+    opacity: 0.5,
+  },
+  button: {
+    width: '100%',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: 12,
+    borderWidth: 2,
+    alignItems: 'center',
+  },
+  buttonText: {
+    fontSize: Typography.size.lg,
+    fontWeight: '600',
   },
 });
 

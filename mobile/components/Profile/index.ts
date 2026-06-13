@@ -5,3 +5,4 @@ export * from './ProfileSegmentedTabs';
 export * from './ProfileChangePhotoSheet';
 export * from './ProfilePostsSection';
 export * from './ProfileProviderGate';
+export * from './ProfileViewSkeleton';

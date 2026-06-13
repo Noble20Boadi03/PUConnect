@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { StyleSheet, View, Text, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, RefreshControlProps } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { filterExploreProviders } from '../../lib/filterExploreProviders';
@@ -25,6 +25,7 @@ export interface ExplorePeoplePanelProps {
   borderColor: string;
   onProviderPress: (provider: ExploreProvider) => void;
   searchQuery?: string;
+  refreshControl?: React.ReactElement<RefreshControlProps>;
 }
 
 export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
@@ -39,6 +40,7 @@ export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
   borderColor,
   onProviderPress,
   searchQuery = '',
+  refreshControl,
 }) => {
   const filtered = useMemo(
     () => filterExploreProviders(providers, activeFilter, searchQuery),
@@ -78,6 +80,7 @@ export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        refreshControl={refreshControl}
       >
         {filtered.length === 0 ? (
           <View style={styles.emptyState}>

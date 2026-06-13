@@ -5,6 +5,7 @@ import { EXPLORE_PROVIDERS_MOCK } from '../constants/exploreMock';
 import { getProviderProfileByUsername } from '../lib/getProviderProfileByUsername';
 import { isValidProviderProfile } from '../lib/editInfoForm';
 import { authService } from '../services';
+import { useAuthStore } from './authStore';
 import type { ProviderProfileDraft, User } from '../types';
 
 interface StoredProviderProfile extends ProviderProfileDraft {
@@ -64,6 +65,33 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
   hydrated: false,
 
   hydrate: async (user) => {
+    // First, try to load from user object (from API)
+    if (user) {
+      const isProvider = user.role === 'provider';
+      const bio = user.bio ?? '';
+      const serviceIds = user.serviceIds ?? [];
+      const tags = user.expertiseTags ?? [];
+
+      if (isProvider && isValidProviderProfile(bio, serviceIds)) {
+        const data: StoredProviderProfile = {
+          isProvider: true,
+          bio,
+          serviceIds,
+          tags,
+        };
+        await writeStored(data);
+        set({
+          isProvider: true,
+          providerBio: bio,
+          providerServiceIds: serviceIds,
+          providerTags: tags,
+          hydrated: true,
+        });
+        return;
+      }
+    }
+
+    // Fallback to stored data
     const stored = await readStored();
     if (stored?.isProvider && isValidProviderProfile(stored.bio, stored.serviceIds)) {
       set({
@@ -76,6 +104,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       return;
     }
 
+    // Fallback to mocks
     const seeded = seedFromMocks(user);
     if (seeded) {
       set({
@@ -104,6 +133,18 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       await get().clearProviderProfile();
       return;
     }
+
+    // Call API to update provider profile
+    const updatedUser = await authService.updateProviderProfile({
+      bio: draft.bio,
+      expertiseTags: draft.tags,
+      serviceIds: draft.serviceIds,
+    });
+
+    // Update auth store with new user data
+    useAuthStore.getState().setUser(updatedUser);
+
+    // Update local state and storage
     await writeStored({ isProvider: true, ...draft });
     set({
       isProvider: true,
@@ -114,6 +155,14 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
   },
 
   clearProviderProfile: async () => {
+    // Call API to clear provider profile (revoke provider status)
+    await authService.revokeProviderStatus();
+    
+    // Update auth store to refresh user data
+    const updatedUser = await authService.getMe();
+    useAuthStore.getState().setUser(updatedUser);
+
+    // Clear local storage and state
     await writeStored(null);
     set({
       isProvider: false,
@@ -125,6 +174,11 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
   revokeProviderProfile: async () => {
     await authService.revokeProviderStatus();
+    
+    // Update auth store to refresh user data
+    const updatedUser = await authService.getMe();
+    useAuthStore.getState().setUser(updatedUser);
+    
     await writeStored(null);
     set({
       isProvider: false,

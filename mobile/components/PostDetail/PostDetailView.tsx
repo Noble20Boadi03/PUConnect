@@ -7,6 +7,7 @@ import {
   useColorScheme,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  RefreshControlProps,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
@@ -49,6 +50,7 @@ export interface PostDetailViewProps {
   actionDisabled?: boolean;
   /** Reason why action is disabled (shown below button if provided) */
   disabledReason?: string | null;
+  refreshControl?: React.ReactElement<RefreshControlProps>;
 }
 
 export const PostDetailView: React.FC<PostDetailViewProps> = ({
@@ -67,6 +69,7 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
   onRequestService,
   actionDisabled = false,
   disabledReason,
+  refreshControl,
 }) => {
   const Colors = useThemeColor();
   const insets = useSafeAreaInsets();
@@ -182,6 +185,7 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
         contentContainerStyle={{
           paddingBottom: footerHeight + footerBottom + Spacing.lg,
         }}
+        refreshControl={refreshControl}
       >
         <PostImageGallery
           images={post.images}
