@@ -1,24 +1,25 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   StyleSheet,
   View,
   Text,
   ScrollView,
   useColorScheme,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
 import { useAppRouter, useThemeColor } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
-import { FEATURED_POSTS_MOCK } from '../../constants';
 import { MarketHeader, MarketFeedHeader, FeaturedPostCard } from '../../components';
-import { filterMarketPosts } from '../../lib';
+import { filterMarketPosts, mapDbPostToFeaturedPost } from '../../lib';
+import { postService } from '../../services';
 import type { FeaturedPost, MarketFilter } from '../../types';
 
 /**
- * Market uses a single ScrollView (mock data is small) to avoid nested
- * VirtualizedLists, which cause slow updates and jank after resume.
+ * Market feed backed by GET /api/posts. Popular services and promo sections
+ * still use static UI content; post carousels and filtered lists use live data.
  */
 export default function MarketScreen() {
   const router = useAppRouter();
@@ -31,9 +32,40 @@ export default function MarketScreen() {
   const searchBg = isDark ? '#1E1E21' : '#F0F0F2';
   const borderColor = isDark ? '#30363D' : 'rgba(0, 0, 0, 0.08)';
 
+  const [posts, setPosts] = useState<FeaturedPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showMarketTip, setShowMarketTip] = useState(true);
   const [activeFilter, setActiveFilter] = useState<MarketFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchPosts = async () => {
+      try {
+        setLoadError(null);
+        const data = await postService.getPosts();
+        if (!cancelled) {
+          setPosts(data.map(mapDbPostToFeaturedPost));
+        }
+      } catch (error) {
+        console.error('Error fetching market posts:', error);
+        if (!cancelled) {
+          setLoadError('Could not load market posts. Pull to refresh by revisiting this tab.');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void fetchPosts();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const dismissTip = useCallback(() => {
     setShowMarketTip(false);
@@ -68,8 +100,8 @@ export default function MarketScreen() {
   const showDiscoverySections = activeFilter === 'all' && !searchQuery;
 
   const filteredPosts = useMemo(
-    () => filterMarketPosts(FEATURED_POSTS_MOCK, activeFilter, searchQuery),
-    [activeFilter, searchQuery]
+    () => filterMarketPosts(posts, activeFilter, searchQuery),
+    [posts, activeFilter, searchQuery]
   );
 
   const emptyMessage = useMemo(() => {
@@ -122,6 +154,7 @@ export default function MarketScreen() {
       iconColor: Colors.icon,
       primaryColor: Colors.primary,
       showDiscoverySections,
+      posts,
       onPostPress: handleCardPress,
       onSeeAllServicesPress: handleSeeAllServices,
       onSeeAllRequestsPress: handleSeeAllRequests,
@@ -133,6 +166,7 @@ export default function MarketScreen() {
       Colors.icon,
       Colors.primary,
       showDiscoverySections,
+      posts,
       handleCardPress,
       handleSeeAllServices,
       handleSeeAllRequests,
@@ -151,6 +185,16 @@ export default function MarketScreen() {
     [cardBg, searchBg, Colors.text, Colors.icon, Colors.primary, borderColor]
   );
 
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
+        <View style={styles.loadingState}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
       <View style={styles.root}>
@@ -165,6 +209,12 @@ export default function MarketScreen() {
           overScrollMode="never"
           removeClippedSubviews
         >
+          {loadError ? (
+            <View style={styles.errorState}>
+              <Text style={[styles.errorText, { color: Colors.icon }]}>{loadError}</Text>
+            </View>
+          ) : null}
+
           <MarketFeedHeader {...feedHeaderTheme} />
 
           {!showDiscoverySections && filteredPosts.length === 0 ? (
@@ -195,6 +245,21 @@ const styles = StyleSheet.create({
   },
   root: {
     flex: 1,
+  },
+  loadingState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorState: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
+  },
+  errorText: {
+    fontSize: Typography.size.sm,
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   scroll: {
     flex: 1,

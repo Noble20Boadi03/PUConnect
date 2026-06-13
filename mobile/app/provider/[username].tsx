@@ -1,14 +1,22 @@
-import React, { useCallback } from 'react';
-import { StyleSheet, Text, TouchableOpacity, useColorScheme } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useColorScheme,
+  ActivityIndicator,
+} from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { ProviderProfileView } from '../../components/ProviderProfile';
-import { buildChatHref, getProviderProfileByUsername } from '../../lib';
+import { buildChatHref, mapApiProfileToProviderProfile } from '../../lib';
 import { useAppRouter } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
+import { profileService } from '../../services';
+import type { ProviderProfile } from '../../types';
 
 export default function ProviderProfileScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
@@ -18,8 +26,40 @@ export default function ProviderProfileScreen() {
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
   const textColor = isDark ? '#ECEDEE' : '#11181C';
 
-  const profile =
-    typeof username === 'string' ? getProviderProfileByUsername(username) : undefined;
+  const [profile, setProfile] = useState<ProviderProfile | undefined>();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (typeof username !== 'string') {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchProfile = async () => {
+      try {
+        const data = await profileService.getPublicProfile(username);
+        if (!cancelled) {
+          setProfile(mapApiProfileToProviderProfile(data));
+        }
+      } catch (error) {
+        console.error('Error fetching provider profile:', error);
+        if (!cancelled) {
+          setProfile(undefined);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void fetchProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, [username]);
 
   const handleBack = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -52,6 +92,17 @@ export default function ProviderProfileScreen() {
     router.push(`/provider/${profile.username}/review` as any);
   }, [profile, router]);
 
+  if (loading) {
+    return (
+      <SafeAreaView
+        style={[styles.loading, { backgroundColor: screenBg }]}
+        edges={['top', 'bottom']}
+      >
+        <ActivityIndicator size="large" color={textColor} />
+      </SafeAreaView>
+    );
+  }
+
   if (!profile) {
     return (
       <SafeAreaView
@@ -80,6 +131,11 @@ export default function ProviderProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   notFound: {
     flex: 1,
     justifyContent: 'center',

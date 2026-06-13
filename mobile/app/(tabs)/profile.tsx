@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -26,7 +26,10 @@ import {
   selectSummaryForProvider,
   useProviderReviewsStore,
 } from '../../store/providerReviewsStore';
-import { getAccountTypeLabel, getProfilePostsForUser } from '../../lib';
+import { getAccountTypeLabel } from '../../lib';
+import { mapDbPostToFeaturedPost } from '../../lib/mapDbPost';
+import { profileService } from '../../services';
+import type { FeaturedPost } from '../../types';
 
 export default function ProfileScreen() {
   const router = useAppRouter();
@@ -41,6 +44,8 @@ export default function ProfileScreen() {
   const isProvider = useProfileStore((s) => s.isProvider);
   const hydrated = useProfileStore((s) => s.hydrated);
   const hydrate = useProfileStore((s) => s.hydrate);
+
+  const [posts, setPosts] = useState<FeaturedPost[]>([]);
 
   const submittedReviews = useProviderReviewsStore((s) => s.submittedReviews);
 
@@ -57,6 +62,35 @@ export default function ProfileScreen() {
     void hydrate(user);
   }, [user, hydrate]);
 
+  useEffect(() => {
+    if (!user?.username) {
+      setPosts([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchPosts = async () => {
+      try {
+        const profile = await profileService.getPublicProfile(user.username);
+        if (!cancelled) {
+          const apiPosts = Array.isArray(profile?.posts) ? profile.posts : [];
+          setPosts(apiPosts.map(mapDbPostToFeaturedPost));
+        }
+      } catch (error) {
+        console.error('Error fetching profile posts:', error);
+        if (!cancelled) {
+          setPosts([]);
+        }
+      }
+    };
+
+    void fetchPosts();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.username]);
+
   const initials = user?.name
     ? user.name
         .split(' ')
@@ -65,8 +99,6 @@ export default function ProfileScreen() {
         .toUpperCase()
         .slice(0, 2)
     : '?';
-
-  const posts = useMemo(() => getProfilePostsForUser(user), [user]);
 
   const handleOpenSettings = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

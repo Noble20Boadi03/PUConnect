@@ -1,5 +1,5 @@
-import React, { useCallback, useState, useMemo } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, useColorScheme } from 'react-native';
+import React, { useCallback, useState, useMemo, useEffect } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, useColorScheme, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,13 +11,15 @@ import { Alert, ConfirmDialog } from '../../components';
 import {
   buildChatHref,
   buildProviderProfileHref,
-  getPostDetailById,
   getExploreCategoryFromPostTags,
+  mapDbPostToPostDetail,
 } from '../../lib';
 import { useAppRouter, useConfirmDialog } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { useAuthStore, useProfileStore } from '../../store';
 import { EDIT_INFO_SERVICE_OPTIONS } from '../../constants/editInfoServices';
+import { postService } from '../../services';
+import type { PostDetail } from '../../types';
 
 function isTruthyParam(value: string | undefined): boolean {
   return value === '1' || value === 'true';
@@ -49,6 +51,8 @@ export default function PostDetailScreen() {
   const textColor = isDark ? '#ECEDEE' : '#11181C';
 
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [post, setPost] = useState<PostDetail | undefined>();
+  const [loading, setLoading] = useState(true);
   const {
     showConfirm,
     confirmVisible,
@@ -57,7 +61,37 @@ export default function PostDetailScreen() {
     handleCancel,
   } = useConfirmDialog();
 
-  const post = typeof id === 'string' ? getPostDetailById(id, user) : undefined;
+  useEffect(() => {
+    if (typeof id !== 'string') {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchPost = async () => {
+      try {
+        const data = await postService.getPostById(id);
+        if (!cancelled) {
+          setPost(mapDbPostToPostDetail(data));
+        }
+      } catch (error) {
+        console.error('Error fetching post detail:', error);
+        if (!cancelled) {
+          setPost(undefined);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void fetchPost();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   // Check if user is eligible to respond to this request
   const eligibility = useMemo(() => {
@@ -189,7 +223,7 @@ export default function PostDetailScreen() {
   }, [post, showConfirm, handleBack]);
 
   const handleDelete = useCallback(async () => {
-    if (!post) return;
+    if (!post || typeof id !== 'string') return;
     const confirmed = await showConfirm({
       title: 'Delete Post',
       message: 'This will permanently remove the post from your profile and the market.',
@@ -199,12 +233,33 @@ export default function PostDetailScreen() {
       icon: 'trash-outline',
     });
     if (!confirmed) return;
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setActionMessage('Post deleted.');
-    setTimeout(() => {
-      handleBack();
-    }, 900);
-  }, [post, showConfirm, handleBack]);
+
+    try {
+      await postService.deletePost(id);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setActionMessage('Post deleted.');
+      setTimeout(() => {
+        handleBack();
+      }, 900);
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setActionMessage('Could not delete this post. Please try again.');
+      setTimeout(() => setActionMessage(null), 3000);
+    }
+  }, [post, id, showConfirm, handleBack]);
+
+  if (loading) {
+    return (
+      <SafeAreaView
+        style={[styles.notFound, { backgroundColor: screenBg }]}
+        edges={['top', 'bottom']}
+      >
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <ActivityIndicator size="large" color={textColor} />
+      </SafeAreaView>
+    );
+  }
 
   if (!post) {
     return (

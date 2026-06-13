@@ -7,13 +7,16 @@ import { Button } from '../Button';
 import { Alert } from '../Alert';
 import { EditInfoField } from '../EditInfo/EditInfoField';
 import { Spacing, Typography } from '../../constants';
-import { useThemeColor } from '../../hooks';
+import { useThemeColor, useAppRouter } from '../../hooks';
 import { useProfileStore } from '../../store';
 import { pruneTagsForServices } from '../../lib/editInfoForm';
 import {
+  buildPostPriceFromForm,
   getNewPostDescriptionPlaceholder,
   validateNewPostForm,
 } from '../../lib/newPostForm';
+import { parsePostPrice } from '../../lib/mapDbPost';
+import { postService } from '../../services';
 import { NewPostTypePicker } from './NewPostTypePicker';
 import { NewPostPriceSection } from './NewPostPriceSection';
 import { NewPostImageUploader } from './NewPostImageUploader';
@@ -39,6 +42,8 @@ export interface NewPostViewProps {
 
 export const NewPostView: React.FC<NewPostViewProps> = ({ onPublished }) => {
   const params = useLocalSearchParams() as NewPostSearchParams;
+  const router = useAppRouter();
+  const isEditing = typeof params.editId === 'string' && params.editId.length > 0;
   const isProvider = useProfileStore((s) => s.isProvider);
   const providerServiceIds = useProfileStore((s) => s.providerServiceIds);
   const providerTags = useProfileStore((s) => s.providerTags);
@@ -68,6 +73,50 @@ export const NewPostView: React.FC<NewPostViewProps> = ({ onPublished }) => {
   const [imagesError, setImagesError] = useState<string | null>(null);
   const [helpCategoryError, setHelpCategoryError] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isLoadingPost, setIsLoadingPost] = useState(isEditing);
+
+  useEffect(() => {
+    if (!isEditing || typeof params.editId !== 'string') return;
+
+    let cancelled = false;
+
+    const loadPost = async () => {
+      try {
+        const data = await postService.getPostById(params.editId!);
+        if (cancelled) return;
+
+        const price = parsePostPrice(data.price);
+        setPostType(data.tag);
+        setTitle(data.title);
+        setDescription(data.description);
+        setImageUris(data.images ?? []);
+        setSelectedTags(data.hashtags ?? []);
+
+        if (price.kind === 'fixed') {
+          setPriceKind('fixed');
+          setFixedAmount(String(price.amount));
+        } else if (price.kind === 'range') {
+          setPriceKind('range');
+          setRangeMin(String(price.min));
+          setRangeMax(String(price.max));
+        } else {
+          setPriceKind('negotiated');
+        }
+      } catch (error) {
+        console.error('Error loading post for edit:', error);
+        setPublishMessage('Could not load this post for editing.');
+      } finally {
+        if (!cancelled) {
+          setIsLoadingPost(false);
+        }
+      }
+    };
+
+    void loadPost();
+    return () => {
+      cancelled = true;
+    };
+  }, [isEditing, params.editId]);
 
   useEffect(() => {
     if (!isProvider && postType === 'Service') {
@@ -96,7 +145,7 @@ export const NewPostView: React.FC<NewPostViewProps> = ({ onPublished }) => {
     setSelectedTags((prev) => pruneTagsForServices(prev, ids));
   }, []);
 
-  const handlePublish = useCallback(() => {
+  const handlePublish = useCallback(async () => {
     const validation = validateNewPostForm({
       title,
       description,
@@ -125,12 +174,36 @@ export const NewPostView: React.FC<NewPostViewProps> = ({ onPublished }) => {
     setPublishMessage(null);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    setTimeout(() => {
-      setIsPublishing(false);
+    const payload = {
+      title: title.trim(),
+      description: description.trim(),
+      tag: postType,
+      price: buildPostPriceFromForm({ priceKind, fixedAmount, rangeMin, rangeMax }),
+      images: imageUris,
+      hashtags: selectedTags,
+    };
+
+    try {
+      if (isEditing && typeof params.editId === 'string') {
+        await postService.updatePost(params.editId, payload);
+        setPublishMessage('Your post was updated.');
+      } else {
+        await postService.createPost(payload);
+        setPublishMessage('Your post was published.');
+      }
+
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setPublishMessage('Your post was published locally. API sync will connect soon.');
       onPublished?.();
-    }, 700);
+      setTimeout(() => {
+        router.replace('/(tabs)/profile' as any);
+      }, 900);
+    } catch (error) {
+      console.error('Error publishing post:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setPublishMessage('Could not publish your post. Please try again.');
+    } finally {
+      setIsPublishing(false);
+    }
   }, [
     title,
     description,
@@ -143,11 +216,23 @@ export const NewPostView: React.FC<NewPostViewProps> = ({ onPublished }) => {
     isProvider,
     providerTags.length,
     helpCategoryIds,
+    selectedTags,
+    isEditing,
+    params.editId,
     onPublished,
+    router,
   ]);
 
   const showHelpCategory = postType === 'Request';
   const showTags = (postType === 'Service' && isProvider) || helpCategoryIds.length > 0;
+
+  if (isLoadingPost) {
+    return (
+      <View style={styles.loadingState}>
+        <Text style={[styles.loadingText, { color: Colors.icon }]}>Loading post…</Text>
+      </View>
+    );
+  }
 
   return (
     <KeyboardLayout contentContainerStyle={styles.scrollContent}>
@@ -270,7 +355,7 @@ export const NewPostView: React.FC<NewPostViewProps> = ({ onPublished }) => {
       ) : null}
 
       <Button
-        title="Publish post"
+        title={isEditing ? 'Save changes' : 'Publish post'}
         variant="primary"
         size="md"
         onPress={handlePublish}
@@ -304,6 +389,16 @@ const styles = StyleSheet.create({
   publishButton: {
     width: '100%',
     borderRadius: 12,
+  },
+  loadingState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: Spacing.xxl,
+  },
+  loadingText: {
+    fontSize: Typography.size.sm,
+    fontWeight: '500',
   },
 });
 

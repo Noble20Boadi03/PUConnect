@@ -28,6 +28,8 @@ export interface MarketFeedHeaderProps {
   primaryColor: string;
   /** When false, only the Featured Posts heading is shown (filter active). */
   showDiscoverySections: boolean;
+  /** Live posts from the API; when omitted, mock data is used. */
+  posts?: FeaturedPost[];
   onPostPress: (post: FeaturedPost) => void;
   onSeeAllServicesPress?: () => void;
   onSeeAllRequestsPress?: () => void;
@@ -99,6 +101,7 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
   iconColor,
   primaryColor,
   showDiscoverySections,
+  posts,
   onPostPress,
   onSeeAllServicesPress,
   onSeeAllRequestsPress,
@@ -140,9 +143,12 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
     [cardBg, searchBg, textColor, iconColor, primaryColor, borderColor, onPostPress]
   );
 
+  const feedPosts = posts ?? FEATURED_POSTS_MOCK;
+  const recentlyViewedPosts = posts ? feedPosts.slice(0, 5) : RECENTLY_VIEWED_MOCK;
+
   // Split posts into services and requests
-  const servicePosts = useMemo(() => FEATURED_POSTS_MOCK.filter(p => p.tag === 'Service'), []);
-  const requestPosts = useMemo(() => FEATURED_POSTS_MOCK.filter(p => p.tag === 'Request'), []);
+  const servicePosts = useMemo(() => feedPosts.filter((p) => p.tag === 'Service'), [feedPosts]);
+  const requestPosts = useMemo(() => feedPosts.filter((p) => p.tag === 'Request'), [feedPosts]);
 
   return (
     <View>
@@ -191,7 +197,7 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
               overScrollMode="never"
               contentContainerStyle={styles.hListContent}
             >
-              {RECENTLY_VIEWED_MOCK.map((item, index) => (
+              {recentlyViewedPosts.map((item, index) => (
                 <View key={item.id} style={index > 0 ? styles.hItemGapWide : undefined}>
                   <RecentRow item={item} {...recentCardProps} />
                 </View>

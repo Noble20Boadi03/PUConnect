@@ -1,4 +1,5 @@
 import type { NewPostPriceKind, NewPostType } from '../types/newPost';
+import type { PostPrice } from '../types/market';
 
 export function getNewPostDescriptionPlaceholder(postType: NewPostType): string {
   return postType === 'Service'
@@ -78,4 +79,20 @@ export function validateNewPostForm(input: {
   }
 
   return { valid: true };
+}
+
+export function buildPostPriceFromForm(input: {
+  priceKind: NewPostPriceKind;
+  fixedAmount: string;
+  rangeMin: string;
+  rangeMax: string;
+}): PostPrice {
+  switch (input.priceKind) {
+    case 'fixed':
+      return { kind: 'fixed', amount: Number(input.fixedAmount) };
+    case 'range':
+      return { kind: 'range', min: Number(input.rangeMin), max: Number(input.rangeMax) };
+    default:
+      return { kind: 'negotiated' };
+  }
 }

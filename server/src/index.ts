@@ -1,6 +1,6 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes';
 import exploreRoutes from './routes/exploreRoutes';
 import postRoutes from './routes/postRoutes';
@@ -12,7 +12,7 @@ import reviewRoutes from './routes/reviewRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 
 // Load environment variables from .env file
-dotenv.config();
+// dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;

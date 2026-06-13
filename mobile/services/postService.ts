@@ -1,5 +1,5 @@
-import apiClient from './apiClient';
-import type { DbPost } from '../types';
+import { apiClient } from './apiClient';
+import type { ApiResponse, DbPost } from '../types';
 
 export interface GetPostsParams {
   tag?: 'Service' | 'Request';
@@ -7,49 +7,61 @@ export interface GetPostsParams {
 }
 
 /**
- * Get all market posts (optionally filtered by type or search query)
+ * Post-related API actions (market feed, detail, create, update, delete).
  */
-export const getPosts = async (params?: GetPostsParams): Promise<DbPost[]> => {
-  const response = await apiClient.get('/posts', { params });
-  return response.data.data;
+export const postService = {
+  /**
+   * Fetches all market posts.
+   * @route GET /api/posts
+   */
+  async getPosts(params?: GetPostsParams): Promise<DbPost[]> {
+    const response = await apiClient.get<ApiResponse<DbPost[]>>('/posts', { params });
+    return response.data.data;
+  },
+
+  /**
+   * Fetches a single post by ID.
+   * @route GET /api/posts/:id
+   */
+  async getPostById(id: string): Promise<DbPost> {
+    const response = await apiClient.get<ApiResponse<DbPost>>(`/posts/${id}`);
+    return response.data.data;
+  },
+
+  /**
+   * Creates a new post for the authenticated user.
+   * @route POST /api/posts
+   */
+  async createPost(data: CreatePostData): Promise<DbPost> {
+    const response = await apiClient.post<ApiResponse<DbPost>>('/posts', data);
+    return response.data.data;
+  },
+
+  /**
+   * Updates an existing post owned by the authenticated user.
+   * @route PUT /api/posts/:id
+   */
+  async updatePost(id: string, data: Partial<CreatePostData>): Promise<DbPost> {
+    const response = await apiClient.put<ApiResponse<DbPost>>(`/posts/${id}`, data);
+    return response.data.data;
+  },
+
+  /**
+   * Deletes a post owned by the authenticated user.
+   * @route DELETE /api/posts/:id
+   */
+  async deletePost(id: string): Promise<void> {
+    await apiClient.delete(`/posts/${id}`);
+  },
 };
 
-/**
- * Get a single post by ID
- */
-export const getPostById = async (id: string): Promise<DbPost> => {
-  const response = await apiClient.get(`/posts/${id}`);
-  return response.data.data;
-};
-
-/**
- * Create a new post
- */
 export interface CreatePostData {
   title: string;
   description: string;
   tag: 'Service' | 'Request';
-  price: any; // This should match your PostPrice type
+  price: DbPost['price'];
   images?: string[];
   hashtags?: string[];
 }
 
-export const createPost = async (data: CreatePostData): Promise<DbPost> => {
-  const response = await apiClient.post('/posts', data);
-  return response.data.data;
-};
-
-/**
- * Update an existing post
- */
-export const updatePost = async (id: string, data: Partial<CreatePostData>): Promise<DbPost> => {
-  const response = await apiClient.put(`/posts/${id}`, data);
-  return response.data.data;
-};
-
-/**
- * Delete a post
- */
-export const deletePost = async (id: string): Promise<void> => {
-  await apiClient.delete(`/posts/${id}`);
-};
+export default postService;
