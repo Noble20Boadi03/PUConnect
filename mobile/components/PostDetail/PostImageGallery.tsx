@@ -9,8 +9,10 @@ import {
   Dimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  Modal,
 } from 'react-native';
 import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
 import { Spacing, Typography } from '../../constants';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -35,7 +37,10 @@ const PostImageGalleryComponent: React.FC<PostImageGalleryProps> = ({
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const listRef = useRef<FlatList<string>>(null);
+  const previewListRef = useRef<FlatList<string>>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(0);
 
   const hasMultiple = images.length > 1;
   const thumbBorderActive = isDark ? '#C4F000' : '#65A30D';
@@ -46,6 +51,11 @@ const PostImageGalleryComponent: React.FC<PostImageGalleryProps> = ({
     listRef.current?.scrollToIndex({ index, animated: true });
   }, []);
 
+  const scrollToPreviewIndex = useCallback((index: number) => {
+    setPreviewIndex(index);
+    previewListRef.current?.scrollToIndex({ index, animated: true });
+  }, []);
+
   const onMomentumScrollEnd = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
       const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
@@ -54,8 +64,30 @@ const PostImageGalleryComponent: React.FC<PostImageGalleryProps> = ({
     []
   );
 
+  const onPreviewMomentumScrollEnd = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+      setPreviewIndex(index);
+    },
+    []
+  );
+
+  const getItemLayout = useCallback(
+    (_: ArrayLike<string> | null | undefined, index: number) => ({
+      length: SCREEN_WIDTH,
+      offset: SCREEN_WIDTH * index,
+      index,
+    }),
+    []
+  );
+
+  const openPreview = useCallback(() => {
+    setPreviewIndex(activeIndex);
+    setPreviewVisible(true);
+  }, [activeIndex]);
+
   const renderSlide = useCallback(
-    ({ item, index }: { item: string; index: number }) => (
+    ({ item, index }: { item: string; index: number}) => (
       <View style={styles.slide}>
         <Image
           source={{ uri: item }}
@@ -70,12 +102,17 @@ const PostImageGalleryComponent: React.FC<PostImageGalleryProps> = ({
     [recyclingKeyPrefix]
   );
 
-  const getItemLayout = useCallback(
-    (_: ArrayLike<string> | null | undefined, index: number) => ({
-      length: SCREEN_WIDTH,
-      offset: SCREEN_WIDTH * index,
-      index,
-    }),
+  const renderPreviewSlide = useCallback(
+    ({ item }: { item: string }) => (
+      <View style={styles.previewImageContainer}>
+        <Image
+          source={{ uri: item }}
+          style={styles.previewImage}
+          contentFit="contain"
+          transition={0}
+        />
+      </View>
+    ),
     []
   );
 
@@ -118,6 +155,14 @@ const PostImageGalleryComponent: React.FC<PostImageGalleryProps> = ({
             </View>
           </>
         ) : null}
+
+        <TouchableOpacity
+          onPress={openPreview}
+          style={styles.expandButton}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="expand-outline" size={20} color="#FFFFFF" />
+        </TouchableOpacity>
       </View>
 
       {hasMultiple ? (
@@ -149,6 +194,60 @@ const PostImageGalleryComponent: React.FC<PostImageGalleryProps> = ({
           }}
         />
       ) : null}
+
+      <Modal
+        visible={previewVisible}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setPreviewVisible(false)}
+      >
+        <View style={styles.previewOverlay}>
+          <View style={styles.previewContainer}>
+            <View style={styles.previewHeader}>
+              <TouchableOpacity onPress={() => setPreviewVisible(false)} style={styles.previewClose}>
+                <Ionicons name="close" size={28} color="#FFFFFF" />
+              </TouchableOpacity>
+              <Text style={styles.previewCount}>
+                {previewIndex + 1} / {images.length}
+              </Text>
+              <View style={styles.previewSpacer} />
+            </View>
+
+            <FlatList
+              ref={previewListRef}
+              data={images}
+              renderItem={renderPreviewSlide}
+              keyExtractor={(item, index) => `preview-${index}`}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              bounces={hasMultiple}
+              onMomentumScrollEnd={onPreviewMomentumScrollEnd}
+              getItemLayout={getItemLayout}
+              initialNumToRender={1}
+              maxToRenderPerBatch={2}
+              windowSize={3}
+              initialScrollIndex={previewIndex}
+              style={styles.previewList}
+            />
+
+            <View style={styles.previewControls}>
+              {previewIndex > 0 && (
+                <TouchableOpacity onPress={() => scrollToPreviewIndex(previewIndex - 1)} style={styles.previewControlButton}>
+                  <Ionicons name="chevron-back" size={32} color="#FFFFFF" />
+                </TouchableOpacity>
+              )}
+              <View style={styles.previewSpacer} />
+              {previewIndex < images.length - 1 && (
+                <TouchableOpacity onPress={() => scrollToPreviewIndex(previewIndex + 1)} style={styles.previewControlButton}>
+                  <Ionicons name="chevron-forward" size={32} color="#FFFFFF" />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -169,6 +268,17 @@ const styles = StyleSheet.create({
   slideImage: {
     width: '100%',
     height: '100%',
+  },
+  expandButton: {
+    position: 'absolute',
+    bottom: Spacing.md,
+    right: Spacing.md,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   counterPill: {
     position: 'absolute',
@@ -222,6 +332,66 @@ const styles = StyleSheet.create({
   thumbImage: {
     width: '100%',
     height: '100%',
+  },
+  // Preview styles
+  previewOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  previewContainer: {
+    width: '100%',
+    height: '100%',
+  },
+  previewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.md,
+  },
+  previewClose: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  previewCount: {
+    flex: 1,
+    textAlign: 'center',
+    color: '#FFFFFF',
+    fontSize: Typography.size.md,
+    fontWeight: '700',
+  },
+  previewSpacer: {
+    width: 44,
+  },
+  previewList: {
+    flex: 1,
+  },
+  previewImageContainer: {
+    width: SCREEN_WIDTH,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+  },
+  previewControls: {
+    flexDirection: 'row',
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.lg,
+  },
+  previewControlButton: {
+    width: 56,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 28,
   },
 });
 
