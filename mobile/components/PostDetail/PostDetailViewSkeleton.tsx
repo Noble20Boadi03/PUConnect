@@ -3,7 +3,6 @@ import { StyleSheet, View, ScrollView, useColorScheme } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Spacing } from '../../constants';
 import { useThemeColor } from '../../hooks';
-import { getSafeAreaBottom } from '../../lib/safeAreaInsets';
 import { Shimmer } from '../Shimmer';
 
 export const PostDetailViewSkeleton: React.FC = () => {
@@ -16,7 +15,7 @@ export const PostDetailViewSkeleton: React.FC = () => {
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
 
-  const footerBottom = getSafeAreaBottom(insets.bottom);
+  const footerBottom = insets.bottom;
   const footerHeight = 60;
 
   return (

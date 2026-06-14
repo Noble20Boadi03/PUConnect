@@ -18,7 +18,6 @@ import * as Haptics from 'expo-haptics';
 import { useThemeColor, usePostDetailChrome } from '../../hooks';
 import { Spacing, Typography, CARD_SHADOW } from '../../constants';
 import { formatPostPrice } from '../../lib';
-import { getSafeAreaBottom } from '../../lib/safeAreaInsets';
 import { getExploreCategoryFromPostTags, getExploreServicesForPost } from '../../lib/mapPostToExplore';
 import { Button } from '../Button';
 import { GuardedPressable } from '../GuardedPressable';
@@ -163,7 +162,7 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
     onViewProvider?.(post.author.username);
   }, [isService, onViewProvider, post.author.username]);
 
-  const footerBottom = getSafeAreaBottom(insets.bottom);
+  const footerBottom = insets.bottom;
   const footerHeight = ownerView ? OWNER_FOOTER_BODY : FOOTER_BODY;
 
   const onScroll = useCallback(

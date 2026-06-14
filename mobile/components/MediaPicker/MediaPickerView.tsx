@@ -198,7 +198,7 @@ export const MediaPickerView: React.FC<MediaPickerProps> = ({
           <TouchableOpacity style={styles.optionBtn} onPress={pickFromStorage}>
             <Ionicons name="folder-open-outline" size={24} color={Colors.primary} />
             <Text style={[styles.optionText, { color: Colors.primary }]}>
-              Browse Files
+              Browse Folders
             </Text>
           </TouchableOpacity>
         </View>

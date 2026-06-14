@@ -56,7 +56,7 @@ export default function RootLayout() {
     if (Platform.OS === 'android' && !managesOwnChrome) {
       void applyThemeSystemChrome(colorScheme === 'dark');
     }
-  }, [colorScheme, managesOwnChrome]);
+  }, [colorScheme, managesOwnChrome, segments]);
 
   useEffect(() => {
     if (isLoading) return;
