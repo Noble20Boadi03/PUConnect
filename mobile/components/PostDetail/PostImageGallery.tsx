@@ -92,7 +92,7 @@ const PostImageGalleryComponent: React.FC<PostImageGalleryProps> = ({
         <Image
           source={{ uri: item }}
           style={styles.slideImage}
-          contentFit="cover"
+          contentFit="contain"
           cachePolicy="memory-disk"
           recyclingKey={`${recyclingKeyPrefix}-${index}`}
           transition={0}

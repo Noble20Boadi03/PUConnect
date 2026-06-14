@@ -50,6 +50,141 @@ const FeaturedPostCardComponent: React.FC<FeaturedPostCardProps> = ({
   const priceLabel = formatPostPrice(item.price);
   const thumbHeight = isCarousel ? THUMB_HEIGHT_CAROUSEL : THUMB_HEIGHT_STACK;
 
+  const renderThumbnail = () => {
+    if (!isService) return null;
+    
+    // Check if item has images (new ServicePost) or just thumbnail (backward compatible)
+    const images = ('images' in item && item.images) ? item.images : [item.thumbnail];
+    const imageCount = images.length;
+
+    if (imageCount === 1) {
+      return (
+        <View style={[styles.thumbnailWrap, { height: thumbHeight, backgroundColor: subtleBg }]}>
+          <Image
+            source={{ uri: images[0] }}
+            style={styles.thumbnail}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            recyclingKey={`market-post-${item.id}-0`}
+            transition={0}
+          />
+        </View>
+      );
+    }
+
+    if (imageCount === 2) {
+      return (
+        <View style={[styles.thumbnailWrap, { height: thumbHeight, backgroundColor: subtleBg }]}>
+          <View style={styles.twoColumnGrid}>
+            <Image
+              source={{ uri: images[0] }}
+              style={styles.halfThumb}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              recyclingKey={`market-post-${item.id}-0`}
+              transition={0}
+            />
+            <Image
+              source={{ uri: images[1] }}
+              style={styles.halfThumb}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              recyclingKey={`market-post-${item.id}-1`}
+              transition={0}
+            />
+          </View>
+        </View>
+      );
+    }
+
+    if (imageCount === 3) {
+      return (
+        <View style={[styles.thumbnailWrap, { height: thumbHeight, backgroundColor: subtleBg }]}>
+          <View style={styles.twoColumnGrid}>
+            <Image
+              source={{ uri: images[0] }}
+              style={styles.fullHeightThumb}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              recyclingKey={`market-post-${item.id}-0`}
+              transition={0}
+            />
+            <View style={styles.twoRowColumn}>
+              <Image
+                source={{ uri: images[1] }}
+                style={styles.halfRowThumb}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                recyclingKey={`market-post-${item.id}-1`}
+                transition={0}
+              />
+              <Image
+                source={{ uri: images[2] }}
+                style={styles.halfRowThumb}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                recyclingKey={`market-post-${item.id}-2`}
+                transition={0}
+              />
+            </View>
+          </View>
+        </View>
+      );
+    }
+
+    // 4 or more images
+    const remainingCount = imageCount - 3;
+    return (
+      <View style={[styles.thumbnailWrap, { height: thumbHeight, backgroundColor: subtleBg }]}>
+        <View style={styles.twoColumnGrid}>
+          <View style={styles.twoRowColumn}>
+            <Image
+              source={{ uri: images[0] }}
+              style={styles.halfRowThumb}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              recyclingKey={`market-post-${item.id}-0`}
+              transition={0}
+            />
+            <Image
+              source={{ uri: images[2] }}
+              style={styles.halfRowThumb}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              recyclingKey={`market-post-${item.id}-2`}
+              transition={0}
+            />
+          </View>
+          <View style={styles.twoRowColumn}>
+            <Image
+              source={{ uri: images[1] }}
+              style={styles.halfRowThumb}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              recyclingKey={`market-post-${item.id}-1`}
+              transition={0}
+            />
+            <View style={styles.halfRowThumb}>
+              <Image
+                source={{ uri: images[3] }}
+                style={styles.halfRowThumb}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                recyclingKey={`market-post-${item.id}-3`}
+                transition={0}
+              />
+              {remainingCount > 0 && (
+                <View style={styles.overlay}>
+                  <Text style={styles.overlayText}>+{remainingCount}</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <View
       style={[
@@ -65,18 +200,7 @@ const FeaturedPostCardComponent: React.FC<FeaturedPostCardProps> = ({
         delayPressIn={50}
         disabled={!onPress}
       >
-        {isService ? (
-          <View style={[styles.thumbnailWrap, { height: thumbHeight, backgroundColor: subtleBg }]}>
-            <Image
-              source={{ uri: item.thumbnail }}
-              style={styles.thumbnail}
-              contentFit="cover"
-              cachePolicy="memory-disk"
-              recyclingKey={`market-post-${item.id}`}
-              transition={0}
-            />
-          </View>
-        ) : null}
+        {renderThumbnail()}
 
         <View style={[styles.body, isService ? styles.bodyWithThumb : undefined]}>
           <View style={styles.topRow}>
@@ -169,6 +293,40 @@ const styles = StyleSheet.create({
   thumbnail: {
     width: '100%',
     height: '100%',
+  },
+  twoColumnGrid: {
+    flexDirection: 'row',
+    width: '100%',
+    height: '100%',
+    gap: 2,
+  },
+  twoRowColumn: {
+    flex: 1,
+    gap: 2,
+  },
+  halfThumb: {
+    flex: 1,
+  },
+  fullHeightThumb: {
+    flex: 1,
+  },
+  halfRowThumb: {
+    flex: 1,
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  overlayText: {
+    color: 'white',
+    fontSize: Typography.size.lg,
+    fontWeight: '800',
   },
   body: {
     padding: Spacing.md,

@@ -26,6 +26,7 @@ export function mapDbPostToFeaturedPost(post: DbPost): FeaturedPost {
   const price = parsePostPrice(post.price);
 
   if (post.tag === 'Service') {
+    const images = post.images.length > 0 ? post.images : [DEFAULT_THUMBNAIL];
     return {
       id: post.id,
       title: post.title,
@@ -33,7 +34,8 @@ export function mapDbPostToFeaturedPost(post: DbPost): FeaturedPost {
       authorName,
       authorInitials: initialsFromName(authorName),
       tag: 'Service',
-      thumbnail: post.images[0] ?? DEFAULT_THUMBNAIL,
+      thumbnail: images[0],
+      images,
       price,
       postedAt,
     };

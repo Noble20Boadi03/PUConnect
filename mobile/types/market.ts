@@ -36,8 +36,10 @@ interface MarketPostBase {
 /** Service listings show an image thumbnail on the card. */
 export interface ServicePost extends MarketPostBase {
   tag: 'Service';
-  /** Remote image URL for the card thumbnail. */
+  /** Remote image URL for the card thumbnail (backward compatibility). */
   thumbnail: string;
+  /** Array of images attached to the listing. */
+  images?: string[];
 }
 
 /** Request listings keep the text-only card layout. */
