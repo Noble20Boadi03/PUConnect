@@ -11,6 +11,7 @@ import {
 import { FlashList } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
 import * as MediaLibrary from 'expo-media-library';
+import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Spacing, Typography } from '../../constants';
@@ -103,6 +104,29 @@ export const MediaPickerView: React.FC<MediaPickerProps> = ({
     });
   }, []);
 
+  const pickFromStorage = useCallback(async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: multiSelect,
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        const pickedAssets: MediaAsset[] = result.assets.map((asset, index) => ({
+          id: `local-${index}-${Date.now()}`,
+          uri: asset.uri,
+          width: asset.width || 0,
+          height: asset.height || 0,
+        }));
+        onSelect(pickedAssets);
+        onClose();
+      }
+    } catch (e) {
+      console.error('Error picking image from storage', e);
+    }
+  }, [onSelect, onClose, multiSelect]);
+
   const renderItem = useCallback(
     ({ item }: { item: MediaAsset }) => {
       const isSelected = selectedAssets.some((a) => a.id === item.id);
@@ -170,6 +194,15 @@ export const MediaPickerView: React.FC<MediaPickerProps> = ({
           <View style={styles.headerBtn} />
         </View>
 
+        <View style={styles.optionsContainer}>
+          <TouchableOpacity style={styles.optionBtn} onPress={pickFromStorage}>
+            <Ionicons name="folder-open-outline" size={24} color={Colors.primary} />
+            <Text style={[styles.optionText, { color: Colors.primary }]}>
+              Browse Files
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         <FlashList
           ref={listRef}
           data={assets}
@@ -212,6 +245,20 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  optionsContainer: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  optionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.sm,
+  },
+  optionText: {
+    fontSize: Typography.size.md,
+    fontWeight: '500',
   },
   headerBtn: {
     width: 44,

@@ -9,7 +9,6 @@ import { Spacing, Typography } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import type { NewPostType } from '../../types/newPost';
 import { MediaPickerView } from '../MediaPicker';
-import { PhotoEditor } from 'react-native-photo-editor-pro';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -63,8 +62,6 @@ export const NewPostImageUploader: React.FC<NewPostImageUploaderProps> = ({
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewIndex, setPreviewIndex] = useState(0);
   const [mediaPickerVisible, setMediaPickerVisible] = useState(false);
-  const [imageEditorVisible, setImageEditorVisible] = useState(false);
-  const [currentEditUri, setCurrentEditUri] = useState<string | null>(null);
   const listRef = useRef<FlatList<string>>(null);
   const Colors = useThemeColor();
   const insets = useSafeAreaInsets();
@@ -95,25 +92,10 @@ export const NewPostImageUploader: React.FC<NewPostImageUploaderProps> = ({
     []
   );
 
-  const editImage = useCallback(async () => {
-    if (Platform.OS === 'web') {
-      Alert.alert('Not available', 'Image editing is not supported on web in this build.');
-      return;
-    }
-    setCurrentEditUri(imageUris[previewIndex]);
-    setImageEditorVisible(true);
-  }, [imageUris, previewIndex]);
-
   const handleMediaSelect = useCallback((assets: any[]) => {
     const newUris = [...imageUris, ...assets.map((a: any) => a.uri)].slice(0, 6);
     onChange(newUris);
   }, [imageUris, onChange]);
-
-  const handleEditorSave = useCallback((uri: string) => {
-    const newUris = [...imageUris];
-    newUris[previewIndex] = uri;
-    onChange(newUris);
-  }, [imageUris, previewIndex, onChange]);
 
   const renderSlide = useCallback(
     ({ item }: { item: string }) => (
@@ -296,9 +278,7 @@ export const NewPostImageUploader: React.FC<NewPostImageUploaderProps> = ({
               <Text style={styles.previewCount}>
                 {previewIndex + 1} / {imageUris.length}
               </Text>
-              <TouchableOpacity onPress={editImage} style={styles.previewEdit}>
-                <Ionicons name="create-outline" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
+              <View style={styles.previewSpacer} />
             </View>
 
             <FlatList
@@ -341,24 +321,6 @@ export const NewPostImageUploader: React.FC<NewPostImageUploaderProps> = ({
         onClose={() => setMediaPickerVisible(false)}
         onSelect={handleMediaSelect}
       />
-
-      {imageEditorVisible && currentEditUri && (
-        <Modal
-          visible={imageEditorVisible}
-          animationType="slide"
-          presentationStyle="fullScreen"
-          onRequestClose={() => setImageEditorVisible(false)}
-        >
-          <PhotoEditor
-            uri={currentEditUri}
-            onSave={(editedUri) => {
-              handleEditorSave(editedUri);
-              setImageEditorVisible(false);
-            }}
-            onCancel={() => setImageEditorVisible(false)}
-          />
-        </Modal>
-      )}
     </View>
   );
 };
@@ -480,12 +442,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: Typography.size.md,
     fontWeight: '700',
-  },
-  previewEdit: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   previewSpacer: {
     width: 44,
