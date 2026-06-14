@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, ScrollView, RefreshControlProps } from 'react-native';
+import { StyleSheet, View, RefreshControlProps } from 'react-native';
 import { Spacing } from '../../constants';
 import { ExploreCategoryCard } from './ExploreCategoryCard';
 import type { ExploreCategory } from '../../types/explore';
@@ -18,13 +18,7 @@ export const ExploreCategoriesPanel: React.FC<ExploreCategoriesPanelProps> = ({
   onCategoryPress,
   refreshControl,
 }) => (
-  <ScrollView
-    style={styles.scroll}
-    contentContainerStyle={styles.scrollContent}
-    showsVerticalScrollIndicator={false}
-    keyboardShouldPersistTaps="handled"
-    refreshControl={refreshControl}
-  >
+  <View style={styles.scrollContent}>
     <View style={styles.list}>
       {categories.map((category) => (
         <ExploreCategoryCard
@@ -34,13 +28,10 @@ export const ExploreCategoriesPanel: React.FC<ExploreCategoriesPanelProps> = ({
         />
       ))}
     </View>
-  </ScrollView>
+  </View>
 );
 
 const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-  },
   scrollContent: {
     paddingHorizontal: HORIZONTAL_PAD,
     paddingBottom: 120,

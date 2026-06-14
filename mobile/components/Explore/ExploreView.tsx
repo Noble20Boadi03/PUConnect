@@ -1,8 +1,8 @@
-// ExploreView component with refreshControl support
 import React, { useCallback, useMemo, useState, useRef } from 'react';
 import {
   StyleSheet,
   View,
+  ScrollView,
   useColorScheme,
   TextInput,
   TouchableOpacity,
@@ -134,74 +134,83 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
-      <ExploreHeader 
-        textColor={Colors.text} 
-        buttonBg={cardBg}
-        onSearchPress={isSearchExpanded ? undefined : handleSearchPress}
-        hideSearchIcon={isSearchExpanded}
-      />
+      <ScrollView
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        refreshControl={refreshControl}
+      >
+        <ExploreHeader 
+          textColor={Colors.text} 
+          buttonBg={cardBg}
+          onSearchPress={isSearchExpanded ? undefined : handleSearchPress}
+          hideSearchIcon={isSearchExpanded}
+        />
 
-      <View style={styles.topSection}>
-        {!isSearchExpanded ? (
-          <ExploreTopTabs
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            {...tabTheme}
-          />
-        ) : (
-          <Animated.View style={[styles.searchBarContainer, { opacity: fadeAnim, backgroundColor: subtleBg }]}>
-            <View style={[styles.searchInner, { backgroundColor: cardBg }]}>
-              <Ionicons name="search-outline" size={20} color={Colors.icon} />
-              <TextInput
-                ref={searchInputRef}
-                style={[styles.searchInput, { color: Colors.text }]}
-                placeholder="Search providers, services..."
-                placeholderTextColor={Colors.icon}
-                value={searchQuery}
-                onChangeText={handleSearchChange}
-                autoCapitalize="none"
-                returnKeyType="search"
-                autoFocus
-              />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                  <Ionicons name="close-circle" size={18} color={Colors.icon} />
-                </TouchableOpacity>
-              )}
-            </View>
-            <TouchableOpacity onPress={handleSearchClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <RNText style={[styles.cancelText, { color: Colors.primary }]}>Cancel</RNText>
-            </TouchableOpacity>
-          </Animated.View>
-        )}
-      </View>
+        <View style={styles.topSection}>
+          {!isSearchExpanded ? (
+            <ExploreTopTabs
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              {...tabTheme}
+            />
+          ) : (
+            <Animated.View style={[styles.searchBarContainer, { opacity: fadeAnim, backgroundColor: subtleBg }]}>
+              <View style={[styles.searchInner, { backgroundColor: cardBg }]}>
+                <Ionicons name="search-outline" size={20} color={Colors.icon} />
+                <TextInput
+                  ref={searchInputRef}
+                  style={[styles.searchInput, { color: Colors.text }]}
+                  placeholder="Search providers, services..."
+                  placeholderTextColor={Colors.icon}
+                  value={searchQuery}
+                  onChangeText={handleSearchChange}
+                  autoCapitalize="none"
+                  returnKeyType="search"
+                  autoFocus
+                />
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Ionicons name="close-circle" size={18} color={Colors.icon} />
+                  </TouchableOpacity>
+                )}
+              </View>
+              <TouchableOpacity onPress={handleSearchClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <RNText style={[styles.cancelText, { color: Colors.primary }]}>Cancel</RNText>
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+        </View>
 
-      <View style={styles.panel}>
-        {isSearchExpanded || activeTab === 'people' ? (
-          <ExplorePeoplePanel
-            categories={categories}
-            providers={providers}
-            activeFilter={peopleFilter}
-            onFilterChange={setPeopleFilter}
-            onProviderPress={handleProviderPress}
-            searchQuery={searchQuery}
-            refreshControl={refreshControl}
-            {...peopleTheme}
-          />
-        ) : (
-          <ExploreCategoriesPanel
-            categories={categories}
-            onCategoryPress={handleCategoryPress}
-            refreshControl={refreshControl}
-          />
-        )}
-      </View>
+        <View style={styles.panel}>
+          {isSearchExpanded || activeTab === 'people' ? (
+            <ExplorePeoplePanel
+              categories={categories}
+              providers={providers}
+              activeFilter={peopleFilter}
+              onFilterChange={setPeopleFilter}
+              onProviderPress={handleProviderPress}
+              searchQuery={searchQuery}
+              refreshControl={undefined}
+              {...peopleTheme}
+            />
+          ) : (
+            <ExploreCategoriesPanel
+              categories={categories}
+              onCategoryPress={handleCategoryPress}
+              refreshControl={undefined}
+            />
+          )}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  scroll: {
     flex: 1,
   },
   topSection: {

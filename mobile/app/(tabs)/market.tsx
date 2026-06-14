@@ -192,8 +192,6 @@ export default function MarketScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
       <View style={styles.root}>
-        <MarketHeader {...headerTheme} />
-
         <ScrollView
           style={[styles.scroll, { backgroundColor: screenBg }]}
           contentContainerStyle={styles.scrollContent}
@@ -206,6 +204,8 @@ export default function MarketScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
+          <MarketHeader {...headerTheme} />
+
           {loadError ? (
             <View style={styles.errorState}>
               <Text style={[styles.errorText, { color: Colors.icon }]}>{loadError}</Text>

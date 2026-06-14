@@ -80,26 +80,27 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
-      <View style={styles.header}>
-        <GuardedPressable
-          style={[styles.backButton, { backgroundColor: subtleBg }]}
-          onPress={onBack}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={22} color={Colors.text} />
-        </GuardedPressable>
-        <Text style={[styles.headerTitle, { color: Colors.text }]} numberOfLines={1}>
-          {profile.displayName}
-        </Text>
-        <View style={styles.headerSpacer} />
-      </View>
-
       <ScrollView
+        style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={refreshControl}
       >
+        <View style={styles.header}>
+          <GuardedPressable
+            style={[styles.backButton, { backgroundColor: subtleBg }]}
+            onPress={onBack}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <Ionicons name="chevron-back" size={22} color={Colors.text} />
+          </GuardedPressable>
+          <Text style={[styles.headerTitle, { color: Colors.text }]} numberOfLines={1}>
+            {profile.displayName}
+          </Text>
+          <View style={styles.headerSpacer} />
+        </View>
+
         <ProfileHeroSection
           variant="public"
           displayName={profile.displayName}
@@ -214,6 +215,9 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  scroll: {
     flex: 1,
   },
   header: {

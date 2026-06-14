@@ -157,32 +157,33 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: Colors.text }]}>Profile</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            style={[styles.headerButton, { backgroundColor: subtleBg }]}
-            onPress={handleToggle}
-          >
-            <Ionicons name={iconName} size={22} color={Colors.text} />
-          </TouchableOpacity>
-          <NotificationBellButton backgroundColor={subtleBg} iconColor={Colors.text} />
-          <TouchableOpacity
-            style={[styles.headerButton, { backgroundColor: subtleBg }]}
-            onPress={handleOpenSettings}
-          >
-            <Ionicons name="settings-outline" size={22} color={Colors.text} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
       <ScrollView
+        style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: Colors.text }]}>Profile</Text>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={[styles.headerButton, { backgroundColor: subtleBg }]}
+              onPress={handleToggle}
+            >
+              <Ionicons name={iconName} size={22} color={Colors.text} />
+            </TouchableOpacity>
+            <NotificationBellButton backgroundColor={subtleBg} iconColor={Colors.text} />
+            <TouchableOpacity
+              style={[styles.headerButton, { backgroundColor: subtleBg }]}
+              onPress={handleOpenSettings}
+            >
+              <Ionicons name="settings-outline" size={22} color={Colors.text} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
         <ProfileHeroSection
           variant="owner"
           displayName={user?.name || 'User'}
@@ -280,6 +281,9 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  scroll: {
     flex: 1,
   },
   header: {

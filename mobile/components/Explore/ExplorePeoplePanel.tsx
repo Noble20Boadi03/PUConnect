@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { StyleSheet, View, Text, ScrollView, RefreshControlProps } from 'react-native';
+import { StyleSheet, View, Text, RefreshControlProps } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { filterExploreProviders } from '../../lib/filterExploreProviders';
@@ -75,13 +75,7 @@ export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
         borderColor={borderColor}
       />
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={refreshControl}
-      >
+      <View style={styles.scrollContent}>
         {filtered.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={[styles.emptyText, { color: mutedColor }]}>{emptyMessage}</Text>
@@ -101,17 +95,14 @@ export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
             ))}
           </View>
         )}
-      </ScrollView>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   root: {
-    flex: 1,
-  },
-  scroll: {
-    flex: 1,
+    width: '100%',
   },
   scrollContent: {
     paddingHorizontal: Spacing.lg,
