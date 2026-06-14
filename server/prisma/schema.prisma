@@ -95,16 +95,17 @@ model User {
 }
 
 model Post {
-  id          String   @id @default(uuid())
-  title       String
-  description String
-  tag         String // "Service" or "Request"
-  price       Json
-  images      String[]
-  hashtags    String[]
-  authorId    String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String   @id @default(uuid())
+  title            String
+  description      String
+  tag              String // "Service" or "Request"
+  price            Json
+  images           String[]
+  hashtags         String[]
+  helpCategoryIds  String[]
+  authorId         String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   author   User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
   requests ServiceRequest[]

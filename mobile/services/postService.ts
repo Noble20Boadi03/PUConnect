@@ -62,6 +62,7 @@ export interface CreatePostData {
   price: DbPost['price'];
   images?: string[];
   hashtags?: string[];
+  helpCategoryIds?: string[];
 }
 
 export default postService;

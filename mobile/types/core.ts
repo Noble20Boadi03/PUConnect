@@ -44,6 +44,7 @@ export interface DbPost {
   price: PostPrice;
   images: string[];
   hashtags: string[];
+  helpCategoryIds: string[];
   authorId: string;
   createdAt: string;
   updatedAt: string;

@@ -91,6 +91,7 @@ export const NewPostView: React.FC<NewPostViewProps> = ({ onPublished }) => {
         setDescription(data.description);
         setImageUris(data.images ?? []);
         setSelectedTags(data.hashtags ?? []);
+        setHelpCategoryIds(data.helpCategoryIds ?? []);
 
         if (price.kind === 'fixed') {
           setPriceKind('fixed');
@@ -194,6 +195,7 @@ export const NewPostView: React.FC<NewPostViewProps> = ({ onPublished }) => {
         price: buildPostPriceFromForm({ priceKind, fixedAmount, rangeMin, rangeMax }),
         images: uploadedImages,
         hashtags: selectedTags,
+        helpCategoryIds,
       };
 
       if (isEditing && typeof params.editId === 'string') {

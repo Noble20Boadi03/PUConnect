@@ -14,19 +14,21 @@ import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { useThemeColor } from '../../hooks';
 
-export type ChangePhotoAction = 'library' | 'camera' | 'cancel';
+export type ChangePhotoAction = 'library' | 'camera' | 'remove' | 'cancel';
 
 export interface ProfileChangePhotoSheetProps {
   visible: boolean;
   onSelect: (action: ChangePhotoAction) => void;
   onClose: () => void;
+  showRemoveOption?: boolean;
 }
 
 const OPTIONS: {
   key: Exclude<ChangePhotoAction, 'cancel'>;
   label: string;
   subtitle: string;
-  icon: 'images-outline' | 'camera-outline';
+  icon: 'images-outline' | 'camera-outline' | 'trash-outline';
+  isDestructive?: boolean;
 }[] = [
   {
     key: 'library',
@@ -40,12 +42,20 @@ const OPTIONS: {
     subtitle: 'Use your camera now',
     icon: 'camera-outline',
   },
+  {
+    key: 'remove',
+    label: 'Remove profile photo',
+    subtitle: 'Use default avatar',
+    icon: 'trash-outline',
+    isDestructive: true,
+  },
 ];
 
 export const ProfileChangePhotoSheet: React.FC<ProfileChangePhotoSheetProps> = ({
   visible,
   onSelect,
   onClose,
+  showRemoveOption = true,
 }) => {
   const Colors = useThemeColor();
   const insets = useSafeAreaInsets();
@@ -59,6 +69,10 @@ export const ProfileChangePhotoSheet: React.FC<ProfileChangePhotoSheetProps> = (
     onSelect(action);
     onClose();
   };
+
+  const filteredOptions = showRemoveOption 
+    ? OPTIONS 
+    : OPTIONS.filter(opt => opt.key !== 'remove');
 
   return (
     <Modal
@@ -79,18 +93,38 @@ export const ProfileChangePhotoSheet: React.FC<ProfileChangePhotoSheetProps> = (
           <View style={[styles.handle, { backgroundColor: subtleBg }]} />
           <Text style={[styles.sheetTitle, { color: Colors.text }]}>Change profile photo</Text>
 
-          {OPTIONS.map((item) => (
+          {filteredOptions.map((item) => (
             <TouchableOpacity
               key={item.key}
               style={[styles.optionRow, { backgroundColor: subtleBg }]}
               onPress={() => handlePress(item.key)}
               activeOpacity={0.85}
             >
-              <View style={[styles.optionIcon, { backgroundColor: Colors.primary + '18' }]}>
-                <Ionicons name={item.icon} size={22} color={Colors.primary} />
+              <View 
+                style={[
+                  styles.optionIcon, 
+                  { 
+                    backgroundColor: item.isDestructive 
+                      ? Colors.error + '18' 
+                      : Colors.primary + '18' 
+                  }
+                ]}
+              >
+                <Ionicons 
+                  name={item.icon} 
+                  size={22} 
+                  color={item.isDestructive ? Colors.error : Colors.primary} 
+                />
               </View>
               <View style={styles.optionText}>
-                <Text style={[styles.optionLabel, { color: Colors.text }]}>{item.label}</Text>
+                <Text 
+                  style={[
+                    styles.optionLabel, 
+                    { color: item.isDestructive ? Colors.error : Colors.text }
+                  ]}
+                >
+                  {item.label}
+                </Text>
                 <Text style={[styles.optionSubtitle, { color: Colors.icon }]}>
                   {item.subtitle}
                 </Text>

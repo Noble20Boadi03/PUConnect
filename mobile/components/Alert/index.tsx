@@ -97,8 +97,8 @@ export const Alert: React.FC<AlertProps> = ({
         exiting={FadeOut.duration(200)}
       >
         <Animated.View
-          entering={ZoomIn.duration(300).springify().damping(18)}
-          exiting={ZoomOut.duration(200)}
+          entering={FadeIn.duration(220)}
+          exiting={FadeOut.duration(150)}
           style={[
             styles.alertCard,
             {

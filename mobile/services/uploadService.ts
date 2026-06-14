@@ -27,6 +27,12 @@ export const uploadService = {
 
     return response.data.data.url;
   },
+
+  async deleteImage(imageUrl: string): Promise<void> {
+    await apiClient.delete('/upload', {
+      data: { imageUrl },
+    });
+  },
 };
 
 export default uploadService;

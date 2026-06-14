@@ -66,9 +66,14 @@ export function useChangeProfilePhoto(initialUri?: string) {
   const handleConfirmPhoto = useCallback(async () => {
     if (!previewUri) return;
     
-    // Upload to Supabase first, then update user profile
     try {
       setIsLoading(true);
+      
+      // Delete the old avatar from storage before uploading new one
+      if (initialUri && initialUri.startsWith('http')) {
+        await uploadService.deleteImage(initialUri);
+      }
+      
       const publicUrl = await uploadService.uploadImage(previewUri);
       const updatedUser = await authService.updateProfile({
         avatarUrl: publicUrl,
@@ -83,12 +88,39 @@ export function useChangeProfilePhoto(initialUri?: string) {
     } finally {
       setIsLoading(false);
     }
-  }, [previewUri, setUser, closePreview, closeSheet]);
+  }, [previewUri, setUser, closePreview, closeSheet, initialUri]);
+
+  const handleRemovePhoto = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      
+      if (initialUri && initialUri.startsWith('http')) {
+        // Delete the old avatar from storage first
+        await uploadService.deleteImage(initialUri);
+      }
+      
+      const updatedUser = await authService.updateProfile({
+        avatarUrl: '', // Use empty string or null based on what your server expects
+      });
+      setUser(updatedUser);
+      setAvatarUri(undefined);
+      closeSheet();
+    } catch (error) {
+      console.error('Error removing profile photo:', error);
+      Alert.alert('Error', 'Failed to remove profile photo. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [setUser, closeSheet, initialUri]);
 
   const handleSheetSelect = useCallback(
     async (action: ChangePhotoAction) => {
       if (action === 'cancel') {
         closeSheet();
+        return;
+      }
+      if (action === 'remove') {
+        await handleRemovePhoto();
         return;
       }
       if (Platform.OS === 'web') {
@@ -97,7 +129,7 @@ export function useChangeProfilePhoto(initialUri?: string) {
       }
       await pickImage(action);
     },
-    [pickImage, closeSheet]
+    [pickImage, closeSheet, handleRemovePhoto]
   );
 
   return {

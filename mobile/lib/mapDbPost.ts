@@ -68,7 +68,7 @@ export function mapDbPostToPostDetail(post: DbPost): PostDetail {
           ? [DEFAULT_THUMBNAIL]
           : [],
     postedDate: formatPostedDate(post.createdAt),
-    categoryTags: post.hashtags,
+    categoryTags: post.helpCategoryIds,
     price: parsePostPrice(post.price),
     fullDescription: post.description,
     hashtags: post.hashtags.map((tag) => (tag.startsWith('#') ? tag : `#${tag}`)),

@@ -54,6 +54,8 @@ export default function PostDetailScreen() {
   const [post, setPost] = useState<PostDetail | undefined>();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isHiding, setIsHiding] = useState(false);
   const {
     showConfirm,
     confirmVisible,
@@ -206,7 +208,7 @@ export default function PostDetailScreen() {
   }, [post, router]);
 
   const handleHide = useCallback(async () => {
-    if (!post) return;
+    if (!post || isHiding) return;
     const confirmed = await showConfirm({
       title: 'Hide Post',
       message:
@@ -216,15 +218,17 @@ export default function PostDetailScreen() {
       icon: 'eye-off-outline',
     });
     if (!confirmed) return;
+    setIsHiding(true);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setActionMessage('Post hidden from the market. It remains on your profile.');
     setTimeout(() => {
+      setIsHiding(false);
       handleBack();
     }, 1200);
-  }, [post, showConfirm, handleBack]);
+  }, [post, showConfirm, handleBack, isHiding]);
 
   const handleDelete = useCallback(async () => {
-    if (!post || typeof id !== 'string') return;
+    if (!post || typeof id !== 'string' || isDeleting) return;
     const confirmed = await showConfirm({
       title: 'Delete Post',
       message: 'This will permanently remove the post from your profile and the market.',
@@ -234,6 +238,7 @@ export default function PostDetailScreen() {
       icon: 'trash-outline',
     });
     if (!confirmed) return;
+    setIsDeleting(true);
 
     try {
       await postService.deletePost(id);
@@ -247,8 +252,10 @@ export default function PostDetailScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setActionMessage('Could not delete this post. Please try again.');
       setTimeout(() => setActionMessage(null), 3000);
+    } finally {
+      setIsDeleting(false);
     }
-  }, [post, id, showConfirm, handleBack]);
+  }, [post, id, showConfirm, handleBack, isDeleting]);
 
   if (loading) {
     return <PostDetailViewSkeleton />;
@@ -304,6 +311,8 @@ export default function PostDetailScreen() {
         onEdit={handleEdit}
         onHide={handleHide}
         onDelete={handleDelete}
+        isHiding={isHiding}
+        isDeleting={isDeleting}
         returnToChat={returnToChat}
         onReturnToChat={handleReturnToChat}
         requestService={requestService}

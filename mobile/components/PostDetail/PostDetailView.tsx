@@ -39,6 +39,8 @@ export interface PostDetailViewProps {
   onEdit?: () => void;
   onHide?: () => void;
   onDelete?: () => void;
+  isHiding?: boolean;
+  isDeleting?: boolean;
   /** Replaces the footer CTA with a back-to-chat action. */
   returnToChat?: boolean;
   onReturnToChat?: () => void;
@@ -62,6 +64,8 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
   onEdit,
   onHide,
   onDelete,
+  isHiding = false,
+  isDeleting = false,
   returnToChat = false,
   onReturnToChat,
   requestService = false,
@@ -374,9 +378,14 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
                 activeOpacity={0.85}
                 accessibilityRole="button"
                 accessibilityLabel="Hide post"
+                isLoading={isHiding}
               >
-                <Ionicons name="eye-off-outline" size={18} color={Colors.primary} />
-                <Text style={[styles.ownerSecondaryLabel, { color: Colors.primary }]}>Hide</Text>
+                {!isHiding && (
+                  <>
+                    <Ionicons name="eye-off-outline" size={18} color={Colors.primary} />
+                    <Text style={[styles.ownerSecondaryLabel, { color: Colors.primary }]}>Hide</Text>
+                  </>
+                )}
               </GuardedPressable>
               <GuardedPressable
                 style={[styles.ownerSecondaryButton, styles.ownerDeleteButton]}
@@ -384,9 +393,14 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
                 activeOpacity={0.85}
                 accessibilityRole="button"
                 accessibilityLabel="Delete post"
+                isLoading={isDeleting}
               >
-                <Ionicons name="trash-outline" size={18} color="#EF4444" />
-                <Text style={[styles.ownerSecondaryLabel, styles.ownerDeleteLabel]}>Delete</Text>
+                {!isDeleting && (
+                  <>
+                    <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                    <Text style={[styles.ownerSecondaryLabel, styles.ownerDeleteLabel]}>Delete</Text>
+                  </>
+                )}
               </GuardedPressable>
             </View>
           </View>

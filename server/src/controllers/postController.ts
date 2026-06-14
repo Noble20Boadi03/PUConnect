@@ -1,5 +1,29 @@
 import { Request, Response } from 'express';
 import prisma from '../config/db';
+import { supabase } from '../config/supabase';
+
+/**
+ * Extract file path from Supabase public URL
+ */
+const extractFilePathFromUrl = (url: string): string | null => {
+  try {
+    // The public URL format is: https://[project-id].supabase.co/storage/v1/object/public/[bucket]/[path]
+    const pathMatch = url.match(/\/storage\/v1\/object\/public\/[^/]+\/(.+)$/);
+    return pathMatch ? pathMatch[1] : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Delete images from Supabase storage
+ */
+const deleteImagesFromStorage = async (imageUrls: string[]) => {
+  const filePaths = imageUrls.map(extractFilePathFromUrl).filter(Boolean) as string[];
+  if (filePaths.length > 0) {
+    await supabase.storage.from('avatars').remove(filePaths);
+  }
+};
 
 /**
  * Get all posts (market feed)
@@ -61,7 +85,7 @@ export const getPostById = async (req: Request, res: Response) => {
 export const createPost = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
-    const { title, description, tag, price, images, hashtags } = req.body;
+    const { title, description, tag, price, images, hashtags, helpCategoryIds } = req.body;
 
     if (!title || !description || !tag) {
       return res.status(400).json({
@@ -78,6 +102,7 @@ export const createPost = async (req: Request, res: Response) => {
         price,
         images: images || [],
         hashtags: hashtags || [],
+        helpCategoryIds: helpCategoryIds || [],
         authorId: userId,
       },
       include: { author: true },
@@ -105,7 +130,7 @@ export const updatePost = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const { id } = req.params;
-    const { title, description, tag, price, images, hashtags } = req.body;
+    const { title, description, tag, price, images, hashtags, helpCategoryIds } = req.body;
 
     // Check if post exists and belongs to user
     const post = await prisma.post.findUnique({ where: { id } });
@@ -122,6 +147,14 @@ export const updatePost = async (req: Request, res: Response) => {
       });
     }
 
+    // Find images that were removed and delete them
+    const oldImages = post.images || [];
+    const newImages = images || [];
+    const removedImages = oldImages.filter((img) => !newImages.includes(img));
+    if (removedImages.length > 0) {
+      await deleteImagesFromStorage(removedImages);
+    }
+
     const updatedPost = await prisma.post.update({
       where: { id },
       data: {
@@ -131,6 +164,7 @@ export const updatePost = async (req: Request, res: Response) => {
         price,
         images,
         hashtags,
+        helpCategoryIds,
       },
       include: { author: true },
     });
@@ -171,6 +205,11 @@ export const deletePost = async (req: Request, res: Response) => {
         status: 403,
         message: 'You are not authorized to delete this post.',
       });
+    }
+
+    // Delete all images associated with the post
+    if (post.images && post.images.length > 0) {
+      await deleteImagesFromStorage(post.images);
     }
 
     await prisma.post.delete({ where: { id } });
