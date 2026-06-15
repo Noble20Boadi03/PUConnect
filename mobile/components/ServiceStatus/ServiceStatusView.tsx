@@ -45,14 +45,24 @@ export const ServiceStatusView: React.FC<ServiceStatusViewProps> = ({ onBack }) 
     );
   }, [requests]);
 
-  const handleRefresh = useCallback(() => {
-    void fetchRequests();
+  const handleRefresh = useCallback(async () => {
+    try {
+      await fetchRequests();
+    } catch (err) {
+      console.error('Failed to refresh service requests:', err);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
   }, [fetchRequests]);
 
   const handleOpenDetails = useCallback(
-    (request: DbServiceRequest) => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      router.push(`/service-request/${request.id}` as any);
+    async (request: DbServiceRequest) => {
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        router.push(`/service-request/${request.id}` as any);
+      } catch (err) {
+        console.error('Failed to open service request details:', err);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
     },
     [router]
   );

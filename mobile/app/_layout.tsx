@@ -73,6 +73,7 @@ export default function RootLayout() {
   const inChat = segments[0] === 'chat';
   const inNotifications = segments[0] === 'notifications';
   const inServiceStatus = String(segments[0]) === 'service-status';
+  const inServiceRequestDetail = String(segments[0]) === 'service-request';
   const inCategoryDetail = String(segments[0]) === 'category';
   const inEditInfo = segments[0] === 'edit-info';
   const inNewPost = segments[0] === 'new-post';
@@ -114,6 +115,7 @@ export default function RootLayout() {
       !inChat &&
       !inNotifications &&
       !inServiceStatus &&
+      !inServiceRequestDetail &&
       !inCategoryDetail &&
       !inChangePassword &&
       !inResetPassword
@@ -134,6 +136,7 @@ export default function RootLayout() {
         inChat ||
         inNotifications ||
         inServiceStatus ||
+        inServiceRequestDetail ||
         inCategoryDetail ||
         inChangePassword ||
         inResetPassword)
@@ -185,6 +188,7 @@ export default function RootLayout() {
           <Stack.Screen name="chat/[username]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="service-status" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="service-request/[id]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="category" options={{ animation: 'slide_from_right' }} />
         </Stack>
         {!managesOwnChrome ? (

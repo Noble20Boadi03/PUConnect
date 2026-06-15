@@ -107,7 +107,7 @@ export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
           });
         }
       }
-      items.push({ key: 'viewOfficialDetails', label: 'View Official Details' });
+      items.push({ key: 'viewOfficialDetails', label: 'View service status' });
     } else {
       if (showOfficialService) {
         items.push({

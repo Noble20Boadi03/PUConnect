@@ -24,7 +24,6 @@ import { ChatComposer } from './ChatComposer';
 import { ChatOptionsSheet, type ChatMenuAction } from './ChatOptionsSheet';
 import { ChatAttachmentSheet, type ChatAttachmentAction } from './ChatAttachmentSheet';
 import { ChatOfficialEngagementSheet } from './ChatOfficialEngagementSheet';
-import { ChatOfficialDetailsSheet } from './ChatOfficialDetailsSheet';
 import { ProviderServicesSheet } from './ProviderServicesSheet';
 import type {
   ChatDateGroup,
@@ -143,7 +142,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const [attachVisible, setAttachVisible] = useState(false);
   const [servicesVisible, setServicesVisible] = useState(false);
   const [engagementSheetVisible, setEngagementSheetVisible] = useState(false);
-  const [detailsSheetVisible, setDetailsSheetVisible] = useState(false);
   const [reviewPromptVisible, setReviewPromptVisible] = useState(false);
   const [pendingReviewDealId, setPendingReviewDealId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -197,9 +195,10 @@ export const ChatView: React.FC<ChatViewProps> = ({
     thread.postContext?.tag === 'Request' ? REQUEST_ACCENT : Colors.primary;
 
   const openOfficialDetails = useCallback(() => {
+    if (!serviceRequestId) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setDetailsSheetVisible(true);
-  }, []);
+    router.push(`/service-request/${serviceRequestId}` as any);
+  }, [serviceRequestId, router]);
 
   const handleContextBannerPress = useCallback(() => {
     if (hasOfficialEngagement) {
@@ -303,7 +302,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
         : {
             id: `recv-completion-req-${Date.now()}`,
             kind: 'received',
-            text: `I have finished the work for “${ctx.title}”. Please review the service delivered in Official Details and confirm when you are satisfied.`,
+            text: `I have finished the work for “${ctx.title}”. Please review the service delivered in the service status and confirm when you are satisfied.`,
             time,
           };
       appendEngagementSystemMessages([
@@ -731,20 +730,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
             contactName={thread.participant.displayName}
             onConfirm={handleConfirmOfficialEngagement}
             onClose={() => setEngagementSheetVisible(false)}
-          />
-          <ChatOfficialDetailsSheet
-            visible={detailsSheetVisible}
-            context={thread.postContext}
-            contactName={thread.participant.displayName}
-            engagementStatus={officialEngagementStatus}
-            completionPhase={completionPhase}
-            startedAt={engagementStartedAt}
-            completionRequestedAt={completionRequestedAt}
-            onRequestCompletion={handleRequestOfficialCompletion}
-            onConfirmCompletion={handleConfirmOfficialCompletion}
-            onDeclineCompletion={handleDeclineOfficialCompletion}
-            onOpenPost={handleOpenPost}
-            onClose={() => setDetailsSheetVisible(false)}
           />
         </>
       ) : null}

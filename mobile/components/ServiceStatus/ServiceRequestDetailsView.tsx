@@ -19,7 +19,6 @@ import {
   mapDbPostToChatPostContext,
   mapServiceRequestToEngagement,
 } from '../../lib/mapServiceRequest';
-import { isCurrentUserProvider } from '../../lib/officialEngagement';
 import { ChatOfficialDetailsCard } from '../Chat/ChatOfficialDetailsCard';
 import { useServiceRequestsStore } from '../../store/serviceRequestsStore';
 import { useAuthStore } from '../../store/authStore';
@@ -63,7 +62,7 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
   const contactName = peer?.name ?? 'Unknown';
   const isRequest = postContext?.tag === 'Request';
   const accent = isRequest ? REQUEST_ACCENT : Colors.primary;
-  const userIsProvider = postContext ? isCurrentUserProvider(postContext.tag) : false;
+  const userIsProvider = serviceRequest.providerId === authUserId;
 
   const canRequestCompletion =
     engagement.officialEngagementStatus === 'active' &&
@@ -74,20 +73,36 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     engagement.completionPhase === 'pending_review' &&
     !userIsProvider;
 
-  const handleOpenPost = useCallback(() => {
-    if (!postContext) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push(`/post/${postContext.postId}` as any);
-  }, [postContext, router]);
+  const handleOpenPost = useCallback(async () => {
+    if (!postContext || actionLoading) return;
+    setActionLoading(true);
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      router.push(`/post/${postContext.postId}` as any);
+    } catch (err) {
+      console.error('Failed to open post:', err);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setActionLoading(false);
+    }
+  }, [postContext, router, actionLoading]);
 
-  const handleOpenChat = useCallback(() => {
-    if (!peer?.username) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const href = postContext
-      ? buildChatHref(peer.username, postContext.postId)
-      : buildChatHref(peer.username);
-    router.push(href as any);
-  }, [peer, postContext, router]);
+  const handleOpenChat = useCallback(async () => {
+    if (!peer?.username || actionLoading) return;
+    setActionLoading(true);
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const href = postContext
+        ? buildChatHref(peer.username, postContext.postId)
+        : buildChatHref(peer.username);
+      router.push(href as any);
+    } catch (err) {
+      console.error('Failed to open chat:', err);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setActionLoading(false);
+    }
+  }, [peer, postContext, router, actionLoading]);
 
   const handleCancelOfficialRequest = useCallback(async () => {
     if (!postContext || actionLoading) return;
@@ -105,7 +120,8 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     try {
       await transition(serviceRequest.id, 'cancel');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    } catch {
+    } catch (err) {
+      console.error('Failed to cancel request:', err);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setActionLoading(false);
@@ -128,7 +144,8 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     try {
       await transition(serviceRequest.id, 'withdraw');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    } catch {
+    } catch (err) {
+      console.error('Failed to withdraw response:', err);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setActionLoading(false);
@@ -158,7 +175,8 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     try {
       await transition(serviceRequest.id, 'request_completion');
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch {
+    } catch (err) {
+      console.error('Failed to request completion:', err);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setActionLoading(false);
@@ -196,7 +214,8 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     try {
       await transition(serviceRequest.id, 'confirm_completion');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {
+    } catch (err) {
+      console.error('Failed to confirm completion:', err);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setActionLoading(false);
@@ -234,7 +253,8 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     try {
       await transition(serviceRequest.id, 'decline_completion');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    } catch {
+    } catch (err) {
+      console.error('Failed to decline completion:', err);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setActionLoading(false);
@@ -372,22 +392,32 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
               </>
             )}
 
-            {(isRequest ? isRequester : userIsProvider) &&
-              engagement.officialEngagementStatus === 'active' &&
+            {engagement.officialEngagementStatus === 'active' &&
               engagement.completionPhase === 'none' && (
-                <TouchableOpacity
-                  style={[styles.destructiveButton, { backgroundColor: Colors.error + '15' }]}
-                  onPress={
-                    isRequest && isRequester
-                      ? handleCancelOfficialRequest
-                      : handleWithdrawOfficialResponse
-                  }
-                  activeOpacity={0.85}
-                >
-                  <Text style={[styles.destructiveLabel, { color: Colors.error }]}>
-                    {isRequest && isRequester ? 'Cancel Request' : 'Withdraw Response'}
-                  </Text>
-                </TouchableOpacity>
+                <>
+                  {isRequester && (
+                    <TouchableOpacity
+                      style={[styles.destructiveButton, { backgroundColor: Colors.error + '15' }]}
+                      onPress={handleCancelOfficialRequest}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={[styles.destructiveLabel, { color: Colors.error }]}>
+                        Cancel Request
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  {isRequest && userIsProvider && (
+                    <TouchableOpacity
+                      style={[styles.destructiveButton, { backgroundColor: Colors.error + '15' }]}
+                      onPress={handleWithdrawOfficialResponse}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={[styles.destructiveLabel, { color: Colors.error }]}>
+                        Withdraw Response
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </>
               )}
           </>
         )}
