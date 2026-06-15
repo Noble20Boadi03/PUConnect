@@ -25,7 +25,7 @@ import {
 } from '../../components/Profile';
 import { NotificationBellButton } from '../../components/NotificationBellButton';
 import { useAuthStore, useProfileStore } from '../../store';
-import { getAccountTypeLabel } from '../../lib';
+import { getAccountTypeLabel, getServiceOptionsByIds } from '../../lib';
 import { mapDbPostToFeaturedPost } from '../../lib/mapDbPost';
 import { profileService } from '../../services';
 import type { FeaturedPost } from '../../types';
@@ -122,6 +122,12 @@ export default function ProfileScreen() {
         .toUpperCase()
         .slice(0, 2)
     : '?';
+
+  const userSkills = user?.services && user.services.length > 0
+    ? user.services.map((s) => s.title)
+    : user?.serviceIds && user.serviceIds.length > 0
+      ? getServiceOptionsByIds(user.serviceIds).map((s) => s.title)
+      : user?.expertiseTags || [];
 
   const handleOpenSettings = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -233,6 +239,31 @@ export default function ProfileScreen() {
             textColor={Colors.text}
             mutedColor={Colors.icon}
           />
+          {isProvider && userSkills.length > 0 ? (
+            <>
+              <View style={[styles.divider, { backgroundColor: Colors.border + '60' }]} />
+              <View style={styles.skillsBlock}>
+                <View style={[styles.skillsIconCircle, { backgroundColor: '#F59E0B15' }]}>
+                  <Ionicons name="sparkles-outline" size={18} color="#F59E0B" />
+                </View>
+                <View style={styles.skillsContent}>
+                  <Text style={[styles.skillsLabel, { color: Colors.icon }]}>
+                    {userSkills.length === 1 ? 'Service' : 'Services'}
+                  </Text>
+                  <View style={styles.skillsWrap}>
+                    {userSkills.map((skill) => (
+                      <View
+                        key={skill}
+                        style={[styles.skillPill, { backgroundColor: subtleBg }]}
+                      >
+                        <Text style={[styles.skillText, { color: Colors.text }]}>{skill}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              </View>
+            </>
+          ) : null}
           {isProvider ? (
             <>
               <View style={[styles.divider, { backgroundColor: Colors.border + '60' }]} />
@@ -334,5 +365,40 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     marginLeft: 54,
+  },
+  skillsBlock: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.md - 2,
+    paddingVertical: Spacing.sm + 2,
+  },
+  skillsIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  skillsContent: {
+    flex: 1,
+  },
+  skillsLabel: {
+    fontSize: Typography.size.xs,
+    fontWeight: '500',
+    marginBottom: Spacing.sm,
+  },
+  skillsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  skillPill: {
+    paddingHorizontal: Spacing.sm + 4,
+    paddingVertical: Spacing.xs,
+    borderRadius: 8,
+  },
+  skillText: {
+    fontSize: Typography.size.xs,
+    fontWeight: '600',
   },
 });

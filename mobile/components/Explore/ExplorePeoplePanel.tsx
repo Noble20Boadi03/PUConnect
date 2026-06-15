@@ -23,6 +23,7 @@ export interface ExplorePeoplePanelProps {
   mutedColor: string;
   primaryColor: string;
   borderColor: string;
+  subtleBg: string;
   onProviderPress: (provider: ExploreProvider) => void;
   searchQuery?: string;
   refreshControl?: React.ReactElement<RefreshControlProps>;
@@ -38,6 +39,7 @@ export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
   mutedColor,
   primaryColor,
   borderColor,
+  subtleBg,
   onProviderPress,
   searchQuery = '',
   refreshControl,
@@ -90,6 +92,8 @@ export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
                 borderColor={borderColor}
                 textColor={textColor}
                 mutedColor={mutedColor}
+                primaryColor={primaryColor}
+                subtleBg={subtleBg}
                 onPress={handleProviderPress}
               />
             ))}

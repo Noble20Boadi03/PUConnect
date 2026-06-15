@@ -73,19 +73,43 @@ export const getCategoryServices = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * Get explore providers (users with provider role)
- * @route GET /api/explore/providers
- */
 export const getExploreProviders = async (req: Request, res: Response) => {
   try {
     const providers = await prisma.user.findMany({
       where: { role: 'provider' },
-      include: { category: true, services: true },
+      include: { category: true },
     });
+
+    const allServiceIds = Array.from(
+      new Set(providers.flatMap((p) => p.serviceIds || []))
+    );
+
+    const categoryServices = allServiceIds.length > 0
+      ? await prisma.categoryService.findMany({
+          where: { id: { in: allServiceIds } },
+        })
+      : [];
+
+    const serviceMap = new Map(
+      categoryServices.map((cs) => [
+        cs.id,
+        { id: cs.id, title: cs.title, categoryId: cs.categoryId },
+      ])
+    );
+
+    const providersWithServices = providers.map((provider) => {
+      const services = (provider.serviceIds || [])
+        .map((id) => serviceMap.get(id))
+        .filter(Boolean);
+      return {
+        ...provider,
+        services,
+      };
+    });
+
     return res.status(200).json({
       status: 200,
-      data: providers,
+      data: providersWithServices,
     });
   } catch (error) {
     console.error('GetExploreProviders Error:', error);

@@ -27,6 +27,7 @@ export interface ExploreServiceProvidersPanelProps {
   mutedColor: string;
   primaryColor: string;
   borderColor: string;
+  subtleBg: string;
   onProviderPress: (provider: ExploreProvider) => void;
 }
 
@@ -40,6 +41,7 @@ export const ExploreServiceProvidersPanel: React.FC<ExploreServiceProvidersPanel
   mutedColor,
   primaryColor,
   borderColor,
+  subtleBg,
   onProviderPress,
 }) => {
   const serviceProviders = useMemo(
@@ -98,6 +100,8 @@ export const ExploreServiceProvidersPanel: React.FC<ExploreServiceProvidersPanel
                 borderColor={borderColor}
                 textColor={textColor}
                 mutedColor={mutedColor}
+                primaryColor={primaryColor}
+                subtleBg={subtleBg}
                 onPress={handleProviderPress}
               />
             ))}

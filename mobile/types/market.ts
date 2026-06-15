@@ -25,6 +25,7 @@ interface MarketPostBase {
   id: string;
   title: string;
   description: string;
+  authorId?: string;
   authorName: string;
   authorInitials: string;
   price: PostPrice;

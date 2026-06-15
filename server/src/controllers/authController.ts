@@ -7,20 +7,33 @@ import { emailService } from '../services/emailService';
 /**
  * Maps a database user to the public API user shape.
  */
-const toPublicUser = (user: any) => ({
-  id: user.id,
-  name: user.name,
-  email: user.email,
-  username: user.username,
-  role: user.role,
-  avatarUrl: user.avatarUrl,
-  bio: user.bio || '',
-  categoryId: user.categoryId || undefined,
-  skillTitle: user.skillTitle || undefined,
-  expertiseTags: user.expertiseTags || [],
-  serviceIds: user.serviceIds || [],
-  themePreference: user.themePreference || undefined,
-});
+const toPublicUser = async (user: any) => {
+  const categoryServices = user.serviceIds && user.serviceIds.length > 0
+    ? await prisma.categoryService.findMany({
+        where: { id: { in: user.serviceIds } }
+      })
+    : [];
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    username: user.username,
+    role: user.role,
+    avatarUrl: user.avatarUrl,
+    bio: user.bio || '',
+    categoryId: user.categoryId || undefined,
+    skillTitle: user.skillTitle || undefined,
+    expertiseTags: user.expertiseTags || [],
+    serviceIds: user.serviceIds || [],
+    themePreference: user.themePreference || undefined,
+    services: categoryServices.map(cs => ({
+      id: cs.id,
+      title: cs.title,
+      categoryId: cs.categoryId
+    })),
+  };
+};
 
 /**
  * Helper: Generate JWT session token for a given user ID.
@@ -81,6 +94,7 @@ export const register = async (req: Request, res: Response) => {
         username: username.toLowerCase(),
         password: hashedPassword,
       },
+      include: { services: true }
     });
 
     // 6. Generate session token
@@ -92,7 +106,7 @@ export const register = async (req: Request, res: Response) => {
       message: 'User registered successfully.',
       data: {
         token,
-        user: toPublicUser(user),
+        user: await toPublicUser(user),
       },
     });
   } catch (error) {
@@ -129,6 +143,7 @@ export const login = async (req: Request, res: Response) => {
           { username: identifier.toLowerCase() },
         ],
       },
+      include: { services: true }
     });
     if (!user) {
       return res.status(401).json({
@@ -155,7 +170,7 @@ export const login = async (req: Request, res: Response) => {
       message: 'Login successful.',
       data: {
         token,
-        user: toPublicUser(user),
+        user: await toPublicUser(user),
       },
     });
   } catch (error) {
@@ -177,6 +192,7 @@ export const getMe = async (req: Request, res: Response) => {
     const userId = (req as any).user.id;
     const user = await prisma.user.findUnique({
       where: { id: userId },
+      include: { services: true }
     });
 
     if (!user) {
@@ -188,7 +204,7 @@ export const getMe = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       status: 200,
-      data: toPublicUser(user),
+      data: await toPublicUser(user),
     });
   } catch (error) {
     console.error('GetMe Error:', error);
@@ -500,12 +516,13 @@ export const updateProfile = async (req: Request, res: Response) => {
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updateData,
+      include: { services: true }
     });
 
     return res.status(200).json({
       status: 200,
       message: 'Profile updated successfully.',
-      data: toPublicUser(updatedUser),
+      data: await toPublicUser(updatedUser),
     });
   } catch (error) {
     console.error('UpdateProfile Error:', error);
@@ -541,12 +558,13 @@ export const updateProviderProfile = async (req: Request, res: Response) => {
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updateData,
+      include: { services: true }
     });
 
     return res.status(200).json({
       status: 200,
       message: 'Provider profile updated successfully.',
-      data: toPublicUser(updatedUser),
+      data: await toPublicUser(updatedUser),
     });
   } catch (error) {
     console.error('UpdateProviderProfile Error:', error);

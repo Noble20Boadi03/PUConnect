@@ -32,6 +32,8 @@ export interface PostDetailViewProps {
   onBack: () => void;
   onSendMessage?: () => void;
   onViewProvider?: (username: string) => void;
+  /** When true, shows "You" as the author name and disables navigation to the profile. */
+  isOwnPost?: boolean;
   /** When true, hides the author/provider block (e.g. opened from chat or owner profile). */
   hideAuthorProfile?: boolean;
   /** Creator view — hides author block and shows edit / hide / delete actions. */
@@ -60,6 +62,7 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
   onBack,
   onSendMessage,
   onViewProvider,
+  isOwnPost = false,
   hideAuthorProfile = false,
   ownerView = false,
   onEdit,
@@ -284,12 +287,12 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
                   { backgroundColor: subtleBg },
                   !isDark && CARD_SHADOW,
                 ]}
-                onPress={isService ? handleViewProvider : undefined}
-                activeOpacity={isService ? 0.85 : 1}
-                disabled={!isService}
-                accessibilityRole={isService ? 'button' : undefined}
+                onPress={isService && !isOwnPost ? handleViewProvider : undefined}
+                activeOpacity={isService && !isOwnPost ? 0.85 : 1}
+                disabled={!isService || isOwnPost}
+                accessibilityRole={isService && !isOwnPost ? 'button' : undefined}
                 accessibilityLabel={
-                  isService ? `View ${post.author.fullName}'s profile` : undefined
+                  isService && !isOwnPost ? `View ${post.author.fullName}'s profile` : undefined
                 }
               >
                 <View style={[styles.personAvatar, { backgroundColor: Colors.primary + '18' }]}>
@@ -324,13 +327,13 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
                 </View>
                 <View style={styles.personInfo}>
                   <Text style={[styles.personName, { color: Colors.text }]}>
-                    {post.author.fullName}
+                    {isOwnPost ? 'You' : post.author.fullName}
                   </Text>
                   <Text style={[styles.personHandle, { color: Colors.icon }]}>
                     {post.author.username}
                   </Text>
                 </View>
-                {isService ? (
+                {isService && !isOwnPost ? (
                   <Ionicons name="chevron-forward" size={20} color={Colors.icon} />
                 ) : null}
               </GuardedPressable>

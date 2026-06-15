@@ -16,6 +16,7 @@ import { MarketHeader, MarketFeedHeader, FeaturedPostCard, MarketViewSkeleton } 
 import { filterMarketPosts, mapDbPostToFeaturedPost } from '../../lib';
 import { postService } from '../../services';
 import type { FeaturedPost, MarketFilter } from '../../types';
+import { useAuthStore } from '../../store';
 
 /**
  * Market feed backed by GET /api/posts. Popular services and promo sections
@@ -31,6 +32,8 @@ export default function MarketScreen() {
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const searchBg = isDark ? '#1E1E21' : '#F0F0F2';
   const borderColor = isDark ? '#30363D' : 'rgba(0, 0, 0, 0.08)';
+
+  const user = useAuthStore((s) => s.user);
 
   const [posts, setPosts] = useState<FeaturedPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,9 +85,10 @@ export default function MarketScreen() {
   const handleCardPress = useCallback(
     (post: FeaturedPost) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      router.push(`/post/${post.id}` as any);
+      const isOwner = user?.id === post.authorId;
+      router.push(`/post/${post.id}${isOwner ? '?fromOwner=1' : ''}` as any);
     },
-    [router]
+    [router, user]
   );
 
   const handleSeeAllServices = useCallback(() => {

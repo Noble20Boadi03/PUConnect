@@ -58,6 +58,15 @@ export default function PostDetailScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isHiding, setIsHiding] = useState(false);
+
+  const isOwnPost = useMemo(() => {
+    if (!post || !user) return false;
+    // `post.author.username` has an '@' prefix from mapping
+    return post.author.username === `@${user.username}`;
+  }, [post, user]);
+
+  const effectiveOwnerView = ownerView || isOwnPost;
+
   const {
     showConfirm,
     confirmVisible,
@@ -147,12 +156,12 @@ export default function PostDetailScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (router.canGoBack()) {
       router.back();
-    } else if (ownerView) {
+    } else if (effectiveOwnerView) {
       router.replace('/(tabs)/profile' as any);
     } else {
       router.replace('/(tabs)/market' as any);
     }
-  }, [router, ownerView]);
+  }, [router, effectiveOwnerView]);
 
   const handleSendMessage = useCallback(async () => {
     if (!post) return;
@@ -280,7 +289,7 @@ export default function PostDetailScreen() {
         <TouchableOpacity style={styles.notFoundBtn} onPress={handleBack}>
           <Ionicons name="arrow-back" size={18} color={textColor} />
           <Text style={[styles.notFoundBtnText, { color: textColor }]}>
-            {ownerView ? 'Back to Profile' : 'Back to Market'}
+            {effectiveOwnerView ? 'Back to Profile' : 'Back to Market'}
           </Text>
         </TouchableOpacity>
       </SafeAreaView>
@@ -314,8 +323,9 @@ export default function PostDetailScreen() {
         onBack={handleBack}
         onSendMessage={handleSendMessage}
         onViewProvider={hideAuthorProfile ? undefined : handleViewProvider}
+        isOwnPost={isOwnPost}
         hideAuthorProfile={hideAuthorProfile}
-        ownerView={ownerView}
+        ownerView={effectiveOwnerView}
         onEdit={handleEdit}
         onHide={handleHide}
         onDelete={handleDelete}

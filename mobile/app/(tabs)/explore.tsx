@@ -12,6 +12,7 @@ import { exploreService } from '../../services';
 import type { ExploreCategory, ExploreProvider, ExploreTab } from '../../types';
 import type { DbCategory, User } from '../../types';
 import { Spacing } from '../../constants';
+import { getServiceOptionsByIds } from '../../lib';
 
 // Mapping functions
 const mapDbCategoryToExploreCategory = (dbCategory: DbCategory): ExploreCategory => ({
@@ -25,18 +26,31 @@ const mapDbCategoryToExploreCategory = (dbCategory: DbCategory): ExploreCategory
   iconName: dbCategory.iconName as any,
 });
 
-const mapUserToExploreProvider = (user: User): ExploreProvider => ({
-  username: user.username,
-  displayName: user.name,
-  handle: user.username,
-  avatarUrl: user.avatarUrl,
-  categoryId: (user as any).categoryId || 'tutoring',
-  skillTitle: (user as any).skillTitle || 'Service Provider',
-  expertiseTags: (user as any).expertiseTags || [],
-  serviceIds: (user as any).serviceIds || [],
-  averageRating: 4.8,
-  reviewCount: 12,
-});
+const mapUserToExploreProvider = (user: any): ExploreProvider => {
+  // Build a skill title from the provider's actual services
+  let services: Array<{ title: string }> = user.services ?? [];
+  if (services.length === 0 && user.serviceIds && user.serviceIds.length > 0) {
+    services = getServiceOptionsByIds(user.serviceIds);
+  }
+  const serviceNames = services.map((s) => s.title).join(', ');
+  const skillTitle =
+    serviceNames ||
+    (user as any).skillTitle ||
+    'Provider';
+
+  return {
+    username: user.username,
+    displayName: user.name,
+    handle: user.username,
+    avatarUrl: user.avatarUrl,
+    categoryId: (user as any).categoryId || 'tutoring',
+    skillTitle,
+    expertiseTags: (user as any).expertiseTags || [],
+    serviceIds: (user as any).serviceIds || [],
+    averageRating: 0,
+    reviewCount: 0,
+  };
+};
 
 export default function ExploreScreen() {
   const [categories, setCategories] = useState<ExploreCategory[]>([]);

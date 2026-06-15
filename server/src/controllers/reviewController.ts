@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../config/db';
+import { io } from '../index';
 
 /**
  * Get reviews for a user
@@ -66,6 +67,20 @@ export const createReview = async (req: Request, res: Response) => {
       },
       include: { reviewer: true, reviewee: true }
     });
+
+    // Create a notification for the reviewee
+    const notification = await prisma.notification.create({
+      data: {
+        userId: reviewee.id,
+        kind: 'service',
+        title: 'New Review',
+        body: `${review.reviewer.name} left you a ${rating}-star review.`,
+      }
+    });
+
+    // Emit real-time event to reviewee
+    io.to(reviewee.id).emit('newNotification', notification);
+
     return res.status(201).json({
       status: 201,
       message: 'Review created successfully',

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../config/db';
+import { io } from '../index';
 
 /**
  * Get service requests for authenticated user (either as requester or provider)
@@ -92,6 +93,20 @@ export const createServiceRequest = async (req: Request, res: Response) => {
       },
       include: { requester: true, provider: true, post: true }
     });
+
+    // Create a notification for the provider
+    const notification = await prisma.notification.create({
+      data: {
+        userId: providerId,
+        kind: 'request',
+        title: 'New Service Request',
+        body: `You have received a new service request from ${request.requester.name}.`,
+      }
+    });
+
+    // Emit real-time event to provider
+    io.to(providerId).emit('newNotification', notification);
+
     return res.status(201).json({
       status: 201,
       message: 'Request created successfully',
@@ -136,6 +151,21 @@ export const updateServiceRequest = async (req: Request, res: Response) => {
       data: { status, message },
       include: { requester: true, provider: true, post: true }
     });
+
+    // Create a notification for the requester about the status update
+    const statusText = status.charAt(0).toUpperCase() + status.slice(1);
+    const notification = await prisma.notification.create({
+      data: {
+        userId: updatedRequest.requesterId,
+        kind: 'request',
+        title: `Service Request ${statusText}`,
+        body: `Your service request to ${updatedRequest.provider.name} was ${status}.`,
+      }
+    });
+
+    // Emit real-time event to requester
+    io.to(updatedRequest.requesterId).emit('newNotification', notification);
+
     return res.status(200).json({
       status: 200,
       message: 'Request updated successfully',

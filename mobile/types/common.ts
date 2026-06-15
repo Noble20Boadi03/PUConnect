@@ -36,6 +36,7 @@ export interface User {
   expertiseTags: string[];
   serviceIds: string[];
   themePreference?: ThemePreference;
+  services?: Array<{ id: string; title: string; categoryId: string }>;
 }
 
 /**

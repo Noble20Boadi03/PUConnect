@@ -12,6 +12,7 @@ import {
   buildProviderProfileHref,
   getSafeAreaBottom,
   getScreenTopPadding,
+  getServiceOptionsByIds,
 } from '../../../../lib';
 import { useAppRouter, useThemeColor } from '../../../../hooks';
 import { GuardedPressable } from '../../../../components/GuardedPressable';
@@ -29,18 +30,30 @@ const mapDbCategoryServiceToExploreCategoryService = (dbService: DbCategoryServi
   filterTags: dbService.filterTags,
 });
 
-const mapUserToExploreProvider = (user: User): ExploreProvider => ({
-  username: user.username,
-  displayName: user.name,
-  handle: user.username,
-  avatarUrl: user.avatarUrl,
-  categoryId: (user as any).categoryId || 'tutoring',
-  skillTitle: (user as any).skillTitle || 'Service Provider',
-  expertiseTags: (user as any).expertiseTags || [],
-  serviceIds: (user as any).serviceIds || [],
-  averageRating: 4.8,
-  reviewCount: 12,
-});
+const mapUserToExploreProvider = (user: User): ExploreProvider => {
+  let services: Array<{ title: string }> = (user as any).services ?? [];
+  if (services.length === 0 && user.serviceIds && user.serviceIds.length > 0) {
+    services = getServiceOptionsByIds(user.serviceIds);
+  }
+  const serviceNames = services.map((s) => s.title).join(', ');
+  const skillTitle =
+    serviceNames ||
+    (user as any).skillTitle ||
+    'Service Provider';
+
+  return {
+    username: user.username,
+    displayName: user.name,
+    handle: user.username,
+    avatarUrl: user.avatarUrl,
+    categoryId: (user as any).categoryId || 'tutoring',
+    skillTitle,
+    expertiseTags: (user as any).expertiseTags || [],
+    serviceIds: (user as any).serviceIds || [],
+    averageRating: 4.8,
+    reviewCount: 12,
+  };
+};
 
 export default function CategoryServiceProvidersScreen() {
   const { id, serviceId } = useLocalSearchParams<{ id: string; serviceId: string }>();
@@ -186,6 +199,7 @@ export default function CategoryServiceProvidersScreen() {
         mutedColor={Colors.icon}
         primaryColor={Colors.primary}
         borderColor={borderColor}
+        subtleBg={subtleBg}
         onProviderPress={handleProviderPress}
       />
     </View>

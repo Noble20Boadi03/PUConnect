@@ -16,6 +16,7 @@ import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 
 import { useAppRouter, useThemeColor } from '../../hooks';
+import { useAuthStore } from '../../store';
 import { buildExploreCategoryHref, buildProviderProfileHref } from '../../lib';
 import { EXPLORE_CATEGORIES_MOCK, EXPLORE_PROVIDERS_MOCK } from '../../constants/exploreMock';
 import { ExploreHeader } from './ExploreHeader';
@@ -54,6 +55,8 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
   const borderColor = isDark ? '#30363D' : 'rgba(0, 0, 0, 0.08)';
 
+  const currentUser = useAuthStore((s) => s.user);
+
   const [activeTab, setActiveTab] = useState<ExploreTab>('categories');
   const [peopleFilter, setPeopleFilter] = useState<ExploreCategoryFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -79,9 +82,14 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
         onProviderPress(provider);
         return;
       }
-      router.push(buildProviderProfileHref(provider.username) as any);
+      
+      if (currentUser?.username === provider.username) {
+        router.push('/(tabs)/profile' as any);
+      } else {
+        router.push(buildProviderProfileHref(provider.username) as any);
+      }
     },
-    [onProviderPress, router]
+    [onProviderPress, router, currentUser]
   );
 
   const handleSearchChange = useCallback((query: string) => {
@@ -128,8 +136,9 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
       mutedColor: Colors.icon,
       primaryColor: Colors.primary,
       borderColor,
+      subtleBg,
     }),
-    [cardBg, Colors.text, Colors.icon, Colors.primary, borderColor]
+    [cardBg, Colors.text, Colors.icon, Colors.primary, borderColor, subtleBg]
   );
 
   return (

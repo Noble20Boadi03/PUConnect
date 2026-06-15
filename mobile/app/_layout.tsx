@@ -4,7 +4,7 @@ import { useColorScheme, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { useEffect } from 'react';
-import { useAuthStore, useProfileStore, useChatStore } from '../store';
+import { useAuthStore, useProfileStore, useChatStore, useNotificationsStore } from '../store';
 import { initializeThemePreference } from '../lib/themePreference';
 import { runGuardedNavigation } from '../lib/guardedNavigation';
 import { useRouter, useSegments } from 'expo-router';
@@ -19,6 +19,7 @@ export default function RootLayout() {
   const { isAuthenticated, isLoading, initialize, user, isFirstLoginSession } = useAuthStore();
   const hydrateProfile = useProfileStore((s) => s.hydrate);
   const { subscribeToMessages, fetchConversations } = useChatStore();
+  const { subscribeToNotifications, fetchNotifications } = useNotificationsStore();
   const segments = useSegments();
   const router = useRouter();
 
@@ -32,8 +33,19 @@ export default function RootLayout() {
       void hydrateProfile(user);
       fetchConversations();
       subscribeToMessages();
+      fetchNotifications();
+      subscribeToNotifications();
     }
-  }, [isLoading, isAuthenticated, user, hydrateProfile, fetchConversations, subscribeToMessages]);
+  }, [
+    isLoading,
+    isAuthenticated,
+    user,
+    hydrateProfile,
+    fetchConversations,
+    subscribeToMessages,
+    fetchNotifications,
+    subscribeToNotifications,
+  ]);
 
   // Authenticated users skip the landing page — hide splash once auth is ready.
   useEffect(() => {

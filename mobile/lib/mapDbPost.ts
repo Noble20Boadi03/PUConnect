@@ -1,6 +1,7 @@
 import { MARKET_POST_THUMBNAILS } from '../constants/marketPostImages';
 import type { DbPost, FeaturedPost, PostDetail, PostPrice, ProviderProfile } from '../types';
 import { formatPostedDate, formatRelativeTime } from './formatRelativeTime';
+import { getServiceOptionsByIds } from './editInfoForm';
 
 const DEFAULT_THUMBNAIL = MARKET_POST_THUMBNAILS.tutoring;
 
@@ -44,6 +45,7 @@ export function mapDbPostToFeaturedPost(post: DbPost): FeaturedPost {
       id: post.id,
       title: post.title,
       description: post.description,
+      authorId: post.authorId,
       authorName,
       authorInitials: initialsFromName(authorName),
       tag: 'Service',
@@ -58,6 +60,7 @@ export function mapDbPostToFeaturedPost(post: DbPost): FeaturedPost {
     id: post.id,
     title: post.title,
     description: post.description,
+    authorId: post.authorId,
     authorName,
     authorInitials: initialsFromName(authorName),
     tag: 'Request',
@@ -101,9 +104,20 @@ export interface ApiProfileResponse {
   expertiseTags?: string[];
   role?: string;
   posts?: DbPost[];
+  services?: Array<{ id: string; title: string; categoryId: string }>;
+  serviceIds?: string[];
 }
 
 export function mapApiProfileToProviderProfile(data: ApiProfileResponse): ProviderProfile {
+  let serviceTitles = data.services?.map((s) => s.title);
+  if (!serviceTitles || serviceTitles.length === 0) {
+    const ids = data.serviceIds || [];
+    const localServices = getServiceOptionsByIds(ids);
+    if (localServices.length > 0) {
+      serviceTitles = localServices.map((s) => s.title);
+    }
+  }
+  
   return {
     username: data.username,
     displayName: data.name,
@@ -111,7 +125,7 @@ export function mapApiProfileToProviderProfile(data: ApiProfileResponse): Provid
     avatarUrl: data.avatarUrl || '',
     initials: initialsFromName(data.name || data.username),
     bio: data.bio ?? '',
-    skills: data.expertiseTags ?? [],
+    skills: (serviceTitles && serviceTitles.length > 0) ? serviceTitles : [],
     posts: (data.posts ?? []).map(mapDbPostToFeaturedPost),
   };
 }

@@ -12,7 +12,6 @@ export const getProfile = async (req: Request, res: Response) => {
       where: { username },
       include: {
         category: true,
-        services: true,
         posts: { orderBy: { createdAt: 'desc' } },
         receivedReviews: { include: { reviewer: true } }
       }
@@ -23,11 +22,27 @@ export const getProfile = async (req: Request, res: Response) => {
         message: 'User not found'
       });
     }
+
+    const categoryServices = user.serviceIds && user.serviceIds.length > 0
+      ? await prisma.categoryService.findMany({
+          where: { id: { in: user.serviceIds } }
+        })
+      : [];
+
     // Don't send password back
     const { password, otpCode, otpExpires, ...safeUser } = user;
+    const safeUserWithServices = {
+      ...safeUser,
+      services: categoryServices.map(cs => ({
+        id: cs.id,
+        title: cs.title,
+        categoryId: cs.categoryId
+      }))
+    };
+
     return res.status(200).json({
       status: 200,
-      data: safeUser
+      data: safeUserWithServices
     });
   } catch (error) {
     console.error('GetProfile error:', error);
@@ -84,16 +99,30 @@ export const updateProfile = async (req: Request, res: Response) => {
         role
       },
       include: {
-        category: true,
-        services: true
+        category: true
       }
     });
 
+    const categoryServices = updatedUser.serviceIds && updatedUser.serviceIds.length > 0
+      ? await prisma.categoryService.findMany({
+          where: { id: { in: updatedUser.serviceIds } }
+        })
+      : [];
+
     const { password, otpCode, otpExpires, ...safeUser } = updatedUser;
+    const safeUserWithServices = {
+      ...safeUser,
+      services: categoryServices.map(cs => ({
+        id: cs.id,
+        title: cs.title,
+        categoryId: cs.categoryId
+      }))
+    };
+
     return res.status(200).json({
       status: 200,
       message: 'Profile updated successfully',
-      data: safeUser
+      data: safeUserWithServices
     });
   } catch (error) {
     console.error('UpdateProfile error:', error);

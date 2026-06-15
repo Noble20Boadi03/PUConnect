@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   useColorScheme,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -40,6 +41,15 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
   const markRead = useNotificationsStore((s) => s.markRead);
   const markAllRead = useNotificationsStore((s) => s.markAllRead);
+  const fetchNotifications = useNotificationsStore((s) => s.fetchNotifications);
+
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchNotifications();
+    setRefreshing(false);
+  }, [fetchNotifications]);
 
   const handleMarkAll = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -111,6 +121,14 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={{ height: Spacing.sm }} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.primary}
+            colors={[Colors.primary]}
+          />
+        }
       />
     </SafeAreaView>
   );
