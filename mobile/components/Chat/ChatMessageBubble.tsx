@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, Typography } from '../../constants';
 import type { ChatMessage } from '../../types';
@@ -53,9 +53,18 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
             : [styles.bubbleReceived, { backgroundColor: receivedBg }],
         ]}
       >
-        <Text style={[styles.text, { color: isSent ? sentText : receivedText }]}>
-          {message.text}
-        </Text>
+        <View style={styles.messageContent}>
+          <Text style={[styles.text, { color: isSent ? sentText : receivedText }]}>
+            {message.text}
+          </Text>
+          {message.isSending && (
+            <ActivityIndicator 
+              size="small" 
+              color={isSent ? sentText : mutedColor} 
+              style={styles.loadingIndicator}
+            />
+          )}
+        </View>
       </View>
       <Text style={[styles.time, { color: mutedColor }]}>{message.time}</Text>
     </View>
@@ -86,10 +95,18 @@ const styles = StyleSheet.create({
   bubbleReceived: {
     borderBottomLeftRadius: 6,
   },
+  messageContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
   text: {
     fontSize: Typography.size.sm,
     fontWeight: '500',
     lineHeight: 21,
+  },
+  loadingIndicator: {
+    opacity: 0.8,
   },
   time: {
     fontSize: Typography.size.xs,

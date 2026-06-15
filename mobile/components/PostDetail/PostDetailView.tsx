@@ -51,6 +51,7 @@ export interface PostDetailViewProps {
   actionDisabled?: boolean;
   /** Reason why action is disabled (shown below button if provided) */
   disabledReason?: string | null;
+  hasExistingConversation?: boolean;
   refreshControl?: React.ReactElement<RefreshControlProps>;
 }
 
@@ -72,6 +73,7 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
   onRequestService,
   actionDisabled = false,
   disabledReason,
+  hasExistingConversation = false,
   refreshControl,
 }) => {
   const Colors = useThemeColor();
@@ -146,7 +148,9 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
     ? 'Return to Chat'
     : requestService
       ? 'Request This Service'
-      : copy.cta;
+      : hasExistingConversation
+        ? 'Continue Chat'
+        : copy.cta;
   const footerIcon = returnToChat
     ? ('arrow-back-circle-outline' as const)
     : requestService
@@ -288,12 +292,36 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
                   isService ? `View ${post.author.fullName}'s profile` : undefined
                 }
               >
-                <Image
-                  source={{ uri: post.author.avatarUrl }}
-                  style={styles.personAvatar}
-                  contentFit="cover"
-                  transition={0}
-                />
+                <View style={[styles.personAvatar, { backgroundColor: Colors.primary + '18' }]}>
+                  {post.author.avatarUrl ? (
+                    <Image
+                      source={{ uri: post.author.avatarUrl }}
+                      style={styles.personAvatarImage}
+                      contentFit="cover"
+                      transition={0}
+                    />
+                  ) : (
+                    <Text style={[styles.personAvatarInitials, { color: Colors.primary }]}>
+                {(() => {
+                  const name = post.author.fullName || post.author.username || '';
+                  const cleanedName = name.trim();
+                  if (!cleanedName) return '??';
+                  
+                  const parts = cleanedName.split(/\s+/).filter(Boolean);
+                  
+                  if (parts.length === 1) {
+                    return cleanedName.slice(0, 2).toUpperCase();
+                  }
+                  
+                  return parts
+                    .slice(0, 2)
+                    .map((part) => part[0])
+                    .join('')
+                    .toUpperCase();
+                })()}
+              </Text>
+                  )}
+                </View>
                 <View style={styles.personInfo}>
                   <Text style={[styles.personName, { color: Colors.text }]}>
                     {post.author.fullName}
@@ -588,6 +616,17 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  personAvatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  personAvatarInitials: {
+    fontSize: 20,
+    fontWeight: '800',
   },
   personInfo: {
     flex: 1,

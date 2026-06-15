@@ -17,6 +17,7 @@ export interface ChatMessage {
   text: string;
   /** Display time, e.g. "10:24 AM" */
   time: string;
+  isSending?: boolean;
 }
 
 export interface ChatDateGroup {

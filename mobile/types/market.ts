@@ -68,6 +68,8 @@ export interface ProviderProfile {
   /** Display handle, e.g. @jordanp */
   handle: string;
   avatarUrl: string;
+  /** Initials from the display name, shown when no avatar is available */
+  initials?: string;
   bio: string;
   skills: string[];
   posts: FeaturedPost[];

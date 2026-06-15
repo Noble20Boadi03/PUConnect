@@ -33,6 +33,7 @@ export default function MessagesScreen() {
     lastMessage: c.lastMessage.content,
     timestamp: new Date(c.lastMessage.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
     unread: !c.lastMessage.isRead,
+    postId: c.lastMessage.post?.id,
   }));
 
   return (

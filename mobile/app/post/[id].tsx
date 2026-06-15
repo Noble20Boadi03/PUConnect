@@ -17,6 +17,7 @@ import {
 import { useAppRouter, useConfirmDialog } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { useAuthStore, useProfileStore } from '../../store';
+import { useChat } from '../../hooks/useChat';
 import { EDIT_INFO_SERVICE_OPTIONS } from '../../constants/editInfoServices';
 import { postService } from '../../services';
 import type { PostDetail } from '../../types';
@@ -49,6 +50,7 @@ export default function PostDetailScreen() {
   const isDark = colorScheme === 'dark';
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
   const textColor = isDark ? '#ECEDEE' : '#11181C';
+  const { conversations, fetchConversations } = useChat();
 
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [post, setPost] = useState<PostDetail | undefined>();
@@ -63,6 +65,11 @@ export default function PostDetailScreen() {
     handleConfirm,
     handleCancel,
   } = useConfirmDialog();
+
+  const hasExistingConversation = useMemo(() => {
+    if (!post) return false;
+    return conversations.some(c => c.user.username === post.author.username);
+  }, [post, conversations]);
 
   const fetchData = useCallback(async (isRefresh = false) => {
     if (typeof id !== 'string') {
@@ -94,7 +101,8 @@ export default function PostDetailScreen() {
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+    fetchConversations();
+  }, [fetchData, fetchConversations]);
 
   // Check if user is eligible to respond to this request
   const eligibility = useMemo(() => {
@@ -319,6 +327,7 @@ export default function PostDetailScreen() {
         onRequestService={handleRequestService}
         actionDisabled={post?.tag === 'Request' && !eligibility.canRespond}
         disabledReason={post?.tag === 'Request' ? (eligibility.reason ?? undefined) : undefined}
+        hasExistingConversation={hasExistingConversation}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }

@@ -85,7 +85,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       // If no post context provided, try to get the latest post from messages
       let finalPostContext = postContext;
       if (!finalPostContext) {
-        const latestPostMessage = backendMessages.find(msg => msg.post);
+        // Find the latest message with a post (look from the end)
+        const latestPostMessage = [...backendMessages].reverse().find(msg => msg.post);
         if (latestPostMessage?.post) {
           finalPostContext = buildPostContext(latestPostMessage.post);
         }
@@ -94,10 +95,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
       set({
         activeThread: {
           providerUsername: username,
-          participant,
-          postContext: finalPostContext,
-          dateGroups,
-        },
+        participant,
+        postContext: finalPostContext,
+        dateGroups,
+      },
         isLoading: false,
       });
       
@@ -113,44 +114,71 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const user = useAuthStore.getState().user;
       if (!user) return;
       
+      const { activeThread } = get();
+      if (!activeThread || activeThread.providerUsername !== receiverUsername) return;
+      
+      // Add optimistic update
+      const date = new Date();
+      const dateLabel = date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase();
+      
+      const uiMsg: ChatMessage = {
+        id: `pending-${Date.now()}`,
+        kind: 'sent',
+        text: content,
+        time: date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+        isSending: true,
+      };
+
+      const newGroups = [...activeThread.dateGroups.map((g) => ({ ...g, messages: [...g.messages] }))];
+      const lastGroup = newGroups[newGroups.length - 1];
+      if (lastGroup && lastGroup.dateLabel === dateLabel) {
+        lastGroup.messages.push(uiMsg);
+      } else {
+        newGroups.push({ dateLabel, messages: [uiMsg] });
+      }
+
+      // If we have a post and no current post context, set it now
+      let newPostContext = activeThread.postContext;
+      
+      set({
+        activeThread: {
+          ...activeThread,
+          dateGroups: newGroups,
+          postContext: newPostContext,
+        },
+      });
+
+      // Actual send
       const newMsg = await chatService.sendMessage(receiverUsername, content, postId);
       
-      const { activeThread } = get();
-      if (activeThread && activeThread.providerUsername === receiverUsername) {
-        const date = new Date(newMsg.createdAt);
-        const dateLabel = date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase();
-        
-        const uiMsg: ChatMessage = {
+      // Replace optimistic with real
+      const { activeThread: updatedThread } = get();
+      if (!updatedThread || updatedThread.providerUsername !== receiverUsername) return;
+      
+      const finalGroups = [...updatedThread.dateGroups.map((g) => ({
+        ...g,
+        messages: g.messages.map((m) => m.id === uiMsg.id ? {
           id: newMsg.id,
-          kind: 'sent',
+          kind: 'sent' as const,
           text: newMsg.content,
-          time: date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-        };
-        
-        // Check if message already exists
-        const messageExists = activeThread.dateGroups.some(
-          group => group.messages.some(msg => msg.id === newMsg.id)
-        );
-        if (messageExists) return;
-        
-        const newGroups = [...activeThread.dateGroups].map(g => ({ ...g, messages: [...g.messages] }));
-        const lastGroup = newGroups[newGroups.length - 1];
-        if (lastGroup && lastGroup.dateLabel === dateLabel) {
-           lastGroup.messages.push(uiMsg);
-        } else {
-           newGroups.push({ dateLabel, messages: [uiMsg] });
-        }
+          time: new Date(newMsg.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+          // isSending removed - message sent successfully
+        } : m),
+      }))];
 
-        // If we have a post and no current post context, set it now
-        let newPostContext = activeThread.postContext;
-        if (!newPostContext && newMsg.post) {
-          newPostContext = buildPostContext(newMsg.post);
-        }
-        
-        set({ activeThread: { ...activeThread, dateGroups: newGroups, postContext: newPostContext } });
+      if (!newPostContext && newMsg.post) {
+        newPostContext = buildPostContext(newMsg.post);
       }
+      
+      set({
+        activeThread: { ...updatedThread,
+          dateGroups: finalGroups,
+          postContext: newPostContext,
+        },
+      });
     } catch (error) {
       console.error('sendMessage error:', error);
+      // Maybe handle error here - keep the message but show an error state
     }
   },
 
@@ -173,23 +201,27 @@ export const useChatStore = create<ChatState>((set, get) => ({
       if (activeThread) {
         const isRelevantMessage = 
           (newMsg.senderId === user.id && 
-           (newMsg.receiver?.username === activeThread.providerUsername || 
-            newMsg.sender?.username === activeThread.providerUsername)) ||
+            (newMsg.receiver?.username === activeThread.providerUsername || 
+              newMsg.sender?.username === activeThread.providerUsername)) ||
           (newMsg.receiverId === user.id && 
-           (newMsg.sender?.username === activeThread.providerUsername || 
-            newMsg.receiver?.username === activeThread.providerUsername));
+            (newMsg.sender?.username === activeThread.providerUsername || 
+              newMsg.receiver?.username === activeThread.providerUsername));
         
         if (isRelevantMessage) {
-          // Check if message already exists
+          // First check if we have a pending message that this should replace
+          const hasPendingMessage = activeThread.dateGroups.some(
+            group => group.messages.some(msg => msg.isSending)
+          );
+          
+          // Check if message already exists with real ID
           const messageExists = activeThread.dateGroups.some(
             group => group.messages.some(msg => msg.id === newMsg.id)
           );
+          
           if (messageExists) {
-            // Still mark as read if we received it
             if (newMsg.receiverId === user.id) {
               chatService.markMessagesAsRead(activeThread.providerUsername).catch(() => {});
             }
-            // Refresh conversations list
             fetchConversations();
             return;
           }
@@ -204,12 +236,35 @@ export const useChatStore = create<ChatState>((set, get) => ({
             time: date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
           };
           
-          const newGroups = [...activeThread.dateGroups].map(g => ({ ...g, messages: [...g.messages] }));
+          // If we have a pending message and this is from us, replace the pending one
+          if (hasPendingMessage && newMsg.senderId === user.id) {
+            const newGroups = [...activeThread.dateGroups.map(g => ({
+              ...g,
+              messages: g.messages.map(m => m.isSending ? uiMsg : m)
+            }))];
+            
+            // If we have a post and no current post context, set it now
+            let newPostContext = activeThread.postContext;
+            if (!newPostContext && newMsg.post) {
+              newPostContext = buildPostContext(newMsg.post);
+            }
+            
+            set({ activeThread: { ...activeThread, dateGroups: newGroups, postContext: newPostContext } });
+            
+            if (newMsg.receiverId === user.id) {
+              chatService.markMessagesAsRead(activeThread.providerUsername).catch(() => {});
+            }
+            fetchConversations();
+            return;
+          }
+
+          // Otherwise add as new message
+          const newGroups = [...activeThread.dateGroups.map(g => ({ ...g, messages: [...g.messages] }))];
           const lastGroup = newGroups[newGroups.length - 1];
           if (lastGroup && lastGroup.dateLabel === dateLabel) {
-             lastGroup.messages.push(uiMsg);
+            lastGroup.messages.push(uiMsg);
           } else {
-             newGroups.push({ dateLabel, messages: [uiMsg] });
+            newGroups.push({ dateLabel, messages: [uiMsg] });
           }
 
           // If we have a post and no current post context, set it now

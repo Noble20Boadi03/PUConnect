@@ -5,12 +5,25 @@ import { formatPostedDate, formatRelativeTime } from './formatRelativeTime';
 const DEFAULT_THUMBNAIL = MARKET_POST_THUMBNAILS.tutoring;
 
 function initialsFromName(name: string): string {
-  return name
-    .split(/\s+/)
+  if (!name) return '??';
+  
+  // Clean the name and handle edge cases
+  const cleanedName = name.trim();
+  if (!cleanedName) return '??';
+  
+  const parts = cleanedName.split(/\s+/).filter(Boolean);
+  
+  // If only one part, take first 2 characters (or 1 if only 1 exists)
+  if (parts.length === 1) {
+    return cleanedName.slice(0, 2).toUpperCase();
+  }
+  
+  // If multiple parts, take first character of first two parts
+  return parts
+    .slice(0, 2)
     .map((part) => part[0])
     .join('')
-    .toUpperCase()
-    .slice(0, 2);
+    .toUpperCase();
 }
 
 export function parsePostPrice(price: unknown): PostPrice {
@@ -96,6 +109,7 @@ export function mapApiProfileToProviderProfile(data: ApiProfileResponse): Provid
     displayName: data.name,
     handle: data.username,
     avatarUrl: data.avatarUrl || '',
+    initials: initialsFromName(data.name || data.username),
     bio: data.bio ?? '',
     skills: data.expertiseTags ?? [],
     posts: (data.posts ?? []).map(mapDbPostToFeaturedPost),

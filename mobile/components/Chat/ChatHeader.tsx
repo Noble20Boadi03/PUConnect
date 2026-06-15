@@ -6,12 +6,25 @@ import { Spacing, Typography } from '../../constants';
 import type { ChatParticipant } from '../../types';
 
 function getInitials(name: string): string {
-  return name
-    .split(/\s+/)
+  if (!name) return '??';
+  
+  // Clean the name and handle edge cases
+  const cleanedName = name.trim();
+  if (!cleanedName) return '??';
+  
+  const parts = cleanedName.split(/\s+/).filter(Boolean);
+  
+  // If only one part, take first 2 characters (or 1 if only 1 exists)
+  if (parts.length === 1) {
+    return cleanedName.slice(0, 2).toUpperCase();
+  }
+  
+  // If multiple parts, take first character of first two parts
+  return parts
+    .slice(0, 2)
     .map((part) => part[0])
     .join('')
-    .toUpperCase()
-    .slice(0, 2);
+    .toUpperCase();
 }
 
 export interface ChatHeaderProps {
