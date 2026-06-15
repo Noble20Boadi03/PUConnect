@@ -21,6 +21,8 @@ interface ProfileState {
   hydrate: (user: User | null | undefined) => Promise<void>;
   saveProviderProfile: (draft: ProviderProfileDraft) => Promise<void>;
   clearProviderProfile: () => Promise<void>;
+  /** Clears local provider state and storage without making any API calls. */
+  resetLocal: () => Promise<void>;
   revokeProviderProfile: () => Promise<void>;
 }
 
@@ -165,6 +167,16 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     useAuthStore.getState().setUser(updatedUser);
 
     // Clear local storage and state
+    await writeStored(null);
+    set({
+      isProvider: false,
+      providerBio: '',
+      providerServiceIds: [],
+      providerTags: [],
+    });
+  },
+
+  resetLocal: async () => {
     await writeStored(null);
     set({
       isProvider: false,

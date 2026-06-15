@@ -25,15 +25,25 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Public endpoints that legitimately return 401 for invalid credentials —
+// a 401 from these should NOT clear the session.
+const PUBLIC_AUTH_PATHS = ['/auth/login', '/auth/register', '/auth/forgot-password', '/auth/verify-otp', '/auth/reset-password'];
+
 // Response interceptor for global error handling
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle global errors like 401 Unauthorized
+    // Handle global errors like 401 Unauthorized, but only for
+    // protected endpoints — not public auth routes that return 401
+    // for wrong credentials.
     if (error.response?.status === 401) {
-      void import('../store/authStore').then(({ useAuthStore }) => {
-        void useAuthStore.getState().clearSession();
-      });
+      const requestPath = error.config?.url || '';
+      const isPublicAuth = PUBLIC_AUTH_PATHS.some((p) => requestPath.includes(p));
+      if (!isPublicAuth) {
+        void import('../store/authStore').then(({ useAuthStore }) => {
+          void useAuthStore.getState().clearSession();
+        });
+      }
     }
     return Promise.reject(error);
   }

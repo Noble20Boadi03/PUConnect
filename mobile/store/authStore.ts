@@ -72,7 +72,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   clearSession: async () => {
     await SecureStore.deleteItemAsync(TOKEN_KEY);
     const { useProfileStore } = await import('./profileStore');
-    await useProfileStore.getState().clearProviderProfile();
+    // Use resetLocal() instead of clearProviderProfile() because clearSession
+    // is called when the token is already invalid/expired — API calls would
+    // fail with 401 and cause cascading errors.
+    await useProfileStore.getState().resetLocal();
     useProfileStore.setState({ hydrated: false });
     set({ user: null, token: null, isAuthenticated: false });
   },
@@ -89,7 +92,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       };
     }
     const { useProfileStore } = await import('./profileStore');
-    await useProfileStore.getState().clearProviderProfile();
+    await useProfileStore.getState().resetLocal();
     useProfileStore.setState({ hydrated: false });
     set({ user: null, token: null, isAuthenticated: false });
     return result;
@@ -112,7 +115,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     await SecureStore.deleteItemAsync(TOKEN_KEY).catch(() => {});
     const { useProfileStore } = await import('./profileStore');
-    await useProfileStore.getState().clearProviderProfile();
+    await useProfileStore.getState().resetLocal();
     useProfileStore.setState({ hydrated: false });
     set({ user: null, token: null, isAuthenticated: false });
     return result;
