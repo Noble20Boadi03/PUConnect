@@ -18,6 +18,7 @@ import { useThemeColor } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { ConversationListItem } from './ConversationListItem';
 import { NotificationBellButton } from '../NotificationBellButton';
+import { ServiceStatusButton } from '../ServiceStatusButton';
 import { MessagesSelectionActionBar } from './MessagesSelectionActionBar';
 import { MessagesSelectionMoreSheet } from './MessagesSelectionMoreSheet';
 import type { ConversationPreview } from '../../types';
@@ -229,7 +230,10 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
                   </Text>
                 )}
               </View>
-              <NotificationBellButton backgroundColor={listBg} iconColor={Colors.text} size={44} />
+              <View style={styles.headerActions}>
+                <ServiceStatusButton backgroundColor={listBg} iconColor={Colors.text} size={44} />
+                <NotificationBellButton backgroundColor={listBg} iconColor={Colors.text} size={44} />
+              </View>
             </>
           )}
         </View>
@@ -379,6 +383,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.sm,
     paddingBottom: Spacing.md,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
   },
   selectionHeader: {
     flex: 1,

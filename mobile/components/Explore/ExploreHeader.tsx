@@ -5,6 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { GuardedPressable } from '../GuardedPressable';
 import { NotificationBellButton } from '../NotificationBellButton';
+import { ServiceStatusButton } from '../ServiceStatusButton';
 
 export interface ExploreHeaderProps {
   textColor: string;
@@ -38,6 +39,7 @@ const ExploreHeaderComponent: React.FC<ExploreHeaderProps> = ({
             <Ionicons name="search-outline" size={22} color={textColor} />
           </GuardedPressable>
         )}
+        <ServiceStatusButton backgroundColor={buttonBg} iconColor={textColor} size={44} />
         <NotificationBellButton backgroundColor={buttonBg} iconColor={textColor} size={44} />
       </View>
     </View>

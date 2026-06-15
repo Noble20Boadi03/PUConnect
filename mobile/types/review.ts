@@ -26,4 +26,6 @@ export interface CompletedDeal {
   postId: string;
   postTitle: string;
   completedAt: string;
+  /** Links to persisted official engagement for server-side review validation. */
+  serviceRequestId?: string;
 }

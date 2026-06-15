@@ -1,0 +1,94 @@
+import type {
+  DbServiceRequest,
+  DbServiceRequestStatus,
+} from '../types/core';
+import type { OfficialCompletionPhase, OfficialEngagementStatus } from '../types/chat';
+
+export interface ServiceEngagementState {
+  serviceRequestId: string | null;
+  officialEngagementStatus: OfficialEngagementStatus;
+  completionPhase: OfficialCompletionPhase;
+  startedAt?: string;
+  completionRequestedAt?: string;
+  completedAt?: string;
+}
+
+function formatDisplayDate(iso: string | null | undefined): string | undefined {
+  if (!iso) return undefined;
+  return new Date(iso).toLocaleDateString([], {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+export function mapServiceRequestToEngagement(
+  request: DbServiceRequest | null | undefined
+): ServiceEngagementState {
+  if (!request) {
+    return {
+      serviceRequestId: null,
+      officialEngagementStatus: 'none',
+      completionPhase: 'none',
+    };
+  }
+
+  let officialEngagementStatus: OfficialEngagementStatus = 'none';
+  let completionPhase: OfficialCompletionPhase = 'none';
+
+  switch (request.status as DbServiceRequestStatus) {
+    case 'active':
+    case 'pending':
+    case 'pending_review':
+      officialEngagementStatus = 'active';
+      break;
+    case 'completed':
+      officialEngagementStatus = 'completed';
+      completionPhase = 'completed';
+      break;
+    default:
+      officialEngagementStatus = 'none';
+  }
+
+  if (request.status === 'pending_review') {
+    completionPhase = 'pending_review';
+  } else if (request.status === 'completed') {
+    completionPhase = 'completed';
+  }
+
+  return {
+    serviceRequestId: request.id,
+    officialEngagementStatus,
+    completionPhase,
+    startedAt: formatDisplayDate(request.acceptedAt ?? request.createdAt),
+    completionRequestedAt: formatDisplayDate(request.completionRequestedAt),
+    completedAt: formatDisplayDate(request.completedAt),
+  };
+}
+
+export function isActiveServiceStatus(status: DbServiceRequestStatus): boolean {
+  return status === 'active' || status === 'pending_review' || status === 'pending';
+}
+
+export function serviceStatusLabel(status: DbServiceRequestStatus): string {
+  switch (status) {
+    case 'pending':
+      return 'Pending';
+    case 'active':
+      return 'Active';
+    case 'pending_review':
+      return 'Awaiting Confirmation';
+    case 'completed':
+      return 'Completed';
+    case 'cancelled':
+      return 'Cancelled';
+    case 'declined':
+      return 'Declined';
+    default:
+      return status;
+  }
+}
+
+export function serviceKindLabel(kind: DbServiceRequest['kind']): string {
+  return kind === 'response' ? 'Official Response' : 'Official Request';
+}

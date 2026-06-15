@@ -9,6 +9,7 @@ interface ProviderReviewsState {
   recordCompletedDeal: (deal: Omit<CompletedDeal, 'id'> & { id?: string }) => string;
   dismissReviewPrompt: (dealId: string) => void;
   submitReview: (review: Omit<ProviderReview, 'id' | 'isOwn'>) => ProviderReview;
+  syncCompletedDealsFromRequests: (deals: CompletedDeal[]) => void;
 }
 
 function dealId(revieweeUsername: string, postId: string) {
@@ -51,7 +52,9 @@ export function selectCanReviewProvider(
   return completedDeals.some((deal) => {
     if (deal.revieweeUsername !== revieweeUsername) return false;
     return !submittedReviews.some(
-      (r) => r.revieweeUsername === revieweeUsername && r.serviceTitle === deal.postTitle
+      (r) =>
+        r.revieweeUsername === revieweeUsername &&
+        (r.serviceTitle === deal.postTitle || deal.serviceRequestId === deal.id)
     );
   });
 }
@@ -59,24 +62,40 @@ export function selectCanReviewProvider(
 export function selectReviewableDeal(
   completedDeals: CompletedDeal[],
   submittedReviews: ProviderReview[],
-  revieweeUsername: string
+  revieweeUsername: string,
+  postId?: string,
+  serviceRequestId?: string
 ): CompletedDeal | undefined {
+  if (serviceRequestId) {
+    return completedDeals.find(
+      (deal) =>
+        deal.serviceRequestId === serviceRequestId ||
+        deal.id === serviceRequestId
+    );
+  }
+  if (postId) {
+    return completedDeals.find(
+      (deal) => deal.revieweeUsername === revieweeUsername && deal.postId === postId
+    );
+  }
   return completedDeals.find(
     (deal) =>
       deal.revieweeUsername === revieweeUsername &&
       !submittedReviews.some(
-        (r) => r.revieweeUsername === revieweeUsername && r.serviceTitle === deal.postTitle
+        (r) =>
+          r.revieweeUsername === revieweeUsername &&
+          (r.serviceTitle === deal.postTitle || deal.serviceRequestId === deal.id)
       )
   );
 }
 
-export const useProviderReviewsStore = create<ProviderReviewsState>((set, get) => ({
+export const useProviderReviewsStore = create<ProviderReviewsState>((set) => ({
   completedDeals: [],
   submittedReviews: [],
   dismissedDealIds: [],
 
   recordCompletedDeal: (deal) => {
-    const id = deal.id ?? dealId(deal.revieweeUsername, deal.postId);
+    const id = deal.id ?? deal.serviceRequestId ?? dealId(deal.revieweeUsername, deal.postId);
     const entry: CompletedDeal = { ...deal, id };
     set((state) => {
       if (state.completedDeals.some((d) => d.id === id)) {
@@ -103,4 +122,18 @@ export const useProviderReviewsStore = create<ProviderReviewsState>((set, get) =
     }));
     return entry;
   },
+
+  syncCompletedDealsFromRequests: (deals) => {
+    set((state) => {
+      const merged = [...state.completedDeals];
+      for (const deal of deals) {
+        if (!merged.some((d) => d.id === deal.id)) {
+          merged.push(deal);
+        }
+      }
+      return { completedDeals: merged };
+    });
+  },
 }));
+
+export default useProviderReviewsStore;

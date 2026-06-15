@@ -21,6 +21,7 @@ export * from './ProviderReviews';
 export * from './Chat';
 export * from './Messages';
 export * from './NotificationBellButton';
+export * from './ServiceStatusButton';
 export * from './Notifications';
 export * from './Explore';
 export * from './CategoryDetail';

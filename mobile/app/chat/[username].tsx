@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { BackHandler, StyleSheet, Text, TouchableOpacity, useColorScheme, ActivityIndicator } from 'react-native';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,13 +6,15 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { ChatView } from '../../components/Chat';
-import { buildProviderProfileHref } from '../../lib';
+import { buildProviderProfileHref, isCurrentUserProvider, mapServiceRequestToEngagement } from '../../lib';
 import { useAppRouter } from '../../hooks';
 import { useChat } from '../../hooks/useChat';
 import { Spacing, Typography } from '../../constants';
 import { profileService } from '../../services/profileService';
 import { postService } from '../../services/postService';
 import { parsePostPrice } from '../../lib/mapDbPost';
+import { useServiceRequestsStore } from '../../store';
+import { useProviderReviewsStore } from '../../store/providerReviewsStore';
 import { ChatPostContext } from '../../types';
 
 export default function ChatScreen() {
@@ -29,6 +31,11 @@ export default function ChatScreen() {
   const resolvedPostId = typeof postId === 'string' ? postId : undefined;
 
   const { activeThread, isLoading, fetchMessages, sendMessage, subscribeToMessages } = useChat();
+  const requests = useServiceRequestsStore((s) => s.requests);
+  const fetchForChat = useServiceRequestsStore((s) => s.fetchForChat);
+  const createOfficialEngagement = useServiceRequestsStore((s) => s.createOfficialEngagement);
+  const transition = useServiceRequestsStore((s) => s.transition);
+  const [engagementLoading, setEngagementLoading] = React.useState(false);
 
   useEffect(() => {
     const loadChat = async () => {
@@ -36,9 +43,9 @@ export default function ChatScreen() {
         try {
           const [participantProfile, post] = await Promise.all([
             profileService.getPublicProfile(username),
-            resolvedPostId ? postService.getPostById(resolvedPostId) : Promise.resolve(undefined)
+            resolvedPostId ? postService.getPostById(resolvedPostId) : Promise.resolve(undefined),
           ]);
-          
+
           let postContext: ChatPostContext | undefined = undefined;
           if (post) {
             const price = parsePostPrice(post.price);
@@ -48,35 +55,96 @@ export default function ChatScreen() {
             } else if (price.kind === 'range') {
               priceLabel = `$${price.min}-$${price.max}`;
             }
-            
+
             postContext = {
               postId: post.id,
               title: post.title,
               tag: post.tag as 'Service' | 'Request',
-              priceLabel
+              priceLabel,
             };
           }
-          
-          fetchMessages(username, {
-            displayName: participantProfile.name || username,
-            handle: `@${participantProfile.username || username}`,
-            avatarUrl: participantProfile.avatarUrl || '',
-          }, postContext);
+
+          fetchMessages(
+            username,
+            {
+              displayName: participantProfile.name || username,
+              handle: `@${participantProfile.username || username}`,
+              avatarUrl: participantProfile.avatarUrl || '',
+            },
+            postContext
+          );
         } catch (error) {
           console.error('Failed to load chat:', error);
-          // Fallback to placeholder
-          fetchMessages(username, {
-            displayName: username,
-            handle: `@${username}`,
-            avatarUrl: '',
-          }, undefined);
+          fetchMessages(
+            username,
+            {
+              displayName: username,
+              handle: `@${username}`,
+              avatarUrl: '',
+            },
+            undefined
+          );
         }
-        
+
         subscribeToMessages();
       }
     };
     loadChat();
   }, [username, resolvedPostId, fetchMessages, subscribeToMessages]);
+
+  useEffect(() => {
+    if (!username || !resolvedPostId) return;
+    setEngagementLoading(true);
+    void fetchForChat(resolvedPostId, username).finally(() => setEngagementLoading(false));
+  }, [username, resolvedPostId, fetchForChat]);
+
+  const chatServiceRequest = useMemo(() => {
+    if (!resolvedPostId || !username) return null;
+    return (
+      requests.find(
+        (r) =>
+          r.postId === resolvedPostId &&
+          (r.requester?.username === username || r.provider?.username === username) &&
+          r.status !== 'cancelled' &&
+          r.status !== 'declined'
+      ) ?? null
+    );
+  }, [requests, resolvedPostId, username]);
+
+  const engagement = useMemo(
+    () => mapServiceRequestToEngagement(chatServiceRequest),
+    [chatServiceRequest]
+  );
+
+  const recordCompletedDeal = useProviderReviewsStore((s) => s.recordCompletedDeal);
+
+  useEffect(() => {
+    if (
+      !chatServiceRequest ||
+      chatServiceRequest.status !== 'completed' ||
+      !activeThread?.postContext
+    ) {
+      return;
+    }
+    recordCompletedDeal({
+      id: chatServiceRequest.id,
+      serviceRequestId: chatServiceRequest.id,
+      revieweeUsername: activeThread.providerUsername,
+      postId: activeThread.postContext.postId,
+      postTitle: activeThread.postContext.title,
+      completedAt: chatServiceRequest.completedAt
+        ? new Date(chatServiceRequest.completedAt).toLocaleDateString([], {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          })
+        : new Date().toLocaleDateString([], {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          }),
+    });
+  }, [chatServiceRequest, activeThread, recordCompletedDeal]);
 
   const exitToMessages = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -113,12 +181,46 @@ export default function ChatScreen() {
     router.push(buildProviderProfileHref(username) as any);
   }, [username, router]);
 
-  const handleSendMessage = useCallback((text: string) => {
-    if (username) {
-      const currentPostId = activeThread?.postContext?.postId;
-      sendMessage(username, text, currentPostId);
-    }
-  }, [username, sendMessage, activeThread]);
+  const handleSendMessage = useCallback(
+    (text: string) => {
+      if (username) {
+        const currentPostId = activeThread?.postContext?.postId;
+        sendMessage(username, text, currentPostId);
+      }
+    },
+    [username, sendMessage, activeThread]
+  );
+
+  const handleCreateOfficialEngagement = useCallback(async () => {
+    if (!resolvedPostId) throw new Error('Missing post context');
+    await createOfficialEngagement(resolvedPostId);
+  }, [resolvedPostId, createOfficialEngagement]);
+
+  const handleCancelOfficialEngagement = useCallback(async () => {
+    if (!chatServiceRequest) throw new Error('No active engagement');
+    const isRequestPost = activeThread?.postContext?.tag === 'Request';
+    const userIsProvider = activeThread?.postContext
+      ? isCurrentUserProvider(activeThread.postContext.tag)
+      : false;
+    const action =
+      isRequestPost && userIsProvider ? 'withdraw' : 'cancel';
+    await transition(chatServiceRequest.id, action);
+  }, [chatServiceRequest, activeThread, transition]);
+
+  const handleRequestCompletion = useCallback(async () => {
+    if (!chatServiceRequest) throw new Error('No active engagement');
+    await transition(chatServiceRequest.id, 'request_completion');
+  }, [chatServiceRequest, transition]);
+
+  const handleConfirmCompletion = useCallback(async () => {
+    if (!chatServiceRequest) throw new Error('No active engagement');
+    await transition(chatServiceRequest.id, 'confirm_completion');
+  }, [chatServiceRequest, transition]);
+
+  const handleDeclineCompletion = useCallback(async () => {
+    if (!chatServiceRequest) throw new Error('No active engagement');
+    await transition(chatServiceRequest.id, 'decline_completion');
+  }, [chatServiceRequest, transition]);
 
   if (isLoading) {
     return (
@@ -151,6 +253,13 @@ export default function ChatScreen() {
       onOpenPostForRequest={handleOpenPostForRequest}
       onViewProviderProfile={handleViewProviderProfile}
       onSendMessage={handleSendMessage}
+      engagement={engagement}
+      engagementLoading={engagementLoading}
+      onCreateOfficialEngagement={handleCreateOfficialEngagement}
+      onCancelOfficialEngagement={handleCancelOfficialEngagement}
+      onRequestCompletion={handleRequestCompletion}
+      onConfirmCompletion={handleConfirmCompletion}
+      onDeclineCompletion={handleDeclineCompletion}
     />
   );
 }

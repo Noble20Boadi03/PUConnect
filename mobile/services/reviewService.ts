@@ -34,6 +34,8 @@ export const reviewService = {
     rating: number;
     comment: string;
     serviceTitle?: string;
+    serviceRequestId?: string;
+    postId?: string;
   }): Promise<DbReview> {
     const response = await apiClient.post<ApiResponse<DbReview>>('/reviews', data);
     return response.data.data;

@@ -4,7 +4,8 @@ import { useColorScheme, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { useEffect } from 'react';
-import { useAuthStore, useProfileStore, useChatStore, useNotificationsStore } from '../store';
+import { useAuthStore, useProfileStore, useChatStore, useNotificationsStore, useServiceRequestsStore } from '../store';
+import { useProviderReviewsStore } from '../store/providerReviewsStore';
 import { initializeThemePreference } from '../lib/themePreference';
 import { runGuardedNavigation } from '../lib/guardedNavigation';
 import { useRouter, useSegments } from 'expo-router';
@@ -20,6 +21,7 @@ export default function RootLayout() {
   const hydrateProfile = useProfileStore((s) => s.hydrate);
   const { subscribeToMessages, fetchConversations } = useChatStore();
   const { subscribeToNotifications, fetchNotifications } = useNotificationsStore();
+  const { fetchRequests, subscribeToUpdates } = useServiceRequestsStore();
   const segments = useSegments();
   const router = useRouter();
 
@@ -35,6 +37,14 @@ export default function RootLayout() {
       subscribeToMessages();
       fetchNotifications();
       subscribeToNotifications();
+      void fetchRequests().then(() => {
+        const deals = useServiceRequestsStore.getState().getCompletedDealsForReviews();
+        useProviderReviewsStore.getState().syncCompletedDealsFromRequests(deals);
+      });
+      const unsubscribeServiceRequests = subscribeToUpdates();
+      return () => {
+        unsubscribeServiceRequests();
+      };
     }
   }, [
     isLoading,
@@ -45,6 +55,8 @@ export default function RootLayout() {
     subscribeToMessages,
     fetchNotifications,
     subscribeToNotifications,
+    fetchRequests,
+    subscribeToUpdates,
   ]);
 
   // Authenticated users skip the landing page — hide splash once auth is ready.
@@ -60,6 +72,7 @@ export default function RootLayout() {
   const inProviderReviewForm = inProviderProfile && segments[2] === 'review';
   const inChat = segments[0] === 'chat';
   const inNotifications = segments[0] === 'notifications';
+  const inServiceStatus = String(segments[0]) === 'service-status';
   const inCategoryDetail = String(segments[0]) === 'category';
   const inEditInfo = segments[0] === 'edit-info';
   const inNewPost = segments[0] === 'new-post';
@@ -100,6 +113,7 @@ export default function RootLayout() {
       !inProviderReviewForm &&
       !inChat &&
       !inNotifications &&
+      !inServiceStatus &&
       !inCategoryDetail &&
       !inChangePassword &&
       !inResetPassword
@@ -119,6 +133,7 @@ export default function RootLayout() {
         inProviderReviewForm ||
         inChat ||
         inNotifications ||
+        inServiceStatus ||
         inCategoryDetail ||
         inChangePassword ||
         inResetPassword)
@@ -138,6 +153,7 @@ export default function RootLayout() {
     inProviderReviewForm,
     inChat,
     inNotifications,
+    inServiceStatus,
     inCategoryDetail,
     inEditInfo,
     inNewPost,
@@ -168,6 +184,7 @@ export default function RootLayout() {
           />
           <Stack.Screen name="chat/[username]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="service-status" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="category" options={{ animation: 'slide_from_right' }} />
         </Stack>
         {!managesOwnChrome ? (

@@ -13,6 +13,7 @@ import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { MarketTipBanner } from '../MarketTipBanner';
 import { NotificationBellButton } from '../NotificationBellButton';
+import { ServiceStatusButton } from '../ServiceStatusButton';
 import type { MarketFilter } from '../../types';
 
 const FILTERS: { key: MarketFilter; label: string }[] = [
@@ -70,6 +71,7 @@ const MarketHeaderComponent: React.FC<MarketHeaderProps> = ({
             style={styles.logo} 
             resizeMode="contain" 
           />
+          <ServiceStatusButton backgroundColor={searchBg} iconColor={textColor} />
           <NotificationBellButton backgroundColor={searchBg} iconColor={textColor} />
         </View>
       </View>

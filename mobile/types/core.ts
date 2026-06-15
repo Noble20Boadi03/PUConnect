@@ -76,15 +76,27 @@ export interface DbProviderService {
   };
 }
 
-export type DbServiceRequestStatus = 'pending' | 'accepted' | 'declined' | 'completed';
+export type DbServiceRequestStatus =
+  | 'pending'
+  | 'active'
+  | 'pending_review'
+  | 'completed'
+  | 'cancelled'
+  | 'declined';
+
+export type DbServiceRequestKind = 'service' | 'response';
 
 export interface DbServiceRequest {
   id: string;
   requesterId: string;
   providerId: string;
   postId: string | null;
+  kind: DbServiceRequestKind;
   status: DbServiceRequestStatus;
   message: string | null;
+  acceptedAt: string | null;
+  completionRequestedAt: string | null;
+  completedAt: string | null;
   createdAt: string;
   updatedAt: string;
   requester?: {

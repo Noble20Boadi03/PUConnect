@@ -24,6 +24,7 @@ import {
   ProfileViewSkeleton,
 } from '../../components/Profile';
 import { NotificationBellButton } from '../../components/NotificationBellButton';
+import { ServiceStatusButton } from '../../components/ServiceStatusButton';
 import { useAuthStore, useProfileStore } from '../../store';
 import { getAccountTypeLabel, getServiceOptionsByIds } from '../../lib';
 import { mapDbPostToFeaturedPost } from '../../lib/mapDbPost';
@@ -180,6 +181,7 @@ export default function ProfileScreen() {
             >
               <Ionicons name={iconName} size={22} color={Colors.text} />
             </TouchableOpacity>
+            <ServiceStatusButton backgroundColor={subtleBg} iconColor={Colors.text} />
             <NotificationBellButton backgroundColor={subtleBg} iconColor={Colors.text} />
             <TouchableOpacity
               style={[styles.headerButton, { backgroundColor: subtleBg }]}

@@ -19,6 +19,7 @@ export * from './filterExploreProvidersByService';
 export * from './formatExploreTagLabel';
 export * from './safeAreaInsets';
 export * from './officialEngagement';
+export * from './mapServiceRequest';
 export * from './getProviderServices';
 export * from './systemChrome';
 export * from './editInfoForm';

@@ -63,6 +63,8 @@ export const SubmitProviderReviewView: React.FC<SubmitProviderReviewViewProps> =
         rating,
         comment: comment.trim(),
         serviceTitle: deal.postTitle,
+        serviceRequestId: deal.serviceRequestId,
+        postId: deal.postId,
       });
       
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -89,7 +91,7 @@ export const SubmitProviderReviewView: React.FC<SubmitProviderReviewViewProps> =
     } finally {
       setIsSubmitting(false);
     }
-  }, [rating, comment, isSubmitting, submitReview, revieweeUsername, deal.postTitle, onSubmitted]);
+  }, [rating, comment, isSubmitting, submitReview, revieweeUsername, deal, onSubmitted]);
 
   const canSubmit = rating >= 1 && comment.trim().length > 0 && !isSubmitting;
 

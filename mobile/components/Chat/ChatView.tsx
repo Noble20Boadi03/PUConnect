@@ -30,9 +30,8 @@ import type {
   ChatDateGroup,
   ChatMessage,
   ChatThread,
-  OfficialCompletionPhase,
-  OfficialEngagementStatus,
 } from '../../types';
+import type { ServiceEngagementState } from '../../lib/mapServiceRequest';
 
 const REQUEST_ACCENT = '#F59E0B';
 
@@ -94,6 +93,13 @@ export interface ChatViewProps {
   /** Opens `/provider/{slug}` — same route as service post detail. */
   onViewProviderProfile?: () => void;
   onSendMessage?: (text: string) => void;
+  engagement: ServiceEngagementState;
+  engagementLoading?: boolean;
+  onCreateOfficialEngagement: () => Promise<void>;
+  onCancelOfficialEngagement: () => Promise<void>;
+  onRequestCompletion: () => Promise<void>;
+  onConfirmCompletion: () => Promise<void>;
+  onDeclineCompletion: () => Promise<void>;
 }
 
 export const ChatView: React.FC<ChatViewProps> = ({
@@ -103,6 +109,13 @@ export const ChatView: React.FC<ChatViewProps> = ({
   onOpenPostForRequest,
   onViewProviderProfile,
   onSendMessage,
+  engagement,
+  engagementLoading = false,
+  onCreateOfficialEngagement,
+  onCancelOfficialEngagement,
+  onRequestCompletion,
+  onConfirmCompletion,
+  onDeclineCompletion,
 }) => {
   const router = useAppRouter();
   const Colors = useThemeColor();
@@ -131,13 +144,9 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const [servicesVisible, setServicesVisible] = useState(false);
   const [engagementSheetVisible, setEngagementSheetVisible] = useState(false);
   const [detailsSheetVisible, setDetailsSheetVisible] = useState(false);
-  const [officialEngagementStatus, setOfficialEngagementStatus] =
-    useState<OfficialEngagementStatus>('none');
-  const [completionPhase, setCompletionPhase] = useState<OfficialCompletionPhase>('none');
-  const [engagementStartedAt, setEngagementStartedAt] = useState<string | undefined>();
-  const [completionRequestedAt, setCompletionRequestedAt] = useState<string | undefined>();
   const [reviewPromptVisible, setReviewPromptVisible] = useState(false);
   const [pendingReviewDealId, setPendingReviewDealId] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const [dateGroups, setDateGroups] = useState<ChatDateGroup[]>(() =>
     thread.dateGroups.map((g) => ({ ...g, messages: [...g.messages] }))
@@ -163,10 +172,18 @@ export const ChatView: React.FC<ChatViewProps> = ({
     setOptionsVisible(true);
   }, []);
 
+  const {
+    officialEngagementStatus,
+    completionPhase,
+    startedAt: engagementStartedAt,
+    completionRequestedAt,
+    serviceRequestId,
+  } = engagement;
+
   const canOfficialService =
-    thread.postContext?.tag === 'Service' && officialEngagementStatus === 'none';
+    thread.postContext?.tag === 'Service' && officialEngagementStatus === 'none' && !engagementLoading;
   const canOfficialRequest =
-    thread.postContext?.tag === 'Request' && officialEngagementStatus === 'none';
+    thread.postContext?.tag === 'Request' && officialEngagementStatus === 'none' && !engagementLoading;
   const showViewProviderProfile =
     !thread.postContext || thread.postContext.tag === 'Service';
   const hasOfficialEngagement =
@@ -211,7 +228,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   );
 
   const handleCancelOfficialRequest = useCallback(async () => {
-    if (!thread.postContext) return;
+    if (!thread.postContext || actionLoading) return;
     const ctx = thread.postContext;
     const confirmed = await showConfirm({
       title: 'Cancel Official Request?',
@@ -222,23 +239,27 @@ export const ChatView: React.FC<ChatViewProps> = ({
       icon: 'close-circle-outline',
     });
     if (!confirmed) return;
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    setOfficialEngagementStatus('none');
-    setCompletionPhase('none');
-    setCompletionRequestedAt(undefined);
-    setEngagementStartedAt(undefined);
-    appendEngagementSystemMessages([
-      {
-        id: `system-cancel-${Date.now()}`,
-        kind: 'system',
-        text: `Official service request for “${ctx.title}” was cancelled.`,
-        time: formatSentTime(),
-      },
-    ]);
-  }, [thread.postContext, showConfirm, appendEngagementSystemMessages]);
+    setActionLoading(true);
+    try {
+      await onCancelOfficialEngagement();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      appendEngagementSystemMessages([
+        {
+          id: `system-cancel-${Date.now()}`,
+          kind: 'system',
+          text: `Official service request for “${ctx.title}” was cancelled.`,
+          time: formatSentTime(),
+        },
+      ]);
+    } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setActionLoading(false);
+    }
+  }, [thread.postContext, actionLoading, showConfirm, onCancelOfficialEngagement, appendEngagementSystemMessages]);
 
   const handleWithdrawOfficialResponse = useCallback(async () => {
-    if (!thread.postContext) return;
+    if (!thread.postContext || actionLoading) return;
     const ctx = thread.postContext;
     const confirmed = await showConfirm({
       title: 'Withdraw Official Response?',
@@ -249,28 +270,29 @@ export const ChatView: React.FC<ChatViewProps> = ({
       icon: 'arrow-undo-outline',
     });
     if (!confirmed) return;
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    setOfficialEngagementStatus('none');
-    setCompletionPhase('none');
-    setCompletionRequestedAt(undefined);
-    setEngagementStartedAt(undefined);
-    appendEngagementSystemMessages([
-      {
-        id: `system-withdraw-${Date.now()}`,
-        kind: 'system',
-        text: `Official response to “${ctx.title}” was withdrawn.`,
-        time: formatSentTime(),
-      },
-    ]);
-  }, [thread.postContext, showConfirm, appendEngagementSystemMessages]);
+    setActionLoading(true);
+    try {
+      await onCancelOfficialEngagement();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      appendEngagementSystemMessages([
+        {
+          id: `system-withdraw-${Date.now()}`,
+          kind: 'system',
+          text: `Official response to “${ctx.title}” was withdrawn.`,
+          time: formatSentTime(),
+        },
+      ]);
+    } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setActionLoading(false);
+    }
+  }, [thread.postContext, actionLoading, showConfirm, onCancelOfficialEngagement, appendEngagementSystemMessages]);
 
   const applyProviderCompletionRequest = useCallback(
     (ctx: NonNullable<ChatThread['postContext']>) => {
       const providerName = userIsProvider ? 'You' : thread.participant.displayName;
       const time = formatSentTime();
-      const requestedLabel = formatDisplayDate();
-      setCompletionPhase('pending_review');
-      setCompletionRequestedAt(requestedLabel);
       const followUp: ChatMessage = userIsProvider
         ? {
             id: `sent-completion-req-${Date.now()}`,
@@ -298,10 +320,15 @@ export const ChatView: React.FC<ChatViewProps> = ({
   );
 
   const handleRequestOfficialCompletion = useCallback(async () => {
-    if (!thread.postContext || officialEngagementStatus !== 'active' || completionPhase !== 'none') {
+    if (
+      !thread.postContext ||
+      officialEngagementStatus !== 'active' ||
+      completionPhase !== 'none' ||
+      !userIsProvider ||
+      actionLoading
+    ) {
       return;
     }
-    if (!userIsProvider) return;
     const ctx = thread.postContext;
     const confirmed = await showConfirm({
       title: 'Request Completion?',
@@ -311,22 +338,30 @@ export const ChatView: React.FC<ChatViewProps> = ({
       icon: 'checkmark-done-outline',
     });
     if (!confirmed) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    applyProviderCompletionRequest(ctx);
+    setActionLoading(true);
+    try {
+      await onRequestCompletion();
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      applyProviderCompletionRequest(ctx);
+    } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setActionLoading(false);
+    }
   }, [
     thread.postContext,
     thread.participant.displayName,
     officialEngagementStatus,
     completionPhase,
     userIsProvider,
+    actionLoading,
     showConfirm,
+    onRequestCompletion,
     applyProviderCompletionRequest,
   ]);
 
   const completeUndertakingAsClient = useCallback(
     (ctx: NonNullable<ChatThread['postContext']>) => {
-      setOfficialEngagementStatus('completed');
-      setCompletionPhase('completed');
       const time = formatSentTime();
       appendEngagementSystemMessages([
         {
@@ -343,15 +378,18 @@ export const ChatView: React.FC<ChatViewProps> = ({
         },
       ]);
       const dealId = recordCompletedDeal({
+        id: serviceRequestId ?? undefined,
         revieweeUsername: thread.providerUsername,
         postId: ctx.postId,
         postTitle: ctx.title,
         completedAt: formatDisplayDate(),
+        serviceRequestId: serviceRequestId ?? undefined,
       });
       promptOptionalReview(dealId);
     },
     [
       thread.providerUsername,
+      serviceRequestId,
       appendEngagementSystemMessages,
       recordCompletedDeal,
       promptOptionalReview,
@@ -359,7 +397,14 @@ export const ChatView: React.FC<ChatViewProps> = ({
   );
 
   const handleConfirmOfficialCompletion = useCallback(async () => {
-    if (!thread.postContext || completionPhase !== 'pending_review' || userIsProvider) return;
+    if (
+      !thread.postContext ||
+      completionPhase !== 'pending_review' ||
+      userIsProvider ||
+      actionLoading
+    ) {
+      return;
+    }
     const ctx = thread.postContext;
     const confirmed = await showConfirm({
       title: 'Confirm Service Delivered?',
@@ -369,18 +414,35 @@ export const ChatView: React.FC<ChatViewProps> = ({
       icon: 'checkmark-circle-outline',
     });
     if (!confirmed) return;
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    completeUndertakingAsClient(ctx);
+    setActionLoading(true);
+    try {
+      await onConfirmCompletion();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      completeUndertakingAsClient(ctx);
+    } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setActionLoading(false);
+    }
   }, [
     thread.postContext,
     completionPhase,
     userIsProvider,
+    actionLoading,
     showConfirm,
+    onConfirmCompletion,
     completeUndertakingAsClient,
   ]);
 
   const handleDeclineOfficialCompletion = useCallback(async () => {
-    if (!thread.postContext || completionPhase !== 'pending_review' || userIsProvider) return;
+    if (
+      !thread.postContext ||
+      completionPhase !== 'pending_review' ||
+      userIsProvider ||
+      actionLoading
+    ) {
+      return;
+    }
     const ctx = thread.postContext;
     const confirmed = await showConfirm({
       title: 'Needs More Work?',
@@ -391,40 +453,49 @@ export const ChatView: React.FC<ChatViewProps> = ({
       icon: 'alert-circle-outline',
     });
     if (!confirmed) return;
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    setCompletionPhase('none');
-    setCompletionRequestedAt(undefined);
-    const time = formatSentTime();
-    appendEngagementSystemMessages([
-      {
-        id: `system-decline-${Date.now()}`,
-        kind: 'system',
-        text: `Completion for “${ctx.title}” was declined — more work is needed.`,
-        time,
-      },
-      {
-        id: `recv-decline-${Date.now()}`,
-        kind: 'received',
-        text: `Thanks for the update. I understand more work is needed on “${ctx.title}”. Let me know when you are ready to review again.`,
-        time,
-      },
-    ]);
+    setActionLoading(true);
+    try {
+      await onDeclineCompletion();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      const time = formatSentTime();
+      appendEngagementSystemMessages([
+        {
+          id: `system-decline-${Date.now()}`,
+          kind: 'system',
+          text: `Completion for “${ctx.title}” was declined — more work is needed.`,
+          time,
+        },
+        {
+          id: `recv-decline-${Date.now()}`,
+          kind: 'received',
+          text: `Thanks for the update. I understand more work is needed on “${ctx.title}”. Let me know when you are ready to review again.`,
+          time,
+        },
+      ]);
+    } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setActionLoading(false);
+    }
   }, [
     thread.postContext,
     thread.participant.displayName,
     completionPhase,
     userIsProvider,
+    actionLoading,
     showConfirm,
+    onDeclineCompletion,
     appendEngagementSystemMessages,
   ]);
 
   const handleReviewNow = useCallback(() => {
     if (!thread.postContext) return;
     setReviewPromptVisible(false);
-    router.push(
-      `/provider/${thread.providerUsername}/review?postId=${encodeURIComponent(thread.postContext.postId)}` as any
-    );
-  }, [thread.postContext, thread.providerUsername, router]);
+    const query = serviceRequestId
+      ? `postId=${encodeURIComponent(thread.postContext.postId)}&serviceRequestId=${encodeURIComponent(serviceRequestId)}`
+      : `postId=${encodeURIComponent(thread.postContext.postId)}`;
+    router.push(`/provider/${thread.providerUsername}/review?${query}` as any);
+  }, [thread.postContext, thread.providerUsername, serviceRequestId, router]);
 
   const handleReviewLater = useCallback(() => {
     if (pendingReviewDealId) {
@@ -453,6 +524,26 @@ export const ChatView: React.FC<ChatViewProps> = ({
         handleRequestOfficialCompletion();
       } else if (action === 'viewProviderProfile') {
         onViewProviderProfile?.();
+      } else if (action === 'mute') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        appendEngagementSystemMessages([
+          {
+            id: `system-mute-${Date.now()}`,
+            kind: 'system',
+            text: `Notifications muted for this conversation.`,
+            time: formatSentTime(),
+          },
+        ]);
+      } else if (action === 'report') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        appendEngagementSystemMessages([
+          {
+            id: `system-report-${Date.now()}`,
+            kind: 'system',
+            text: `Thanks — your report was recorded and will be reviewed by PuConnect.`,
+            time: formatSentTime(),
+          },
+        ]);
       }
     },
     [
@@ -462,65 +553,47 @@ export const ChatView: React.FC<ChatViewProps> = ({
       openOfficialDetails,
       handleRequestOfficialCompletion,
       onViewProviderProfile,
+      appendEngagementSystemMessages,
     ]
   );
 
-  const handleConfirmOfficialEngagement = useCallback(() => {
-    if (!thread.postContext) return;
+  const handleConfirmOfficialEngagement = useCallback(async () => {
+    if (!thread.postContext || actionLoading) return;
     const ctx = thread.postContext;
     const isRequest = ctx.tag === 'Request';
-    setOfficialEngagementStatus('active');
-    setCompletionPhase('none');
-    setEngagementStartedAt(formatDisplayDate());
-    setCompletionRequestedAt(undefined);
-    const time = formatSentTime();
-    setDateGroups((prev) =>
-      appendMessages(prev, [
-        {
-          id: `system-engagement-${Date.now()}`,
-          kind: 'system',
-          text: isRequest
-            ? `Official response submitted for “${ctx.title}”.`
-            : `Official service request started for “${ctx.title}”.`,
-          time,
-        },
-        {
-          id: `recv-engagement-${Date.now()}`,
-          kind: 'received',
-          text: isRequest
-            ? `Thanks! I received your official response to my request for “${ctx.title}”. I will review and get back to you.`
-            : `Thanks! I have received your official request for “${ctx.title}”. I will confirm details shortly.`,
-          time,
-        },
-      ])
-    );
-    requestAnimationFrame(() => {
-      scrollRef.current?.scrollToEnd({ animated: true });
-    });
-
-    if (!isRequest) {
-      const ctx = thread.postContext;
-      const providerName = thread.participant.displayName;
-      setTimeout(() => {
-        setCompletionPhase('pending_review');
-        setCompletionRequestedAt(formatDisplayDate());
-        appendEngagementSystemMessages([
+    setActionLoading(true);
+    try {
+      await onCreateOfficialEngagement();
+      const time = formatSentTime();
+      setDateGroups((prev) =>
+        appendMessages(prev, [
           {
-            id: `system-provider-req-${Date.now()}`,
+            id: `system-engagement-${Date.now()}`,
             kind: 'system',
-            text: `${providerName} has requested to mark “${ctx.title}” complete.`,
-            time: formatSentTime(),
+            text: isRequest
+              ? `Official response submitted for “${ctx.title}”.`
+              : `Official service request started for “${ctx.title}”.`,
+            time,
           },
           {
-            id: `recv-provider-req-${Date.now()}`,
+            id: `recv-engagement-${Date.now()}`,
             kind: 'received',
-            text: `I have finished the work for “${ctx.title}”. Please review the service delivered in Official Details and confirm when you are satisfied.`,
-            time: formatSentTime(),
+            text: isRequest
+              ? `Thanks! I received your official response to my request for “${ctx.title}”. I will review and get back to you.`
+              : `Thanks! I have received your official request for “${ctx.title}”. I will confirm details shortly.`,
+            time,
           },
-        ]);
-      }, 2800);
+        ])
+      );
+      requestAnimationFrame(() => {
+        scrollRef.current?.scrollToEnd({ animated: true });
+      });
+    } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setActionLoading(false);
     }
-  }, [thread.postContext, thread.participant.displayName, appendEngagementSystemMessages]);
+  }, [thread.postContext, actionLoading, onCreateOfficialEngagement]);
 
   const handleAttachSelect = useCallback((action: ChatAttachmentAction) => {
     if (action === 'photos' || action === 'documents') {

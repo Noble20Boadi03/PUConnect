@@ -12,13 +12,18 @@ import {
   selectReviewableDeal,
   useProviderReviewsStore,
 } from '../../../store/providerReviewsStore';
+import { useServiceRequestsStore } from '../../../store';
 import { useAppRouter } from '../../../hooks';
 import { Spacing, Typography } from '../../../constants';
 import { profileService } from '../../../services';
 import type { ProviderProfile } from '../../../types';
 
 export default function SubmitProviderReviewScreen() {
-  const { username, postId } = useLocalSearchParams<{ username: string; postId?: string }>();
+  const { username, postId, serviceRequestId } = useLocalSearchParams<{
+    username: string;
+    postId?: string;
+    serviceRequestId?: string;
+  }>();
   const router = useAppRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -30,6 +35,15 @@ export default function SubmitProviderReviewScreen() {
 
   const completedDeals = useProviderReviewsStore((s) => s.completedDeals);
   const submittedReviews = useProviderReviewsStore((s) => s.submittedReviews);
+  const syncCompletedDeals = useProviderReviewsStore((s) => s.syncCompletedDealsFromRequests);
+  const getCompletedDealsForReviews = useServiceRequestsStore((s) => s.getCompletedDealsForReviews);
+  const fetchRequests = useServiceRequestsStore((s) => s.fetchRequests);
+
+  useEffect(() => {
+    void fetchRequests().then(() => {
+      syncCompletedDeals(getCompletedDealsForReviews());
+    });
+  }, [fetchRequests, getCompletedDealsForReviews, syncCompletedDeals]);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -55,13 +69,16 @@ export default function SubmitProviderReviewScreen() {
   const deal = useMemo(() => {
     if (!profile) return undefined;
     const resolvedPostId = typeof postId === 'string' ? postId : undefined;
-    if (resolvedPostId) {
-      return completedDeals.find(
-        (d) => d.revieweeUsername === profile.username && d.postId === resolvedPostId
-      );
-    }
-    return selectReviewableDeal(completedDeals, submittedReviews, profile.username);
-  }, [profile, postId, completedDeals, submittedReviews]);
+    const resolvedServiceRequestId =
+      typeof serviceRequestId === 'string' ? serviceRequestId : undefined;
+    return selectReviewableDeal(
+      completedDeals,
+      submittedReviews,
+      profile.username,
+      resolvedPostId,
+      resolvedServiceRequestId
+    );
+  }, [profile, postId, serviceRequestId, completedDeals, submittedReviews]);
 
   const eligibleToReview = useMemo(
     () =>

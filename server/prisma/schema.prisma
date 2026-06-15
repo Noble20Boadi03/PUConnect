@@ -130,19 +130,38 @@ model ProviderService {
   @@map("provider_services")
 }
 
-model ServiceRequest {
-  id          String   @id @default(uuid())
-  requesterId String
-  providerId  String
-  postId      String?
-  status      String   @default("pending") // pending, accepted, declined, completed
-  message     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+enum ServiceRequestKind {
+  service
+  response
+}
 
-  requester User  @relation("SentRequests", fields: [requesterId], references: [id], onDelete: Cascade)
-  provider  User  @relation("ReceivedRequests", fields: [providerId], references: [id], onDelete: Cascade)
-  post      Post? @relation(fields: [postId], references: [id], onDelete: SetNull)
+enum ServiceRequestStatus {
+  pending
+  active
+  pending_review
+  completed
+  cancelled
+  declined
+}
+
+model ServiceRequest {
+  id                    String               @id @default(uuid())
+  requesterId           String
+  providerId            String
+  postId                String?
+  kind                  ServiceRequestKind   @default(service)
+  status                ServiceRequestStatus @default(active)
+  message               String?
+  acceptedAt            DateTime?
+  completionRequestedAt DateTime?
+  completedAt           DateTime?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+
+  requester User     @relation("SentRequests", fields: [requesterId], references: [id], onDelete: Cascade)
+  provider  User     @relation("ReceivedRequests", fields: [providerId], references: [id], onDelete: Cascade)
+  post      Post?    @relation(fields: [postId], references: [id], onDelete: SetNull)
+  reviews   Review[]
 
   @@map("service_requests")
 }
@@ -164,17 +183,21 @@ model ChatMessage {
 }
 
 model Review {
-  id           String   @id @default(uuid())
-  reviewerId   String
-  revieweeId   String
-  rating       Int // 1-5
-  comment      String
-  serviceTitle String?
-  createdAt    DateTime @default(now())
+  id               String   @id @default(uuid())
+  reviewerId       String
+  revieweeId       String
+  rating           Int // 1-5
+  comment          String
+  serviceTitle     String?
+  serviceRequestId String?
+  postId           String?
+  createdAt        DateTime @default(now())
 
-  reviewer User @relation("SentReviews", fields: [reviewerId], references: [id], onDelete: Cascade)
-  reviewee User @relation("ReceivedReviews", fields: [revieweeId], references: [id], onDelete: Cascade)
+  reviewer       User            @relation("SentReviews", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewee       User            @relation("ReceivedReviews", fields: [revieweeId], references: [id], onDelete: Cascade)
+  serviceRequest ServiceRequest? @relation(fields: [serviceRequestId], references: [id], onDelete: SetNull)
 
+  @@unique([serviceRequestId])
   @@map("reviews")
 }
 
