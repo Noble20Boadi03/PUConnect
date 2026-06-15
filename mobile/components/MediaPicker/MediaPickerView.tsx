@@ -45,6 +45,7 @@ export const MediaPickerView: React.FC<MediaPickerProps> = ({
   const [endCursor, setEndCursor] = useState<string | undefined>(undefined);
   const [permissionGranted, setPermissionGranted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const loadingRef = useRef(false);
   const listRef = useRef<any>(null);
 
   const insets = useSafeAreaInsets();
@@ -52,28 +53,9 @@ export const MediaPickerView: React.FC<MediaPickerProps> = ({
   const isDark = colorScheme === 'dark';
   const Colors = useThemeColor();
 
-  const requestPermission = useCallback(async () => {
-    try {
-      const { status, canAskAgain } = await MediaLibrary.requestPermissionsAsync();
-      if (status === 'granted') {
-        setPermissionGranted(true);
-        await loadAssets();
-      } else if (!canAskAgain) {
-        Alert.alert(
-          'Permission Required',
-          'Please enable media permissions in Settings to use this feature.',
-          [{ text: 'OK', onPress: onClose }]
-        );
-      }
-    } catch (error) {
-      console.warn('MediaLibrary permission error (Expo Go limitation):', error);
-      // Automatically fallback to the system picker when custom gallery cannot get permissions
-      pickFromStorage();
-    }
-  }, [onClose, loadAssets, pickFromStorage]);
-
   const loadAssets = useCallback(async (after: string | undefined = undefined) => {
-    if (loading) return;
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     setLoading(true);
     try {
       const result = await MediaLibrary.getAssetsAsync({
@@ -95,19 +77,9 @@ export const MediaPickerView: React.FC<MediaPickerProps> = ({
     } catch (e) {
       console.error('Error loading assets', e);
     } finally {
+      loadingRef.current = false;
       setLoading(false);
     }
-  }, [loading]);
-
-  const toggleSelect = useCallback((asset: MediaAsset) => {
-    setSelectedAssets((prev) => {
-      const index = prev.findIndex((a) => a.id === asset.id);
-      if (index > -1) {
-        return prev.filter((a) => a.id !== asset.id);
-      } else {
-        return [...prev, asset];
-      }
-    });
   }, []);
 
   const pickFromStorage = useCallback(async () => {
@@ -132,6 +104,36 @@ export const MediaPickerView: React.FC<MediaPickerProps> = ({
       console.error('Error picking image from storage', e);
     }
   }, [onSelect, onClose, multiSelect]);
+
+  const requestPermission = useCallback(async () => {
+    try {
+      const { status, canAskAgain } = await MediaLibrary.requestPermissionsAsync();
+      if (status === 'granted') {
+        setPermissionGranted(true);
+        await loadAssets();
+      } else if (!canAskAgain) {
+        Alert.alert(
+          'Permission Required',
+          'Please enable media permissions in Settings to use this feature.',
+          [{ text: 'OK', onPress: onClose }]
+        );
+      }
+    } catch (error) {
+      console.warn('MediaLibrary permission error (Expo Go limitation):', error);
+      pickFromStorage();
+    }
+  }, [onClose, loadAssets, pickFromStorage]);
+
+  const toggleSelect = useCallback((asset: MediaAsset) => {
+    setSelectedAssets((prev) => {
+      const index = prev.findIndex((a) => a.id === asset.id);
+      if (index > -1) {
+        return prev.filter((a) => a.id !== asset.id);
+      } else {
+        return [...prev, asset];
+      }
+    });
+  }, []);
 
   const renderItem = useCallback(
     ({ item }: { item: MediaAsset }) => {
