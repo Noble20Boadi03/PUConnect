@@ -95,7 +95,7 @@ model User {
 }
 
 model Post {
-  id               String   @id @default(uuid())
+  id               String         @id @default(uuid())
   title            String
   description      String
   tag              String // "Service" or "Request"
@@ -107,8 +107,9 @@ model Post {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  author   User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  requests ServiceRequest[]
+  author       User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  requests     ServiceRequest[]
+  chatMessages ChatMessage[]
 
   @@map("posts")
 }
@@ -151,11 +152,13 @@ model ChatMessage {
   senderId   String
   receiverId String
   content    String
+  postId     String?
   isRead     Boolean  @default(false)
   createdAt  DateTime @default(now())
 
-  sender   User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender   User  @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User  @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  post     Post? @relation(fields: [postId], references: [id], onDelete: SetNull)
 
   @@map("chat_messages")
 }

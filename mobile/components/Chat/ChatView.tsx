@@ -557,6 +557,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
         subtleBg={subtleBg}
         textColor={Colors.text}
         mutedColor={Colors.icon}
+        primaryColor={Colors.primary}
         onBack={onBack}
         onMoreOptions={handleMoreOptions}
       />

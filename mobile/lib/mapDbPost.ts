@@ -75,7 +75,7 @@ export function mapDbPostToPostDetail(post: DbPost): PostDetail {
     author: {
       fullName: author?.name ?? 'Unknown',
       username: `@${username}`,
-      avatarUrl: author?.avatarUrl || `https://i.pravatar.cc/256?u=${username}`,
+      avatarUrl: author?.avatarUrl || '',
     },
   };
 }
@@ -95,7 +95,7 @@ export function mapApiProfileToProviderProfile(data: ApiProfileResponse): Provid
     username: data.username,
     displayName: data.name,
     handle: data.username,
-    avatarUrl: data.avatarUrl || `https://i.pravatar.cc/256?u=${data.username}`,
+    avatarUrl: data.avatarUrl || '',
     bio: data.bio ?? '',
     skills: data.expertiseTags ?? [],
     posts: (data.posts ?? []).map(mapDbPostToFeaturedPost),

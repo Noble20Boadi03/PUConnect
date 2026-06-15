@@ -6,6 +6,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { Spacing, Typography } from '../../constants';
 import type { ConversationPreview } from '../../types';
 
+function getInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
+
 export interface ConversationListItemProps {
   conversation: ConversationPreview;
   textColor: string;
@@ -75,12 +84,20 @@ const ConversationListItemComponent: React.FC<ConversationListItemProps> = ({
         ) : (
           <>
             <View style={[styles.avatarRing, isOnline && { borderColor: '#22C55E' }]}>
-              <Image
-                source={{ uri: participant.avatarUrl }}
-                style={styles.avatar}
-                contentFit="cover"
-                transition={0}
-              />
+              <View style={[styles.avatar, { backgroundColor: primaryColor + '18' }]}>
+                {participant.avatarUrl ? (
+                  <Image
+                    source={{ uri: participant.avatarUrl }}
+                    style={styles.avatarImage}
+                    contentFit="cover"
+                    transition={0}
+                  />
+                ) : (
+                  <Text style={[styles.avatarInitials, { color: primaryColor }]}>
+                    {getInitials(participant.displayName)}
+                  </Text>
+                )}
+              </View>
             </View>
             {isOnline ? (
               <View style={[styles.onlineDot, { borderColor: onlineBorderColor }]} />
@@ -191,6 +208,17 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarInitials: {
+    fontSize: 20,
+    fontWeight: '800',
   },
   onlineDot: {
     position: 'absolute',

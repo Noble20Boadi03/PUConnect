@@ -31,7 +31,8 @@ export const getChatMessages = async (req: Request, res: Response) => {
       },
       include: {
         sender: true,
-        receiver: true
+        receiver: true,
+        post: true
       },
       orderBy: { createdAt: 'asc' }
     });
@@ -65,7 +66,7 @@ export const getConversations = async (req: Request, res: Response) => {
           { receiverId: userId }
         ]
       },
-      include: { sender: true, receiver: true },
+      include: { sender: true, receiver: true, post: true },
       orderBy: { createdAt: 'desc' }
     });
 
@@ -102,7 +103,7 @@ export const getConversations = async (req: Request, res: Response) => {
 export const sendChatMessage = async (req: Request, res: Response) => {
   try {
     const senderId = (req as any).user.id;
-    const { receiverUsername, content } = req.body;
+    const { receiverUsername, content, postId } = req.body;
 
     // Find receiver
     const receiver = await prisma.user.findUnique({
@@ -119,9 +120,10 @@ export const sendChatMessage = async (req: Request, res: Response) => {
       data: {
         senderId,
         receiverId: receiver.id,
-        content
+        content,
+        postId
       },
-      include: { sender: true, receiver: true }
+      include: { sender: true, receiver: true, post: true }
     });
 
     // Emit message to receiver via Socket.io if they're online

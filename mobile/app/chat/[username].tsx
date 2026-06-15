@@ -11,6 +11,9 @@ import { useAppRouter } from '../../hooks';
 import { useChat } from '../../hooks/useChat';
 import { Spacing, Typography } from '../../constants';
 import { profileService } from '../../services/profileService';
+import { postService } from '../../services/postService';
+import { parsePostPrice } from '../../lib/mapDbPost';
+import { ChatPostContext } from '../../types';
 
 export default function ChatScreen() {
   const { username, postId } = useLocalSearchParams<{
@@ -31,20 +34,42 @@ export default function ChatScreen() {
     const loadChat = async () => {
       if (username) {
         try {
-          const participantProfile = await profileService.getPublicProfile(username);
+          const [participantProfile, post] = await Promise.all([
+            profileService.getPublicProfile(username),
+            resolvedPostId ? postService.getPostById(resolvedPostId) : Promise.resolve(undefined)
+          ]);
+          
+          let postContext: ChatPostContext | undefined = undefined;
+          if (post) {
+            const price = parsePostPrice(post.price);
+            let priceLabel = '';
+            if (price.kind === 'fixed') {
+              priceLabel = `$${price.amount}`;
+            } else if (price.kind === 'range') {
+              priceLabel = `$${price.min}-$${price.max}`;
+            }
+            
+            postContext = {
+              postId: post.id,
+              title: post.title,
+              tag: post.tag as 'Service' | 'Request',
+              priceLabel
+            };
+          }
+          
           fetchMessages(username, {
             displayName: participantProfile.name || username,
             handle: `@${participantProfile.username || username}`,
-            avatarUrl: participantProfile.avatarUrl || 'https://i.pravatar.cc/150',
-          }, resolvedPostId ? { postId: resolvedPostId, title: 'Service Request', tag: 'Service' } : undefined);
+            avatarUrl: participantProfile.avatarUrl || '',
+          }, postContext);
         } catch (error) {
-          console.error('Failed to load participant profile:', error);
+          console.error('Failed to load chat:', error);
           // Fallback to placeholder
           fetchMessages(username, {
             displayName: username,
             handle: `@${username}`,
-            avatarUrl: 'https://i.pravatar.cc/150',
-          }, resolvedPostId ? { postId: resolvedPostId, title: 'Service Request', tag: 'Service' } : undefined);
+            avatarUrl: '',
+          }, undefined);
         }
         
         subscribeToMessages();
@@ -90,9 +115,10 @@ export default function ChatScreen() {
 
   const handleSendMessage = useCallback((text: string) => {
     if (username) {
-      sendMessage(username, text);
+      const currentPostId = activeThread?.postContext?.postId;
+      sendMessage(username, text, currentPostId);
     }
-  }, [username, sendMessage]);
+  }, [username, sendMessage, activeThread]);
 
   if (isLoading) {
     return (

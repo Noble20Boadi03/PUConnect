@@ -5,11 +5,21 @@ import { Ionicons } from '@expo/vector-icons';
 import { Spacing, Typography } from '../../constants';
 import type { ChatParticipant } from '../../types';
 
+function getInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
+
 export interface ChatHeaderProps {
   participant: ChatParticipant;
   subtleBg: string;
   textColor: string;
   mutedColor: string;
+  primaryColor: string;
   onBack: () => void;
   onMoreOptions?: () => void;
 }
@@ -19,6 +29,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   subtleBg,
   textColor,
   mutedColor,
+  primaryColor,
   onBack,
   onMoreOptions,
 }) => (
@@ -32,12 +43,20 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
       <Ionicons name="chevron-back" size={22} color={textColor} />
     </TouchableOpacity>
 
-    <Image
-      source={{ uri: participant.avatarUrl }}
-      style={styles.avatar}
-      contentFit="cover"
-      transition={0}
-    />
+    <View style={[styles.avatar, { backgroundColor: primaryColor + '18' }]}>
+      {participant.avatarUrl ? (
+        <Image
+          source={{ uri: participant.avatarUrl }}
+          style={styles.avatarImage}
+          contentFit="cover"
+          transition={0}
+        />
+      ) : (
+        <Text style={[styles.avatarInitials, { color: primaryColor }]}>
+          {getInitials(participant.displayName)}
+        </Text>
+      )}
+    </View>
 
     <View style={styles.identity}>
       <Text style={[styles.name, { color: textColor }]} numberOfLines={1}>
@@ -78,6 +97,17 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarInitials: {
+    fontSize: 18,
+    fontWeight: '800',
   },
   identity: {
     flex: 1,

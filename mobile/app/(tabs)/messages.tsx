@@ -28,7 +28,7 @@ export default function MessagesScreen() {
     participant: {
       displayName: c.user.name,
       handle: `@${c.user.username}`,
-      avatarUrl: c.user.avatarUrl || 'https://i.pravatar.cc/150',
+      avatarUrl: c.user.avatarUrl || '',
     },
     lastMessage: c.lastMessage.content,
     timestamp: new Date(c.lastMessage.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),

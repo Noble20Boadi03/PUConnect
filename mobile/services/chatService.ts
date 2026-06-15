@@ -5,10 +5,12 @@ export interface BackendChatMessage {
   senderId: string;
   receiverId: string;
   content: string;
+  postId?: string;
   isRead: boolean;
   createdAt: string;
   sender?: any;
   receiver?: any;
+  post?: any;
 }
 
 export interface BackendConversation {
@@ -32,8 +34,8 @@ export const chatService = {
     return response.data.data;
   },
 
-  sendMessage: async (receiverUsername: string, content: string): Promise<BackendChatMessage> => {
-    const response = await apiClient.post('/chat', { receiverUsername, content });
+  sendMessage: async (receiverUsername: string, content: string, postId?: string): Promise<BackendChatMessage> => {
+    const response = await apiClient.post('/chat', { receiverUsername, content, postId });
     return response.data.data;
   },
 

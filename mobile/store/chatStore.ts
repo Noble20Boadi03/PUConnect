@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { chatService, BackendChatMessage, BackendConversation } from '../services/chatService';
 import { useAuthStore } from './authStore';
 import { getSocket } from '../lib/socket';
-import { ChatMessage, ChatDateGroup, ChatParticipant, ChatThread } from '../types';
+import { ChatMessage, ChatDateGroup, ChatParticipant, ChatThread, ChatPostContext } from '../types';
+import { parsePostPrice } from '../lib/mapDbPost';
 
 interface ChatState {
   conversations: BackendConversation[];
@@ -10,8 +11,8 @@ interface ChatState {
   isLoading: boolean;
   
   fetchConversations: () => Promise<void>;
-  fetchMessages: (username: string, participant: ChatParticipant, postContext?: any) => Promise<void>;
-  sendMessage: (receiverUsername: string, content: string) => Promise<void>;
+  fetchMessages: (username: string, participant: ChatParticipant, postContext?: ChatPostContext) => Promise<void>;
+  sendMessage: (receiverUsername: string, content: string, postId?: string) => Promise<void>;
   subscribeToMessages: () => void;
   unsubscribeFromMessages: () => void;
 }
@@ -36,6 +37,24 @@ const formatMessages = (messages: BackendChatMessage[], currentUserId: string): 
   });
   
   return Object.entries(groups).map(([dateLabel, messages]) => ({ dateLabel, messages }));
+};
+
+// Helper to extract post context from a post
+const buildPostContext = (post: any): ChatPostContext => {
+  const price = parsePostPrice(post.price);
+  let priceLabel = '';
+  if (price.kind === 'fixed') {
+    priceLabel = `$${price.amount}`;
+  } else if (price.kind === 'range') {
+    priceLabel = `$${price.min}-$${price.max}`;
+  }
+  
+  return {
+    postId: post.id,
+    title: post.title,
+    tag: post.tag as 'Service' | 'Request',
+    priceLabel
+  };
 };
 
 let socketInstance: any = null;
@@ -63,11 +82,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const backendMessages = await chatService.getMessages(username);
       const dateGroups = formatMessages(backendMessages, user.id);
 
+      // If no post context provided, try to get the latest post from messages
+      let finalPostContext = postContext;
+      if (!finalPostContext) {
+        const latestPostMessage = backendMessages.find(msg => msg.post);
+        if (latestPostMessage?.post) {
+          finalPostContext = buildPostContext(latestPostMessage.post);
+        }
+      }
+
       set({
         activeThread: {
           providerUsername: username,
           participant,
-          postContext,
+          postContext: finalPostContext,
           dateGroups,
         },
         isLoading: false,
@@ -80,12 +108,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  sendMessage: async (receiverUsername, content) => {
+  sendMessage: async (receiverUsername, content, postId) => {
     try {
       const user = useAuthStore.getState().user;
       if (!user) return;
       
-      const newMsg = await chatService.sendMessage(receiverUsername, content);
+      const newMsg = await chatService.sendMessage(receiverUsername, content, postId);
       
       const { activeThread } = get();
       if (activeThread && activeThread.providerUsername === receiverUsername) {
@@ -99,6 +127,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
           time: date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
         };
         
+        // Check if message already exists
+        const messageExists = activeThread.dateGroups.some(
+          group => group.messages.some(msg => msg.id === newMsg.id)
+        );
+        if (messageExists) return;
+        
         const newGroups = [...activeThread.dateGroups].map(g => ({ ...g, messages: [...g.messages] }));
         const lastGroup = newGroups[newGroups.length - 1];
         if (lastGroup && lastGroup.dateLabel === dateLabel) {
@@ -106,8 +140,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
         } else {
            newGroups.push({ dateLabel, messages: [uiMsg] });
         }
+
+        // If we have a post and no current post context, set it now
+        let newPostContext = activeThread.postContext;
+        if (!newPostContext && newMsg.post) {
+          newPostContext = buildPostContext(newMsg.post);
+        }
         
-        set({ activeThread: { ...activeThread, dateGroups: newGroups } });
+        set({ activeThread: { ...activeThread, dateGroups: newGroups, postContext: newPostContext } });
       }
     } catch (error) {
       console.error('sendMessage error:', error);
@@ -140,6 +180,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
             newMsg.receiver?.username === activeThread.providerUsername));
         
         if (isRelevantMessage) {
+          // Check if message already exists
+          const messageExists = activeThread.dateGroups.some(
+            group => group.messages.some(msg => msg.id === newMsg.id)
+          );
+          if (messageExists) {
+            // Still mark as read if we received it
+            if (newMsg.receiverId === user.id) {
+              chatService.markMessagesAsRead(activeThread.providerUsername).catch(() => {});
+            }
+            // Refresh conversations list
+            fetchConversations();
+            return;
+          }
+
           const date = new Date(newMsg.createdAt);
           const dateLabel = date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase();
           
@@ -157,8 +211,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
           } else {
              newGroups.push({ dateLabel, messages: [uiMsg] });
           }
+
+          // If we have a post and no current post context, set it now
+          let newPostContext = activeThread.postContext;
+          if (!newPostContext && newMsg.post) {
+            newPostContext = buildPostContext(newMsg.post);
+          }
           
-          set({ activeThread: { ...activeThread, dateGroups: newGroups } });
+          set({ activeThread: { ...activeThread, dateGroups: newGroups, postContext: newPostContext } });
           
           // Mark messages as read if we received them
           if (newMsg.receiverId === user.id) {
