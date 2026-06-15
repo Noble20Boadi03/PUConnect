@@ -5,6 +5,7 @@ import { useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColor } from '../../hooks';
+import { useChatStore, useAuthStore } from '../../store';
 
 /**
  * Base height of the tab bar content (icons + labels) before safe-area padding.
@@ -28,6 +29,13 @@ export default function TabsLayout() {
   // keeps the bar visually pinned regardless. Using a hardcoded fallback here
   // was the original bug: it inflated the height before the real inset arrived.
   const bottomPadding = insets.bottom;
+
+  const { conversations } = useChatStore();
+  const { user: currentUser } = useAuthStore();
+
+  const unreadCount = conversations.filter(
+    (c) => !c.lastMessage.isRead && c.lastMessage.receiverId === currentUser?.id
+  ).length;
 
   return (
     <Tabs
@@ -72,6 +80,12 @@ export default function TabsLayout() {
         name="messages"
         options={{
           title: 'Messages',
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: Colors.primary,
+            color: '#FFFFFF',
+            fontSize: 10,
+          },
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="chatbubbles-outline" size={size} color={color} />
           ),

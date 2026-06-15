@@ -3,11 +3,13 @@ import React, { useCallback, useEffect } from 'react';
 import { MessagesInboxView } from '../../components/Messages';
 import { buildChatHref } from '../../lib';
 import { useAppRouter } from '../../hooks';
+import { useAuthStore } from '../../store';
 import { useChat } from '../../hooks/useChat';
 import type { ConversationPreview } from '../../types';
 
 export default function MessagesScreen() {
   const router = useAppRouter();
+  const { user: currentUser } = useAuthStore();
   const { conversations, fetchConversations, subscribeToMessages } = useChat();
 
   useEffect(() => {
@@ -32,7 +34,7 @@ export default function MessagesScreen() {
     },
     lastMessage: c.lastMessage.content,
     timestamp: new Date(c.lastMessage.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
-    unread: !c.lastMessage.isRead,
+    unread: !c.lastMessage.isRead && c.lastMessage.receiverId === currentUser?.id,
     postId: c.lastMessage.post?.id,
   }));
 

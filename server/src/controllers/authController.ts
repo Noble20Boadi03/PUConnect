@@ -7,20 +7,19 @@ import { emailService } from '../services/emailService';
 /**
  * Maps a database user to the public API user shape.
  */
-const toPublicUser = (user: {
-  id: string;
-  name: string;
-  email: string;
-  username: string;
-  role: string;
-  avatarUrl: string;
-}) => ({
+const toPublicUser = (user: any) => ({
   id: user.id,
   name: user.name,
   email: user.email,
   username: user.username,
   role: user.role,
   avatarUrl: user.avatarUrl,
+  bio: user.bio || '',
+  categoryId: user.categoryId || undefined,
+  skillTitle: user.skillTitle || undefined,
+  expertiseTags: user.expertiseTags || [],
+  serviceIds: user.serviceIds || [],
+  themePreference: user.themePreference || undefined,
 });
 
 /**

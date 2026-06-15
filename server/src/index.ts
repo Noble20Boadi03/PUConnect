@@ -29,33 +29,23 @@ const io = new SocketIOServer(server, {
   },
 });
 
-// Store user ID to socket ID mappings
-const userSocketMap = new Map<string, string>();
-
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
-  // Handle user joining with their user ID
+  // Handle user joining their personal room
   socket.on('join', (userId: string) => {
-    userSocketMap.set(userId, socket.id);
-    console.log(`User ${userId} connected with socket ${socket.id}`);
+    socket.join(userId);
+    console.log(`User ${userId} joined their room with socket ${socket.id}`);
   });
 
   // Handle user disconnecting
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
-    // Remove user from map
-    for (const [userId, socketId] of userSocketMap.entries()) {
-      if (socketId === socket.id) {
-        userSocketMap.delete(userId);
-        break;
-      }
-    }
   });
 });
 
-// Export io and userSocketMap so controllers can use them
-export { io, userSocketMap };
+// Export io so controllers can use it
+export { io };
 
 // Enable CORS (Cross-Origin Resource Sharing)
 // This is critical to allow mobile devices/emulators to connect to the backend

@@ -238,9 +238,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
           
           // If we have a pending message and this is from us, replace the pending one
           if (hasPendingMessage && newMsg.senderId === user.id) {
+            let replaced = false;
             const newGroups = [...activeThread.dateGroups.map(g => ({
               ...g,
-              messages: g.messages.map(m => m.isSending ? uiMsg : m)
+              messages: g.messages.map(m => {
+                if (m.isSending && !replaced) {
+                  replaced = true;
+                  return uiMsg;
+                }
+                return m;
+              })
             }))];
             
             // If we have a post and no current post context, set it now
