@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../config/db';
+import { io, userSocketMap } from '../index';
 
 /**
  * Get chat messages between authenticated user and another user
@@ -122,6 +123,18 @@ export const sendChatMessage = async (req: Request, res: Response) => {
       },
       include: { sender: true, receiver: true }
     });
+
+    // Emit message to receiver via Socket.io if they're online
+    const receiverSocketId = userSocketMap.get(receiver.id);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit('newMessage', message);
+    }
+
+    // Also emit to sender (for consistency across devices)
+    const senderSocketId = userSocketMap.get(senderId);
+    if (senderSocketId) {
+      io.to(senderSocketId).emit('newMessage', message);
+    }
 
     return res.status(201).json({
       status: 201,

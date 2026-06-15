@@ -9,3 +9,4 @@ export * from './useAppRouter';
 export * from './useThemeToggle';
 export * from './usePostDetailChrome';
 export * from './useChangeProfilePhoto';
+export * from './useChat';

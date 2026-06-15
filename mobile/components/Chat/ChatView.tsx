@@ -93,6 +93,7 @@ export interface ChatViewProps {
   onOpenPostForRequest?: (postId: string) => void;
   /** Opens `/provider/{slug}` — same route as service post detail. */
   onViewProviderProfile?: () => void;
+  onSendMessage?: (text: string) => void;
 }
 
 export const ChatView: React.FC<ChatViewProps> = ({
@@ -101,6 +102,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   onOpenPost,
   onOpenPostForRequest,
   onViewProviderProfile,
+  onSendMessage,
 }) => {
   const router = useAppRouter();
   const Colors = useThemeColor();
@@ -140,6 +142,10 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const [dateGroups, setDateGroups] = useState<ChatDateGroup[]>(() =>
     thread.dateGroups.map((g) => ({ ...g, messages: [...g.messages] }))
   );
+
+  React.useEffect(() => {
+    setDateGroups(thread.dateGroups.map((g) => ({ ...g, messages: [...g.messages] })));
+  }, [thread.dateGroups]);
 
   const providerServices = useMemo(
     () => getProviderServices(thread.providerUsername),
@@ -531,12 +537,16 @@ export const ChatView: React.FC<ChatViewProps> = ({
     const trimmed = draft.trim();
     if (!trimmed) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setDateGroups((prev) => appendSentMessage(prev, trimmed));
+    if (onSendMessage) {
+      onSendMessage(trimmed);
+    } else {
+      setDateGroups((prev) => appendSentMessage(prev, trimmed));
+    }
     setDraft('');
     requestAnimationFrame(() => {
       scrollRef.current?.scrollToEnd({ animated: true });
     });
-  }, [draft]);
+  }, [draft, onSendMessage]);
 
   const displayGroups = useMemo(() => dateGroups, [dateGroups]);
 

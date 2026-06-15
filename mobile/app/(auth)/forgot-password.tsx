@@ -96,6 +96,7 @@ export default function ForgotPasswordScreen() {
               <Alert
                 type="success"
                 message={successMsg}
+                onDismiss={() => setSuccessMsg(null)}
               />
             )}
 
@@ -103,6 +104,7 @@ export default function ForgotPasswordScreen() {
               <Alert
                 type="error"
                 message={errorMsg}
+                onDismiss={() => setErrorMsg(null)}
               />
             )}
 

@@ -41,6 +41,14 @@
       ],
       "expo-secure-store",
       [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow PuConnect to access your photos.",
+          "savePhotosPermission": "Allow PuConnect to save photos.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "PuConnect needs access to your photos so you can choose a profile picture.",
@@ -55,7 +63,9 @@
     },
     "extra": {
       "apiUrl": "https://api.dev.puconnect.com",
-      "environment": "development"
+      "environment": "development",
+      "supabaseUrl": "YOUR_SUPABASE_URL",
+      "supabaseAnonKey": "YOUR_SUPABASE_ANON_KEY"
     }
   }
 }

@@ -19,6 +19,8 @@ const getApiUrl = () => {
 export const ENV = {
   apiUrl: getApiUrl(),
   environment: Constants.expoConfig?.extra?.environment || 'development',
+  supabaseUrl: Constants.expoConfig?.extra?.supabaseUrl || '',
+  supabaseAnonKey: Constants.expoConfig?.extra?.supabaseAnonKey || '',
 };
 
 export default ENV;

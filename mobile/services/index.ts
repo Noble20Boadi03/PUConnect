@@ -6,3 +6,4 @@ export * from './settingsService';
 export * from './profileService';
 export * from './reviewService';
 export * from './uploadService';
+export * from './chatService';

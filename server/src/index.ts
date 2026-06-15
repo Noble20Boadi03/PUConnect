@@ -1,5 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
 import cors from 'cors';
 import authRoutes from './routes/authRoutes';
 import exploreRoutes from './routes/exploreRoutes';
@@ -16,7 +18,44 @@ import uploadRoutes from './routes/uploadRoutes';
 // dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
+
+// Set up Socket.IO
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST'],
+  },
+});
+
+// Store user ID to socket ID mappings
+const userSocketMap = new Map<string, string>();
+
+io.on('connection', (socket) => {
+  console.log('A user connected:', socket.id);
+
+  // Handle user joining with their user ID
+  socket.on('join', (userId: string) => {
+    userSocketMap.set(userId, socket.id);
+    console.log(`User ${userId} connected with socket ${socket.id}`);
+  });
+
+  // Handle user disconnecting
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+    // Remove user from map
+    for (const [userId, socketId] of userSocketMap.entries()) {
+      if (socketId === socket.id) {
+        userSocketMap.delete(userId);
+        break;
+      }
+    }
+  });
+});
+
+// Export io and userSocketMap so controllers can use them
+export { io, userSocketMap };
 
 // Enable CORS (Cross-Origin Resource Sharing)
 // This is critical to allow mobile devices/emulators to connect to the backend
@@ -50,7 +89,7 @@ app.get('/', (req, res) => {
   });
 });
 
-// Start Server
-app.listen(Number(PORT), '0.0.0.0', () => {
+// Start Server (using server instead of app.listen)
+server.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`Server is running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
 });

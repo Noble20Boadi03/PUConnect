@@ -1,14 +1,16 @@
-import React, { useCallback, useMemo } from 'react';
-import { BackHandler, StyleSheet, Text, TouchableOpacity, useColorScheme } from 'react-native';
+import React, { useCallback, useEffect } from 'react';
+import { BackHandler, StyleSheet, Text, TouchableOpacity, useColorScheme, ActivityIndicator } from 'react-native';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { ChatView } from '../../components/Chat';
-import { buildProviderProfileHref, getChatThread } from '../../lib';
+import { buildProviderProfileHref } from '../../lib';
 import { useAppRouter } from '../../hooks';
+import { useChat } from '../../hooks/useChat';
 import { Spacing, Typography } from '../../constants';
+import { profileService } from '../../services/profileService';
 
 export default function ChatScreen() {
   const { username, postId } = useLocalSearchParams<{
@@ -23,10 +25,33 @@ export default function ChatScreen() {
 
   const resolvedPostId = typeof postId === 'string' ? postId : undefined;
 
-  const thread = useMemo(() => {
-    if (typeof username !== 'string') return undefined;
-    return getChatThread(username, resolvedPostId);
-  }, [username, resolvedPostId]);
+  const { activeThread, isLoading, fetchMessages, sendMessage, subscribeToMessages } = useChat();
+
+  useEffect(() => {
+    const loadChat = async () => {
+      if (username) {
+        try {
+          const participantProfile = await profileService.getPublicProfile(username);
+          fetchMessages(username, {
+            displayName: participantProfile.name || username,
+            handle: `@${participantProfile.username || username}`,
+            avatarUrl: participantProfile.avatarUrl || 'https://i.pravatar.cc/150',
+          }, resolvedPostId ? { postId: resolvedPostId, title: 'Service Request', tag: 'Service' } : undefined);
+        } catch (error) {
+          console.error('Failed to load participant profile:', error);
+          // Fallback to placeholder
+          fetchMessages(username, {
+            displayName: username,
+            handle: `@${username}`,
+            avatarUrl: 'https://i.pravatar.cc/150',
+          }, resolvedPostId ? { postId: resolvedPostId, title: 'Service Request', tag: 'Service' } : undefined);
+        }
+        
+        subscribeToMessages();
+      }
+    };
+    loadChat();
+  }, [username, resolvedPostId, fetchMessages, subscribeToMessages]);
 
   const exitToMessages = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -63,7 +88,21 @@ export default function ChatScreen() {
     router.push(buildProviderProfileHref(username) as any);
   }, [username, router]);
 
-  if (!thread) {
+  const handleSendMessage = useCallback((text: string) => {
+    if (username) {
+      sendMessage(username, text);
+    }
+  }, [username, sendMessage]);
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={[styles.center, { backgroundColor: screenBg }]} edges={['top', 'bottom']}>
+        <ActivityIndicator size="large" color={textColor} />
+      </SafeAreaView>
+    );
+  }
+
+  if (!activeThread) {
     return (
       <SafeAreaView
         style={[styles.notFound, { backgroundColor: screenBg }]}
@@ -80,16 +119,22 @@ export default function ChatScreen() {
 
   return (
     <ChatView
-      thread={thread}
+      thread={activeThread}
       onBack={exitToMessages}
       onOpenPost={handleOpenPost}
       onOpenPostForRequest={handleOpenPostForRequest}
       onViewProviderProfile={handleViewProviderProfile}
+      onSendMessage={handleSendMessage}
     />
   );
 }
 
 const styles = StyleSheet.create({
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   notFound: {
     flex: 1,
     justifyContent: 'center',

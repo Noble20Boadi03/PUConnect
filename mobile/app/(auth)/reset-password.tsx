@@ -142,6 +142,7 @@ export default function ResetPasswordScreen() {
               <Alert
                 type="success"
                 message={successMsg}
+                onDismiss={() => setSuccessMsg(null)}
               />
             )}
 
@@ -149,6 +150,7 @@ export default function ResetPasswordScreen() {
               <Alert
                 type="error"
                 message={errorMsg}
+                onDismiss={() => setErrorMsg(null)}
               />
             )}
 

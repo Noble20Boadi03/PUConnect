@@ -194,6 +194,7 @@ export default function RegisterScreen() {
                 <Alert
                   type="error"
                   message={errorMsg}
+                  onDismiss={() => setErrorMsg(null)}
                 />
               )}
               

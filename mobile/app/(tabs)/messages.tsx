@@ -1,13 +1,19 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import { MessagesInboxView } from '../../components/Messages';
-import { MESSAGES_INBOX_MOCK } from '../../constants/messagesListMock';
 import { buildChatHref } from '../../lib';
 import { useAppRouter } from '../../hooks';
+import { useChat } from '../../hooks/useChat';
 import type { ConversationPreview } from '../../types';
 
 export default function MessagesScreen() {
   const router = useAppRouter();
+  const { conversations, fetchConversations, subscribeToMessages } = useChat();
+
+  useEffect(() => {
+    fetchConversations();
+    subscribeToMessages();
+  }, [fetchConversations, subscribeToMessages]);
 
   const handleConversationPress = useCallback(
     (conversation: ConversationPreview) => {
@@ -16,9 +22,22 @@ export default function MessagesScreen() {
     [router]
   );
 
+  const mappedConversations: ConversationPreview[] = conversations.map(c => ({
+    id: c.user.id,
+    providerUsername: c.user.username,
+    participant: {
+      displayName: c.user.name,
+      handle: `@${c.user.username}`,
+      avatarUrl: c.user.avatarUrl || 'https://i.pravatar.cc/150',
+    },
+    lastMessage: c.lastMessage.content,
+    timestamp: new Date(c.lastMessage.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+    unread: !c.lastMessage.isRead,
+  }));
+
   return (
     <MessagesInboxView
-      conversations={MESSAGES_INBOX_MOCK}
+      conversations={mappedConversations}
       onConversationPress={handleConversationPress}
     />
   );

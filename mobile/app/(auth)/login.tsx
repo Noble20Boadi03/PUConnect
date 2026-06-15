@@ -126,6 +126,7 @@ export default function LoginScreen() {
                 <Alert
                   type="error"
                   message={errorMsg}
+                  onDismiss={() => setErrorMsg(null)}
                 />
               )}
               <View style={styles.inputWrapper}>

@@ -32,7 +32,7 @@ export const KeyboardLayout: React.FC<KeyboardLayoutProps> = ({
   return (
     <KeyboardAvoidingView
       style={[styles.container, style]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={keyboardVerticalOffset}
     >
       <ScrollView
