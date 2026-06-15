@@ -1,8 +1,10 @@
 import type {
   DbServiceRequest,
   DbServiceRequestStatus,
+  DbPost,
 } from '../types/core';
-import type { OfficialCompletionPhase, OfficialEngagementStatus } from '../types/chat';
+import type { OfficialCompletionPhase, OfficialEngagementStatus, ChatPostContext } from '../types/chat';
+import { parsePostPrice } from './mapDbPost';
 
 export interface ServiceEngagementState {
   serviceRequestId: string | null;
@@ -91,4 +93,21 @@ export function serviceStatusLabel(status: DbServiceRequestStatus): string {
 
 export function serviceKindLabel(kind: DbServiceRequest['kind']): string {
   return kind === 'response' ? 'Official Response' : 'Official Request';
+}
+
+export function mapDbPostToChatPostContext(post: DbPost): ChatPostContext {
+  const price = parsePostPrice(post.price);
+  let priceLabel = '';
+  if (price.kind === 'fixed') {
+    priceLabel = `$${price.amount}`;
+  } else if (price.kind === 'range') {
+    priceLabel = `$${price.min}-$${price.max}`;
+  }
+  
+  return {
+    postId: post.id,
+    title: post.title,
+    tag: post.tag,
+    priceLabel
+  };
 }

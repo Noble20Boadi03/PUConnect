@@ -16,7 +16,7 @@ import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { useThemeColor, useAppRouter } from '../../hooks';
 import { useAuthStore, useServiceRequestsStore } from '../../store';
-import { buildChatHref, serviceKindLabel, serviceStatusLabel } from '../../lib';
+import { serviceKindLabel, serviceStatusLabel } from '../../lib';
 import type { DbServiceRequest } from '../../types/core';
 
 const REQUEST_ACCENT = '#F59E0B';
@@ -49,19 +49,12 @@ export const ServiceStatusView: React.FC<ServiceStatusViewProps> = ({ onBack }) 
     void fetchRequests();
   }, [fetchRequests]);
 
-  const handleOpenChat = useCallback(
+  const handleOpenDetails = useCallback(
     (request: DbServiceRequest) => {
-      if (!userId) return;
-      const isRequester = request.requesterId === userId;
-      const peer = isRequester ? request.provider : request.requester;
-      if (!peer?.username) return;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      const href = request.postId
-        ? buildChatHref(peer.username, request.postId)
-        : buildChatHref(peer.username);
-      router.push(href as any);
+      router.push(`/service-request/${request.id}` as any);
     },
-    [userId, router]
+    [router]
   );
 
   const renderItem = useCallback(
@@ -82,7 +75,7 @@ export const ServiceStatusView: React.FC<ServiceStatusViewProps> = ({ onBack }) 
       return (
         <TouchableOpacity
           style={[styles.card, { backgroundColor: cardBg }]}
-          onPress={() => handleOpenChat(item)}
+          onPress={() => handleOpenDetails(item)}
           activeOpacity={0.85}
         >
           <View style={styles.cardHeader}>
@@ -110,7 +103,7 @@ export const ServiceStatusView: React.FC<ServiceStatusViewProps> = ({ onBack }) 
         </TouchableOpacity>
       );
     },
-    [userId, cardBg, subtleBg, Colors, handleOpenChat]
+    [userId, cardBg, subtleBg, Colors, handleOpenDetails]
   );
 
   return (
