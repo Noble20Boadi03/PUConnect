@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../config/db';
 import { io } from '../index';
 import type { ServiceRequestKind, ServiceRequestStatus } from '@prisma/client';
+import { sendPushNotification } from '../services/pushService';
 
 const safeUserSelect = {
   id: true,
@@ -52,9 +53,9 @@ function emitServiceRequestUpdate(request: Awaited<ReturnType<typeof prisma.serv
   io.to(request.providerId).emit('serviceRequestUpdated', request);
 }
 
-async function notifyUser(
+export async function notifyUser(
   userId: string,
-  kind: 'request' | 'service',
+  kind: 'message' | 'service' | 'request' | 'system',
   title: string,
   body: string
 ) {
@@ -62,6 +63,22 @@ async function notifyUser(
     data: { userId, kind, title, body },
   });
   io.to(userId).emit('newNotification', notification);
+  
+  // Fire-and-forget push notification
+  (async () => {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { pushToken: true },
+      });
+      if (user?.pushToken) {
+        await sendPushNotification(user.pushToken, title, body);
+      }
+    } catch (error) {
+      console.error('Error sending push notification from notifyUser:', error);
+    }
+  })();
+  
   return notification;
 }
 

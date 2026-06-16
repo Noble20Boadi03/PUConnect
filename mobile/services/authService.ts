@@ -136,6 +136,14 @@ export const authService = {
     const response = await apiClient.post<ApiResponse<null>>('/auth/change-password', { currentPassword, newPassword, confirmNewPassword });
     return response.data;
   },
+
+  /**
+   * Updates authenticated user's push token
+   * @route PUT /api/auth/push-token
+   */
+  async updatePushToken(pushToken: string | null): Promise<void> {
+    await apiClient.put('/auth/push-token', { pushToken });
+  },
 };
 
 export default authService;

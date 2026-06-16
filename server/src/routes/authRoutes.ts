@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, logout, getMe, deleteAccount, revokeProviderStatus, forgotPassword, verifyOTP, resetPassword, changePassword, updateProfile, updateProviderProfile } from '../controllers/authController';
+import { register, login, logout, getMe, deleteAccount, revokeProviderStatus, forgotPassword, verifyOTP, resetPassword, changePassword, updateProfile, updateProviderProfile, updatePushToken } from '../controllers/authController';
 import { protect } from '../middlewares/authMiddleware';
 
 const router = Router();
@@ -19,5 +19,6 @@ router.patch('/revoke-provider', protect, revokeProviderStatus);
 router.post('/change-password', protect, changePassword);
 router.patch('/update-profile', protect, updateProfile);
 router.patch('/update-provider-profile', protect, updateProviderProfile);
+router.put('/push-token', protect, updatePushToken);
 
 export default router;

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../config/db';
 import { io } from '../index';
+import { notifyUser } from './serviceRequestController';
 
 const safeUserSelect = {
   id: true,
@@ -162,7 +163,7 @@ export const sendChatMessage = async (req: Request, res: Response) => {
         sender: { select: safeUserSelect }, 
         receiver: { select: safeUserSelect }, 
         post: { select: postSelect } 
-      }
+      },
     });
 
     // Emit message to receiver via Socket.io if they're online
@@ -170,6 +171,14 @@ export const sendChatMessage = async (req: Request, res: Response) => {
 
     // Also emit to sender (for consistency across devices)
     io.to(senderId).emit('newMessage', message);
+    
+    // Create DB notification and send push
+    await notifyUser(
+      receiver.id,
+      'message',
+      message.sender.name || message.sender.username,
+      message.content.length > 100 ? message.content.substring(0, 100) + '...' : message.content
+    );
 
     return res.status(201).json({
       status: 201,

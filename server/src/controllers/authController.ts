@@ -262,10 +262,52 @@ export const getMe = async (req: Request, res: Response) => {
 
 
 /**
+ * Update authenticated user's push token.
+ * @route PUT /api/auth/push-token
+ */
+export const updatePushToken = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const { pushToken } = req.body;
+
+    // Determine if we should set or clear the token
+    const tokenToSet = pushToken && pushToken.trim() !== '' ? pushToken : null;
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { pushToken: tokenToSet },
+    });
+
+    return res.status(200).json({
+      status: 200,
+      success: true,
+    });
+  } catch (error) {
+    console.error('UpdatePushToken Error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error updating push token.',
+    });
+  }
+};
+
+/**
  * Log out user (for custom manual auth, we verify/clear client tokens).
  * @route POST /api/auth/logout
  */
 export const logout = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    if (userId) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { pushToken: null },
+      });
+    }
+  } catch (error) {
+    console.error('Logout Error (clearing push token):', error);
+  }
+
   return res.status(200).json({
     status: 200,
     message: 'Logged out successfully.',

@@ -78,6 +78,7 @@ model User {
   updatedAt     DateTime           @updatedAt
   otpCode       String?
   otpExpires    DateTime?
+  pushToken     String?  @map("push_token")
 
   // Relations
   posts            Post[]

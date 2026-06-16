@@ -13,6 +13,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { applyThemeSystemChrome } from '../lib/systemChrome';
 import { useMarketStore } from '../store/marketStore';
 import { useExploreStore } from '../store/exploreStore';
+import * as Notifications from 'expo-notifications';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -48,6 +49,25 @@ export default function RootLayout() {
       });
       const unsubscribeServiceRequests = subscribeToUpdates();
       
+      // Notification listeners
+      const subscription1 = Notifications.addNotificationReceivedListener(() => {
+        useNotificationsStore.getState().fetchNotifications();
+      });
+      const subscription2 = Notifications.addNotificationResponseReceivedListener((response) => {
+        const data = response.notification.request.content.data as any;
+        const type = data?.type;
+        
+        if (type === 'MESSAGE') {
+          router.push('/(tabs)/messages');
+        } else if (type === 'SERVICE_REQUEST') {
+          router.push('/service-status');
+        } else if (type === 'REVIEW') {
+          router.push('/(tabs)/profile');
+        } else {
+          router.push('/notifications');
+        }
+      });
+      
       // Background prefetching (fire-and-forget, respect cache TTL)
       fetchPosts();
       fetchExploreData();
@@ -57,6 +77,8 @@ export default function RootLayout() {
       
       return () => {
         unsubscribeServiceRequests();
+        subscription1.remove();
+        subscription2.remove();
       };
     }
   }, [
@@ -73,6 +95,7 @@ export default function RootLayout() {
     fetchPosts,
     fetchExploreData,
     fetchProfile,
+    router,
   ]);
 
   // Authenticated users skip the landing page — hide splash once auth is ready.

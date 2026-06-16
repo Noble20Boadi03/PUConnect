@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../config/db';
 import { io } from '../index';
+import { sendPushNotification } from '../services/pushService';
 
 const safeUserSelect = {
   id: true,
@@ -196,6 +197,21 @@ export const createReview = async (req: Request, res: Response) => {
     });
 
     io.to(reviewee.id).emit('newNotification', notification);
+    
+    // Fire-and-forget push notification
+    (async () => {
+      try {
+        const user = await prisma.user.findUnique({
+          where: { id: reviewee.id },
+          select: { pushToken: true },
+        });
+        if (user?.pushToken) {
+          await sendPushNotification(user.pushToken, 'New Review', `${review.reviewer.name} left you a ${rating}-star review.`);
+        }
+      } catch (error) {
+        console.error('Error sending push notification for new review:', error);
+      }
+    })();
 
     return res.status(201).json({
       status: 201,

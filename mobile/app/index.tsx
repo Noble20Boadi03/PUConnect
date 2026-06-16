@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { StyleSheet, View, Text, Image, TouchableOpacity, useColorScheme, Dimensions, Appearance, ImageSourcePropType } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
@@ -11,6 +11,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withDelay,
   Easing,
   withSpring,
   FadeIn,
@@ -20,7 +21,7 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore, useProfileStore, useMarketStore, useExploreStore } from '../store';
 
-const { width, height } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 interface OnboardingSlide {
   id: number;
@@ -90,26 +91,42 @@ export default function LandingPage() {
   const { isLoading: exploreLoading } = useExploreStore();
 
   const [currentIndex, setCurrentIndex] = useState(slide === 'last' ? ONBOARDING_DATA.length - 1 : 0);
+  const safeAreaRef = useRef<View>(null);
+  const safeAreaY = useSharedValue(0);
 
   // Animation shared values
   const initialLogoSize = 88;
-  const initialLogoX = width / 2 - initialLogoSize / 2;
-  const initialLogoY = height / 2 - initialLogoSize / 2;
+  const targetLogoSize = 44;
 
-  const logoScale = useSharedValue(skipSplash === 'true' ? 1 : 1);
+  const logoScale = useSharedValue(skipSplash === 'true' ? 0.5 : 1);
+  const logoX = useSharedValue(0);
+  const logoY = useSharedValue(0);
+  const logoOpacity = useSharedValue(1);
+  const headerCenterY = useSharedValue(0);
   const screenOpacity = useSharedValue(skipSplash === 'true' ? 0 : 1);
   const contentOpacity = useSharedValue(skipSplash === 'true' ? 1 : 0);
 
   // All hooks must be called before early return!
   const animatedLogoStyle = useAnimatedStyle(() => {
+    // Initial centered position
+    const initialCenterX = screenWidth / 2;
+    const initialCenterY = screenHeight / 2;
+    
+    // Current center position
+    const currentCenterX = initialCenterX + logoX.value;
+    const currentCenterY = initialCenterY + logoY.value;
+    
+    // Current top-left position
+    const currentLeft = currentCenterX - (initialLogoSize * logoScale.value) / 2;
+    const currentTop = currentCenterY - (initialLogoSize * logoScale.value) / 2;
+    
     return {
-      top: 0,
-      left: 0,
+      left: currentLeft,
+      top: currentTop,
       transform: [
-        { translateX: initialLogoX },
-        { translateY: initialLogoY },
         { scale: logoScale.value },
       ],
+      opacity: logoOpacity.value,
       position: 'absolute',
       zIndex: 100,
       width: initialLogoSize,
@@ -170,19 +187,52 @@ export default function LandingPage() {
         await new Promise(resolve => setTimeout(resolve, 500));
         router.replace('/(tabs)/market' as any);
       } else {
-        // Original onboarding animation
-        // Hold the logo in the perfect center for 2 seconds
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Fade in the images and content while the logo is moving
-        contentOpacity.value = withTiming(1, { duration: 800 });
+        // Unauthenticated onboarding animation sequence
+        // 0ms → App opens, logo centered, content invisible
+        // 200ms → Brief pause (logo visible centered)
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // 200ms → Logo starts animating to top-left (600ms duration)
+        // Calculate target positions
+        // Target logo center at:
+        // X: left edge + Spacing.lg + (targetLogoSize / 2)
+        // Y: same vertical center as theme switch (headerCenterY)
+        const targetLogoCenterX = Spacing.lg + (targetLogoSize / 2);
+        const targetLogoCenterY = headerCenterY.value;
+        
+        // Initial logo center is at screen center
+        const initialCenterX = screenWidth / 2;
+        const initialCenterY = screenHeight / 2;
+        
+        // Delta X and Y are target minus initial
+        const targetX = targetLogoCenterX - initialCenterX;
+        const targetY = targetLogoCenterY - initialCenterY;
+        
+        logoX.value = withTiming(targetX, {
+          duration: 600,
+          easing: Easing.inOut(Easing.ease),
+        });
+        logoY.value = withTiming(targetY, {
+          duration: 600,
+          easing: Easing.inOut(Easing.ease),
+        });
+        logoScale.value = withTiming(0.5, {
+          duration: 600,
+          easing: Easing.inOut(Easing.ease),
+        });
+        
+        // 800ms → Onboarding content starts fading in (400ms duration)
+        contentOpacity.value = withDelay(
+          500,
+          withTiming(1, { duration: 400 })
+        );
       }
     };
 
     if (!isLoading) {
       startAnimation();
     }
-  }, [isLoading, isAuthenticated, hasCompletedOnboarding, skipSplash, insets, router, profileHydrated, marketLoading, exploreLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isLoading, isAuthenticated, hasCompletedOnboarding, skipSplash, insets, router, profileHydrated, marketLoading, exploreLoading, headerCenterY, initialLogoSize]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Render nothing while loading
   if (isLoading) {
@@ -257,26 +307,29 @@ export default function LandingPage() {
         />
       </Animated.View>
 
-      <SafeAreaView style={styles.safeArea}>
-        <Animated.View style={[animatedLogoStyle, {
-          transform: [
-            { translateX: Spacing.lg },
-            { translateY: insets.top + Spacing.md },
-            { scale: 0.5 },
-          ],
-          width: 44,
-          height: 44,
-          borderRadius: 22,
-        }]}>
-          <Image
-            source={require('../assets/images/logo.png')}
-            style={{ width: 32, height: 32 }}
-            resizeMode="contain"
-          />
-        </Animated.View>
+      <Animated.View style={animatedLogoStyle}>
+        <Image
+          source={require('../assets/images/logo.png')}
+          style={{ width: 64, height: 64 }}
+          resizeMode="contain"
+        />
+      </Animated.View>
 
+      <SafeAreaView 
+        style={styles.safeArea}
+        ref={safeAreaRef}
+        onLayout={(e) => {
+          safeAreaY.value = e.nativeEvent.layout.y;
+        }}
+      >
         <Animated.View style={animatedContentStyle}>
-          <View style={styles.header}>
+          <View 
+            style={styles.header}
+            onLayout={(e) => {
+              const { y, height } = e.nativeEvent.layout;
+              headerCenterY.value = safeAreaY.value + y + height / 2;
+            }}
+          >
             <View style={{ width: 44 }} />
             <TouchableOpacity
               style={[styles.iconButton, { backgroundColor: Colors.background + 'E6' }]}
@@ -377,7 +430,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: height * 0.55,
+    height: screenHeight * 0.55,
   },
   heroImage: {
     width: '100%',

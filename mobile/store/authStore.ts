@@ -5,6 +5,7 @@ import { User, LogoutResult } from '../types';
 import { AUTH_TOKEN_KEY, HAS_COMPLETED_ONBOARDING_KEY } from '../constants';
 import { authService, settingsService } from '../services';
 import { useProfileStore } from './profileStore';
+import { registerForPushNotifications } from '../services/pushTokenService';
 
 interface AuthState {
   user: User | null;
@@ -61,6 +62,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!get().isFirstLoginSession) {
       await get().setHasCompletedOnboarding(true);
     }
+    // Register for push notifications
+    (async () => {
+      try {
+        const pushToken = await registerForPushNotifications();
+        if (pushToken) {
+          await authService.updatePushToken(pushToken);
+        }
+      } catch (error) {
+        console.error('Error registering for push notifications after login:', error);
+      }
+    })();
   },
   initialize: async () => {
     try {
@@ -80,6 +92,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (!hasCompletedOnboarding) {
           await get().setHasCompletedOnboarding(true);
         }
+        // Register for push notifications
+        (async () => {
+          try {
+            const pushToken = await registerForPushNotifications();
+            if (pushToken) {
+              await authService.updatePushToken(pushToken);
+            }
+          } catch (error) {
+            console.error('Error registering for push notifications during initialize:', error);
+          }
+        })();
       } catch (error) {
         const status = isAxiosError(error) ? error.response?.status : undefined;
         if (status === 401 || status === 403) {
@@ -115,6 +138,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         apiReached: false,
       };
     }
+    // Clear push token on logout
+    (async () => {
+      try {
+        await authService.updatePushToken(null);
+      } catch (error) {
+        console.error('Error clearing push token during logout:', error);
+      }
+    })();
     const { useProfileStore } = await import('./profileStore');
     await useProfileStore.getState().resetLocal();
     useProfileStore.setState({ hydrated: false });
