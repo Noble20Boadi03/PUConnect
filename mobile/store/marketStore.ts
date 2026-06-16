@@ -7,6 +7,7 @@ interface MarketState {
   posts: FeaturedPost[];
   isLoading: boolean;
   isRefreshing: boolean;
+  error: string | null;
   lastFetched: number | null;
   fetchPosts: (isRefresh?: boolean) => Promise<void>;
 }
@@ -17,10 +18,11 @@ export const useMarketStore = create<MarketState>((set, get) => ({
   posts: [],
   isLoading: false,
   isRefreshing: false,
+  error: null,
   lastFetched: null,
   
   fetchPosts: async (isRefresh = false) => {
-    const { lastFetched } = get();
+    const { lastFetched, posts } = get();
     const now = Date.now();
     
     // Check cache
@@ -28,9 +30,12 @@ export const useMarketStore = create<MarketState>((set, get) => ({
       return;
     }
 
+    const hasExistingData = posts.length > 0;
+
     set({ 
-      isLoading: !isRefresh, 
-      isRefreshing: isRefresh 
+      isLoading: !isRefresh && !hasExistingData, 
+      isRefreshing: isRefresh,
+      error: null
     });
 
     try {
@@ -41,6 +46,7 @@ export const useMarketStore = create<MarketState>((set, get) => ({
       });
     } catch (error) {
       console.error('Error fetching market posts:', error);
+      set({ error: error instanceof Error ? error.message : 'Failed to load data' });
     } finally {
       set({ isLoading: false, isRefreshing: false });
     }

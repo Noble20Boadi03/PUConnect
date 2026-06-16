@@ -45,6 +45,7 @@ interface ExploreState {
   providers: ExploreProvider[];
   isLoading: boolean;
   isRefreshing: boolean;
+  error: string | null;
   lastFetched: number | null;
   fetchExploreData: (isRefresh?: boolean) => Promise<void>;
 }
@@ -56,10 +57,11 @@ export const useExploreStore = create<ExploreState>((set, get) => ({
   providers: [],
   isLoading: false,
   isRefreshing: false,
+  error: null,
   lastFetched: null,
   
   fetchExploreData: async (isRefresh = false) => {
-    const { lastFetched } = get();
+    const { lastFetched, categories, providers } = get();
     const now = Date.now();
     
     // Check cache
@@ -67,9 +69,12 @@ export const useExploreStore = create<ExploreState>((set, get) => ({
       return;
     }
 
+    const hasExistingData = categories.length > 0 || providers.length > 0;
+
     set({ 
-      isLoading: !isRefresh, 
-      isRefreshing: isRefresh 
+      isLoading: !isRefresh && !hasExistingData, 
+      isRefreshing: isRefresh,
+      error: null
     });
 
     try {
@@ -85,6 +90,7 @@ export const useExploreStore = create<ExploreState>((set, get) => ({
       });
     } catch (error) {
       console.error('Error fetching explore data:', error);
+      set({ error: error instanceof Error ? error.message : 'Failed to load data' });
     } finally {
       set({ isLoading: false, isRefreshing: false });
     }

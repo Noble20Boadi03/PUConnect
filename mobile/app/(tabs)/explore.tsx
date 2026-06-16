@@ -20,7 +20,7 @@ export default function ExploreScreen() {
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
 
-  const { categories, providers, isLoading, isRefreshing, fetchExploreData } = useExploreStore();
+  const { categories, providers, isLoading, isRefreshing, error, fetchExploreData } = useExploreStore();
 
   const onRefresh = () => {
     fetchExploreData(true);
@@ -68,6 +68,7 @@ export default function ExploreScreen() {
     <ExploreView
       categories={categories}
       providers={providers}
+      error={error}
       refreshControl={
         <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
       }

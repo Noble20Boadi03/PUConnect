@@ -33,6 +33,7 @@ import type {
 export interface ExploreViewProps {
   categories?: ExploreCategory[];
   providers?: ExploreProvider[];
+  error?: string | null;
   onCategoryPress?: (category: ExploreCategory) => void;
   onProviderPress?: (provider: ExploreProvider) => void;
   refreshControl?: React.ReactElement<RefreshControlProps>;
@@ -41,6 +42,7 @@ export interface ExploreViewProps {
 export const ExploreView: React.FC<ExploreViewProps> = ({
   categories = [],
   providers = [],
+  error,
   onCategoryPress,
   onProviderPress,
   refreshControl,
@@ -155,6 +157,12 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
           hideSearchIcon={isSearchExpanded}
         />
 
+        {error ? (
+          <View style={styles.errorState}>
+            <RNText style={[styles.errorText, { color: Colors.icon }]}>{error}</RNText>
+          </View>
+        ) : null}
+
         <View style={styles.topSection}>
           {!isSearchExpanded ? (
             <ExploreTopTabs
@@ -224,6 +232,16 @@ const styles = StyleSheet.create({
   },
   topSection: {
     marginBottom: Spacing.md,
+  },
+  errorState: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
+  },
+  errorText: {
+    fontSize: Typography.size.sm,
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   searchBarContainer: {
     flexDirection: 'row',

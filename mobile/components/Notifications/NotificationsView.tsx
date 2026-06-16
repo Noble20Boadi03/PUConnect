@@ -39,16 +39,14 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
 
   const items = useNotificationsStore((s) => s.items);
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
+  const isLoading = useNotificationsStore((s) => s.isLoading);
+  const isRefreshing = useNotificationsStore((s) => s.isRefreshing);
   const markRead = useNotificationsStore((s) => s.markRead);
   const markAllRead = useNotificationsStore((s) => s.markAllRead);
   const fetchNotifications = useNotificationsStore((s) => s.fetchNotifications);
 
-  const [refreshing, setRefreshing] = React.useState(false);
-
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await fetchNotifications();
-    setRefreshing(false);
+    await fetchNotifications(true);
   }, [fetchNotifications]);
 
   const handleMarkAll = useCallback(() => {
@@ -123,7 +121,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
         ItemSeparatorComponent={() => <View style={{ height: Spacing.sm }} />}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={isRefreshing}
             onRefresh={onRefresh}
             tintColor={Colors.primary}
             colors={[Colors.primary]}

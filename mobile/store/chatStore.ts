@@ -9,6 +9,8 @@ interface ChatState {
   conversations: BackendConversation[];
   activeThread: ChatThread | null;
   isLoading: boolean;
+  isRefreshing: boolean;
+  error: string | null;
   
   fetchConversations: () => Promise<void>;
   fetchMessages: (username: string, participant: ChatParticipant, postContext?: ChatPostContext) => Promise<void>;
@@ -63,18 +65,29 @@ export const useChatStore = create<ChatState>((set, get) => ({
   conversations: [],
   activeThread: null,
   isLoading: false,
+  isRefreshing: false,
+  error: null,
 
   fetchConversations: async () => {
     try {
       const data = await chatService.getConversations();
-      set({ conversations: data });
+      set({ conversations: data, error: null });
     } catch (error) {
       console.error('fetchConversations error:', error);
+      set({ error: error instanceof Error ? error.message : 'Failed to load conversations' });
     }
   },
 
   fetchMessages: async (username, participant, postContext) => {
-    set({ isLoading: true });
+    const { activeThread } = get();
+    const isRefreshing = activeThread?.providerUsername === username;
+    
+    set({ 
+      isLoading: !isRefreshing, 
+      isRefreshing,
+      error: null 
+    });
+    
     try {
       const user = useAuthStore.getState().user;
       if (!user) return;
@@ -95,17 +108,22 @@ export const useChatStore = create<ChatState>((set, get) => ({
       set({
         activeThread: {
           providerUsername: username,
-        participant,
-        postContext: finalPostContext,
-        dateGroups,
-      },
+          participant,
+          postContext: finalPostContext,
+          dateGroups,
+        },
         isLoading: false,
+        isRefreshing: false,
       });
       
       chatService.markMessagesAsRead(username).catch(() => {});
     } catch (error) {
       console.error('fetchMessages error:', error);
-      set({ isLoading: false });
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to load messages',
+        isLoading: false,
+        isRefreshing: false
+      });
     }
   },
 

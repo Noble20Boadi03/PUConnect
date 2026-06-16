@@ -9,8 +9,10 @@ import { useAuthStore } from './authStore';
 interface ServiceRequestsState {
   requests: DbServiceRequest[];
   isLoading: boolean;
+  isRefreshing: boolean;
+  error: string | null;
   hydrated: boolean;
-  fetchRequests: () => Promise<void>;
+  fetchRequests: (isRefresh?: boolean) => Promise<void>;
   fetchForChat: (postId: string, peerUsername: string) => Promise<DbServiceRequest | null>;
   createOfficialEngagement: (postId: string) => Promise<DbServiceRequest>;
   transition: (
@@ -34,17 +36,28 @@ function upsertById(list: DbServiceRequest[], item: DbServiceRequest): DbService
 export const useServiceRequestsStore = create<ServiceRequestsState>((set, get) => ({
   requests: [],
   isLoading: false,
+  isRefreshing: false,
+  error: null,
   hydrated: false,
 
-  fetchRequests: async () => {
-    set({ isLoading: true });
+  fetchRequests: async (isRefresh = false) => {
+    const { requests } = get();
+    const hasExistingData = requests.length > 0;
+
+    set({
+      isLoading: !isRefresh && !hasExistingData,
+      isRefreshing: isRefresh,
+      error: null
+    });
+
     try {
       const requests = await serviceRequestService.getAll();
       set({ requests, hydrated: true });
     } catch (error) {
       console.error('Failed to fetch service requests:', error);
+      set({ error: error instanceof Error ? error.message : 'Failed to load requests' });
     } finally {
-      set({ isLoading: false });
+      set({ isLoading: false, isRefreshing: false });
     }
   },
 

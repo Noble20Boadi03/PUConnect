@@ -7,7 +7,10 @@ import { useAuthStore } from './authStore';
 interface NotificationsState {
   items: AppNotification[];
   unreadCount: number;
-  fetchNotifications: () => Promise<void>;
+  isLoading: boolean;
+  isRefreshing: boolean;
+  error: string | null;
+  fetchNotifications: (isRefresh?: boolean) => Promise<void>;
   markRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
   subscribeToNotifications: () => void;
@@ -48,14 +51,29 @@ let socketInstance: any = null;
 export const useNotificationsStore = create<NotificationsState>((set, get) => ({
   items: [],
   unreadCount: 0,
+  isLoading: false,
+  isRefreshing: false,
+  error: null,
 
-  fetchNotifications: async () => {
+  fetchNotifications: async (isRefresh = false) => {
+    const { items } = get();
+    const hasExistingData = items.length > 0;
+
+    set({
+      isLoading: !isRefresh && !hasExistingData,
+      isRefreshing: isRefresh,
+      error: null
+    });
+
     try {
       const data = await notificationService.getNotifications();
       const mapped = data.map(toAppNotification);
       set({ items: mapped, unreadCount: countUnread(mapped) });
     } catch (error) {
       console.error('Failed to fetch notifications', error);
+      set({ error: error instanceof Error ? error.message : 'Failed to load notifications' });
+    } finally {
+      set({ isLoading: false, isRefreshing: false });
     }
   },
 

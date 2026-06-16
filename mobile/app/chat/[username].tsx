@@ -30,7 +30,7 @@ export default function ChatScreen() {
 
   const resolvedPostId = typeof postId === 'string' ? postId : undefined;
 
-  const { activeThread, isLoading, fetchMessages, sendMessage, subscribeToMessages } = useChat();
+  const { activeThread, isLoading, isRefreshing, error, fetchMessages, sendMessage, subscribeToMessages } = useChat();
   const requests = useServiceRequestsStore((s) => s.requests);
   const fetchForChat = useServiceRequestsStore((s) => s.fetchForChat);
   const createOfficialEngagement = useServiceRequestsStore((s) => s.createOfficialEngagement);
@@ -222,7 +222,7 @@ export default function ChatScreen() {
     await transition(chatServiceRequest.id, 'decline_completion');
   }, [chatServiceRequest, transition]);
 
-  if (isLoading) {
+  if (isLoading || isRefreshing) {
     return (
       <SafeAreaView style={[styles.center, { backgroundColor: screenBg }]} edges={['top', 'bottom']}>
         <ActivityIndicator size="large" color={textColor} />
@@ -230,7 +230,7 @@ export default function ChatScreen() {
     );
   }
 
-  if (!activeThread) {
+  if (!activeThread && !isLoading) {
     return (
       <SafeAreaView
         style={[styles.notFound, { backgroundColor: screenBg }]}

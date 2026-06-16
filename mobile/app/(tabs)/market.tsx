@@ -34,9 +34,8 @@ export default function MarketScreen() {
   const borderColor = isDark ? '#30363D' : 'rgba(0, 0, 0, 0.08)';
 
   const user = useAuthStore((s) => s.user);
-  const { posts, isLoading, isRefreshing, fetchPosts } = useMarketStore();
+  const { posts, isLoading, isRefreshing, error, fetchPosts } = useMarketStore();
 
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [showMarketTip, setShowMarketTip] = useState(true);
   const [activeFilter, setActiveFilter] = useState<MarketFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -189,9 +188,9 @@ export default function MarketScreen() {
         >
           <MarketHeader {...headerTheme} />
 
-          {loadError ? (
+          {error ? (
             <View style={styles.errorState}>
-              <Text style={[styles.errorText, { color: Colors.icon }]}>{loadError}</Text>
+              <Text style={[styles.errorText, { color: Colors.icon }]}>{error}</Text>
             </View>
           ) : null}
 
