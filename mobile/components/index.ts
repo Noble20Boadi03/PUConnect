@@ -27,3 +27,4 @@ export * from './Explore';
 export * from './CategoryDetail';
 export * from './Shimmer';
 export * from './MarketViewSkeleton';
+export * from './TabHeader';

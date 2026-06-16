@@ -8,7 +8,6 @@ import {
   useColorScheme,
   RefreshControl,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
@@ -25,6 +24,7 @@ import {
 } from '../../components/Profile';
 import { NotificationBellButton } from '../../components/NotificationBellButton';
 import { ServiceStatusButton } from '../../components/ServiceStatusButton';
+import { TabHeader } from '../../components';
 import { useAuthStore, useProfileStore, useUserProfileStore } from '../../store';
 import { getAccountTypeLabel, getServiceOptionsByIds } from '../../lib';
 
@@ -127,7 +127,28 @@ export default function ProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
+    <View style={[styles.rootContainer, { backgroundColor: screenBg }]}>
+      <TabHeader
+        title="Profile"
+        rightActions={
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={[styles.headerButton, { backgroundColor: subtleBg }]}
+              onPress={handleToggle}
+            >
+              <Ionicons name={iconName} size={22} color={Colors.text} />
+            </TouchableOpacity>
+            <ServiceStatusButton backgroundColor={subtleBg} iconColor={Colors.text} size={44} />
+            <NotificationBellButton backgroundColor={subtleBg} iconColor={Colors.text} size={44} />
+            <TouchableOpacity
+              style={[styles.headerButton, { backgroundColor: subtleBg }]}
+              onPress={handleOpenSettings}
+            >
+              <Ionicons name="settings-outline" size={22} color={Colors.text} />
+            </TouchableOpacity>
+          </View>
+        }
+      />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
@@ -136,26 +157,6 @@ export default function ProfileScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: Colors.text }]}>Profile</Text>
-          <View style={styles.headerActions}>
-            <TouchableOpacity
-              style={[styles.headerButton, { backgroundColor: subtleBg }]}
-              onPress={handleToggle}
-            >
-              <Ionicons name={iconName} size={22} color={Colors.text} />
-            </TouchableOpacity>
-            <ServiceStatusButton backgroundColor={subtleBg} iconColor={Colors.text} />
-            <NotificationBellButton backgroundColor={subtleBg} iconColor={Colors.text} />
-            <TouchableOpacity
-              style={[styles.headerButton, { backgroundColor: subtleBg }]}
-              onPress={handleOpenSettings}
-            >
-              <Ionicons name="settings-outline" size={22} color={Colors.text} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
         <ProfileHeroSection
           variant="owner"
           displayName={user?.name || 'User'}
@@ -272,37 +273,25 @@ export default function ProfileScreen() {
           onCancel={closePreview}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  rootContainer: {
     flex: 1,
   },
   scroll: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-  },
-  title: {
-    fontSize: Typography.size.xxl,
-    fontWeight: '800',
-    letterSpacing: -0.5,
   },
   headerActions: {
     flexDirection: 'row',
     gap: Spacing.sm,
   },
   headerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
   },

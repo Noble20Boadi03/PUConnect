@@ -12,7 +12,7 @@ import * as Haptics from 'expo-haptics';
 
 import { useAppRouter, useThemeColor } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
-import { MarketHeader, MarketFeedHeader, FeaturedPostCard, MarketViewSkeleton } from '../../components';
+import { MarketHeaderTop, MarketFeedHeader, FeaturedPostCard, MarketViewSkeleton } from '../../components';
 import { filterMarketPosts } from '../../lib';
 import type { FeaturedPost, MarketFilter } from '../../types';
 import { useAuthStore } from '../../store';
@@ -48,8 +48,8 @@ export default function MarketScreen() {
     fetchPosts();
   }, [fetchPosts]);
 
-  const dismissTip = useCallback(() => {
-    setShowMarketTip(false);
+  const toggleTip = useCallback(() => {
+    setShowMarketTip(prev => !prev);
   }, []);
 
   const handleFilterChange = useCallback((filter: MarketFilter) => {
@@ -106,7 +106,7 @@ export default function MarketScreen() {
       cardBg,
       searchBg,
       showTip: showMarketTip,
-      onDismissTip: dismissTip,
+      onDismissTip: toggleTip,
       activeFilter,
       onFilterChange: handleFilterChange,
       searchQuery,
@@ -120,7 +120,7 @@ export default function MarketScreen() {
       cardBg,
       searchBg,
       showMarketTip,
-      dismissTip,
+      toggleTip,
       activeFilter,
       handleFilterChange,
       searchQuery,
@@ -172,49 +172,46 @@ export default function MarketScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
-      <View style={styles.root}>
-        <ScrollView
-          style={[styles.scroll, { backgroundColor: screenBg }]}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          nestedScrollEnabled
-          overScrollMode="never"
-          removeClippedSubviews
-          refreshControl={
-            <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
-          }
-        >
-          <MarketHeader {...headerTheme} />
+    <View style={[styles.container, { backgroundColor: screenBg }]}>
+      <MarketHeaderTop {...headerTheme} />
+      <ScrollView
+        style={[styles.scroll, { backgroundColor: screenBg }]}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled
+        overScrollMode="never"
+        removeClippedSubviews
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+        }
+      >
+        {error ? (
+          <View style={styles.errorState}>
+            <Text style={[styles.errorText, { color: Colors.icon }]}>{error}</Text>
+          </View>
+        ) : null}
 
-          {error ? (
-            <View style={styles.errorState}>
-              <Text style={[styles.errorText, { color: Colors.icon }]}>{error}</Text>
+        <MarketFeedHeader {...feedHeaderTheme} />
+
+        {!showDiscoverySections && filteredPosts.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={[styles.emptyText, { color: Colors.icon }]}>{emptyMessage}</Text>
+          </View>
+        ) : !showDiscoverySections ? (
+          filteredPosts.map((item) => (
+            <View key={item.id} style={styles.featuredItem}>
+              <FeaturedPostCard
+                item={item}
+                layout="stack"
+                onPress={() => handleCardPress(item)}
+                {...postCardTheme}
+              />
             </View>
-          ) : null}
-
-          <MarketFeedHeader {...feedHeaderTheme} />
-
-          {!showDiscoverySections && filteredPosts.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={[styles.emptyText, { color: Colors.icon }]}>{emptyMessage}</Text>
-            </View>
-          ) : !showDiscoverySections ? (
-            filteredPosts.map((item) => (
-              <View key={item.id} style={styles.featuredItem}>
-                <FeaturedPostCard
-                  item={item}
-                  layout="stack"
-                  onPress={() => handleCardPress(item)}
-                  {...postCardTheme}
-                />
-              </View>
-            ))
-          ) : null}
-        </ScrollView>
-      </View>
-    </SafeAreaView>
+          ))
+        ) : null}
+      </ScrollView>
+    </View>
   );
 }
 

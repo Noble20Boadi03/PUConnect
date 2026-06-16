@@ -144,19 +144,13 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
-      <ScrollView
-        style={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        refreshControl={refreshControl}
+    <View style={[styles.container, { backgroundColor: screenBg }]}>
+      <ExploreHeader 
+        textColor={Colors.text} 
+        buttonBg={cardBg}
+        onSearchPress={isSearchExpanded ? undefined : handleSearchPress}
+        hideSearchIcon={isSearchExpanded}
       >
-        <ExploreHeader 
-          textColor={Colors.text} 
-          buttonBg={cardBg}
-          onSearchPress={isSearchExpanded ? undefined : handleSearchPress}
-          hideSearchIcon={isSearchExpanded}
-        />
-
         {error ? (
           <View style={styles.errorState}>
             <RNText style={[styles.errorText, { color: Colors.icon }]}>{error}</RNText>
@@ -197,7 +191,12 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
             </Animated.View>
           )}
         </View>
-
+      </ExploreHeader>
+      <ScrollView
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        refreshControl={refreshControl}
+      >
         <View style={styles.panel}>
           {isSearchExpanded || activeTab === 'people' ? (
             <ExplorePeoplePanel
@@ -219,7 +218,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
           )}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 

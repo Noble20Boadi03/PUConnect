@@ -14,6 +14,7 @@ import { Spacing, Typography } from '../../constants';
 import { MarketTipBanner } from '../MarketTipBanner';
 import { NotificationBellButton } from '../NotificationBellButton';
 import { ServiceStatusButton } from '../ServiceStatusButton';
+import { TabHeader } from '../TabHeader';
 import type { MarketFilter } from '../../types';
 
 const FILTERS: { key: MarketFilter; label: string }[] = [
@@ -22,13 +23,13 @@ const FILTERS: { key: MarketFilter; label: string }[] = [
   { key: 'requests', label: 'Requests' },
 ];
 
-export interface MarketHeaderProps {
+export interface MarketHeaderTopProps {
   textColor: string;
   iconColor: string;
   primaryColor: string;
   borderColor: string;
-  cardBg: string;
   searchBg: string;
+  cardBg: string;
   showTip: boolean;
   onDismissTip: () => void;
   activeFilter: MarketFilter;
@@ -37,13 +38,13 @@ export interface MarketHeaderProps {
   onSearchChange: (query: string) => void;
 }
 
-const MarketHeaderComponent: React.FC<MarketHeaderProps> = ({
+const MarketHeaderTopComponent: React.FC<MarketHeaderTopProps> = ({
   textColor,
   iconColor,
   primaryColor,
   borderColor,
-  cardBg,
   searchBg,
+  cardBg,
   showTip,
   onDismissTip,
   activeFilter,
@@ -52,6 +53,7 @@ const MarketHeaderComponent: React.FC<MarketHeaderProps> = ({
   onSearchChange,
 }) => {
   const isDark = useColorScheme() === 'dark';
+  const border = '#3B82F6';
 
   const handleFilterPress = useCallback(
     (filter: MarketFilter) => {
@@ -61,104 +63,106 @@ const MarketHeaderComponent: React.FC<MarketHeaderProps> = ({
     [onFilterChange]
   );
 
+  const handleToggleTip = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (showTip) {
+      onDismissTip();
+    } else {
+      // If we need to show it, but currently the parent controls showTip,
+      // so let's assume we have a way to toggle, but for now, let's just call onDismissTip as toggle
+      onDismissTip();
+    }
+  }, [showTip, onDismissTip]);
+
   return (
-    <View style={[styles.headerContainer, { backgroundColor: cardBg }]}>
-      <View style={styles.titleRow}>
-        <Text style={[styles.appTitle, { color: textColor }]}>PuConnect</Text>
-        <View style={styles.rightIcons}>
-          <Image 
-            source={require('../../assets/images/logo.png')} 
-            style={styles.logo} 
-            resizeMode="contain" 
+    <View>
+      <TabHeader
+        title="Market"
+        rightActions={
+          <View style={styles.rightIcons}>
+            <Image 
+              source={require('../../assets/images/logo.png')} 
+              style={styles.logo} 
+              resizeMode="contain" 
+            />
+            <ServiceStatusButton backgroundColor={searchBg} iconColor={textColor} size={44} />
+            <NotificationBellButton backgroundColor={searchBg} iconColor={textColor} size={44} />
+          </View>
+        }
+      />
+      <View style={styles.contentContainer}>
+        <View style={[styles.searchContainer, { backgroundColor: searchBg }]}>
+          <Ionicons name="search-outline" size={18} color={iconColor} />
+          <TextInput
+            style={[styles.searchInput, { color: textColor }]}
+            placeholder="Search Services or Requests"
+            placeholderTextColor={iconColor + '90'}
+            value={searchQuery}
+            onChangeText={onSearchChange}
+            autoCapitalize="none"
+            returnKeyType="search"
           />
-          <ServiceStatusButton backgroundColor={searchBg} iconColor={textColor} />
-          <NotificationBellButton backgroundColor={searchBg} iconColor={textColor} />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => onSearchChange('')}>
+              <Ionicons name="close-circle" size={18} color={iconColor} />
+            </TouchableOpacity>
+          )}
         </View>
-      </View>
 
-      <View style={[styles.searchContainer, { backgroundColor: searchBg }]}>
-        <Ionicons name="search-outline" size={18} color={iconColor} />
-        <TextInput
-          style={[styles.searchInput, { color: textColor }]}
-          placeholder="Search Services or Requests"
-          placeholderTextColor={iconColor + '90'}
-          value={searchQuery}
-          onChangeText={onSearchChange}
-          autoCapitalize="none"
-          returnKeyType="search"
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => onSearchChange('')}>
-            <Ionicons name="close-circle" size={18} color={iconColor} />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      <View style={styles.filterRow}>
-        <View style={styles.filterPills}>
-          {FILTERS.map((filter) => {
-            const isActive = activeFilter === filter.key;
-            return (
-              <TouchableOpacity
-                key={filter.key}
-                style={[
-                  styles.filterPill,
-                  {
-                    backgroundColor: isActive ? primaryColor : 'transparent',
-                    borderColor: isActive ? primaryColor : borderColor,
-                  },
-                ]}
-                onPress={() => handleFilterPress(filter.key)}
-              >
-                <Text
+        <View style={styles.filterRow}>
+          <View style={styles.filterPills}>
+            {FILTERS.map((filter) => {
+              const isActive = activeFilter === filter.key;
+              return (
+                <TouchableOpacity
+                  key={filter.key}
                   style={[
-                    styles.filterPillText,
+                    styles.filterPill,
                     {
-                      color: isActive
-                        ? isDark
-                          ? '#09090B'
-                          : '#FFFFFF'
-                        : textColor,
-                      fontWeight: isActive ? '700' : '500',
+                      backgroundColor: isActive ? primaryColor : 'transparent',
+                      borderColor: isActive ? primaryColor : borderColor,
                     },
                   ]}
+                  onPress={() => handleFilterPress(filter.key)}
                 >
-                  {filter.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+                  <Text
+                    style={[
+                      styles.filterPillText,
+                      {
+                        color: isActive
+                          ? isDark
+                            ? '#09090B'
+                            : '#FFFFFF'
+                          : textColor,
+                        fontWeight: isActive ? '700' : '500',
+                      },
+                    ]}
+                  >
+                    {filter.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <TouchableOpacity onPress={handleToggleTip} hitSlop={8} style={styles.infoIcon}>
+            <Ionicons name="information-circle" size={24} color={border} />
+          </TouchableOpacity>
         </View>
-      </View>
 
-      {showTip && (
-        <MarketTipBanner
-          message="Browse Services for professional help or Requests from students who need your skills."
-          onDismiss={onDismissTip}
-        />
-      )}
+        {showTip && (
+          <MarketTipBanner
+            message="Browse Services for professional help or Requests from students who need your skills."
+            onDismiss={onDismissTip}
+          />
+        )}
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  headerContainer: {
+  contentContainer: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.sm,
-    paddingBottom: Spacing.md,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.md,
   },
   rightIcons: {
     flexDirection: 'row',
@@ -166,15 +170,10 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   logo: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'white',
-  },
-  appTitle: {
-    fontSize: Typography.size.xxl,
-    fontWeight: '800',
-    letterSpacing: -0.5,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -193,6 +192,7 @@ const styles = StyleSheet.create({
   filterRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: Spacing.sm + 4,
   },
   filterPills: {
@@ -208,8 +208,16 @@ const styles = StyleSheet.create({
   filterPillText: {
     fontSize: Typography.size.xs,
   },
+  infoIcon: {
+    padding: Spacing.xs,
+  },
 });
 
-export const MarketHeader = memo(MarketHeaderComponent);
-
+export const MarketHeaderTop = memo(MarketHeaderTopComponent);
+// Keep original exports for backwards compatibility
+export const MarketHeader = memo((props: any) => (
+  <>
+    <MarketHeaderTop {...props} />
+  </>
+));
 export default MarketHeader;

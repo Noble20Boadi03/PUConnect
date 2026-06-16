@@ -32,17 +32,18 @@ export default function ExploreScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
-        <ExploreHeader textColor={isDark ? '#ECEDEE' : '#11181C'} buttonBg={cardBg} />
-        <View style={styles.topSection}>
-          <ExploreTopTabs
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            subtleBg={subtleBg}
-            cardBg={cardBg}
-            textColor={isDark ? '#ECEDEE' : '#11181C'}
-          />
-        </View>
+      <View style={[styles.container, { backgroundColor: screenBg }]}>
+        <ExploreHeader textColor={isDark ? '#ECEDEE' : '#11181C'} buttonBg={cardBg}>
+          <View style={styles.topSection}>
+            <ExploreTopTabs
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              subtleBg={subtleBg}
+              cardBg={cardBg}
+              textColor={isDark ? '#ECEDEE' : '#11181C'}
+            />
+          </View>
+        </ExploreHeader>
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
@@ -60,7 +61,7 @@ export default function ExploreScreen() {
             )}
           </View>
         </ScrollView>
-      </SafeAreaView>
+      </View>
     );
   }
 
