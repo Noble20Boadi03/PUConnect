@@ -18,7 +18,7 @@ import { Spacing, Typography } from '../../constants';
 import { useAppRouter, useThemeColor } from '../../hooks';
 import { useAuthStore } from '../../store';
 import { buildExploreCategoryHref, buildProviderProfileHref } from '../../lib';
-import { EXPLORE_CATEGORIES_MOCK, EXPLORE_PROVIDERS_MOCK } from '../../constants/exploreMock';
+
 import { ExploreHeader } from './ExploreHeader';
 import { ExploreTopTabs } from './ExploreTopTabs';
 import { ExploreCategoriesPanel } from './ExploreCategoriesPanel';
@@ -39,8 +39,8 @@ export interface ExploreViewProps {
 }
 
 export const ExploreView: React.FC<ExploreViewProps> = ({
-  categories = EXPLORE_CATEGORIES_MOCK,
-  providers = EXPLORE_PROVIDERS_MOCK,
+  categories = [],
+  providers = [],
   onCategoryPress,
   onProviderPress,
   refreshControl,

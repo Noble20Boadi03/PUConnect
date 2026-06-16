@@ -169,11 +169,155 @@ async function main() {
 
   console.log('🛠️ Creating category services...');
   await prisma.categoryService.deleteMany({}); // Clear existing to avoid duplicates
-  for (const service of categoryServices) {
-    await prisma.categoryService.create({
-      data: service,
-    });
-  }
+  const createdServices = await Promise.all(
+    categoryServices.map((service) => prisma.categoryService.create({ data: service }))
+  );
+
+  // 3. Create Users (regular users and providers)
+  const users = [
+    {
+      name: 'Emily Chen',
+      username: 'emilyl',
+      email: 'emily@example.com',
+      password: '$2a$10$EixZaY3s7J3w6VJ6lNw60.K0pU0VhK7dZ7J1KZ7J1KZ7J1KZ7J1KZ',
+      role: 'provider' as const,
+      avatarUrl: 'https://i.pravatar.cc/256?u=emilyl',
+      bio: 'Organic Chemistry tutor with 4+ years experience',
+      categoryId: ExploreCategoryId.tutoring,
+      skillTitle: 'Organic Chemistry Tutor',
+      expertiseTags: ['ORGANIC CHEMISTRY', 'BIOCHEM', 'LAB REPORTS'],
+      serviceIds: [createdServices[0].id],
+    },
+    {
+      name: 'Zoe Martinez',
+      username: 'zoem',
+      email: 'zoe@example.com',
+      password: '$2a$10$EixZaY3s7J3w6VJ6lNw60.K0pU0VhK7dZ7J1KZ7J1KZ7J1KZ7J1KZ',
+      role: 'provider' as const,
+      avatarUrl: 'https://i.pravatar.cc/256?u=zoem',
+      bio: 'Social media content creator and graphic designer',
+      categoryId: ExploreCategoryId.design,
+      skillTitle: 'Social Media Creator',
+      expertiseTags: ['INSTAGRAM', 'TIKTOK', 'CONTENT STRATEGY'],
+      serviceIds: [createdServices[6].id],
+    },
+    {
+      name: 'David Kim',
+      username: 'davidr',
+      email: 'david@example.com',
+      password: '$2a$10$EixZaY3s7J3w6VJ6lNw60.K0pU0VhK7dZ7J1KZ7J1KZ7J1KZ7J1KZ',
+      role: 'provider' as const,
+      avatarUrl: 'https://i.pravatar.cc/256?u=davidr',
+      bio: 'Career coach and LinkedIn expert',
+      categoryId: ExploreCategoryId.career,
+      skillTitle: 'Career & LinkedIn Coach',
+      expertiseTags: ['RESUMES', 'LINKEDIN', 'INTERVIEW PREP'],
+      serviceIds: [createdServices[9].id],
+    },
+    {
+      name: 'Jamie Smith',
+      username: 'jamies',
+      email: 'jamie@example.com',
+      password: '$2a$10$EixZaY3s7J3w6VJ6lNw60.K0pU0VhK7dZ7J1KZ7J1KZ7J1KZ7J1KZ',
+      role: 'user' as const,
+      avatarUrl: 'https://i.pravatar.cc/256?u=jamies',
+      bio: 'Just a regular student looking for help!',
+    },
+    {
+      name: 'Alex Johnson',
+      username: 'alexj',
+      email: 'alex@example.com',
+      password: '$2a$10$EixZaY3s7J3w6VJ6lNw60.K0pU0VhK7dZ7J1KZ7J1KZ7J1KZ7J1KZ',
+      role: 'user' as const,
+      avatarUrl: 'https://i.pravatar.cc/256?u=alexj',
+      bio: 'Computer Science student',
+    },
+  ];
+
+  console.log('👥 Creating users...');
+  await prisma.user.deleteMany({});
+  const createdUsers = await Promise.all(
+    users.map((user) => prisma.user.create({ data: user }))
+  );
+  const [emily, zoe, david, jamie, alex] = createdUsers;
+
+  // 4. Create Posts
+  const posts = [
+    {
+      title: 'Organic Chemistry Tutoring',
+      description: 'Struggling with OChem? I can help with reaction mechanisms, synthesis, and exam prep. Flexible hours!',
+      tag: 'Service',
+      price: { type: 'hourly', amount: 25 },
+      images: [],
+      hashtags: ['ochem', 'tutoring', 'chemistry'],
+      helpCategoryIds: [ExploreCategoryId.tutoring],
+      authorId: emily.id,
+    },
+    {
+      title: 'Need Help with Resume',
+      description: 'Looking for someone to review my resume for summer internships!',
+      tag: 'Request',
+      price: { type: 'fixed', amount: 15 },
+      images: [],
+      hashtags: ['resume', 'career', 'internship'],
+      helpCategoryIds: [ExploreCategoryId.career],
+      authorId: jamie.id,
+    },
+    {
+      title: 'Instagram Content Design',
+      description: 'I design beautiful Instagram posts and stories for student organizations!',
+      tag: 'Service',
+      price: { type: 'per_post', amount: 10 },
+      images: [],
+      hashtags: ['design', 'socialmedia', 'instagram'],
+      helpCategoryIds: [ExploreCategoryId.design],
+      authorId: zoe.id,
+    },
+  ];
+
+  console.log('📝 Creating posts...');
+  await prisma.post.deleteMany({});
+  const createdPosts = await Promise.all(
+    posts.map((post) => prisma.post.create({ data: post }))
+  );
+
+  // 5. Create Reviews
+  const reviews = [
+    {
+      reviewerId: jamie.id,
+      revieweeId: emily.id,
+      rating: 5,
+      comment: 'Emily was super helpful! She explained reaction mechanisms in a way that finally made sense.',
+      serviceTitle: 'Organic Chemistry Tutoring',
+    },
+    {
+      reviewerId: alex.id,
+      revieweeId: emily.id,
+      rating: 4,
+      comment: 'Great tutor, very patient.',
+      serviceTitle: 'Organic Chemistry Tutoring',
+    },
+    {
+      reviewerId: jamie.id,
+      revieweeId: zoe.id,
+      rating: 5,
+      comment: 'Zoe\'s designs are amazing! Our club\'s Instagram looks so professional now.',
+      serviceTitle: 'Instagram Content Design',
+    },
+    {
+      reviewerId: alex.id,
+      revieweeId: david.id,
+      rating: 5,
+      comment: 'David helped me land my dream internship! My resume is so much better now.',
+      serviceTitle: 'Resume & CV Review',
+    },
+  ];
+
+  console.log('⭐ Creating reviews...');
+  await prisma.review.deleteMany({});
+  await Promise.all(
+    reviews.map((review) => prisma.review.create({ data: review }))
+  );
 
   console.log('✅ Seeding completed successfully!');
 }

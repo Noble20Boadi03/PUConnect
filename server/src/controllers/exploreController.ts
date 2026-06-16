@@ -77,7 +77,10 @@ export const getExploreProviders = async (req: Request, res: Response) => {
   try {
     const providers = await prisma.user.findMany({
       where: { role: 'provider' },
-      include: { category: true },
+      include: {
+        category: true,
+        receivedReviews: true,
+      },
     });
 
     const allServiceIds = Array.from(
@@ -101,9 +104,20 @@ export const getExploreProviders = async (req: Request, res: Response) => {
       const services = (provider.serviceIds || [])
         .map((id) => serviceMap.get(id))
         .filter(Boolean);
+      
+      // Calculate average rating and review count
+      const reviewCount = provider.receivedReviews.length;
+      let averageRating = 0;
+      if (reviewCount > 0) {
+        const totalRating = provider.receivedReviews.reduce((sum, review) => sum + review.rating, 0);
+        averageRating = Math.round((totalRating / reviewCount) * 10) / 10; // Round to 1 decimal place
+      }
+
       return {
         ...provider,
         services,
+        averageRating,
+        reviewCount,
       };
     });
 

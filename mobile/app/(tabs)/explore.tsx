@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, ScrollView, useColorScheme, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -8,55 +8,11 @@ import {
   ExploreCategoryCardSkeleton,
   ExploreProviderCardSkeleton,
 } from '../../components';
-import { exploreService } from '../../services';
-import type { ExploreCategory, ExploreProvider, ExploreTab } from '../../types';
-import type { DbCategory, User } from '../../types';
+import type { ExploreTab } from '../../types';
 import { Spacing } from '../../constants';
-import { getServiceOptionsByIds } from '../../lib';
-
-// Mapping functions
-const mapDbCategoryToExploreCategory = (dbCategory: DbCategory): ExploreCategory => ({
-  id: dbCategory.id,
-  title: dbCategory.title,
-  pillLabel: dbCategory.pillLabel,
-  tagline: dbCategory.tagline,
-  description: dbCategory.description,
-  imageUrl: dbCategory.imageUrl,
-  accentColor: dbCategory.accentColor,
-  iconName: dbCategory.iconName as any,
-});
-
-const mapUserToExploreProvider = (user: any): ExploreProvider => {
-  // Build a skill title from the provider's actual services
-  let services: Array<{ title: string }> = user.services ?? [];
-  if (services.length === 0 && user.serviceIds && user.serviceIds.length > 0) {
-    services = getServiceOptionsByIds(user.serviceIds);
-  }
-  const serviceNames = services.map((s) => s.title).join(', ');
-  const skillTitle =
-    serviceNames ||
-    (user as any).skillTitle ||
-    'Provider';
-
-  return {
-    username: user.username,
-    displayName: user.name,
-    handle: user.username,
-    avatarUrl: user.avatarUrl,
-    categoryId: (user as any).categoryId || 'tutoring',
-    skillTitle,
-    expertiseTags: (user as any).expertiseTags || [],
-    serviceIds: (user as any).serviceIds || [],
-    averageRating: 0,
-    reviewCount: 0,
-  };
-};
+import { useExploreStore } from '../../store/exploreStore';
 
 export default function ExploreScreen() {
-  const [categories, setCategories] = useState<ExploreCategory[]>([]);
-  const [providers, setProviders] = useState<ExploreProvider[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<ExploreTab>('categories');
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -64,37 +20,17 @@ export default function ExploreScreen() {
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
 
-  const fetchData = useCallback(async (isRefresh = false) => {
-    if (isRefresh) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
-    try {
-      const [categoriesData, providersData] = await Promise.all([
-        exploreService.getCategories(),
-        exploreService.getExploreProviders(),
-      ]);
+  const { categories, providers, isLoading, isRefreshing, fetchExploreData } = useExploreStore();
 
-      setCategories(categoriesData.map(mapDbCategoryToExploreCategory));
-      setProviders(providersData.map(mapUserToExploreProvider));
-    } catch (error) {
-      console.error('Error fetching explore data:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
-
-  const onRefresh = useCallback(() => {
-    fetchData(true);
-  }, [fetchData]);
+  const onRefresh = () => {
+    fetchExploreData(true);
+  };
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchExploreData();
+  }, [fetchExploreData]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
         <ExploreHeader textColor={isDark ? '#ECEDEE' : '#11181C'} buttonBg={cardBg} />
@@ -133,7 +69,7 @@ export default function ExploreScreen() {
       categories={categories}
       providers={providers}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
       }
     />
   );
