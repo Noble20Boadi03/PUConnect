@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useMemo, useEffect } from 'react';
+import React, { useCallback, useMemo, useEffect, useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, useColorScheme, RefreshControl } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -12,15 +12,13 @@ import {
   buildChatHref,
   buildProviderProfileHref,
   getExploreCategoryFromPostTags,
-  mapDbPostToPostDetail,
 } from '../../lib';
 import { useAppRouter, useConfirmDialog } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
-import { useAuthStore, useProfileStore } from '../../store';
+import { useAuthStore, useProfileStore, usePostStore } from '../../store';
 import { useChat } from '../../hooks/useChat';
 import { EDIT_INFO_SERVICE_OPTIONS } from '../../constants/editInfoServices';
 import { postService } from '../../services';
-import type { PostDetail } from '../../types';
 
 function isTruthyParam(value: string | undefined): boolean {
   return value === '1' || value === 'true';
@@ -52,10 +50,8 @@ export default function PostDetailScreen() {
   const textColor = isDark ? '#ECEDEE' : '#11181C';
   const { conversations, fetchConversations } = useChat();
 
+  const { data: post, isLoading, isRefreshing, fetchPost, clearCache } = usePostStore();
   const [actionMessage, setActionMessage] = useState<string | null>(null);
-  const [post, setPost] = useState<PostDetail | undefined>();
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isHiding, setIsHiding] = useState(false);
 
@@ -80,38 +76,19 @@ export default function PostDetailScreen() {
     return conversations.some(c => c.user.username === post.author.username);
   }, [post, conversations]);
 
-  const fetchData = useCallback(async (isRefresh = false) => {
-    if (typeof id !== 'string') {
-      setLoading(false);
-      return;
-    }
-
-    if (isRefresh) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
-
-    try {
-      const data = await postService.getPostById(id);
-      setPost(mapDbPostToPostDetail(data));
-    } catch (error) {
-      console.error('Error fetching post detail:', error);
-      setPost(undefined);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [id]);
-
   const onRefresh = useCallback(() => {
-    fetchData(true);
-  }, [fetchData]);
+    if (typeof id === 'string') {
+      clearCache();
+      fetchPost(id, true);
+    }
+  }, [id, clearCache, fetchPost]);
 
   useEffect(() => {
-    fetchData();
+    if (typeof id === 'string') {
+      fetchPost(id);
+    }
     fetchConversations();
-  }, [fetchData, fetchConversations]);
+  }, [id, fetchPost, fetchConversations]);
 
   // Check if user is eligible to respond to this request
   const eligibility = useMemo(() => {
@@ -274,7 +251,7 @@ export default function PostDetailScreen() {
     }
   }, [post, id, showConfirm, handleBack, isDeleting]);
 
-  if (loading) {
+  if (isLoading) {
     return <PostDetailViewSkeleton />;
   }
 
@@ -339,7 +316,7 @@ export default function PostDetailScreen() {
         disabledReason={post?.tag === 'Request' ? (eligibility.reason ?? undefined) : undefined}
         hasExistingConversation={hasExistingConversation}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
         }
       />
     </View>

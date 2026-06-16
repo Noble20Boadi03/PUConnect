@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,30 +12,9 @@ import {
   getScreenTopPadding,
 } from '../../lib';
 import type { ExploreCategory, ExploreCategoryService } from '../../types/explore';
-import type { DbCategory, DbCategoryService } from '../../types';
 import { useAppRouter } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
-import { exploreService } from '../../services';
-
-// Mapping functions
-const mapDbCategoryToExploreCategory = (dbCategory: DbCategory): ExploreCategory => ({
-  id: dbCategory.id,
-  title: dbCategory.title,
-  pillLabel: dbCategory.pillLabel,
-  tagline: dbCategory.tagline,
-  description: dbCategory.description,
-  imageUrl: dbCategory.imageUrl,
-  accentColor: dbCategory.accentColor,
-  iconName: dbCategory.iconName as any,
-});
-
-const mapDbCategoryServiceToExploreCategoryService = (dbService: DbCategoryService): ExploreCategoryService => ({
-  id: dbService.id,
-  categoryId: dbService.categoryId,
-  title: dbService.title,
-  description: dbService.description,
-  filterTags: dbService.filterTags,
-});
+import { useCategoryDetailStore } from '../../store';
 
 export default function CategoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -47,9 +26,9 @@ export default function CategoryDetailScreen() {
   const insets = useSafeAreaInsets();
   const topPadding = getScreenTopPadding(insets.top);
 
-  const [category, setCategory] = useState<ExploreCategory | undefined>();
-  const [services, setServices] = useState<ExploreCategoryService[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading, fetchCategoryDetail } = useCategoryDetailStore();
+  const category = data?.category;
+  const services = data?.services || [];
 
   const handleBack = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -69,32 +48,12 @@ export default function CategoryDetailScreen() {
   );
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!id) return;
-      try {
-        const [categoryData, servicesData] = await Promise.all([
-          exploreService.getCategoryById(id),
-          exploreService.getCategoryServices(),
-        ]);
+    if (id) {
+      fetchCategoryDetail(id);
+    }
+  }, [id, fetchCategoryDetail]);
 
-        const mappedCategory = mapDbCategoryToExploreCategory(categoryData);
-        const mappedServices = servicesData
-          .filter(s => s.categoryId === id)
-          .map(mapDbCategoryServiceToExploreCategoryService);
-
-        setCategory(mappedCategory);
-        setServices(mappedServices);
-      } catch (error) {
-        console.error('Error fetching category data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [id]);
-
-  if (loading) {
+  if (isLoading) {
     return <CategoryDetailViewSkeleton />;
   }
 

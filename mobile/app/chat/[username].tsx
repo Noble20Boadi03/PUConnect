@@ -15,7 +15,7 @@ import { postService } from '../../services/postService';
 import { parsePostPrice } from '../../lib/mapDbPost';
 import { useServiceRequestsStore } from '../../store';
 import { useProviderReviewsStore } from '../../store/providerReviewsStore';
-import { ChatPostContext } from '../../types';
+import { ChatPostContext, ChatThread } from '../../types';
 
 export default function ChatScreen() {
   const { username, postId } = useLocalSearchParams<{
@@ -222,7 +222,7 @@ export default function ChatScreen() {
     await transition(chatServiceRequest.id, 'decline_completion');
   }, [chatServiceRequest, transition]);
 
-  if (isLoading || isRefreshing) {
+  if (isLoading) {
     return (
       <SafeAreaView style={[styles.center, { backgroundColor: screenBg }]} edges={['top', 'bottom']}>
         <ActivityIndicator size="large" color={textColor} />
@@ -247,7 +247,7 @@ export default function ChatScreen() {
 
   return (
     <ChatView
-      thread={activeThread}
+      thread={activeThread as ChatThread}
       onBack={exitToMessages}
       onOpenPost={handleOpenPost}
       onOpenPostForRequest={handleOpenPostForRequest}

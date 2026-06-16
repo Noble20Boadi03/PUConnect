@@ -17,7 +17,6 @@ import Animated, {
   FadeIn,
   FadeOut
 } from 'react-native-reanimated';
-import * as SplashScreen from 'expo-splash-screen';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -100,10 +99,8 @@ export default function LandingPage() {
 
   useEffect(() => {
     const startAnimation = async () => {
-      // Hide native splash screen immediately to reveal our custom solid-color splash
-      await SplashScreen.hideAsync();
-
       if (skipSplash === 'true') {
+        setIsAnimationComplete(true);
         return;
       }
 

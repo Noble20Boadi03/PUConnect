@@ -3,3 +3,6 @@ export * from './profileStore';
 export * from './chatStore';
 export * from './notificationsStore';
 export * from './serviceRequestsStore';
+export * from './postStore';
+export * from './providerProfileStore';
+export * from './categoryDetailStore';

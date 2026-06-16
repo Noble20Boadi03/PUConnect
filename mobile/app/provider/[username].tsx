@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -12,11 +12,10 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { ProviderProfileView, ProviderProfileViewSkeleton } from '../../components/ProviderProfile';
-import { buildChatHref, mapApiProfileToProviderProfile } from '../../lib';
+import { buildChatHref } from '../../lib';
 import { useAppRouter } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
-import { profileService } from '../../services';
-import type { ProviderProfile } from '../../types';
+import { useProviderProfileStore } from '../../store';
 
 export default function ProviderProfileScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
@@ -26,41 +25,20 @@ export default function ProviderProfileScreen() {
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
   const textColor = isDark ? '#ECEDEE' : '#11181C';
 
-  const [profile, setProfile] = useState<ProviderProfile | undefined>();
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const fetchData = useCallback(async (isRefresh = false) => {
-    if (typeof username !== 'string') {
-      setLoading(false);
-      return;
-    }
-
-    if (isRefresh) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
-
-    try {
-      const data = await profileService.getPublicProfile(username);
-      setProfile(mapApiProfileToProviderProfile(data));
-    } catch (error) {
-      console.error('Error fetching provider profile:', error);
-      setProfile(undefined);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [username]);
+  const { data: profile, isLoading, isRefreshing, fetchProviderProfile, clearCache } = useProviderProfileStore();
 
   const onRefresh = useCallback(() => {
-    fetchData(true);
-  }, [fetchData]);
+    if (typeof username === 'string') {
+      clearCache();
+      fetchProviderProfile(username, true);
+    }
+  }, [username, clearCache, fetchProviderProfile]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (typeof username === 'string') {
+      fetchProviderProfile(username);
+    }
+  }, [username, fetchProviderProfile]);
 
   const handleBack = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -93,7 +71,7 @@ export default function ProviderProfileScreen() {
     router.push(`/provider/${profile.username}/review` as any);
   }, [profile, router]);
 
-  if (loading) {
+  if (isLoading) {
     return <ProviderProfileViewSkeleton />;
   }
 
@@ -121,7 +99,7 @@ export default function ProviderProfileScreen() {
       onOpenReviews={handleOpenReviews}
       onLeaveReview={handleLeaveReview}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
       }
     />
   );

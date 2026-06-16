@@ -5,18 +5,23 @@ import { getSocket } from '../lib/socket';
 import { ChatMessage, ChatDateGroup, ChatParticipant, ChatThread, ChatPostContext } from '../types';
 import { parsePostPrice } from '../lib/mapDbPost';
 
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 interface ChatState {
   conversations: BackendConversation[];
   activeThread: ChatThread | null;
+  currentId: string | null;
+  lastFetched: number | null;
   isLoading: boolean;
   isRefreshing: boolean;
   error: string | null;
   
   fetchConversations: () => Promise<void>;
-  fetchMessages: (username: string, participant: ChatParticipant, postContext?: ChatPostContext) => Promise<void>;
+  fetchMessages: (username: string, participant: ChatParticipant, postContext?: ChatPostContext, forceRefresh?: boolean) => Promise<void>;
   sendMessage: (receiverUsername: string, content: string, postId?: string) => Promise<void>;
   subscribeToMessages: () => void;
   unsubscribeFromMessages: () => void;
+  clearCache: () => void;
 }
 
 const formatMessages = (messages: BackendChatMessage[], currentUserId: string): ChatDateGroup[] => {
@@ -64,6 +69,8 @@ let socketInstance: any = null;
 export const useChatStore = create<ChatState>((set, get) => ({
   conversations: [],
   activeThread: null,
+  currentId: null,
+  lastFetched: null,
   isLoading: false,
   isRefreshing: false,
   error: null,
@@ -78,13 +85,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  fetchMessages: async (username, participant, postContext) => {
-    const { activeThread } = get();
-    const isRefreshing = activeThread?.providerUsername === username;
-    
+  fetchMessages: async (username, participant, postContext, forceRefresh = false) => {
+    const { currentId, lastFetched, activeThread } = get();
+    const now = Date.now();
+
+    // Check cache
+    if (!forceRefresh && currentId === username && lastFetched && now - lastFetched < CACHE_TTL) {
+      return;
+    }
+
+    const hasExistingData = currentId === username && activeThread !== null;
+
     set({ 
-      isLoading: !isRefreshing, 
-      isRefreshing,
+      isLoading: !hasExistingData && !forceRefresh, 
+      isRefreshing: forceRefresh || (hasExistingData && !forceRefresh),
       error: null 
     });
     
@@ -112,6 +126,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
           postContext: finalPostContext,
           dateGroups,
         },
+        currentId: username,
+        lastFetched: now,
         isLoading: false,
         isRefreshing: false,
       });
@@ -125,6 +141,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
         isRefreshing: false
       });
     }
+  },
+
+  clearCache: () => {
+    set({ lastFetched: null });
   },
 
   sendMessage: async (receiverUsername, content, postId) => {
