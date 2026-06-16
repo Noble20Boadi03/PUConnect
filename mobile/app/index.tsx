@@ -7,23 +7,20 @@ import { useAppRouter, useThemeColor } from '../hooks';
 import { Spacing, Typography } from '../constants';
 import { Button } from '../components';
 import { LandingPageSearchParams } from '../types';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withTiming, 
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
   Easing,
-  runOnJS,
   withSpring,
   FadeIn,
   FadeOut
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAuthStore } from '../store';
 
 const { width, height } = Dimensions.get('window');
-
-const LOGO_SIZE_INITIAL = 120;
-const LOGO_SIZE_FINAL = 40;
 
 interface OnboardingSlide {
   id: number;
@@ -87,9 +84,9 @@ export default function LandingPage() {
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
-  
+  const { isAuthenticated, isLoading, hasCompletedOnboarding } = useAuthStore();
+
   const [currentIndex, setCurrentIndex] = useState(slide === 'last' ? ONBOARDING_DATA.length - 1 : 0);
-  const [isAnimationComplete, setIsAnimationComplete] = useState(skipSplash === 'true');
 
   // Animation shared values
   const logoX = useSharedValue(skipSplash === 'true' ? Spacing.lg : width / 2 - 22);
@@ -97,45 +94,7 @@ export default function LandingPage() {
   const logoScale = useSharedValue(skipSplash === 'true' ? 1 : 2.5);
   const contentOpacity = useSharedValue(skipSplash === 'true' ? 1 : 0);
 
-  useEffect(() => {
-    const startAnimation = async () => {
-      if (skipSplash === 'true') {
-        setIsAnimationComplete(true);
-        return;
-      }
-
-      // Hold the logo in the perfect center for 2 seconds
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      const targetX = Spacing.lg;
-      const targetY = insets.top + Spacing.md; 
-
-      logoX.value = withTiming(targetX, {
-        duration: 800,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      });
-
-      logoY.value = withTiming(targetY, {
-        duration: 800,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      });
-
-      logoScale.value = withTiming(1, {
-        duration: 800,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      }, (finished) => {
-        if (finished) {
-          runOnJS(setIsAnimationComplete)(true);
-        }
-      });
-
-      // Fade in the images and content while the logo is moving
-      contentOpacity.value = withTiming(1, { duration: 800 });
-    };
-
-    startAnimation();
-  }, []);
-
+  // All hooks must be called before early return!
   const animatedLogoStyle = useAnimatedStyle(() => {
     return {
       top: 0,
@@ -176,6 +135,52 @@ export default function LandingPage() {
 
   const currentData = ONBOARDING_DATA[currentIndex];
   const isLastSlide = currentIndex === ONBOARDING_DATA.length - 1;
+
+  useEffect(() => {
+    const startAnimation = async () => {
+      if (skipSplash === 'true') {
+        return;
+      }
+
+      // Guard: For returning users, do not start animation at all
+      if (isAuthenticated && hasCompletedOnboarding) {
+        return;
+      }
+
+      // Hold the logo in the perfect center for 2 seconds
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      const targetX = Spacing.lg;
+      const targetY = insets.top + Spacing.md;
+
+      logoX.value = withTiming(targetX, {
+        duration: 800,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      });
+
+      logoY.value = withTiming(targetY, {
+        duration: 800,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      });
+
+      logoScale.value = withTiming(1, {
+        duration: 800,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      });
+
+      // Fade in the images and content while the logo is moving
+      contentOpacity.value = withTiming(1, { duration: 800 });
+    };
+
+    if (!isLoading) {
+      startAnimation();
+    }
+  }, [isLoading, isAuthenticated, hasCompletedOnboarding, skipSplash, insets]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Render nothing while loading or for returning users
+  if (isLoading || (isAuthenticated && hasCompletedOnboarding)) {
+    return null;
+  }
 
   const handleNext = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -241,15 +246,15 @@ export default function LandingPage() {
         <Animated.View style={animatedContentStyle}>
           <View style={styles.header}>
             <View style={{ width: 44 }} />
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.iconButton, { backgroundColor: Colors.background + 'E6' }]}
               activeOpacity={0.7}
               onPress={toggleTheme}
             >
-              <Ionicons 
-                name={colorScheme === 'dark' ? 'sunny' : 'moon'} 
-                size={20} 
-                color={Colors.text} 
+              <Ionicons
+                name={colorScheme === 'dark' ? 'sunny' : 'moon'}
+                size={20}
+                color={Colors.text}
               />
             </TouchableOpacity>
           </View>
@@ -268,7 +273,7 @@ export default function LandingPage() {
                   ) : null}
                 </Text>
               </Animated.View>
-              
+
               <Animated.View
                 key={`subtitle-${currentIndex}`}
                 entering={FadeIn.delay(200).duration(400).springify()}
@@ -303,9 +308,9 @@ export default function LandingPage() {
 
               <View style={styles.pagination}>
                 {ONBOARDING_DATA.map((_, i) => (
-                  <PaginationDot 
-                    key={i} 
-                    isActive={i === currentIndex} 
+                  <PaginationDot
+                    key={i}
+                    isActive={i === currentIndex}
                     activeColor={Colors.primary}
                     inactiveColor={Colors.border}
                   />
@@ -434,4 +439,3 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
 });
-
