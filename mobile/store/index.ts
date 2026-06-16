@@ -8,3 +8,4 @@ export * from './providerProfileStore';
 export * from './categoryDetailStore';
 export * from './marketStore';
 export * from './exploreStore';
+export * from './userProfileStore';

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -25,12 +25,8 @@ import {
 } from '../../components/Profile';
 import { NotificationBellButton } from '../../components/NotificationBellButton';
 import { ServiceStatusButton } from '../../components/ServiceStatusButton';
-import { useAuthStore, useProfileStore } from '../../store';
+import { useAuthStore, useProfileStore, useUserProfileStore } from '../../store';
 import { getAccountTypeLabel, getServiceOptionsByIds } from '../../lib';
-import { mapDbPostToFeaturedPost } from '../../lib/mapDbPost';
-import { profileService } from '../../services';
-import type { FeaturedPost } from '../../types';
-import type { DbReview } from '../../services/reviewService';
 
 export default function ProfileScreen() {
   const router = useAppRouter();
@@ -45,11 +41,11 @@ export default function ProfileScreen() {
   const isProvider = useProfileStore((s) => s.isProvider);
   const hydrated = useProfileStore((s) => s.hydrated);
   const hydrate = useProfileStore((s) => s.hydrate);
-
-  const [posts, setPosts] = useState<FeaturedPost[]>([]);
-  const [receivedReviews, setReceivedReviews] = useState<DbReview[]>([]);
-  const [postsLoading, setPostsLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const posts = useUserProfileStore((s) => s.posts);
+  const receivedReviews = useUserProfileStore((s) => s.receivedReviews);
+  const postsLoading = useUserProfileStore((s) => s.isLoading);
+  const refreshing = useUserProfileStore((s) => s.isRefreshing);
+  const fetchProfile = useUserProfileStore((s) => s.fetchProfile);
 
   // Compute review summary from receivedReviews
   const reviewSummary = receivedReviews.length === 0 
@@ -77,43 +73,11 @@ export default function ProfileScreen() {
     void hydrate(user);
   }, [user, hydrate]);
 
-  const fetchPosts = useCallback(async (isRefresh = false) => {
-    if (!user?.username) {
-      setPosts([]);
-      setReceivedReviews([]);
-      setPostsLoading(false);
-      return;
-    }
-
-    if (isRefresh) {
-      setRefreshing(true);
-    } else {
-      setPostsLoading(true);
-    }
-
-    try {
-      const profile = await profileService.getPublicProfile(user.username);
-      const apiPosts = Array.isArray(profile?.posts) ? profile.posts : [];
-      const reviews = Array.isArray(profile?.receivedReviews) ? profile.receivedReviews : [];
-      setPosts(apiPosts.map(mapDbPostToFeaturedPost));
-      setReceivedReviews(reviews);
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      setPosts([]);
-      setReceivedReviews([]);
-    } finally {
-      setPostsLoading(false);
-      setRefreshing(false);
-    }
-  }, [user?.username]);
-
   const onRefresh = useCallback(() => {
-    fetchPosts(true);
-  }, [fetchPosts]);
-
-  useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
+    if (user?.username) {
+      fetchProfile(user.username, true);
+    }
+  }, [user?.username, fetchProfile]);
 
   const initials = user?.name
     ? user.name

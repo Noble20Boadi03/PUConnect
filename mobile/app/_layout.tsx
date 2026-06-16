@@ -4,7 +4,7 @@ import { useColorScheme, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { useEffect } from 'react';
-import { useAuthStore, useProfileStore, useChatStore, useNotificationsStore, useServiceRequestsStore } from '../store';
+import { useAuthStore, useProfileStore, useChatStore, useNotificationsStore, useServiceRequestsStore, useUserProfileStore } from '../store';
 import { useProviderReviewsStore } from '../store/providerReviewsStore';
 import { initializeThemePreference } from '../lib/themePreference';
 import { runGuardedNavigation } from '../lib/guardedNavigation';
@@ -26,6 +26,7 @@ export default function RootLayout() {
   const { fetchRequests, subscribeToUpdates } = useServiceRequestsStore();
   const { fetchPosts } = useMarketStore();
   const { fetchExploreData } = useExploreStore();
+  const { fetchProfile } = useUserProfileStore();
   const segments = useSegments();
   const router = useRouter();
 
@@ -50,6 +51,9 @@ export default function RootLayout() {
       // Background prefetching (fire-and-forget, respect cache TTL)
       fetchPosts();
       fetchExploreData();
+      if (user?.username) {
+        fetchProfile(user.username);
+      }
       
       return () => {
         unsubscribeServiceRequests();
@@ -68,6 +72,7 @@ export default function RootLayout() {
     subscribeToUpdates,
     fetchPosts,
     fetchExploreData,
+    fetchProfile,
   ]);
 
   // Authenticated users skip the landing page — hide splash once auth is ready.
