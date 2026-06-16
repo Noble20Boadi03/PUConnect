@@ -19,6 +19,7 @@ export default function PhotoSetupScreen() {
 
   const user = useAuthStore((s) => s.user);
   const setFirstLoginSession = useAuthStore((s) => s.setFirstLoginSession);
+  const setHasCompletedOnboarding = useAuthStore((s) => s.setHasCompletedOnboarding);
 
   const { avatarUri, sheetVisible, openSheet, closeSheet, handleSheetSelect } =
     useChangeProfilePhoto(user?.avatarUrl);
@@ -39,6 +40,7 @@ export default function PhotoSetupScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     // Completing this setup clears the flag, which will trigger the layout to route to market.
     setFirstLoginSession(false);
+    setHasCompletedOnboarding(true);
   };
 
   return (

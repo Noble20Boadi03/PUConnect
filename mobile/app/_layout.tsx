@@ -19,7 +19,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const { isAuthenticated, isLoading, initialize, user, isFirstLoginSession } = useAuthStore();
+  const { isAuthenticated, isLoading, initialize, user, isFirstLoginSession, hasCompletedOnboarding } = useAuthStore();
   const hydrateProfile = useProfileStore((s) => s.hydrate);
   const { subscribeToMessages, fetchConversations } = useChatStore();
   const { subscribeToNotifications, fetchNotifications } = useNotificationsStore();
@@ -114,7 +114,7 @@ export default function RootLayout() {
       });
     } else if (
       isAuthenticated &&
-      !isFirstLoginSession &&
+      hasCompletedOnboarding &&
       !inTabsGroup &&
       !inSettings &&
       !inEditInfo &&
@@ -159,6 +159,7 @@ export default function RootLayout() {
   }, [
     isAuthenticated,
     isFirstLoginSession,
+    hasCompletedOnboarding,
     segments,
     isLoading,
     inPostDetail,
