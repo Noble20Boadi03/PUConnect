@@ -3,7 +3,7 @@ import React, { useCallback, useEffect } from 'react';
 import { MessagesInboxView } from '../../components/Messages';
 import { buildChatHref } from '../../lib';
 import { useAppRouter } from '../../hooks';
-import { useAuthStore } from '../../store';
+import { useAuthStore, useChatStore } from '../../store';
 import { useChat } from '../../hooks/useChat';
 import type { ConversationPreview } from '../../types';
 
@@ -11,6 +11,7 @@ export default function MessagesScreen() {
   const router = useAppRouter();
   const { user: currentUser } = useAuthStore();
   const { conversations, fetchConversations, subscribeToMessages } = useChat();
+  const { fetchMessages } = useChatStore();
 
   useEffect(() => {
     fetchConversations();
@@ -22,6 +23,18 @@ export default function MessagesScreen() {
       router.push(buildChatHref(conversation.providerUsername, conversation.postId) as any);
     },
     [router]
+  );
+
+  const handleConversationPressIn = useCallback(
+    (conversation: ConversationPreview) => {
+      // Prefetch messages when user starts pressing the conversation
+      fetchMessages(
+        conversation.providerUsername,
+        conversation.participant,
+        conversation.postId ? { postId: conversation.postId, title: '', tag: 'Service', priceLabel: '' } : undefined
+      );
+    },
+    [fetchMessages]
   );
 
   const mappedConversations: ConversationPreview[] = conversations.map(c => ({
@@ -42,6 +55,7 @@ export default function MessagesScreen() {
     <MessagesInboxView
       conversations={mappedConversations}
       onConversationPress={handleConversationPress}
+      onConversationPressIn={handleConversationPressIn}
     />
   );
 }

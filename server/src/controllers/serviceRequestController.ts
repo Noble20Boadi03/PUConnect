@@ -3,6 +3,35 @@ import prisma from '../config/db';
 import { io } from '../index';
 import type { ServiceRequestKind, ServiceRequestStatus } from '@prisma/client';
 
+const safeUserSelect = {
+  id: true,
+  name: true,
+  username: true,
+  avatarUrl: true,
+  role: true,
+  bio: true,
+  categoryId: true,
+  skillTitle: true,
+  expertiseTags: true,
+  serviceIds: true,
+  createdAt: true,
+  updatedAt: true
+};
+
+const postSelect = { 
+  id: true, 
+  title: true, 
+  description: true, 
+  tag: true, 
+  price: true, 
+  images: true, 
+  hashtags: true, 
+  helpCategoryIds: true, 
+  authorId: true, 
+  createdAt: true, 
+  updatedAt: true 
+};
+
 const ACTIVE_STATUSES: ServiceRequestStatus[] = ['active', 'pending_review', 'pending'];
 
 function includeRelations() {
@@ -13,7 +42,7 @@ function includeRelations() {
     provider: {
       select: { id: true, name: true, username: true, avatarUrl: true },
     },
-    post: true,
+    post: { select: postSelect },
   };
 }
 
@@ -79,7 +108,7 @@ export const getServiceRequestForChat = async (req: Request, res: Response) => {
       });
     }
 
-    const peer = await prisma.user.findUnique({ where: { username: peerUsername } });
+    const peer = await prisma.user.findUnique({ where: { username: peerUsername }, select: { id: true, name: true, username: true, avatarUrl: true } });
     if (!peer) {
       return res.status(404).json({
         status: 404,
@@ -168,7 +197,7 @@ export const createServiceRequest = async (req: Request, res: Response) => {
 
     const post = await prisma.post.findUnique({
       where: { id: postId },
-      include: { author: true },
+      include: { author: { select: safeUserSelect } },
     });
     if (!post) {
       return res.status(404).json({
@@ -243,7 +272,7 @@ export const createServiceRequest = async (req: Request, res: Response) => {
       include: includeRelations(),
     });
 
-    const initiator = await prisma.user.findUnique({ where: { id: currentUserId } });
+    const initiator = await prisma.user.findUnique({ where: { id: currentUserId }, select: { id: true, name: true, username: true, avatarUrl: true } });
     const notifyTargetId = currentUserId === requesterId ? providerId : requesterId;
     const title =
       kind === 'service' ? 'New Official Service Request' : 'New Official Response';

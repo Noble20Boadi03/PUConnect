@@ -2,6 +2,21 @@ import { Request, Response } from 'express';
 import prisma from '../config/db';
 import { supabase } from '../config/supabase';
 
+const safeUserSelect = {
+  id: true,
+  name: true,
+  username: true,
+  avatarUrl: true,
+  role: true,
+  bio: true,
+  categoryId: true,
+  skillTitle: true,
+  expertiseTags: true,
+  serviceIds: true,
+  createdAt: true,
+  updatedAt: true
+};
+
 /**
  * Extract file path from Supabase public URL
  */
@@ -32,7 +47,7 @@ const deleteImagesFromStorage = async (imageUrls: string[]) => {
 export const getPosts = async (req: Request, res: Response) => {
   try {
     const posts = await prisma.post.findMany({
-      include: { author: true },
+      include: { author: { select: safeUserSelect } },
       orderBy: { createdAt: 'desc' },
     });
     return res.status(200).json({
@@ -40,7 +55,7 @@ export const getPosts = async (req: Request, res: Response) => {
       data: posts,
     });
   } catch (error) {
-    console.error('GetPosts Error:', error);
+    console.error('GetPosts error:', error);
     return res.status(500).json({
       status: 500,
       message: 'Server error retrieving posts.',
@@ -57,7 +72,7 @@ export const getPostById = async (req: Request, res: Response) => {
     const { id } = req.params;
     const post = await prisma.post.findUnique({
       where: { id },
-      include: { author: true },
+      include: { author: { select: safeUserSelect } },
     });
     if (!post) {
       return res.status(404).json({
@@ -70,7 +85,7 @@ export const getPostById = async (req: Request, res: Response) => {
       data: post,
     });
   } catch (error) {
-    console.error('GetPostById Error:', error);
+    console.error('GetPostById error:', error);
     return res.status(500).json({
       status: 500,
       message: 'Server error retrieving post.',
@@ -105,7 +120,7 @@ export const createPost = async (req: Request, res: Response) => {
         helpCategoryIds: helpCategoryIds || [],
         authorId: userId,
       },
-      include: { author: true },
+      include: { author: { select: safeUserSelect } },
     });
 
     return res.status(201).json({
@@ -114,7 +129,7 @@ export const createPost = async (req: Request, res: Response) => {
       data: post,
     });
   } catch (error) {
-    console.error('CreatePost Error:', error);
+    console.error('CreatePost error:', error);
     return res.status(500).json({
       status: 500,
       message: 'Server error creating post.',
@@ -166,7 +181,7 @@ export const updatePost = async (req: Request, res: Response) => {
         hashtags,
         helpCategoryIds,
       },
-      include: { author: true },
+      include: { author: { select: safeUserSelect } },
     });
 
     return res.status(200).json({
@@ -175,7 +190,7 @@ export const updatePost = async (req: Request, res: Response) => {
       data: updatedPost,
     });
   } catch (error) {
-    console.error('UpdatePost Error:', error);
+    console.error('UpdatePost error:', error);
     return res.status(500).json({
       status: 500,
       message: 'Server error updating post.',

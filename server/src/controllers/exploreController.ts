@@ -1,6 +1,35 @@
 import { Request, Response } from 'express';
 import prisma from '../config/db';
 
+const safeUserSelect = {
+  id: true,
+  name: true,
+  username: true,
+  avatarUrl: true,
+  role: true,
+  bio: true,
+  categoryId: true,
+  skillTitle: true,
+  expertiseTags: true,
+  serviceIds: true,
+  createdAt: true,
+  updatedAt: true
+};
+
+const postSelect = { 
+  id: true, 
+  title: true, 
+  description: true, 
+  tag: true, 
+  price: true, 
+  images: true, 
+  hashtags: true, 
+  helpCategoryIds: true, 
+  authorId: true, 
+  createdAt: true, 
+  updatedAt: true 
+};
+
 /**
  * Get all explore categories
  * @route GET /api/explore/categories
@@ -77,9 +106,10 @@ export const getExploreProviders = async (req: Request, res: Response) => {
   try {
     const providers = await prisma.user.findMany({
       where: { role: 'provider' },
-      include: {
+      select: {
+        ...safeUserSelect,
         category: true,
-        receivedReviews: true,
+        receivedReviews: { select: { rating: true } },
       },
     });
 
@@ -126,7 +156,7 @@ export const getExploreProviders = async (req: Request, res: Response) => {
       data: providersWithServices,
     });
   } catch (error) {
-    console.error('GetExploreProviders Error:', error);
+    console.error('GetExploreProviders error:', error);
     return res.status(500).json({
       status: 500,
       message: 'Server error retrieving providers.',

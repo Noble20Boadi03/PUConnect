@@ -39,6 +39,7 @@ export interface ConversationListItemProps {
   onlineBorderColor: string;
   isLast?: boolean;
   onPress: () => void;
+  onPressIn?: () => void;
   selectionMode?: boolean;
   isSelected?: boolean;
   onSelectToggle?: () => void;
@@ -56,6 +57,7 @@ const ConversationListItemComponent: React.FC<ConversationListItemProps> = ({
   onlineBorderColor,
   isLast = false,
   onPress,
+  onPressIn,
   selectionMode = false,
   isSelected = false,
   onSelectToggle,
@@ -84,6 +86,7 @@ const ConversationListItemComponent: React.FC<ConversationListItemProps> = ({
         !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: dividerColor },
       ]}
       onPress={selectionMode && onSelectToggle ? onSelectToggle : onPress}
+      onPressIn={onPressIn}
       onLongPress={onLongPress}
       delayLongPress={450}
       activeOpacity={0.72}

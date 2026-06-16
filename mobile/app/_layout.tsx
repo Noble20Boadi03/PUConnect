@@ -11,6 +11,8 @@ import { runGuardedNavigation } from '../lib/guardedNavigation';
 import { useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { applyThemeSystemChrome } from '../lib/systemChrome';
+import { useMarketStore } from '../store/marketStore';
+import { useExploreStore } from '../store/exploreStore';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -22,6 +24,8 @@ export default function RootLayout() {
   const { subscribeToMessages, fetchConversations } = useChatStore();
   const { subscribeToNotifications, fetchNotifications } = useNotificationsStore();
   const { fetchRequests, subscribeToUpdates } = useServiceRequestsStore();
+  const { fetchPosts } = useMarketStore();
+  const { fetchExploreData } = useExploreStore();
   const segments = useSegments();
   const router = useRouter();
 
@@ -42,6 +46,11 @@ export default function RootLayout() {
         useProviderReviewsStore.getState().syncCompletedDealsFromRequests(deals);
       });
       const unsubscribeServiceRequests = subscribeToUpdates();
+      
+      // Background prefetching (fire-and-forget, respect cache TTL)
+      fetchPosts();
+      fetchExploreData();
+      
       return () => {
         unsubscribeServiceRequests();
       };
@@ -57,6 +66,8 @@ export default function RootLayout() {
     subscribeToNotifications,
     fetchRequests,
     subscribeToUpdates,
+    fetchPosts,
+    fetchExploreData,
   ]);
 
   // Authenticated users skip the landing page — hide splash once auth is ready.

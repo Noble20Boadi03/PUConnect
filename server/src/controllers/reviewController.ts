@@ -2,6 +2,35 @@ import { Request, Response } from 'express';
 import prisma from '../config/db';
 import { io } from '../index';
 
+const safeUserSelect = {
+  id: true,
+  name: true,
+  username: true,
+  avatarUrl: true,
+  role: true,
+  bio: true,
+  categoryId: true,
+  skillTitle: true,
+  expertiseTags: true,
+  serviceIds: true,
+  createdAt: true,
+  updatedAt: true
+};
+
+const postSelect = { 
+  id: true, 
+  title: true, 
+  description: true, 
+  tag: true, 
+  price: true, 
+  images: true, 
+  hashtags: true, 
+  helpCategoryIds: true, 
+  authorId: true, 
+  createdAt: true, 
+  updatedAt: true 
+};
+
 /**
  * Get reviews for a user
  * @route GET /api/reviews/:username
@@ -11,6 +40,7 @@ export const getReviewsForUser = async (req: Request, res: Response) => {
     const { username } = req.params;
     const user = await prisma.user.findUnique({
       where: { username },
+      select: safeUserSelect
     });
     if (!user) {
       return res.status(404).json({
@@ -21,7 +51,10 @@ export const getReviewsForUser = async (req: Request, res: Response) => {
 
     const reviews = await prisma.review.findMany({
       where: { revieweeId: user.id },
-      include: { reviewer: true, reviewee: true },
+      include: { 
+        reviewer: { select: safeUserSelect }, 
+        reviewee: { select: safeUserSelect } 
+      },
       orderBy: { createdAt: 'desc' },
     });
     return res.status(200).json({
@@ -54,7 +87,7 @@ export const getEligibleReviews = async (req: Request, res: Response) => {
         provider: {
           select: { id: true, name: true, username: true, avatarUrl: true },
         },
-        post: true,
+        post: { select: postSelect },
         reviews: true,
       },
       orderBy: { completedAt: 'desc' },
@@ -86,6 +119,7 @@ export const createReview = async (req: Request, res: Response) => {
 
     const reviewee = await prisma.user.findUnique({
       where: { username: revieweeUsername },
+      select: safeUserSelect
     });
     if (!reviewee) {
       return res.status(404).json({
@@ -100,7 +134,7 @@ export const createReview = async (req: Request, res: Response) => {
     if (serviceRequestId) {
       const serviceRequest = await prisma.serviceRequest.findUnique({
         where: { id: serviceRequestId },
-        include: { reviews: true, post: true },
+        include: { reviews: true, post: { select: postSelect } },
       });
       if (!serviceRequest) {
         return res.status(404).json({
@@ -146,7 +180,10 @@ export const createReview = async (req: Request, res: Response) => {
         serviceRequestId: serviceRequestId ?? null,
         postId: resolvedPostId ?? null,
       },
-      include: { reviewer: true, reviewee: true },
+      include: { 
+        reviewer: { select: safeUserSelect }, 
+        reviewee: { select: safeUserSelect } 
+      },
     });
 
     const notification = await prisma.notification.create({

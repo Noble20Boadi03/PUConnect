@@ -28,11 +28,13 @@ type InboxFilter = 'all' | 'unread';
 export interface MessagesInboxViewProps {
   conversations: ConversationPreview[];
   onConversationPress: (conversation: ConversationPreview) => void;
+  onConversationPressIn?: (conversation: ConversationPreview) => void;
 }
 
 export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
   conversations,
   onConversationPress,
+  onConversationPressIn,
 }) => {
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
@@ -172,6 +174,11 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           onConversationPress(item);
         }}
+        onPressIn={() => {
+          if (onConversationPressIn) {
+            onConversationPressIn(item);
+          }
+        }}
       />
     ),
     [
@@ -186,6 +193,7 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
       selectedIds,
       toggleSelection,
       onConversationPress,
+      onConversationPressIn,
     ]
   );
 

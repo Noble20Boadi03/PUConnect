@@ -4,6 +4,21 @@ import bcrypt from 'bcryptjs';
 import prisma from '../config/db';
 import { emailService } from '../services/emailService';
 
+const safeUserSelect = {
+  id: true,
+  name: true,
+  username: true,
+  avatarUrl: true,
+  role: true,
+  bio: true,
+  categoryId: true,
+  skillTitle: true,
+  expertiseTags: true,
+  serviceIds: true,
+  createdAt: true,
+  updatedAt: true
+};
+
 /**
  * Maps a database user to the public API user shape.
  */
@@ -26,7 +41,6 @@ const toPublicUser = async (user: any) => {
     skillTitle: user.skillTitle || undefined,
     expertiseTags: user.expertiseTags || [],
     serviceIds: user.serviceIds || [],
-    themePreference: user.themePreference || undefined,
     services: categoryServices.map(cs => ({
       id: cs.id,
       title: cs.title,
@@ -63,6 +77,7 @@ export const register = async (req: Request, res: Response) => {
     // 2. Check if email is already registered in Supabase
     const emailExists = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
+      select: { id: true }
     });
     if (emailExists) {
       return res.status(400).json({
@@ -74,6 +89,7 @@ export const register = async (req: Request, res: Response) => {
     // 3. Check if username is already taken
     const usernameExists = await prisma.user.findUnique({
       where: { username: username.toLowerCase() },
+      select: { id: true }
     });
     if (usernameExists) {
       return res.status(400).json({
@@ -94,7 +110,19 @@ export const register = async (req: Request, res: Response) => {
         username: username.toLowerCase(),
         password: hashedPassword,
       },
-      include: { services: true }
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        username: true,
+        role: true,
+        avatarUrl: true,
+        bio: true,
+        categoryId: true,
+        skillTitle: true,
+        expertiseTags: true,
+        serviceIds: true
+      }
     });
 
     // 6. Generate session token
@@ -143,7 +171,20 @@ export const login = async (req: Request, res: Response) => {
           { username: identifier.toLowerCase() },
         ],
       },
-      include: { services: true }
+      select: { 
+        id: true, 
+        password: true, 
+        role: true, 
+        username: true, 
+        name: true, 
+        avatarUrl: true,
+        serviceIds: true,
+        email: true,
+        bio: true,
+        categoryId: true,
+        skillTitle: true,
+        expertiseTags: true
+      }
     });
     if (!user) {
       return res.status(401).json({
@@ -192,7 +233,11 @@ export const getMe = async (req: Request, res: Response) => {
     const userId = (req as any).user.id;
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { services: true }
+      select: {
+        ...safeUserSelect,
+        email: true,
+        serviceIds: true
+      }
     });
 
     if (!user) {
@@ -314,6 +359,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
           { username: emailOrUsername.toLowerCase() },
         ],
       },
+      select: { id: true, email: true, name: true }
     });
 
     // Even if user doesn't exist, return success (security best practice)
@@ -376,6 +422,7 @@ export const verifyOTP = async (req: Request, res: Response) => {
         otpCode: otp,
         otpExpires: { gt: new Date() }, // OTP not expired
       },
+      select: { id: true, otpCode: true, otpExpires: true }
     });
 
     if (!user) {
@@ -430,6 +477,7 @@ export const resetPassword = async (req: Request, res: Response) => {
         otpCode: otp,
         otpExpires: { gt: new Date() },
       },
+      select: { id: true, otpCode: true, otpExpires: true, password: true }
     });
 
     if (!user) {
@@ -485,6 +533,7 @@ export const updateProfile = async (req: Request, res: Response) => {
           username: username.toLowerCase(),
           NOT: { id: userId },
         },
+        select: { id: true }
       });
       if (existingUser) {
         return res.status(400).json({
@@ -501,6 +550,7 @@ export const updateProfile = async (req: Request, res: Response) => {
           email: email.toLowerCase(),
           NOT: { id: userId },
         },
+        select: { id: true }
       });
       if (existingUser) {
         return res.status(400).json({
@@ -516,7 +566,19 @@ export const updateProfile = async (req: Request, res: Response) => {
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updateData,
-      include: { services: true }
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        username: true,
+        role: true,
+        avatarUrl: true,
+        bio: true,
+        categoryId: true,
+        skillTitle: true,
+        expertiseTags: true,
+        serviceIds: true
+      }
     });
 
     return res.status(200).json({
@@ -558,7 +620,19 @@ export const updateProviderProfile = async (req: Request, res: Response) => {
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updateData,
-      include: { services: true }
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        username: true,
+        role: true,
+        avatarUrl: true,
+        bio: true,
+        categoryId: true,
+        skillTitle: true,
+        expertiseTags: true,
+        serviceIds: true
+      }
     });
 
     return res.status(200).json({
@@ -602,6 +676,7 @@ export const changePassword = async (req: Request, res: Response) => {
     // Find user
     const user = await prisma.user.findUnique({
       where: { id: userId },
+      select: { id: true, password: true }
     });
 
     if (!user) {

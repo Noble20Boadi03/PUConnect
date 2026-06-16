@@ -1,6 +1,35 @@
 import { Request, Response } from 'express';
 import prisma from '../config/db';
 
+const safeUserSelect = {
+  id: true,
+  name: true,
+  username: true,
+  avatarUrl: true,
+  role: true,
+  bio: true,
+  categoryId: true,
+  skillTitle: true,
+  expertiseTags: true,
+  serviceIds: true,
+  createdAt: true,
+  updatedAt: true
+};
+
+const postSelect = { 
+  id: true, 
+  title: true, 
+  description: true, 
+  tag: true, 
+  price: true, 
+  images: true, 
+  hashtags: true, 
+  helpCategoryIds: true, 
+  authorId: true, 
+  createdAt: true, 
+  updatedAt: true 
+};
+
 /**
  * Get user profile by username
  * @route GET /api/profile/:username
@@ -10,10 +39,15 @@ export const getProfile = async (req: Request, res: Response) => {
     const { username } = req.params;
     const user = await prisma.user.findUnique({
       where: { username },
-      include: {
+      select: {
+        ...safeUserSelect,
         category: true,
-        posts: { orderBy: { createdAt: 'desc' } },
-        receivedReviews: { include: { reviewer: true } }
+        posts: { orderBy: { createdAt: 'desc' }, select: postSelect },
+        receivedReviews: { 
+          include: { 
+            reviewer: { select: safeUserSelect } 
+          } 
+        }
       }
     });
     if (!user) {
@@ -29,10 +63,8 @@ export const getProfile = async (req: Request, res: Response) => {
         })
       : [];
 
-    // Don't send password back
-    const { password, otpCode, otpExpires, ...safeUser } = user;
     const safeUserWithServices = {
-      ...safeUser,
+      ...user,
       services: categoryServices.map(cs => ({
         id: cs.id,
         title: cs.title,
@@ -75,7 +107,8 @@ export const updateProfile = async (req: Request, res: Response) => {
     // Check if username is already taken by another user
     if (username) {
       const existingUser = await prisma.user.findFirst({
-        where: { username, NOT: { id: userId } }
+        where: { username, NOT: { id: userId } },
+        select: { id: true }
       });
       if (existingUser) {
         return res.status(400).json({
@@ -98,7 +131,8 @@ export const updateProfile = async (req: Request, res: Response) => {
         serviceIds,
         role
       },
-      include: {
+      select: {
+        ...safeUserSelect,
         category: true
       }
     });
@@ -109,9 +143,8 @@ export const updateProfile = async (req: Request, res: Response) => {
         })
       : [];
 
-    const { password, otpCode, otpExpires, ...safeUser } = updatedUser;
     const safeUserWithServices = {
-      ...safeUser,
+      ...updatedUser,
       services: categoryServices.map(cs => ({
         id: cs.id,
         title: cs.title,

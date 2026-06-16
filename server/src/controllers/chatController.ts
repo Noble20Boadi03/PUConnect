@@ -2,6 +2,35 @@ import { Request, Response } from 'express';
 import prisma from '../config/db';
 import { io } from '../index';
 
+const safeUserSelect = {
+  id: true,
+  name: true,
+  username: true,
+  avatarUrl: true,
+  role: true,
+  bio: true,
+  categoryId: true,
+  skillTitle: true,
+  expertiseTags: true,
+  serviceIds: true,
+  createdAt: true,
+  updatedAt: true
+};
+
+const postSelect = { 
+  id: true, 
+  title: true, 
+  description: true, 
+  tag: true, 
+  price: true, 
+  images: true, 
+  hashtags: true, 
+  helpCategoryIds: true, 
+  authorId: true, 
+  createdAt: true, 
+  updatedAt: true 
+};
+
 /**
  * Get chat messages between authenticated user and another user
  * @route GET /api/chat/:username
@@ -13,7 +42,8 @@ export const getChatMessages = async (req: Request, res: Response) => {
 
     // Find the other user
     const otherUser = await prisma.user.findUnique({
-      where: { username }
+      where: { username },
+      select: safeUserSelect
     });
     if (!otherUser) {
       return res.status(404).json({
@@ -30,9 +60,9 @@ export const getChatMessages = async (req: Request, res: Response) => {
         ]
       },
       include: {
-        sender: true,
-        receiver: true,
-        post: true
+        sender: { select: safeUserSelect },
+        receiver: { select: safeUserSelect },
+        post: { select: postSelect }
       },
       orderBy: { createdAt: 'asc' }
     });
@@ -66,7 +96,11 @@ export const getConversations = async (req: Request, res: Response) => {
           { receiverId: userId }
         ]
       },
-      include: { sender: true, receiver: true, post: true },
+      include: { 
+        sender: { select: safeUserSelect }, 
+        receiver: { select: safeUserSelect }, 
+        post: { select: postSelect } 
+      },
       orderBy: { createdAt: 'desc' }
     });
 
@@ -107,7 +141,8 @@ export const sendChatMessage = async (req: Request, res: Response) => {
 
     // Find receiver
     const receiver = await prisma.user.findUnique({
-      where: { username: receiverUsername }
+      where: { username: receiverUsername },
+      select: safeUserSelect
     });
     if (!receiver) {
       return res.status(404).json({
@@ -123,7 +158,11 @@ export const sendChatMessage = async (req: Request, res: Response) => {
         content,
         postId
       },
-      include: { sender: true, receiver: true, post: true }
+      include: { 
+        sender: { select: safeUserSelect }, 
+        receiver: { select: safeUserSelect }, 
+        post: { select: postSelect } 
+      }
     });
 
     // Emit message to receiver via Socket.io if they're online
@@ -156,7 +195,8 @@ export const markMessagesAsRead = async (req: Request, res: Response) => {
     const { username } = req.params;
 
     const otherUser = await prisma.user.findUnique({
-      where: { username }
+      where: { username },
+      select: safeUserSelect
     });
     if (!otherUser) {
       return res.status(404).json({

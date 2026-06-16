@@ -1,6 +1,21 @@
 import { Request, Response } from 'express';
 import prisma from '../config/db';
 
+const safeUserSelect = {
+  id: true,
+  name: true,
+  username: true,
+  avatarUrl: true,
+  role: true,
+  bio: true,
+  categoryId: true,
+  skillTitle: true,
+  expertiseTags: true,
+  serviceIds: true,
+  createdAt: true,
+  updatedAt: true
+};
+
 /**
  * Get all provider services (or filter by user)
  * @route GET /api/provider-services
@@ -10,7 +25,7 @@ export const getProviderServices = async (req: Request, res: Response) => {
     const { userId } = req.query;
     const services = await prisma.providerService.findMany({
       where: userId ? { userId: userId as string } : {},
-      include: { user: true },
+      include: { user: { select: safeUserSelect } },
       orderBy: { createdAt: 'desc' }
     });
     return res.status(200).json({
@@ -35,7 +50,7 @@ export const getProviderServiceById = async (req: Request, res: Response) => {
     const { id } = req.params;
     const service = await prisma.providerService.findUnique({
       where: { id },
-      include: { user: true }
+      include: { user: { select: safeUserSelect } }
     });
     if (!service) {
       return res.status(404).json({
@@ -74,7 +89,7 @@ export const createProviderService = async (req: Request, res: Response) => {
         price,
         tags
       },
-      include: { user: true }
+      include: { user: { select: safeUserSelect } }
     });
     return res.status(201).json({
       status: 201,
@@ -118,7 +133,7 @@ export const updateProviderService = async (req: Request, res: Response) => {
     const updatedService = await prisma.providerService.update({
       where: { id },
       data: { categoryId, title, description, price, tags },
-      include: { user: true }
+      include: { user: { select: safeUserSelect } }
     });
     return res.status(200).json({
       status: 200,
