@@ -303,7 +303,7 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
                   <Text
                     style={[
                       styles.filterBadgeText,
-                      { color: isDark ? '#09090B' : '#FFFFFF' },
+                      { color: Colors.onPrimary },
                     ]}
                   >
                     {totalUnread}

@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
+import { useThemeColor } from '../../hooks';
 
 export type ProfileHeroVariant = 'owner' | 'public';
 
@@ -42,7 +43,7 @@ export const ProfileHeroSection: React.FC<ProfileHeroSectionProps> = ({
   onMessage,
 }) => {
   const isOwner = variant === 'owner';
-  const ctaOnDark = isDark ? '#09090B' : '#FFFFFF';
+  const Colors = useThemeColor();
 
   const fireHaptic = () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
@@ -77,8 +78,8 @@ export const ProfileHeroSection: React.FC<ProfileHeroSectionProps> = ({
               onChangePhoto?.();
             }}
           >
-            <Ionicons name="image-outline" size={16} color={ctaOnDark} />
-            <Text style={[styles.actionButtonText, { color: ctaOnDark }]}>Change Photo</Text>
+            <Ionicons name="image-outline" size={16} color={Colors.onPrimary} />
+            <Text style={[styles.actionButtonText, { color: Colors.onPrimary }]}>Change Photo</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
@@ -103,8 +104,8 @@ export const ProfileHeroSection: React.FC<ProfileHeroSectionProps> = ({
           }}
           activeOpacity={0.9}
         >
-          <Ionicons name="chatbubble-outline" size={18} color={ctaOnDark} />
-          <Text style={[styles.messageButtonText, { color: ctaOnDark }]}>Send Message</Text>
+          <Ionicons name="chatbubble-outline" size={18} color={Colors.onPrimary} />
+          <Text style={[styles.messageButtonText, { color: Colors.onPrimary }]}>Send Message</Text>
         </TouchableOpacity>
       )}
     </View>

@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { filterProviderPosts } from '../../lib';
-import { useAppRouter } from '../../hooks';
+import { useAppRouter, useThemeColor } from '../../hooks';
 import { FeaturedPostCard } from '../FeaturedPostCard';
 import { ProfileSegmentedTabs } from './ProfileSegmentedTabs';
 import { ProfileProviderGate } from './ProfileProviderGate';
@@ -41,6 +41,7 @@ export const ProfilePostsSection: React.FC<ProfilePostsSectionProps> = ({
   hideAuthorOnCards = false,
 }) => {
   const router = useAppRouter();
+  const Colors = useThemeColor();
   const defaultTab: ProviderPostsTab = isProvider && posts.some((p) => p.tag === 'Service')
     ? 'services'
     : 'requests';
@@ -75,8 +76,8 @@ export const ProfilePostsSection: React.FC<ProfilePostsSectionProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Create post"
           >
-            <Ionicons name="add" size={16} color="#FFFFFF" />
-            <Text style={[styles.createButtonText, { color: '#FFFFFF' }]}>New</Text>
+            <Ionicons name="add" size={16} color={Colors.onPrimary} />
+            <Text style={[styles.createButtonText, { color: Colors.onPrimary }]}>New</Text>
           </TouchableOpacity>
         ) : null}
       </View>

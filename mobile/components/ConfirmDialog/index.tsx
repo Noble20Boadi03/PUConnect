@@ -122,13 +122,13 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                   {isLoading ? (
                     <ActivityIndicator
                       size="small"
-                      color={isDark && !isDestructive ? '#09090B' : '#FFFFFF'}
+                      color={isDestructive ? '#FFFFFF' : Colors.onPrimary}
                     />
                   ) : (
                     <Text
                       style={[
                         styles.confirmText,
-                        { color: isDark && !isDestructive ? '#09090B' : '#FFFFFF' },
+                        { color: isDestructive ? '#FFFFFF' : Colors.onPrimary },
                       ]}
                     >
                       {confirmLabel}

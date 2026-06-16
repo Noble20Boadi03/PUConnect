@@ -143,8 +143,8 @@ export const ProviderReviewsView: React.FC<ProviderReviewsViewProps> = ({
               }}
               activeOpacity={0.9}
             >
-              <Ionicons name="create-outline" size={18} color={isDark ? '#09090B' : '#FFFFFF'} />
-              <Text style={[styles.leaveReviewText, { color: isDark ? '#09090B' : '#FFFFFF' }]}>
+              <Ionicons name="create-outline" size={18} color={Colors.onPrimary} />
+              <Text style={[styles.leaveReviewText, { color: Colors.onPrimary }]}>
                 Leave a Review
               </Text>
             </TouchableOpacity>

@@ -188,7 +188,7 @@ export const SubmitProviderReviewView: React.FC<SubmitProviderReviewViewProps> =
             <Text
               style={[
                 styles.submitLabel,
-                { color: canSubmit ? (isDark ? '#09090B' : '#FFFFFF') : Colors.icon },
+                { color: canSubmit ? Colors.onPrimary : Colors.icon },
               ]}
             >
               Submit Review

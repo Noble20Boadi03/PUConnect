@@ -78,8 +78,8 @@ export const ReviewPromptDialog: React.FC<ReviewPromptDialogProps> = ({
                 onPress={handleReview}
                 activeOpacity={0.9}
               >
-                <Ionicons name="create-outline" size={20} color={isDark ? '#09090B' : '#FFFFFF'} />
-                <Text style={[styles.primaryLabel, { color: isDark ? '#09090B' : '#FFFFFF' }]}>
+                <Ionicons name="create-outline" size={20} color={Colors.onPrimary} />
+                <Text style={[styles.primaryLabel, { color: Colors.onPrimary }]}>
                   Leave a Review
                 </Text>
               </TouchableOpacity>

@@ -116,7 +116,7 @@ export const EditInfoServicesSheet: React.FC<EditInfoServicesSheetProps> = ({
             }}
             activeOpacity={0.9}
           >
-            <Text style={[styles.doneLabel, { color: isDark ? '#09090B' : '#FFFFFF' }]}>Done</Text>
+            <Text style={[styles.doneLabel, { color: Colors.onPrimary }]}>Done</Text>
           </TouchableOpacity>
         </Pressable>
       </Pressable>

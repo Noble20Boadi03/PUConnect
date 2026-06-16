@@ -10,6 +10,7 @@ export interface ThemeColors {
   tabIconDefault: string;
   tabIconSelected: string;
   primary: string;
+  onPrimary: string;
   secondary: string;
   error: string;
   border: string;
@@ -26,6 +27,7 @@ export const Colors: { light: ThemeColors; dark: ThemeColors } = {
     tabIconDefault: '#9BA1A6',
     tabIconSelected: '#65A30D',
     primary: '#65A30D',
+    onPrimary: '#FFFFFF',
     secondary: '#5856D6',
     error: '#FF3B30',
     border: '#E1E4E8',
@@ -40,6 +42,7 @@ export const Colors: { light: ThemeColors; dark: ThemeColors } = {
     tabIconDefault: '#9BA1A6',
     tabIconSelected: '#C4F000',
     primary: '#C4F000',
+    onPrimary: '#000000',
     secondary: '#5E5CE6',
     error: '#FF453A',
     border: '#30363D',

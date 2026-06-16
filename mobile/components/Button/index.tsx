@@ -35,8 +35,10 @@ export const Button: React.FC<ButtonProps> = ({
       case 'outline':
       case 'ghost':
         return { color: Colors.primary };
-      default:
+      case 'secondary':
         return { color: '#FFFFFF' };
+      default:
+        return { color: Colors.onPrimary };
     }
   };
 
