@@ -18,7 +18,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useAuthStore } from '../store';
+import { useAuthStore, useProfileStore, useMarketStore, useExploreStore } from '../store';
 
 const { width, height } = Dimensions.get('window');
 
@@ -85,13 +85,19 @@ export default function LandingPage() {
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
   const { isAuthenticated, isLoading, hasCompletedOnboarding } = useAuthStore();
+  const { hydrated: profileHydrated } = useProfileStore();
+  const { isLoading: marketLoading } = useMarketStore();
+  const { isLoading: exploreLoading } = useExploreStore();
 
   const [currentIndex, setCurrentIndex] = useState(slide === 'last' ? ONBOARDING_DATA.length - 1 : 0);
 
   // Animation shared values
-  const logoX = useSharedValue(skipSplash === 'true' ? Spacing.lg : width / 2 - 22);
-  const logoY = useSharedValue(skipSplash === 'true' ? insets.top + Spacing.md : height / 2 - 22);
-  const logoScale = useSharedValue(skipSplash === 'true' ? 1 : 2.5);
+  const initialLogoSize = 88;
+  const initialLogoX = width / 2 - initialLogoSize / 2;
+  const initialLogoY = height / 2 - initialLogoSize / 2;
+
+  const logoScale = useSharedValue(skipSplash === 'true' ? 1 : 1);
+  const screenOpacity = useSharedValue(skipSplash === 'true' ? 0 : 1);
   const contentOpacity = useSharedValue(skipSplash === 'true' ? 1 : 0);
 
   // All hooks must be called before early return!
@@ -100,15 +106,15 @@ export default function LandingPage() {
       top: 0,
       left: 0,
       transform: [
-        { translateX: logoX.value },
-        { translateY: logoY.value },
+        { translateX: initialLogoX },
+        { translateY: initialLogoY },
         { scale: logoScale.value },
       ],
       position: 'absolute',
       zIndex: 100,
-      width: 44,
-      height: 44,
-      borderRadius: 22,
+      width: initialLogoSize,
+      height: initialLogoSize,
+      borderRadius: initialLogoSize / 2,
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: 'white',
@@ -117,6 +123,12 @@ export default function LandingPage() {
       shadowOpacity: 0.1,
       shadowRadius: 3.84,
       elevation: 5,
+    };
+  });
+
+  const animatedScreenStyle = useAnimatedStyle(() => {
+    return {
+      opacity: screenOpacity.value,
     };
   });
 
@@ -142,43 +154,38 @@ export default function LandingPage() {
         return;
       }
 
-      // Guard: For returning users, do not start animation at all
       if (isAuthenticated && hasCompletedOnboarding) {
-        return;
+        // Wait for data to load
+        while (isLoading || profileHydrated === false || marketLoading || exploreLoading) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        // Fade out the entire screen
+        screenOpacity.value = withTiming(0, {
+          duration: 500,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+        });
+
+        // After fade completes, navigate to marketplace
+        await new Promise(resolve => setTimeout(resolve, 500));
+        router.replace('/(tabs)/market' as any);
+      } else {
+        // Original onboarding animation
+        // Hold the logo in the perfect center for 2 seconds
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Fade in the images and content while the logo is moving
+        contentOpacity.value = withTiming(1, { duration: 800 });
       }
-
-      // Hold the logo in the perfect center for 2 seconds
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      const targetX = Spacing.lg;
-      const targetY = insets.top + Spacing.md;
-
-      logoX.value = withTiming(targetX, {
-        duration: 800,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      });
-
-      logoY.value = withTiming(targetY, {
-        duration: 800,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      });
-
-      logoScale.value = withTiming(1, {
-        duration: 800,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      });
-
-      // Fade in the images and content while the logo is moving
-      contentOpacity.value = withTiming(1, { duration: 800 });
     };
 
     if (!isLoading) {
       startAnimation();
     }
-  }, [isLoading, isAuthenticated, hasCompletedOnboarding, skipSplash, insets]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isLoading, isAuthenticated, hasCompletedOnboarding, skipSplash, insets, router, profileHydrated, marketLoading, exploreLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Render nothing while loading or for returning users
-  if (isLoading || (isAuthenticated && hasCompletedOnboarding)) {
+  // Render nothing while loading
+  if (isLoading) {
     return null;
   }
 
@@ -203,6 +210,22 @@ export default function LandingPage() {
     Appearance.setColorScheme(colorScheme === 'dark' ? 'light' : 'dark');
   };
 
+  if (isAuthenticated && hasCompletedOnboarding) {
+    // Simple screen for authenticated users with just the centered logo that fades out
+    return (
+      <Animated.View style={[styles.container, { backgroundColor: Colors.background }, animatedScreenStyle]}>
+        <Animated.View style={animatedLogoStyle}>
+          <Image
+            source={require('../assets/images/logo.png')}
+            style={{ width: 64, height: 64 }}
+            resizeMode="contain"
+          />
+        </Animated.View>
+      </Animated.View>
+    );
+  }
+
+  // Original onboarding screen for non-authenticated users
   return (
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
       {/* Immersive Top Background Images with Crossfade */}
@@ -235,7 +258,16 @@ export default function LandingPage() {
       </Animated.View>
 
       <SafeAreaView style={styles.safeArea}>
-        <Animated.View style={animatedLogoStyle}>
+        <Animated.View style={[animatedLogoStyle, {
+          transform: [
+            { translateX: Spacing.lg },
+            { translateY: insets.top + Spacing.md },
+            { scale: 0.5 },
+          ],
+          width: 44,
+          height: 44,
+          borderRadius: 22,
+        }]}>
           <Image
             source={require('../assets/images/logo.png')}
             style={{ width: 32, height: 32 }}

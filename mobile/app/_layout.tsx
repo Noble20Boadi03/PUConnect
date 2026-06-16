@@ -89,6 +89,7 @@ export default function RootLayout() {
   const inEditInfo = segments[0] === 'edit-info';
   const inNewPost = segments[0] === 'new-post';
   const inPhotoSetup = segments[0] === '(auth)' && segments[1] === 'photo-setup';
+  const inIndex = (segments as string[]).length === 0 || (segments as string[])[0] === 'index';
   const managesOwnChrome = inPostDetail;
 
   // Sync Android navigation bar with theme (post detail manages its own chrome).
@@ -115,6 +116,7 @@ export default function RootLayout() {
     } else if (
       isAuthenticated &&
       hasCompletedOnboarding &&
+      !inIndex &&
       !inTabsGroup &&
       !inSettings &&
       !inEditInfo &&

@@ -6,3 +6,5 @@ export * from './serviceRequestsStore';
 export * from './postStore';
 export * from './providerProfileStore';
 export * from './categoryDetailStore';
+export * from './marketStore';
+export * from './exploreStore';
