@@ -453,19 +453,19 @@ export const transitionServiceRequest = async (req: Request, res: Response) => {
       case 'cancel':
       case 'withdraw':
         systemContent = `❌ The service request has been cancelled.`;
-        await sendSystemMessage(updatedRequest.requesterId, updatedRequest.providerId, systemContent, updatedRequest.postId);
+        await sendSystemMessage(updatedRequest.requesterId, updatedRequest.providerId, systemContent, updatedRequest.postId || undefined);
         break;
       case 'request_completion':
         systemContent = `✅ ${providerName} has marked the service as complete. Please confirm or request more work.`;
-        await sendSystemMessage(updatedRequest.providerId, updatedRequest.requesterId, systemContent, updatedRequest.postId);
+        await sendSystemMessage(updatedRequest.providerId, updatedRequest.requesterId, systemContent, updatedRequest.postId || undefined);
         break;
       case 'confirm_completion':
         systemContent = `🎉 Service completed! You can now leave a review.`;
-        await sendSystemMessage(updatedRequest.providerId, updatedRequest.requesterId, systemContent, updatedRequest.postId);
+        await sendSystemMessage(updatedRequest.providerId, updatedRequest.requesterId, systemContent, updatedRequest.postId || undefined);
         break;
       case 'decline_completion':
         systemContent = `🔄 Completion was declined. Service is still in progress.`;
-        await sendSystemMessage(updatedRequest.requesterId, updatedRequest.providerId, systemContent, updatedRequest.postId);
+        await sendSystemMessage(updatedRequest.requesterId, updatedRequest.providerId, systemContent, updatedRequest.postId || undefined);
         break;
     }
 

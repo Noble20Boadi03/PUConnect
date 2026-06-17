@@ -59,12 +59,10 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
 
   if (message.kind === 'system') {
     return (
-      <View style={styles.systemRow}>
-        <View style={[styles.systemBubble, { backgroundColor: systemBg }]}>
-          <Ionicons name="shield-checkmark" size={14} color={accent} />
-          <Text style={[styles.systemText, { color: mutedColor }]}>{message.text}</Text>
-        </View>
-        <Text style={[styles.time, styles.timeSystem, { color: mutedColor }]}>{message.time}</Text>
+      <View style={styles.systemMessageRow}>
+        <View style={[styles.systemDividerLine, { backgroundColor: mutedColor }]} />
+        <Text style={[styles.systemMessageText, { color: mutedColor }]}>{message.text}</Text>
+        <View style={[styles.systemDividerLine, { backgroundColor: mutedColor }]} />
       </View>
     );
   }
@@ -152,30 +150,23 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
     paddingHorizontal: Spacing.xs,
   },
-  systemRow: {
-    alignSelf: 'center',
-    alignItems: 'center',
-    maxWidth: '92%',
-    marginBottom: Spacing.md,
-  },
-  systemBubble: {
+  systemMessageRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
-    borderRadius: 20,
+    marginVertical: 12,
+    paddingHorizontal: 16,
+    gap: 8,
   },
-  systemText: {
+  systemDividerLine: {
     flex: 1,
-    fontSize: Typography.size.xs,
-    fontWeight: '600',
-    lineHeight: 17,
-    textAlign: 'center',
+    height: 1,
+    opacity: 0.5,
   },
-  timeSystem: {
-    marginTop: Spacing.xs,
+  systemMessageText: {
+    fontSize: 11,
     textAlign: 'center',
+    flexShrink: 1,
+    fontStyle: 'italic',
   },
 });
 

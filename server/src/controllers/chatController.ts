@@ -3,6 +3,34 @@ import prisma from '../config/db';
 import { io } from '../index';
 import { notifyUser } from './serviceRequestController';
 
+const safeUserSelect = {
+  id: true,
+  name: true,
+  username: true,
+  avatarUrl: true,
+  role: true,
+  categoryId: true,
+  skillTitle: true,
+  expertiseTags: true,
+  serviceIds: true,
+  createdAt: true,
+  updatedAt: true
+};
+
+const postSelect = { 
+  id: true, 
+  title: true, 
+  description: true, 
+  tag: true, 
+  price: true, 
+  images: true, 
+  hashtags: true, 
+  helpCategoryIds: true, 
+  authorId: true, 
+  createdAt: true, 
+  updatedAt: true 
+};
+
 export async function sendSystemMessage(
   senderId: string,
   receiverId: string,
@@ -29,35 +57,6 @@ export async function sendSystemMessage(
 
   return message;
 }
-
-const safeUserSelect = {
-  id: true,
-  name: true,
-  username: true,
-  avatarUrl: true,
-  role: true,
-  bio: true,
-  categoryId: true,
-  skillTitle: true,
-  expertiseTags: true,
-  serviceIds: true,
-  createdAt: true,
-  updatedAt: true
-};
-
-const postSelect = { 
-  id: true, 
-  title: true, 
-  description: true, 
-  tag: true, 
-  price: true, 
-  images: true, 
-  hashtags: true, 
-  helpCategoryIds: true, 
-  authorId: true, 
-  createdAt: true, 
-  updatedAt: true 
-};
 
 /**
  * Delete a chat message
