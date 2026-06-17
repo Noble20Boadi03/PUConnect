@@ -4,6 +4,7 @@ import {
   getCategoryById,
   getCategoryServices,
   getExploreProviders,
+  searchProviders,
 } from '../controllers/exploreController';
 
 const router = express.Router();
@@ -13,5 +14,6 @@ router.get('/categories', getCategories);
 router.get('/categories/:id', getCategoryById);
 router.get('/category-services', getCategoryServices);
 router.get('/providers', getExploreProviders);
+router.get('/search', searchProviders);
 
 export default router;

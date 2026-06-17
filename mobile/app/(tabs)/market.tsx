@@ -36,7 +36,7 @@ export default function MarketScreen() {
   const user = useAuthStore((s) => s.user);
   const { posts, isLoading, isRefreshing, error, fetchPosts } = useMarketStore();
 
-  const [showMarketTip, setShowMarketTip] = useState(true);
+  const [showMarketTip, setShowMarketTip] = useState(false);
   const [activeFilter, setActiveFilter] = useState<MarketFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
 

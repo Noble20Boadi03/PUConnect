@@ -33,13 +33,67 @@ const postSelect = {
 };
 
 /**
- * Get chat messages between authenticated user and another user
+ * Delete a chat message
+ * @route DELETE /api/chat/message/:messageId
+ */
+export const deleteChatMessage = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const { messageId } = req.params;
+
+    // Find the message
+    const message = await prisma.chatMessage.findUnique({
+      where: { id: messageId },
+      include: { sender: true, receiver: true }
+    });
+
+    if (!message) {
+      return res.status(404).json({
+        status: 404,
+        message: 'Message not found'
+      });
+    }
+
+    // Check if the user is the sender
+    if (message.senderId !== userId) {
+      return res.status(403).json({
+        status: 403,
+        message: 'You can only delete your own messages'
+      });
+    }
+
+    // Delete the message
+    await prisma.chatMessage.delete({
+      where: { id: messageId }
+    });
+
+    // Emit socket event to both sender and receiver
+    const threadId = [message.senderId, message.receiverId].sort().join('-');
+    io.to(message.senderId).emit('messageDeleted', { messageId, threadId });
+    io.to(message.receiverId).emit('messageDeleted', { messageId, threadId });
+
+    return res.status(200).json({
+      status: 200,
+      message: 'Message deleted successfully'
+    });
+  } catch (error) {
+    console.error('DeleteChatMessage error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error'
+    });
+  }
+};
+
+/**
+ * Get chat messages between authenticated user and another user (cursor-based pagination)
  * @route GET /api/chat/:username
  */
 export const getChatMessages = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const { username } = req.params;
+    const { cursor, limit = 30 } = req.query;
 
     // Find the other user
     const otherUser = await prisma.user.findUnique({
@@ -53,6 +107,9 @@ export const getChatMessages = async (req: Request, res: Response) => {
       });
     }
 
+    // Get one extra message to check if there are more
+    const takeLimit = parseInt(limit as string, 10) + 1;
+
     const messages = await prisma.chatMessage.findMany({
       where: {
         OR: [
@@ -65,12 +122,27 @@ export const getChatMessages = async (req: Request, res: Response) => {
         receiver: { select: safeUserSelect },
         post: { select: postSelect }
       },
-      orderBy: { createdAt: 'asc' }
+      orderBy: { createdAt: 'desc' },
+      take: takeLimit,
+      cursor: cursor ? { id: cursor as string } : undefined,
+      skip: cursor ? 1 : 0
     });
+
+    // Check if there are more messages
+    const hasMore = messages.length === takeLimit;
+    // Remove the extra message if it exists
+    const paginatedMessages = hasMore ? messages.slice(0, -1) : messages;
+    // Get next cursor from the oldest message in the paginated list
+    const nextCursor = paginatedMessages.length > 0 ? paginatedMessages[paginatedMessages.length - 1].id : null;
+
+    // Reverse to get ascending order
+    const sortedMessages = paginatedMessages.reverse();
 
     return res.status(200).json({
       status: 200,
-      data: messages
+      data: sortedMessages,
+      nextCursor,
+      hasMore
     });
   } catch (error) {
     console.error('GetChatMessages error:', error);
@@ -82,15 +154,26 @@ export const getChatMessages = async (req: Request, res: Response) => {
 };
 
 /**
- * Get all conversations for authenticated user
+ * Get all conversations for authenticated user (page-based pagination)
  * @route GET /api/chat
  */
 export const getConversations = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
+    const { page = 1, limit = 20 } = req.query;
+    const pageNumber = parseInt(page as string, 10);
+    const limitNumber = parseInt(limit as string, 10);
+    const skip = (pageNumber - 1) * limitNumber;
 
-    // Get all unique users the current user has messaged with
-    const messages = await prisma.chatMessage.findMany({
+    // First get all muted conversations for user
+    const mutedConversations = await prisma.mutedConversation.findMany({
+      where: { userId },
+      select: { participantUsername: true }
+    });
+    const mutedUsernames = new Set(mutedConversations.map(mc => mc.participantUsername));
+
+    // First get all unique user IDs and last messages with proper ordering
+    const allLastMessages = await prisma.chatMessage.findMany({
       where: {
         OR: [
           { senderId: userId },
@@ -102,28 +185,117 @@ export const getConversations = async (req: Request, res: Response) => {
         receiver: { select: safeUserSelect }, 
         post: { select: postSelect } 
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      distinct: ['senderId', 'receiverId']
     });
 
-    // Group by user
+    // Group by user and add isMuted
     const conversationMap = new Map();
-    for (const msg of messages) {
+    for (const msg of allLastMessages) {
       const otherUserId = msg.senderId === userId ? msg.receiverId : msg.senderId;
+      const otherUser = msg.senderId === userId ? msg.receiver : msg.sender;
       if (!conversationMap.has(otherUserId)) {
         conversationMap.set(otherUserId, {
-          user: msg.senderId === userId ? msg.receiver : msg.sender,
-          lastMessage: msg
+          user: otherUser,
+          lastMessage: msg,
+          isMuted: mutedUsernames.has(otherUser.username)
         });
       }
     }
 
-    const conversations = Array.from(conversationMap.values());
+    const allConversations = Array.from(conversationMap.values());
+    const total = allConversations.length;
+    const paginatedConversations = allConversations.slice(skip, skip + limitNumber);
+    const hasMore = skip + limitNumber < total;
+
     return res.status(200).json({
       status: 200,
-      data: conversations
+      data: paginatedConversations,
+      total,
+      page: pageNumber,
+      hasMore
     });
   } catch (error) {
     console.error('GetConversations error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error'
+    });
+  }
+};
+
+/**
+ * Mute a conversation
+ * @route POST /api/chat/:username/mute
+ */
+export const muteConversation = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const { username } = req.params;
+
+    // Check if user exists
+    const participant = await prisma.user.findUnique({
+      where: { username },
+      select: { id: true, username: true }
+    });
+    if (!participant) {
+      return res.status(404).json({
+        status: 404,
+        message: 'User not found'
+      });
+    }
+
+    // Create or upsert muted conversation
+    await prisma.mutedConversation.upsert({
+      where: {
+        userId_participantUsername: {
+          userId,
+          participantUsername: username
+        }
+      },
+      create: {
+        userId,
+        participantUsername: username
+      },
+      update: {}
+    });
+
+    return res.status(200).json({
+      status: 200,
+      message: 'Conversation muted'
+    });
+  } catch (error) {
+    console.error('MuteConversation error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error'
+    });
+  }
+};
+
+/**
+ * Unmute a conversation
+ * @route DELETE /api/chat/:username/mute
+ */
+export const unmuteConversation = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const { username } = req.params;
+
+    // Delete muted conversation
+    await prisma.mutedConversation.deleteMany({
+      where: {
+        userId,
+        participantUsername: username
+      }
+    });
+
+    return res.status(200).json({
+      status: 200,
+      message: 'Conversation unmuted'
+    });
+  } catch (error) {
+    console.error('UnmuteConversation error:', error);
     return res.status(500).json({
       status: 500,
       message: 'Server error'

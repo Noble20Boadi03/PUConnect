@@ -43,6 +43,7 @@ export interface ChatOptionsSheetProps {
   engagementTag?: MarketPostTag;
   completionPhase?: OfficialCompletionPhase;
   isCurrentUserProvider?: boolean;
+  isMuted?: boolean;
   onSelect: (action: ChatMenuAction) => void;
   onClose: () => void;
 }
@@ -65,6 +66,7 @@ export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
   engagementTag,
   completionPhase = 'none',
   isCurrentUserProvider = false,
+  isMuted = false,
   onSelect,
   onClose,
 }) => {
@@ -132,7 +134,7 @@ export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
     if (showBrowseServices) {
       items.push({ key: 'browseServices', label: 'Browse Services' });
     }
-    items.push({ key: 'mute', label: 'Mute' });
+    items.push({ key: 'mute', label: isMuted ? 'Unmute' : 'Mute' });
     items.push({ key: 'report', label: 'Report', destructive: true });
     return items;
   }, [
@@ -145,6 +147,7 @@ export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
     engagementTag,
     completionPhase,
     isCurrentUserProvider,
+    isMuted,
     Colors.primary,
   ]);
 

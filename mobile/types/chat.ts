@@ -17,7 +17,7 @@ export interface ChatMessage {
   text: string;
   /** Display time, e.g. "10:24 AM" */
   time: string;
-  isSending?: boolean;
+  status?: 'pending' | 'sent' | 'failed';
 }
 
 export interface ChatDateGroup {
@@ -65,4 +65,5 @@ export interface ConversationPreview {
   unreadCount?: number;
   isOnline?: boolean;
   isPinned?: boolean;
+  isMuted?: boolean;
 }

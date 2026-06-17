@@ -40,6 +40,17 @@ export const exploreService = {
     const response = await apiClient.get<ApiResponse<User[]>>('/explore/providers');
     return response.data.data;
   },
+
+  /**
+   * Searches providers by name or username
+   * @route GET /api/explore/search
+   */
+  async searchProviders(query: string): Promise<User[]> {
+    const response = await apiClient.get<ApiResponse<User[]>>('/explore/search', {
+      params: { q: query }
+    });
+    return response.data.data;
+  },
 };
 
 export default exploreService;

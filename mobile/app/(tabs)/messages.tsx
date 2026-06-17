@@ -10,7 +10,7 @@ import type { ConversationPreview } from '../../types';
 export default function MessagesScreen() {
   const router = useAppRouter();
   const { user: currentUser } = useAuthStore();
-  const { conversations, fetchConversations, subscribeToMessages } = useChat();
+  const { conversations, fetchConversations, subscribeToMessages, isRefreshing, isLoadingMoreConversations, loadMoreConversations } = useChat();
   const { fetchMessages } = useChatStore();
 
   useEffect(() => {
@@ -49,6 +49,7 @@ export default function MessagesScreen() {
     timestamp: new Date(c.lastMessage.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
     unread: !c.lastMessage.isRead && c.lastMessage.receiverId === currentUser?.id,
     postId: c.lastMessage.post?.id,
+    isMuted: c.isMuted,
   }));
 
   return (
@@ -56,6 +57,10 @@ export default function MessagesScreen() {
       conversations={mappedConversations}
       onConversationPress={handleConversationPress}
       onConversationPressIn={handleConversationPressIn}
+      isRefreshing={isRefreshing}
+      onRefresh={fetchConversations}
+      isLoadingMore={isLoadingMoreConversations}
+      onLoadMore={loadMoreConversations}
     />
   );
 }

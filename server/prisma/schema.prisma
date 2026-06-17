@@ -90,6 +90,7 @@ model User {
   receivedRequests ServiceRequest[]  @relation("ReceivedRequests")
   services         ProviderService[]
   notifications    Notification[]
+  mutedConversations MutedConversation[]
   category         Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
   @@map("users")
@@ -214,4 +215,16 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
+}
+
+model MutedConversation {
+  id                 String   @id @default(uuid())
+  userId             String
+  participantUsername String
+  createdAt          DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, participantUsername])
+  @@map("muted_conversations")
 }

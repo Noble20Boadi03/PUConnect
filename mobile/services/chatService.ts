@@ -21,17 +21,35 @@ export interface BackendConversation {
     avatarUrl: string;
   };
   lastMessage: BackendChatMessage;
+  isMuted?: boolean;
+}
+
+export interface GetConversationsResponse {
+  data: BackendConversation[];
+  total: number;
+  page: number;
+  hasMore: boolean;
+}
+
+export interface GetMessagesResponse {
+  data: BackendChatMessage[];
+  nextCursor: string | null;
+  hasMore: boolean;
 }
 
 export const chatService = {
-  getConversations: async (): Promise<BackendConversation[]> => {
-    const response = await apiClient.get('/chat');
-    return response.data.data;
+  getConversations: async (page: number = 1, limit: number = 20): Promise<GetConversationsResponse> => {
+    const response = await apiClient.get('/chat', {
+      params: { page, limit }
+    });
+    return response.data;
   },
 
-  getMessages: async (username: string): Promise<BackendChatMessage[]> => {
-    const response = await apiClient.get(`/chat/${username}`);
-    return response.data.data;
+  getMessages: async (username: string, cursor?: string, limit: number = 30): Promise<GetMessagesResponse> => {
+    const params: any = { limit };
+    if (cursor) params.cursor = cursor;
+    const response = await apiClient.get(`/chat/${username}`, { params });
+    return response.data;
   },
 
   sendMessage: async (receiverUsername: string, content: string, postId?: string): Promise<BackendChatMessage> => {
@@ -41,5 +59,17 @@ export const chatService = {
 
   markMessagesAsRead: async (username: string): Promise<void> => {
     await apiClient.put(`/chat/${username}/read`);
+  },
+
+  deleteMessage: async (messageId: string): Promise<void> => {
+    await apiClient.delete(`/chat/message/${messageId}`);
+  },
+
+  muteConversation: async (username: string): Promise<void> => {
+    await apiClient.post(`/chat/${username}/mute`);
+  },
+
+  unmuteConversation: async (username: string): Promise<void> => {
+    await apiClient.delete(`/chat/${username}/mute`);
   },
 };

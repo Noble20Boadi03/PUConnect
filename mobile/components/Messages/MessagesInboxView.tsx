@@ -8,11 +8,13 @@ import {
   TextInput,
   useColorScheme,
   BackHandler,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useNavigation } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 
 import { useThemeColor } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
@@ -30,16 +32,25 @@ export interface MessagesInboxViewProps {
   conversations: ConversationPreview[];
   onConversationPress: (conversation: ConversationPreview) => void;
   onConversationPressIn?: (conversation: ConversationPreview) => void;
+  isRefreshing?: boolean;
+  onRefresh?: () => void;
+  isLoadingMore?: boolean;
+  onLoadMore?: () => void;
 }
 
 export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
   conversations,
   onConversationPress,
   onConversationPressIn,
+  isRefreshing = false,
+  onRefresh,
+  isLoadingMore = false,
+  onLoadMore,
 }) => {
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const router = useRouter();
 
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
   const listBg = isDark ? '#18181B' : '#FFFFFF';
@@ -56,6 +67,11 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
   
   const isSelectionMode = selectedIds.length > 0;
   const navigation = useNavigation();
+
+  const handleCompose = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/chat/new' as any);
+  }, [router]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -210,6 +226,21 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
     [sections.length, Colors.icon]
   );
 
+  const renderFooter = useCallback(() => {
+    if (!isLoadingMore) return null;
+    return (
+      <View style={styles.footerContainer}>
+        <ActivityIndicator size="small" color={Colors.primary} />
+      </View>
+    );
+  }, [isLoadingMore, Colors.primary]);
+
+  const handleEndReached = useCallback(() => {
+    if (!isLoadingMore && onLoadMore) {
+      onLoadMore();
+    }
+  }, [isLoadingMore, onLoadMore]);
+
   return (
     <View style={[styles.rootContainer, { backgroundColor: screenBg }]}>
       {isSelectionMode ? (
@@ -308,6 +339,9 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
                   isSelectionMode && { paddingBottom: Spacing.xxl + 80 } // Add extra padding for selection action bar
                 ]
               }
+              refreshControl={
+                <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+              }
               ListEmptyComponent={
                 <View style={styles.emptyState}>
                   <View style={[styles.emptyIconWrap, { backgroundColor: subtleBg }]}>
@@ -325,6 +359,9 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
                   </Text>
                 </View>
               }
+              onEndReached={handleEndReached}
+              onEndReachedThreshold={0.1}
+              ListFooterComponent={renderFooter}
             />
           </View>
         </SafeAreaView>
@@ -334,6 +371,13 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
             title="Messages"
             rightActions={
               <View style={styles.headerActions}>
+                <TouchableOpacity
+                  onPress={handleCompose}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={{ width: 44, height: 44, justifyContent: 'center', alignItems: 'center', backgroundColor: listBg, borderRadius: 22 }}
+                >
+                  <Ionicons name="create-outline" size={22} color={Colors.text} />
+                </TouchableOpacity>
                 <ServiceStatusButton backgroundColor={listBg} iconColor={Colors.text} size={44} />
                 <NotificationBellButton backgroundColor={listBg} iconColor={Colors.text} size={44} />
               </View>
@@ -436,6 +480,9 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
                     isSelectionMode && { paddingBottom: Spacing.xxl + 80 } // Add extra padding for selection action bar
                   ]
                 }
+                refreshControl={
+                  <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+                }
                 ListEmptyComponent={
                   <View style={styles.emptyState}>
                     <View style={[styles.emptyIconWrap, { backgroundColor: subtleBg }]}>
@@ -453,6 +500,9 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
                     </Text>
                   </View>
                 }
+                onEndReached={handleEndReached}
+                onEndReachedThreshold={0.1}
+                ListFooterComponent={renderFooter}
               />
             </View>
           </View>
@@ -650,6 +700,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  footerContainer: {
+    paddingVertical: Spacing.md,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

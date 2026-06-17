@@ -163,3 +163,37 @@ export const getExploreProviders = async (req: Request, res: Response) => {
     });
   }
 };
+
+/**
+ * Search providers by name or username
+ * @route GET /api/explore/search
+ */
+export const searchProviders = async (req: Request, res: Response) => {
+  try {
+    const { q } = req.query;
+    const searchQuery = (q as string) || '';
+    
+    const providers = await prisma.user.findMany({
+      where: {
+        role: 'provider',
+        OR: [
+          { name: { contains: searchQuery, mode: 'insensitive' } },
+          { username: { contains: searchQuery, mode: 'insensitive' } }
+        ]
+      },
+      select: safeUserSelect,
+      take: 20
+    });
+
+    return res.status(200).json({
+      status: 200,
+      data: providers,
+    });
+  } catch (error) {
+    console.error('SearchProviders error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error searching providers.',
+    });
+  }
+};

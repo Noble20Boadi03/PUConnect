@@ -30,7 +30,13 @@ export default function ChatScreen() {
 
   const resolvedPostId = typeof postId === 'string' ? postId : undefined;
 
-  const { activeThread, isLoading, isRefreshing, error, fetchMessages, sendMessage, subscribeToMessages } = useChat();
+  const { activeThread, isLoading, isRefreshing, error, fetchMessages, sendMessage, subscribeToMessages, isLoadingMoreMessages, hasMoreMessages, loadMoreMessages, removeMessage } = useChat();
+
+  const handleRefresh = useCallback(() => {
+    if (username && activeThread) {
+      fetchMessages(username, activeThread.participant, activeThread.postContext, true);
+    }
+  }, [username, activeThread, fetchMessages]);
   const requests = useServiceRequestsStore((s) => s.requests);
   const fetchForChat = useServiceRequestsStore((s) => s.fetchForChat);
   const createOfficialEngagement = useServiceRequestsStore((s) => s.createOfficialEngagement);
@@ -260,6 +266,12 @@ export default function ChatScreen() {
       onRequestCompletion={handleRequestCompletion}
       onConfirmCompletion={handleConfirmCompletion}
       onDeclineCompletion={handleDeclineCompletion}
+      isRefreshing={isRefreshing}
+      onRefresh={handleRefresh}
+      isLoadingMore={isLoadingMoreMessages}
+      onLoadMore={loadMoreMessages}
+      hasMore={hasMoreMessages}
+      onDeleteMessage={removeMessage}
     />
   );
 }

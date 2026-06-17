@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleSheet, View, Text, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, ActivityIndicator, Alert, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import type { ChatMessage } from '../../types';
 
@@ -14,6 +15,9 @@ export interface ChatMessageBubbleProps {
   primaryColor: string;
   systemBg: string;
   systemAccent?: string;
+  onRetry?: (message: ChatMessage) => void;
+  onDelete?: (message: ChatMessage) => void;
+  onLongPress?: (message: ChatMessage) => void;
 }
 
 export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
@@ -26,8 +30,32 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
   primaryColor,
   systemBg,
   systemAccent,
+  onRetry,
+  onDelete,
+  onLongPress,
 }) => {
   const accent = systemAccent ?? primaryColor;
+
+  const handlePress = () => {
+    if (message.status === 'failed') {
+      Alert.alert(
+        'Message Failed',
+        'This message could not be sent.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete', style: 'destructive', onPress: () => onDelete?.(message) },
+          { text: 'Retry', onPress: () => onRetry?.(message) },
+        ]
+      );
+    }
+  };
+
+  const handleLongPressHandler = () => {
+    if (onLongPress) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      onLongPress(message);
+    }
+  };
 
   if (message.kind === 'system') {
     return (
@@ -45,27 +73,34 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
 
   return (
     <View style={[styles.row, isSent ? styles.rowSent : styles.rowReceived]}>
-      <View
-        style={[
+      <Pressable
+        android_ripple={{ color: 'rgba(0,0,0,0.1)' }}
+        style={({ pressed }) => [
           styles.bubble,
           isSent
-            ? [styles.bubbleSent, { backgroundColor: sentBg }]
+            ? [styles.bubbleSent, { backgroundColor: message.status === 'failed' ? '#FCA5A5' : sentBg }]
             : [styles.bubbleReceived, { backgroundColor: receivedBg }],
+          pressed && { opacity: 0.85 }
         ]}
+        onPress={message.status === 'failed' ? handlePress : undefined}
+        onLongPress={handleLongPressHandler}
       >
         <View style={styles.messageContent}>
-          <Text style={[styles.text, { color: isSent ? sentText : receivedText }]}>
+          <Text style={[styles.text, { color: isSent ? (message.status === 'failed' ? '#7F1D1D' : sentText) : receivedText }]}>
             {message.text}
           </Text>
-          {message.isSending && (
+          {message.status === 'pending' && (
             <ActivityIndicator 
               size="small" 
               color={isSent ? sentText : mutedColor} 
               style={styles.loadingIndicator}
             />
           )}
+          {message.status === 'failed' && (
+            <Ionicons name="warning" size={16} color="#B91C1C" style={styles.errorIcon} />
+          )}
         </View>
-      </View>
+      </Pressable>
       <Text style={[styles.time, { color: mutedColor }]}>{message.time}</Text>
     </View>
   );
@@ -107,6 +142,9 @@ const styles = StyleSheet.create({
   },
   loadingIndicator: {
     opacity: 0.8,
+  },
+  errorIcon: {
+    marginLeft: Spacing.xs,
   },
   time: {
     fontSize: Typography.size.xs,

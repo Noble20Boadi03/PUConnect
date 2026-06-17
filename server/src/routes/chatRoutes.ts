@@ -3,7 +3,10 @@ import {
   getChatMessages,
   getConversations,
   sendChatMessage,
-  markMessagesAsRead
+  markMessagesAsRead,
+  deleteChatMessage,
+  muteConversation,
+  unmuteConversation
 } from '../controllers/chatController';
 import { protect } from '../middlewares/authMiddleware';
 
@@ -14,5 +17,8 @@ router.get('/', protect, getConversations);
 router.get('/:username', protect, getChatMessages);
 router.post('/', protect, sendChatMessage);
 router.put('/:username/read', protect, markMessagesAsRead);
+router.delete('/message/:messageId', protect, deleteChatMessage);
+router.post('/:username/mute', protect, muteConversation);
+router.delete('/:username/mute', protect, unmuteConversation);
 
 export default router;

@@ -8,3 +8,4 @@ export * from './ChatAttachmentSheet';
 export * from './ProviderServicesSheet';
 export * from './ChatOfficialEngagementSheet';
 export * from './ChatOfficialDetailsCard';
+export * from './ChatMessageActionsSheet';

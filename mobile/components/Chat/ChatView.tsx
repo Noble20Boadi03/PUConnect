@@ -7,6 +7,8 @@ import {
   useColorScheme,
   KeyboardAvoidingView,
   Platform,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -25,6 +27,8 @@ import { ChatOptionsSheet, type ChatMenuAction } from './ChatOptionsSheet';
 import { ChatAttachmentSheet, type ChatAttachmentAction } from './ChatAttachmentSheet';
 import { ChatOfficialEngagementSheet } from './ChatOfficialEngagementSheet';
 import { ProviderServicesSheet } from './ProviderServicesSheet';
+import { ChatMessageActionsSheet } from './ChatMessageActionsSheet';
+import { useChatStore } from '../../store/chatStore';
 import type {
   ChatDateGroup,
   ChatMessage,
@@ -99,6 +103,12 @@ export interface ChatViewProps {
   onRequestCompletion: () => Promise<void>;
   onConfirmCompletion: () => Promise<void>;
   onDeclineCompletion: () => Promise<void>;
+  isRefreshing?: boolean;
+  onRefresh?: () => void;
+  isLoadingMore?: boolean;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  onDeleteMessage?: (messageId: string) => void;
 }
 
 export const ChatView: React.FC<ChatViewProps> = ({
@@ -115,6 +125,12 @@ export const ChatView: React.FC<ChatViewProps> = ({
   onRequestCompletion,
   onConfirmCompletion,
   onDeclineCompletion,
+  isRefreshing = false,
+  onRefresh,
+  isLoadingMore = false,
+  onLoadMore,
+  hasMore = false,
+  onDeleteMessage,
 }) => {
   const router = useAppRouter();
   const Colors = useThemeColor();
@@ -145,6 +161,19 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const [reviewPromptVisible, setReviewPromptVisible] = useState(false);
   const [pendingReviewDealId, setPendingReviewDealId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<ChatMessage | null>(null);
+  const [messageActionsVisible, setMessageActionsVisible] = useState(false);
+
+  const deleteMessage = useChatStore((state) => state.deleteMessage);
+  const conversations = useChatStore((state) => state.conversations);
+  const muteConversation = useChatStore((state) => state.muteConversation);
+  const unmuteConversation = useChatStore((state) => state.unmuteConversation);
+  
+  const isMuted = useMemo(() => {
+    const conv = conversations.find((c) => c.user.username === thread.providerUsername);
+    return conv?.isMuted ?? false;
+  }, [conversations, thread.providerUsername]);
+
   const scrollRef = useRef<ScrollView>(null);
   const [dateGroups, setDateGroups] = useState<ChatDateGroup[]>(() =>
     thread.dateGroups.map((g) => ({ ...g, messages: [...g.messages] }))
@@ -524,35 +553,24 @@ export const ChatView: React.FC<ChatViewProps> = ({
       } else if (action === 'viewProviderProfile') {
         onViewProviderProfile?.();
       } else if (action === 'mute') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        appendEngagementSystemMessages([
-          {
-            id: `system-mute-${Date.now()}`,
-            kind: 'system',
-            text: `Notifications muted for this conversation.`,
-            time: formatSentTime(),
-          },
-        ]);
-      } else if (action === 'report') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-        appendEngagementSystemMessages([
-          {
-            id: `system-report-${Date.now()}`,
-            kind: 'system',
-            text: `Thanks — your report was recorded and will be reviewed by PuConnect.`,
-            time: formatSentTime(),
-          },
-        ]);
+        if (isMuted) {
+          unmuteConversation(thread.providerUsername);
+        } else {
+          muteConversation(thread.providerUsername);
+        }
       }
     },
     [
       thread.postContext,
+      thread.providerUsername,
       handleCancelOfficialRequest,
       handleWithdrawOfficialResponse,
       openOfficialDetails,
       handleRequestOfficialCompletion,
       onViewProviderProfile,
-      appendEngagementSystemMessages,
+      isMuted,
+      muteConversation,
+      unmuteConversation,
     ]
   );
 
@@ -620,7 +638,42 @@ export const ChatView: React.FC<ChatViewProps> = ({
     });
   }, [draft, onSendMessage]);
 
+  const handleRetryMessage = useCallback((message: ChatMessage) => {
+    if (onDeleteMessage) {
+      onDeleteMessage(message.id);
+    } else {
+      setDateGroups(prev => prev.map(g => ({
+        ...g,
+        messages: g.messages.filter(m => m.id !== message.id)
+      })).filter(g => g.messages.length > 0));
+    }
+    
+    if (onSendMessage) {
+      onSendMessage(message.text);
+    }
+  }, [onSendMessage, onDeleteMessage]);
+
+  const handleMessageLongPress = useCallback((message: ChatMessage) => {
+    setSelectedMessage(message);
+    setMessageActionsVisible(true);
+  }, []);
+
+  const handleDeleteMessage = useCallback((message: ChatMessage) => {
+    if (onDeleteMessage) {
+      onDeleteMessage(message.id);
+    } else {
+      setDateGroups(prev => prev.map(g => ({
+        ...g,
+        messages: g.messages.filter(m => m.id !== message.id)
+      })).filter(g => g.messages.length > 0));
+    }
+  }, [onDeleteMessage]);
+
   const displayGroups = useMemo(() => dateGroups, [dateGroups]);
+
+  const hasPendingMessage = useMemo(() => {
+    return dateGroups.some(group => group.messages.some(msg => msg.status === 'pending'));
+  }, [dateGroups]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
@@ -667,7 +720,21 @@ export const ChatView: React.FC<ChatViewProps> = ({
           contentContainerStyle={styles.messagesContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+          }
+          onScroll={(event) => {
+            const { contentOffset } = event.nativeEvent;
+            if (contentOffset.y <= 0 && hasMore && !isLoadingMore && onLoadMore) {
+              onLoadMore();
+            }
+          }}
         >
+          {isLoadingMore && (
+            <View style={styles.loadingMoreContainer}>
+              <ActivityIndicator size="small" color={Colors.primary} />
+            </View>
+          )}
           {displayGroups.map((group) => (
             <View key={group.dateLabel}>
               <View style={styles.dateSeparator}>
@@ -687,6 +754,9 @@ export const ChatView: React.FC<ChatViewProps> = ({
                   primaryColor={Colors.primary}
                   systemBg={subtleBg}
                   systemAccent={contextAccent}
+                  onRetry={handleRetryMessage}
+                  onDelete={handleDeleteMessage}
+                  onLongPress={handleMessageLongPress}
                 />
               ))}
             </View>
@@ -704,6 +774,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
           mutedColor={Colors.icon}
           primaryColor={Colors.primary}
           bottomInset={insets.bottom}
+          hasPendingMessage={hasPendingMessage}
         />
       </KeyboardAvoidingView>
 
@@ -718,6 +789,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
         engagementTag={thread.postContext?.tag}
         completionPhase={completionPhase}
         isCurrentUserProvider={userIsProvider}
+        isMuted={isMuted}
         onSelect={handleMenuSelect}
         onClose={() => setOptionsVisible(false)}
       />
@@ -769,6 +841,16 @@ export const ChatView: React.FC<ChatViewProps> = ({
         onReviewNow={handleReviewNow}
         onLater={handleReviewLater}
       />
+      <ChatMessageActionsSheet
+        visible={messageActionsVisible}
+        message={selectedMessage}
+        isSentByCurrentUser={selectedMessage?.kind === 'sent'}
+        onDelete={deleteMessage}
+        onClose={() => {
+          setMessageActionsVisible(false);
+          setSelectedMessage(null);
+        }}
+      />
     </SafeAreaView>
   );
 };
@@ -787,6 +869,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,
     paddingBottom: Spacing.lg,
+  },
+  loadingMoreContainer: {
+    paddingVertical: Spacing.md,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   dateSeparator: {
     flexDirection: 'row',

@@ -72,6 +72,7 @@ const ConversationListItemComponent: React.FC<ConversationListItemProps> = ({
     unreadCount,
     isOnline,
     isPinned,
+    isMuted,
   } = conversation;
 
   const showBadge = unread && (unreadCount ?? 0) > 0;
@@ -131,6 +132,14 @@ const ConversationListItemComponent: React.FC<ConversationListItemProps> = ({
                 size={12}
                 color={primaryColor}
                 style={styles.pinIcon}
+              />
+            ) : null}
+            {isMuted ? (
+              <Ionicons
+                name="notifications-off-outline"
+                size={14}
+                color={mutedColor}
+                style={styles.muteIcon}
               />
             ) : null}
             <Text
@@ -264,6 +273,9 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   pinIcon: {
+    marginRight: 4,
+  },
+  muteIcon: {
     marginRight: 4,
   },
   name: {

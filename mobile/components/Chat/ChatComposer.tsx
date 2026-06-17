@@ -14,6 +14,7 @@ export interface ChatComposerProps {
   mutedColor: string;
   primaryColor: string;
   bottomInset: number;
+  hasPendingMessage?: boolean;
 }
 
 export const ChatComposer: React.FC<ChatComposerProps> = ({
@@ -27,10 +28,11 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({
   mutedColor,
   primaryColor,
   bottomInset,
+  hasPendingMessage = false,
 }) => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const canSend = value.trim().length > 0;
+  const canSend = value.trim().length > 0 && !hasPendingMessage;
   const sendIconColor = canSend ? (isDark ? '#09090B' : '#FFFFFF') : mutedColor;
 
   return (
