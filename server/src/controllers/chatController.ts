@@ -34,14 +34,16 @@ const postSelect = {
 export async function sendSystemMessage(
   senderId: string,
   receiverId: string,
-  content: string,
+  senderContent: string,
+  receiverContent: string,
   postId?: string
 ) {
-  const message = await prisma.chatMessage.create({
+  // Create message for sender
+  const senderMessage = await prisma.chatMessage.create({
     data: {
       senderId,
       receiverId,
-      content,
+      content: senderContent,
       postId,
       kind: 'system'
     },
@@ -52,10 +54,27 @@ export async function sendSystemMessage(
     }
   });
 
-  io.to(senderId).emit('newMessage', message);
-  io.to(receiverId).emit('newMessage', message);
+  // Create message for receiver
+  const receiverMessage = await prisma.chatMessage.create({
+    data: {
+      senderId: receiverId,
+      receiverId: senderId,
+      content: receiverContent,
+      postId,
+      kind: 'system'
+    },
+    include: {
+      sender: { select: safeUserSelect },
+      receiver: { select: safeUserSelect },
+      post: { select: postSelect }
+    }
+  });
 
-  return message;
+  // Emit to correct parties
+  io.to(senderId).emit('newMessage', senderMessage);
+  io.to(receiverId).emit('newMessage', receiverMessage);
+
+  return { senderMessage, receiverMessage };
 }
 
 /**

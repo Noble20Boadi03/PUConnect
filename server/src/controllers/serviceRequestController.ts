@@ -303,11 +303,25 @@ export const createServiceRequest = async (req: Request, res: Response) => {
     emitServiceRequestUpdate(request);
 
     // Send system message to both parties
-    const systemContent =
-      kind === 'service'
-        ? `📋 ${initiator?.name || 'Someone'} has officially requested your service.`
-        : `📋 ${initiator?.name || 'Someone'} has submitted an official response.`;
-    await sendSystemMessage(requesterId, providerId, systemContent, postId);
+    if (kind === 'service') {
+      // Client requests provider
+      await sendSystemMessage(
+        requesterId,
+        providerId,
+        "📋 You officially requested this service.",
+        "📋 You received an official service request.",
+        postId
+      );
+    } else {
+      // Provider responds to client
+      await sendSystemMessage(
+        providerId,
+        requesterId,
+        "📋 You submitted an official response.",
+        "📋 The provider submitted an official response to your request.",
+        postId
+      );
+    }
 
     return res.status(201).json({
       status: 201,
@@ -446,26 +460,56 @@ export const transitionServiceRequest = async (req: Request, res: Response) => {
     emitServiceRequestUpdate(updatedRequest);
 
     // Send system message
-    let systemContent: string | undefined;
-    const providerName = updatedRequest.provider?.name || 'The provider';
-
     switch (action) {
       case 'cancel':
+        // Client cancels
+        await sendSystemMessage(
+          updatedRequest.requesterId,
+          updatedRequest.providerId,
+          "❌ You cancelled the service request.",
+          "❌ The client cancelled the service request.",
+          updatedRequest.postId || undefined
+        );
+        break;
       case 'withdraw':
-        systemContent = `❌ The service request has been cancelled.`;
-        await sendSystemMessage(updatedRequest.requesterId, updatedRequest.providerId, systemContent, updatedRequest.postId || undefined);
+        // Provider withdraws
+        await sendSystemMessage(
+          updatedRequest.providerId,
+          updatedRequest.requesterId,
+          "❌ You declined this request.",
+          "❌ Your request was declined.",
+          updatedRequest.postId || undefined
+        );
         break;
       case 'request_completion':
-        systemContent = `✅ ${providerName} has marked the service as complete. Please confirm or request more work.`;
-        await sendSystemMessage(updatedRequest.providerId, updatedRequest.requesterId, systemContent, updatedRequest.postId || undefined);
+        // Provider requests completion
+        await sendSystemMessage(
+          updatedRequest.providerId,
+          updatedRequest.requesterId,
+          "✅ You marked the service as complete. Awaiting confirmation.",
+          "✅ The provider marked the service as complete. Please confirm or request more work.",
+          updatedRequest.postId || undefined
+        );
         break;
       case 'confirm_completion':
-        systemContent = `🎉 Service completed! You can now leave a review.`;
-        await sendSystemMessage(updatedRequest.providerId, updatedRequest.requesterId, systemContent, updatedRequest.postId || undefined);
+        // Client confirms completion
+        await sendSystemMessage(
+          updatedRequest.requesterId,
+          updatedRequest.providerId,
+          "🎉 You confirmed the service as complete!",
+          "🎉 The client confirmed the service is complete. You can request a review.",
+          updatedRequest.postId || undefined
+        );
         break;
       case 'decline_completion':
-        systemContent = `🔄 Completion was declined. Service is still in progress.`;
-        await sendSystemMessage(updatedRequest.requesterId, updatedRequest.providerId, systemContent, updatedRequest.postId || undefined);
+        // Client declines completion
+        await sendSystemMessage(
+          updatedRequest.requesterId,
+          updatedRequest.providerId,
+          "🔄 You requested more work on this service.",
+          "🔄 The client requested more work. Service is still active.",
+          updatedRequest.postId || undefined
+        );
         break;
     }
 

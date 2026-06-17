@@ -4,7 +4,7 @@ import type { ExploreCategory, ExploreCategoryService } from '../types/explore';
 import type { DbCategory, DbCategoryService } from '../types';
 
 // Mapping functions
-const mapDbCategoryToExploreCategory = (dbCategory: DbCategory): ExploreCategory => ({
+export const mapDbCategoryToExploreCategory = (dbCategory: DbCategory): ExploreCategory => ({
   id: dbCategory.id,
   title: dbCategory.title,
   pillLabel: dbCategory.pillLabel,
@@ -15,7 +15,7 @@ const mapDbCategoryToExploreCategory = (dbCategory: DbCategory): ExploreCategory
   iconName: dbCategory.iconName as any,
 });
 
-const mapDbCategoryServiceToExploreCategoryService = (dbService: DbCategoryService): ExploreCategoryService => ({
+export const mapDbCategoryServiceToExploreCategoryService = (dbService: DbCategoryService): ExploreCategoryService => ({
   id: dbService.id,
   categoryId: dbService.categoryId,
   title: dbService.title,

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Platform } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import type { ChangePhotoAction } from '../components/Profile/ProfileChangePhotoSheet';
 import { authService, uploadService } from '../services';
 import { useAuthStore } from '../store';
+import { useImagePicker } from './useImagePicker';
 
 export function useChangeProfilePhoto(initialUri?: string) {
   const [sheetVisible, setSheetVisible] = useState(false);
@@ -11,6 +11,13 @@ export function useChangeProfilePhoto(initialUri?: string) {
   const [previewUri, setPreviewUri] = useState<string | undefined>();
   const [avatarUri, setAvatarUri] = useState<string | undefined>(initialUri);
   const [isLoading, setIsLoading] = useState(false);
+
+  const { pickFromCamera, pickFromGallery } = useImagePicker({
+    allowsEditing: true,
+    aspect: [1, 1],
+    quality: 0.85,
+    allowsMultipleSelection: false,
+  });
 
   const setUser = useAuthStore((s) => s.setUser);
 
@@ -30,38 +37,17 @@ export function useChangeProfilePhoto(initialUri?: string) {
   }, []);
 
   const pickImage = useCallback(async (action: Exclude<ChangePhotoAction, 'cancel'>) => {
-    const permission =
-      action === 'camera'
-        ? await ImagePicker.requestCameraPermissionsAsync()
-        : await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (!permission.granted) {
-      Alert.alert(
-        'Permission needed',
-        action === 'camera'
-          ? 'Allow camera access to take a profile photo.'
-          : 'Allow photo library access to choose a profile photo.'
-      );
-      return;
+    if (action === 'camera') {
+      const image = await pickFromCamera();
+      if (!image) return;
+      openPreview(image.uri);
+    } else if (action === 'library') {
+      const images = await pickFromGallery();
+      if (images.length === 0) return;
+      const image = images[0];
+      openPreview(image.uri);
     }
-
-    const pickerOptions: ImagePicker.ImagePickerOptions = {
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.85,
-    };
-
-    const result =
-      action === 'camera'
-        ? await ImagePicker.launchCameraAsync(pickerOptions)
-        : await ImagePicker.launchImageLibraryAsync(pickerOptions);
-
-    if (!result.canceled && result.assets[0]?.uri) {
-      const newPreviewUri = result.assets[0].uri;
-      openPreview(newPreviewUri);
-    }
-  }, [openPreview]);
+  }, [pickFromCamera, pickFromGallery, openPreview]);
 
   const handleConfirmPhoto = useCallback(async () => {
     if (!previewUri) return;

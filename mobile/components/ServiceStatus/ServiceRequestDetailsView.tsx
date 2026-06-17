@@ -52,17 +52,23 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
   const [actionLoading, setActionLoading] = useState(false);
 
   const authUserId = useAuthStore((state) => state.user?.id);
+  
+  // Subscribe to live store updates for this specific request
+  const liveServiceRequest = useServiceRequestsStore(
+    (state) => state.requests.find((r) => r.id === serviceRequest.id)
+  );
+  const activeRequest = liveServiceRequest ?? serviceRequest;
 
-  const engagement = mapServiceRequestToEngagement(serviceRequest);
-  const postContext = serviceRequest.post
-    ? mapDbPostToChatPostContext(serviceRequest.post)
+  const engagement = mapServiceRequestToEngagement(activeRequest);
+  const postContext = activeRequest.post
+    ? mapDbPostToChatPostContext(activeRequest.post)
     : null;
-  const isRequester = serviceRequest.requesterId === authUserId;
-  const peer = isRequester ? serviceRequest.provider : serviceRequest.requester;
+  const isRequester = activeRequest.requesterId === authUserId;
+  const peer = isRequester ? activeRequest.provider : activeRequest.requester;
   const contactName = peer?.name ?? 'Unknown';
   const isRequest = postContext?.tag === 'Request';
   const accent = isRequest ? REQUEST_ACCENT : Colors.primary;
-  const userIsProvider = serviceRequest.providerId === authUserId;
+  const userIsProvider = activeRequest.providerId === authUserId;
 
   const canRequestCompletion =
     engagement.officialEngagementStatus === 'active' &&
@@ -118,7 +124,7 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     if (!confirmed) return;
     setActionLoading(true);
     try {
-      await transition(serviceRequest.id, 'cancel');
+      await transition(activeRequest.id, 'cancel');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     } catch (err) {
       console.error('Failed to cancel request:', err);
@@ -126,7 +132,7 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     } finally {
       setActionLoading(false);
     }
-  }, [postContext, actionLoading, showConfirm, transition, serviceRequest.id]);
+  }, [postContext, actionLoading, showConfirm, transition, activeRequest.id]);
 
   const handleWithdrawOfficialResponse = useCallback(async () => {
     if (!postContext || actionLoading) return;
@@ -142,7 +148,7 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     if (!confirmed) return;
     setActionLoading(true);
     try {
-      await transition(serviceRequest.id, 'withdraw');
+      await transition(activeRequest.id, 'withdraw');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     } catch (err) {
       console.error('Failed to withdraw response:', err);
@@ -150,7 +156,7 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     } finally {
       setActionLoading(false);
     }
-  }, [postContext, actionLoading, showConfirm, transition, serviceRequest.id]);
+  }, [postContext, actionLoading, showConfirm, transition, activeRequest.id]);
 
   const handleRequestOfficialCompletion = useCallback(async () => {
     if (
@@ -173,7 +179,7 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     if (!confirmed) return;
     setActionLoading(true);
     try {
-      await transition(serviceRequest.id, 'request_completion');
+      await transition(activeRequest.id, 'request_completion');
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (err) {
       console.error('Failed to request completion:', err);
@@ -189,7 +195,7 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     actionLoading,
     showConfirm,
     transition,
-    serviceRequest.id,
+    activeRequest.id,
   ]);
 
   const handleConfirmOfficialCompletion = useCallback(async () => {
@@ -212,7 +218,7 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     if (!confirmed) return;
     setActionLoading(true);
     try {
-      await transition(serviceRequest.id, 'confirm_completion');
+      await transition(activeRequest.id, 'confirm_completion');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err) {
       console.error('Failed to confirm completion:', err);
@@ -227,7 +233,7 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     actionLoading,
     showConfirm,
     transition,
-    serviceRequest.id,
+    activeRequest.id,
   ]);
 
   const handleDeclineOfficialCompletion = useCallback(async () => {
@@ -251,7 +257,7 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     if (!confirmed) return;
     setActionLoading(true);
     try {
-      await transition(serviceRequest.id, 'decline_completion');
+      await transition(activeRequest.id, 'decline_completion');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     } catch (err) {
       console.error('Failed to decline completion:', err);
@@ -267,7 +273,7 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     actionLoading,
     showConfirm,
     transition,
-    serviceRequest.id,
+    activeRequest.id,
   ]);
 
   return (
@@ -304,7 +310,7 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
               subtleBg={subtleBg}
               primaryColor={Colors.primary}
               currentUserId={authUserId ?? ''}
-              serviceRequest={serviceRequest}
+              serviceRequest={activeRequest}
             />
           </View>
         )}

@@ -36,6 +36,10 @@ export interface DbCategoryService {
   updatedAt: string;
 }
 
+export interface DbCategoryServiceWithCategory extends DbCategoryService {
+  category: DbCategory;
+}
+
 export interface DbPost {
   id: string;
   title: string;

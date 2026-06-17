@@ -1,9 +1,8 @@
-import React, { memo, useCallback, useMemo } from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import React, { memo, useCallback, useMemo, useEffect } from 'react';
+import { StyleSheet, View, ScrollView, ActivityIndicator } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Spacing } from '../../constants';
 import {
-  POPULAR_SERVICES_MOCK,
   RECENTLY_VIEWED_MOCK,
   MARKET_PROMO,
   FEATURED_POSTS_MOCK,
@@ -12,8 +11,10 @@ import { SectionHeader } from '../SectionHeader';
 import { PopularServiceCard } from '../PopularServiceCard';
 import { FeaturedPostCard } from '../FeaturedPostCard';
 import { MarketPromoBanner } from '../MarketPromoBanner';
-import type { PopularService, FeaturedPost, MarketFilter } from '../../types';
+import type { FeaturedPost, MarketFilter, DbCategoryServiceWithCategory, ExploreCategoryService } from '../../types';
 import { useAppRouter } from '../../hooks';
+import { buildExploreServiceHref } from '../../lib';
+import { useMarketStore } from '../../store';
 
 
 const H_PAD = Spacing.lg;
@@ -36,7 +37,7 @@ export interface MarketFeedHeaderProps {
 }
 
 interface PopularRowProps {
-  item: PopularService;
+  item: DbCategoryServiceWithCategory;
   labelBg: string;
   labelColor: string;
   onPress: () => void;
@@ -107,10 +108,13 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
   onSeeAllRequestsPress,
 }) => {
   const router = useAppRouter();
+  const { popularServices, popularServicesLoading, fetchPopularServices } = useMarketStore();
 
-  const onPress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }, []);
+  useEffect(() => {
+    if (showDiscoverySections) {
+      fetchPopularServices();
+    }
+  }, [showDiscoverySections, fetchPopularServices]);
 
   const onSeeAllPopular = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -118,9 +122,9 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
   }, [router]);
 
   const onPopularServicePress = useCallback(
-    (item: PopularService) => {
+    (service: ExploreCategoryService, categoryId: string) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      router.push(`/category/${item.categoryId}/service/${item.id}` as any);
+      router.push(buildExploreServiceHref(categoryId, service.id) as any);
     },
     [router]
   );
@@ -154,6 +158,14 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
     <View>
       {showDiscoverySections ? (
         <>
+          <View style={styles.paddedBlock}>
+            <MarketPromoBanner
+              title={MARKET_PROMO.title}
+              subtitle={MARKET_PROMO.subtitle}
+              primaryColor={primaryColor}
+            />
+          </View>
+
           <View style={styles.block}>
             <View style={styles.heading}>
               <SectionHeader
@@ -163,24 +175,30 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
                 onActionPress={onSeeAllPopular}
               />
             </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              nestedScrollEnabled
-              overScrollMode="never"
-              contentContainerStyle={styles.hListContent}
-            >
-              {POPULAR_SERVICES_MOCK.map((item, index) => (
-                <View key={item.id} style={index > 0 ? styles.hItemGap : undefined}>
-                  <PopularRow
-                    item={item}
-                    labelBg={cardBg}
-                    labelColor={textColor}
-                    onPress={() => onPopularServicePress(item)}
-                  />
-                </View>
-              ))}
-            </ScrollView>
+            {popularServicesLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color={primaryColor} />
+              </View>
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                nestedScrollEnabled
+                overScrollMode="never"
+                contentContainerStyle={styles.hListContent}
+              >
+                {popularServices.map((item, index) => (
+                  <View key={item.id} style={index > 0 ? styles.hItemGap : undefined}>
+                    <PopularRow
+                      item={item}
+                      labelBg={cardBg}
+                      labelColor={textColor}
+                      onPress={() => onPopularServicePress(item.service, item.categoryId)}
+                    />
+                  </View>
+                ))}
+              </ScrollView>
+            )}
           </View>
 
           <View style={styles.block}>
@@ -203,14 +221,6 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
                 </View>
               ))}
             </ScrollView>
-          </View>
-
-          <View style={styles.paddedBlock}>
-            <MarketPromoBanner
-              title={MARKET_PROMO.title}
-              subtitle={MARKET_PROMO.subtitle}
-              primaryColor={primaryColor}
-            />
           </View>
 
           {/* Services Subsection */}
@@ -296,6 +306,10 @@ const styles = StyleSheet.create({
   },
   hItemGapWide: {
     marginLeft: CAROUSEL_SEPARATOR,
+  },
+  loadingContainer: {
+    paddingHorizontal: H_PAD,
+    paddingVertical: Spacing.lg,
   },
 });
 

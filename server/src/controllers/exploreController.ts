@@ -197,3 +197,27 @@ export const searchProviders = async (req: Request, res: Response) => {
     });
   }
 };
+
+/**
+ * Get popular services across all categories
+ * @route GET /api/explore/categories/popular-services
+ */
+export const getPopularServices = async (req: Request, res: Response) => {
+  try {
+    // For now, return first 5 services with their category data
+    const services = await prisma.categoryService.findMany({
+      include: { category: true },
+      take: 5,
+    });
+    return res.status(200).json({
+      status: 200,
+      data: services,
+    });
+  } catch (error) {
+    console.error('GetPopularServices Error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error retrieving popular services.',
+    });
+  }
+};

@@ -50,10 +50,17 @@ export default function ChatScreen() {
     const loadChat = async () => {
       if (username) {
         try {
-          const [participantProfile, post] = await Promise.all([
-            profileService.getPublicProfile(username),
-            resolvedPostId ? postService.getPostById(resolvedPostId) : Promise.resolve(undefined),
-          ]);
+          // First fetch participant profile (always required)
+          const participantProfile = await profileService.getPublicProfile(username);
+          
+          // Then try to fetch post context, but don't fail the whole chat if it fails
+          let post;
+          try {
+            post = resolvedPostId ? await postService.getPostById(resolvedPostId) : undefined;
+          } catch (postError) {
+            console.warn('Failed to fetch post context for chat:', postError);
+            post = undefined;
+          }
 
           let postContext: ChatPostContext | undefined = undefined;
           if (post) {

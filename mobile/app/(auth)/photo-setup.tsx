@@ -1,14 +1,15 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, View, Text, useColorScheme } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { StyleSheet, View, Text, useColorScheme, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 
-import { useThemeColor, useChangeProfilePhoto } from '../../hooks';
+import { useThemeColor, useImagePicker, useAppRouter } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { Button } from '../../components';
 import { ProfileChangePhotoSheet } from '../../components/Profile';
 import { useAuthStore } from '../../store';
+import { uploadService, authService } from '../../services';
 
 export default function PhotoSetupScreen() {
   const Colors = useThemeColor();
@@ -18,11 +19,20 @@ export default function PhotoSetupScreen() {
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
 
   const user = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
   const setFirstLoginSession = useAuthStore((s) => s.setFirstLoginSession);
   const setHasCompletedOnboarding = useAuthStore((s) => s.setHasCompletedOnboarding);
+  const router = useAppRouter();
 
-  const { avatarUri, sheetVisible, openSheet, closeSheet, handleSheetSelect } =
-    useChangeProfilePhoto(user?.avatarUrl);
+  const { pickFromCamera, pickFromGallery } = useImagePicker({
+    allowsEditing: true,
+    aspect: [1, 1],
+    quality: 0.85,
+  });
+
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [sheetVisible, setSheetVisible] = useState(false);
 
   const initials = useMemo(() => {
     if (!user?.name) return '?';
@@ -34,13 +44,63 @@ export default function PhotoSetupScreen() {
       .slice(0, 2);
   }, [user?.name]);
 
-  const hasSelectedPhoto = !!avatarUri && avatarUri !== user?.avatarUrl;
+  const hasSelectedPhoto = !!selectedImage;
 
-  const handleContinueOrSkip = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // Completing this setup clears the flag, which will trigger the layout to route to market.
+  const openSheet = () => setSheetVisible(true);
+  const closeSheet = () => setSheetVisible(false);
+
+  async function handlePickFromGallery() {
+    const images = await pickFromGallery();
+    if (images.length === 0) return;
+    setSelectedImage(images[0].uri);
+    closeSheet();
+  }
+
+  async function handlePickFromCamera() {
+    const image = await pickFromCamera();
+    if (!image) return;
+    setSelectedImage(image.uri);
+    closeSheet();
+  }
+
+  const handleSheetSelect = async (action: 'camera' | 'library' | 'remove' | 'cancel') => {
+    if (action === 'cancel') {
+      closeSheet();
+      return;
+    }
+    if (action === 'remove') {
+      setSelectedImage(null);
+      closeSheet();
+      return;
+    }
+    if (action === 'camera') {
+      await handlePickFromCamera();
+    } else if (action === 'library') {
+      await handlePickFromGallery();
+    }
+  };
+
+  async function handleSavePhoto() {
+    if (!selectedImage) return;
+    try {
+      setIsUploading(true);
+      const url = await uploadService.uploadImage(selectedImage);
+      const updatedUser = await authService.updateProfile({ avatarUrl: url });
+      setUser(updatedUser);
+      setFirstLoginSession(false);
+      setHasCompletedOnboarding(true);
+      router.replace('/(tabs)/market' as any);
+    } catch (e) {
+      Alert.alert('Error', 'Failed to upload photo. Try again.');
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  const handleSkip = () => {
     setFirstLoginSession(false);
     setHasCompletedOnboarding(true);
+    router.replace('/(tabs)/market' as any);
   };
 
   return (
@@ -56,9 +116,9 @@ export default function PhotoSetupScreen() {
         <View style={[styles.card, { backgroundColor: cardBg }]}>
           <View style={styles.avatarContainer}>
             <View style={[styles.avatarCircle, { backgroundColor: Colors.primary + '18' }]}>
-              {avatarUri ? (
+              {selectedImage ? (
                 <Image
-                  source={{ uri: avatarUri }}
+                  source={{ uri: selectedImage }}
                   style={styles.avatarImage}
                   contentFit="cover"
                   transition={0}
@@ -70,36 +130,32 @@ export default function PhotoSetupScreen() {
           </View>
 
           <View style={styles.actions}>
-            {!hasSelectedPhoto ? (
-              <Button
-                title="Upload Image"
-                variant="outline"
-                size="md"
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  openSheet();
-                }}
-                style={styles.actionButton}
-              />
-            ) : (
-              <Button
-                title="Continue"
-                variant="primary"
-                size="md"
-                onPress={handleContinueOrSkip}
-                style={styles.actionButton}
-              />
-            )}
-            
-            {!hasSelectedPhoto && (
+            {!isUploading && (
               <Button
                 title="Skip for now"
                 variant="ghost"
                 size="sm"
-                onPress={handleContinueOrSkip}
+                onPress={handleSkip}
                 style={styles.actionButton}
               />
             )}
+
+            <Button
+              title={hasSelectedPhoto ? 'Save Photo' : 'Upload Image'}
+              variant={hasSelectedPhoto ? 'primary' : 'outline'}
+              size="md"
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                if (hasSelectedPhoto) {
+                  handleSavePhoto();
+                } else {
+                  openSheet();
+                }
+              }}
+              style={styles.actionButton}
+              disabled={isUploading}
+              isLoading={isUploading}
+            />
           </View>
         </View>
       </View>

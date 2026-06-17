@@ -14,7 +14,7 @@ import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { useThemeColor } from '../../hooks';
 
-export type ChatAttachmentAction = 'photos' | 'documents' | 'cancel';
+export type ChatAttachmentAction = 'camera' | 'photos' | 'documents' | 'cancel';
 
 export interface ChatAttachmentSheetProps {
   visible: boolean;
@@ -25,18 +25,24 @@ export interface ChatAttachmentSheetProps {
 const ATTACH_ITEMS: {
   key: Exclude<ChatAttachmentAction, 'cancel'>;
   label: string;
-  icon: 'images-outline' | 'document-text-outline';
+  icon: 'camera-outline' | 'images-outline' | 'document-text-outline';
   subtitle: string;
 }[] = [
+  {
+    key: 'camera',
+    label: 'Camera',
+    icon: 'camera-outline',
+    subtitle: 'Take a photo',
+  },
   {
     key: 'photos',
     label: 'Photos',
     icon: 'images-outline',
-    subtitle: 'Share from your gallery',
+    subtitle: 'Choose up to 5 images',
   },
   {
     key: 'documents',
-    label: 'Documents',
+    label: 'Document',
     icon: 'document-text-outline',
     subtitle: 'PDF, Word, and other files',
   },

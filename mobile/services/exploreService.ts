@@ -1,5 +1,5 @@
 import { apiClient } from './apiClient';
-import type { ApiResponse, DbCategory, DbCategoryService, User } from '../types';
+import type { ApiResponse, DbCategory, DbCategoryService, User, DbCategoryServiceWithCategory } from '../types';
 
 /**
  * Explore-related API actions (categories, sub-services, and provider discovery).
@@ -29,6 +29,15 @@ export const exploreService = {
    */
   async getCategoryServices(): Promise<DbCategoryService[]> {
     const response = await apiClient.get<ApiResponse<DbCategoryService[]>>('/explore/category-services');
+    return response.data.data;
+  },
+
+  /**
+   * Fetches popular services across all categories with category data.
+   * @route GET /api/explore/categories/popular-services
+   */
+  async getPopularServices(): Promise<DbCategoryServiceWithCategory[]> {
+    const response = await apiClient.get<ApiResponse<DbCategoryServiceWithCategory[]>>('/explore/categories/popular-services');
     return response.data.data;
   },
 

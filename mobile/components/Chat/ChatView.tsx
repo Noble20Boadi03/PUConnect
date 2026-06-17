@@ -9,13 +9,14 @@ import {
   Platform,
   RefreshControl,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
 import { ConfirmDialog } from '../ConfirmDialog';
 import { ReviewPromptDialog } from '../ReviewPromptDialog';
-import { useAppRouter, useConfirmDialog, useThemeColor } from '../../hooks';
+import { useAppRouter, useConfirmDialog, useThemeColor, useImagePicker } from '../../hooks';
 import { useProviderReviewsStore } from '../../store/providerReviewsStore';
 import { Spacing, Typography } from '../../constants';
 import { getProviderServices, isCurrentUserProvider, isCurrentUserRequester } from '../../lib';
@@ -29,6 +30,7 @@ import { ChatOfficialEngagementSheet } from './ChatOfficialEngagementSheet';
 import { ProviderServicesSheet } from './ProviderServicesSheet';
 import { ChatMessageActionsSheet } from './ChatMessageActionsSheet';
 import { useChatStore } from '../../store/chatStore';
+import { uploadService } from '../../services';
 import type {
   ChatDateGroup,
   ChatMessage,
@@ -161,6 +163,12 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const sentBg = Colors.primary;
   const sentText = isDark ? '#09090B' : '#FFFFFF';
 
+  const { pickFromCamera, pickFromGallery } = useImagePicker({
+    allowsMultipleSelection: true,
+    selectionLimit: 5,
+    quality: 0.8,
+  });
+
   const [draft, setDraft] = useState('');
   const [optionsVisible, setOptionsVisible] = useState(false);
   const [attachVisible, setAttachVisible] = useState(false);
@@ -171,6 +179,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const [actionLoading, setActionLoading] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<ChatMessage | null>(null);
   const [messageActionsVisible, setMessageActionsVisible] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const deleteMessage = useChatStore((state) => state.deleteMessage);
   const conversations = useChatStore((state) => state.conversations);
@@ -506,11 +515,82 @@ export const ChatView: React.FC<ChatViewProps> = ({
     }
   }, [thread.postContext, actionLoading, onCreateOfficialEngagement]);
 
-  const handleAttachSelect = useCallback((action: ChatAttachmentAction) => {
-    if (action === 'photos' || action === 'documents') {
-      // Pure UI — picker not wired yet.
+  const handleAttachSelect = useCallback(async (action: ChatAttachmentAction) => {
+    if (isUploading) return;
+
+    if (action === 'camera') {
+      const cameraImage = await pickFromCamera();
+      if (!cameraImage) return;
+      try {
+        setIsUploading(true);
+        const url = await uploadService.uploadImage(cameraImage.uri);
+        if (onSendMessage) {
+          onSendMessage(url);
+        } else {
+          setDateGroups((prev) => appendSentMessage(prev, url));
+        }
+      } catch (error) {
+        console.error('Failed to upload image:', error);
+        Alert.alert('Error', 'Failed to upload image. Please try again.');
+      } finally {
+        setIsUploading(false);
+      }
+    } else if (action === 'photos') {
+      const images = await pickFromGallery();
+      if (images.length === 0) return;
+      try {
+        setIsUploading(true);
+        // Upload each image sequentially
+        for (const image of images) {
+          const url = await uploadService.uploadImage(image.uri);
+          if (onSendMessage) {
+            onSendMessage(url);
+          } else {
+            setDateGroups((prev) => appendSentMessage(prev, url));
+          }
+        }
+      } catch (error) {
+        console.error('Failed to upload images:', error);
+        Alert.alert('Error', 'Failed to upload images. Please try again.');
+      } finally {
+        setIsUploading(false);
+      }
+    } else if (action === 'documents') {
+      const DocumentPicker = require('expo-document-picker');
+      const result = await DocumentPicker.getDocumentAsync({
+        type: [
+          'application/pdf',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/vnd.ms-excel',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'text/plain',
+        ],
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled) return;
+      const doc = result.assets[0];
+      try {
+        setIsUploading(true);
+        const url = await uploadService.uploadFile(
+          doc.uri,
+          doc.name,
+          doc.mimeType ?? 'application/octet-stream'
+        );
+        const messageContent = `doc::${doc.name}::${url}`;
+        if (onSendMessage) {
+          onSendMessage(messageContent);
+        } else {
+          setDateGroups((prev) => appendSentMessage(prev, messageContent));
+        }
+      } catch (error) {
+        console.error('Failed to upload document:', error);
+        Alert.alert('Error', 'Failed to upload document. Please try again.');
+      } finally {
+        setIsUploading(false);
+      }
     }
-  }, []);
+  }, [pickFromCamera, pickFromGallery, onSendMessage, isUploading]);
 
   const handleAttach = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -571,49 +651,29 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
-      <ChatHeader
-        participant={thread.participant}
-        subtleBg={subtleBg}
-        textColor={Colors.text}
-        mutedColor={Colors.icon}
-        primaryColor={Colors.primary}
-        onBack={onBack}
-        onMoreOptions={handleMoreOptions}
-      />
-
-      {thread.postContext && !((officialEngagementStatus as OfficialEngagementStatus) === 'completed') ? (
-        <ChatContextBanner
-          context={thread.postContext}
-          cardBg={cardBg}
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
+        <ChatHeader
+          participant={thread.participant}
           subtleBg={subtleBg}
           textColor={Colors.text}
           mutedColor={Colors.icon}
           primaryColor={Colors.primary}
-          officialEngagementActive={officialEngagementStatus === 'active'}
-          officialEngagementCompleted={officialEngagementStatus === 'completed'}
-          officialCompletionPending={
-            officialEngagementStatus === 'active' && completionPhase === 'pending_review' && userIsProvider
-          }
-          officialCompletionNeedsReview={
-            officialEngagementStatus === 'active' &&
-            completionPhase === 'pending_review' &&
-            !userIsProvider
-          }
-          onPress={handleContextBannerPress}
+          onBack={onBack}
+          onMoreOptions={handleMoreOptions}
         />
-      ) : null}
 
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
-      >
         <ScrollView
           ref={scrollRef}
           style={styles.messagesScroll}
           contentContainerStyle={styles.messagesContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets={true}
           refreshControl={
             <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
           }
@@ -657,6 +717,28 @@ export const ChatView: React.FC<ChatViewProps> = ({
           ))}
         </ScrollView>
 
+        {thread.postContext && !((officialEngagementStatus as OfficialEngagementStatus) === 'completed') ? (
+          <ChatContextBanner
+            context={thread.postContext}
+            cardBg={cardBg}
+            subtleBg={subtleBg}
+            textColor={Colors.text}
+            mutedColor={Colors.icon}
+            primaryColor={Colors.primary}
+            officialEngagementActive={officialEngagementStatus === 'active'}
+            officialEngagementCompleted={officialEngagementStatus === 'completed'}
+            officialCompletionPending={
+              officialEngagementStatus === 'active' && completionPhase === 'pending_review' && userIsProvider
+            }
+            officialCompletionNeedsReview={
+              officialEngagementStatus === 'active' &&
+              completionPhase === 'pending_review' &&
+              !userIsProvider
+            }
+            onPress={handleContextBannerPress}
+          />
+        ) : null}
+
         <ChatComposer
           value={draft}
           onChangeText={setDraft}
@@ -668,7 +750,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
           mutedColor={Colors.icon}
           primaryColor={Colors.primary}
           bottomInset={insets.bottom}
-          hasPendingMessage={hasPendingMessage}
+          hasPendingMessage={hasPendingMessage || isUploading}
         />
       </KeyboardAvoidingView>
 

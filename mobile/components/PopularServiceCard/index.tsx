@@ -3,10 +3,10 @@ import { StyleSheet, View, Text } from 'react-native';
 import { GuardedPressable } from '../GuardedPressable';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, Typography, CARD_SHADOW } from '../../constants';
-import type { PopularService } from '../../types';
+import type { DbCategoryServiceWithCategory } from '../../types';
 
 export interface PopularServiceCardProps {
-  item: PopularService;
+  item: DbCategoryServiceWithCategory;
   labelBg: string;
   labelColor: string;
   onPress?: () => void;
@@ -25,8 +25,8 @@ const PopularServiceCardComponent: React.FC<PopularServiceCardProps> = ({
       activeOpacity={0.85}
       disabled={!onPress}
     >
-      <View style={[styles.iconArea, { backgroundColor: item.accentColor }]}>
-        <Ionicons name={item.icon} size={32} color="#FFFFFF" />
+      <View style={[styles.iconArea, { backgroundColor: item.category.accentColor }]}>
+        <Ionicons name={item.category.iconName as any} size={32} color="#FFFFFF" />
       </View>
       <View style={[styles.labelArea, { backgroundColor: labelBg }]}>
         <Text style={[styles.label, { color: labelColor }]} numberOfLines={2}>
