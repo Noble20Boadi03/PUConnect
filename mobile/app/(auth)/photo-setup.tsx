@@ -20,8 +20,7 @@ export default function PhotoSetupScreen() {
 
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
-  const setFirstLoginSession = useAuthStore((s) => s.setFirstLoginSession);
-  const setHasCompletedOnboarding = useAuthStore((s) => s.setHasCompletedOnboarding);
+  const completeOnboarding = useAuthStore((s) => s.completeOnboarding);
   const router = useAppRouter();
 
   const { pickFromCamera, pickFromGallery } = useImagePicker({
@@ -87,8 +86,7 @@ export default function PhotoSetupScreen() {
       const url = await uploadService.uploadImage(selectedImage);
       const updatedUser = await authService.updateProfile({ avatarUrl: url });
       setUser(updatedUser);
-      setFirstLoginSession(false);
-      setHasCompletedOnboarding(true);
+      await completeOnboarding();
       router.replace('/(tabs)/market' as any);
     } catch (e) {
       Alert.alert('Error', 'Failed to upload photo. Try again.');
@@ -97,9 +95,8 @@ export default function PhotoSetupScreen() {
     }
   }
 
-  const handleSkip = () => {
-    setFirstLoginSession(false);
-    setHasCompletedOnboarding(true);
+  const handleSkip = async () => {
+    await completeOnboarding();
     router.replace('/(tabs)/market' as any);
   };
 

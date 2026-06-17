@@ -15,6 +15,7 @@ interface NotificationsState {
   markAllRead: () => Promise<void>;
   subscribeToNotifications: () => void;
   unsubscribeFromNotifications: () => void;
+  reset: () => void;
 }
 
 function formatTime(isoString: string): string {
@@ -125,8 +126,17 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
   unsubscribeFromNotifications: () => {
     if (socketInstance) {
       socketInstance.off('newNotification');
-      // We don't disconnect because chat might still use it
       socketInstance = null;
     }
+  },
+  
+  reset: () => {
+    set({
+      items: [],
+      unreadCount: 0,
+      isLoading: false,
+      isRefreshing: false,
+      error: null,
+    });
   }
 }));

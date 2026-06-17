@@ -2,10 +2,11 @@ import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { isAxiosError } from 'axios';
 import { User, LogoutResult } from '../types';
-import { AUTH_TOKEN_KEY, HAS_COMPLETED_ONBOARDING_KEY } from '../constants';
+import { AUTH_TOKEN_KEY, HAS_COMPLETED_ONBOARDING_KEY, IS_FIRST_LOGIN_SESSION_KEY } from '../constants';
 import { authService, settingsService } from '../services';
 import { useProfileStore } from './profileStore';
 import { registerForPushNotifications } from '../services/pushTokenService';
+import { disconnectSocket } from '../lib/socket';
 
 interface AuthState {
   user: User | null;
@@ -21,8 +22,10 @@ interface AuthState {
   logout: () => Promise<LogoutResult>;
   deleteAccount: () => Promise<LogoutResult>;
   clearSession: () => Promise<void>;
-  setFirstLoginSession: (value: boolean) => void;
+  setFirstLoginSession: (value: boolean) => Promise<void>;
   setHasCompletedOnboarding: (value: boolean) => Promise<void>;
+  completeOnboarding: () => Promise<void>;
+  clearAllStoresAndSocket: () => Promise<void>;
 }
 
 const TOKEN_KEY = AUTH_TOKEN_KEY;
@@ -37,7 +40,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: true,
   hasCompletedOnboarding: false,
   isFirstLoginSession: false,
-  setFirstLoginSession: (value) => set({ isFirstLoginSession: value }),
+  setFirstLoginSession: async (value) => {
+    if (value) {
+      await SecureStore.setItemAsync(IS_FIRST_LOGIN_SESSION_KEY, 'true');
+    } else {
+      await SecureStore.deleteItemAsync(IS_FIRST_LOGIN_SESSION_KEY);
+    }
+    set({ isFirstLoginSession: value });
+  },
   setHasCompletedOnboarding: async (value) => {
     if (value) {
       await SecureStore.setItemAsync(HAS_COMPLETED_ONBOARDING_KEY, 'true');
@@ -45,6 +55,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await SecureStore.deleteItemAsync(HAS_COMPLETED_ONBOARDING_KEY);
     }
     set({ hasCompletedOnboarding: value });
+  },
+  completeOnboarding: async () => {
+    await SecureStore.setItemAsync(HAS_COMPLETED_ONBOARDING_KEY, 'true');
+    await SecureStore.deleteItemAsync(IS_FIRST_LOGIN_SESSION_KEY);
+    set({ hasCompletedOnboarding: true, isFirstLoginSession: false });
   },
   setUser: (user) => set({ user, isAuthenticated: !!user }),
   setToken: async (token) => {
@@ -55,11 +70,38 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
     set({ token, isAuthenticated: !!token });
   },
+  
+  clearAllStoresAndSocket: async () => {
+    // Unsubscribe from all socket listeners
+    const { useChatStore } = await import('./chatStore');
+    const { useNotificationsStore } = await import('./notificationsStore');
+    useChatStore.getState().unsubscribeFromMessages();
+    useNotificationsStore.getState().unsubscribeFromNotifications();
+    
+    // Disconnect socket
+    disconnectSocket();
+    
+    // Reset all stores
+    const { useMarketStore } = await import('./marketStore');
+    const { useServiceRequestsStore } = await import('./serviceRequestsStore');
+    const { useProviderReviewsStore } = await import('./providerReviewsStore');
+    const { useUserProfileStore } = await import('./userProfileStore');
+    
+    useChatStore.getState().reset();
+    useMarketStore.getState().reset();
+    useNotificationsStore.getState().reset();
+    useServiceRequestsStore.getState().reset();
+    useProviderReviewsStore.getState().reset();
+    useUserProfileStore.getState().reset();
+  },
   login: async (user, token) => {
     await SecureStore.setItemAsync(TOKEN_KEY, token);
-    set({ user, token, isAuthenticated: true });
+    // Check if isFirstLoginSession is in storage
+    const isFirstLoginSessionRaw = await SecureStore.getItemAsync(IS_FIRST_LOGIN_SESSION_KEY);
+    const isFirstLoginSession = isFirstLoginSessionRaw === 'true';
+    set({ user, token, isAuthenticated: true, isFirstLoginSession });
     // If not a first login session, mark onboarding as completed
-    if (!get().isFirstLoginSession) {
+    if (!isFirstLoginSession) {
       await get().setHasCompletedOnboarding(true);
     }
     // Register for push notifications
@@ -79,17 +121,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const token = await SecureStore.getItemAsync(TOKEN_KEY);
       const hasCompletedOnboardingRaw = await SecureStore.getItemAsync(HAS_COMPLETED_ONBOARDING_KEY);
       const hasCompletedOnboarding = hasCompletedOnboardingRaw === 'true';
+      const isFirstLoginSessionRaw = await SecureStore.getItemAsync(IS_FIRST_LOGIN_SESSION_KEY);
+      const isFirstLoginSession = isFirstLoginSessionRaw === 'true';
 
       if (!token) {
-        set({ token: null, user: null, isAuthenticated: false, isLoading: false, hasCompletedOnboarding });
+        set({ token: null, user: null, isAuthenticated: false, isLoading: false, hasCompletedOnboarding, isFirstLoginSession: false });
         return;
       }
 
       try {
         const user = await authService.getMe();
-        set({ user, token, isAuthenticated: true, isLoading: false, hasCompletedOnboarding });
-        // For existing users who haven't had the onboarding flag persisted yet
-        if (!hasCompletedOnboarding) {
+        set({ user, token, isAuthenticated: true, isLoading: false, hasCompletedOnboarding, isFirstLoginSession });
+        // For existing users who haven't had the onboarding flag persisted yet and aren't in first login session
+        if (!hasCompletedOnboarding && !isFirstLoginSession) {
           await get().setHasCompletedOnboarding(true);
         }
         // Register for push notifications
@@ -107,23 +151,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const status = isAxiosError(error) ? error.response?.status : undefined;
         if (status === 401 || status === 403) {
           await SecureStore.deleteItemAsync(TOKEN_KEY);
+          await SecureStore.deleteItemAsync(IS_FIRST_LOGIN_SESSION_KEY);
         }
-        set({ user: null, token: null, isAuthenticated: false, isLoading: false, hasCompletedOnboarding });
+        set({ user: null, token: null, isAuthenticated: false, isLoading: false, hasCompletedOnboarding, isFirstLoginSession: false });
       }
     } catch {
-      set({ user: null, token: null, isAuthenticated: false, isLoading: false, hasCompletedOnboarding: false });
+      set({ user: null, token: null, isAuthenticated: false, isLoading: false, hasCompletedOnboarding: false, isFirstLoginSession: false });
     }
   },
   clearSession: async () => {
     await SecureStore.deleteItemAsync(TOKEN_KEY);
     await SecureStore.deleteItemAsync(HAS_COMPLETED_ONBOARDING_KEY);
+    await SecureStore.deleteItemAsync(IS_FIRST_LOGIN_SESSION_KEY);
+    // Call clearAllStoresAndSocket to reset everything
+    await get().clearAllStoresAndSocket();
+    // Reset profile store as well (since it's already being done before)
     const { useProfileStore } = await import('./profileStore');
-    // Use resetLocal() instead of clearProviderProfile() because clearSession
-    // is called when the token is already invalid/expired — API calls would
-    // fail with 401 and cause cascading errors.
     await useProfileStore.getState().resetLocal();
     useProfileStore.setState({ hydrated: false });
-    set({ user: null, token: null, isAuthenticated: false, hasCompletedOnboarding: false });
+    set({ user: null, token: null, isAuthenticated: false, hasCompletedOnboarding: false, isFirstLoginSession: false });
   },
   logout: async () => {
     let result: LogoutResult;
@@ -132,6 +178,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch {
       await SecureStore.deleteItemAsync(TOKEN_KEY).catch(() => {});
       await SecureStore.deleteItemAsync(HAS_COMPLETED_ONBOARDING_KEY).catch(() => {});
+      await SecureStore.deleteItemAsync(IS_FIRST_LOGIN_SESSION_KEY).catch(() => {});
       result = {
         success: true,
         message: 'Signed out on this device.',
@@ -146,10 +193,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         console.error('Error clearing push token during logout:', error);
       }
     })();
+    // Clear all stores and disconnect socket
+    await get().clearAllStoresAndSocket();
+    // Reset profile store
     const { useProfileStore } = await import('./profileStore');
     await useProfileStore.getState().resetLocal();
     useProfileStore.setState({ hydrated: false });
-    set({ user: null, token: null, isAuthenticated: false, hasCompletedOnboarding: false });
+    set({ user: null, token: null, isAuthenticated: false, hasCompletedOnboarding: false, isFirstLoginSession: false });
     return result;
   },
   deleteAccount: async () => {
@@ -170,10 +220,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     await SecureStore.deleteItemAsync(TOKEN_KEY).catch(() => {});
     await SecureStore.deleteItemAsync(HAS_COMPLETED_ONBOARDING_KEY).catch(() => {});
+    await SecureStore.deleteItemAsync(IS_FIRST_LOGIN_SESSION_KEY).catch(() => {});
+    // Clear all stores and disconnect socket
+    await get().clearAllStoresAndSocket();
+    // Reset profile store
     const { useProfileStore } = await import('./profileStore');
     await useProfileStore.getState().resetLocal();
     useProfileStore.setState({ hydrated: false });
-    set({ user: null, token: null, isAuthenticated: false, hasCompletedOnboarding: false });
+    set({ user: null, token: null, isAuthenticated: false, hasCompletedOnboarding: false, isFirstLoginSession: false });
     return result;
   },
 }));

@@ -10,6 +10,7 @@ interface ProviderReviewsState {
   dismissReviewPrompt: (dealId: string) => void;
   submitReview: (review: Omit<ProviderReview, 'id' | 'isOwn'>) => ProviderReview;
   syncCompletedDealsFromRequests: (deals: CompletedDeal[]) => void;
+  reset: () => void;
 }
 
 function dealId(revieweeUsername: string, postId: string) {
@@ -132,6 +133,14 @@ export const useProviderReviewsStore = create<ProviderReviewsState>((set) => ({
         }
       }
       return { completedDeals: merged };
+    });
+  },
+  
+  reset: () => {
+    set({
+      completedDeals: [],
+      submittedReviews: [],
+      dismissedDealIds: [],
     });
   },
 }));

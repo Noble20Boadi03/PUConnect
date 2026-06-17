@@ -15,6 +15,7 @@ interface MarketState {
   lastFetchedPopular: number | null;
   fetchPosts: (isRefresh?: boolean) => Promise<void>;
   fetchPopularServices: (isRefresh?: boolean) => Promise<void>;
+  reset: () => void;
 }
 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -91,6 +92,19 @@ export const useMarketStore = create<MarketState>((set, get) => ({
     } finally {
       set({ popularServicesLoading: false });
     }
+  },
+  
+  reset: () => {
+    set({
+      posts: [],
+      popularServices: [],
+      popularServicesLoading: false,
+      isLoading: false,
+      isRefreshing: false,
+      error: null,
+      lastFetched: null,
+      lastFetchedPopular: null,
+    });
   },
 }));
 

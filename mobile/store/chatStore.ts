@@ -35,6 +35,7 @@ interface ChatState {
   clearCache: () => void;
   removeMessage: (messageId: string) => void;
   clearPostContext: () => void;
+  reset: () => void;
 }
 
 const formatMessages = (messages: BackendChatMessage[], currentUserId: string): ChatDateGroup[] => {
@@ -518,8 +519,27 @@ export const useChatStore = create<ChatState>((set, get) => ({
   unsubscribeFromMessages: () => {
     if (socketInstance) {
       socketInstance.off('newMessage');
+      socketInstance.off('messageDeleted');
       socketInstance.disconnect();
       socketInstance = null;
     }
+  },
+  
+  reset: () => {
+    set({
+      conversations: [],
+      activeThread: null,
+      currentId: null,
+      lastFetched: null,
+      isLoading: false,
+      isRefreshing: false,
+      error: null,
+      nextCursor: null,
+      hasMoreMessages: false,
+      conversationsPage: 1,
+      hasMoreConversations: false,
+      isLoadingMoreConversations: false,
+      isLoadingMoreMessages: false,
+    });
   }
 }));

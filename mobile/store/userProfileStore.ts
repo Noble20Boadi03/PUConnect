@@ -12,6 +12,7 @@ interface UserProfileState {
   error: string | null;
   lastFetched: number | null;
   fetchProfile: (username: string, isRefresh?: boolean) => Promise<void>;
+  reset: () => void;
 }
 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -61,6 +62,17 @@ export const useUserProfileStore = create<UserProfileState>((set, get) => ({
     } finally {
       set({ isLoading: false, isRefreshing: false });
     }
+  },
+  
+  reset: () => {
+    set({
+      posts: [],
+      receivedReviews: [],
+      isLoading: false,
+      isRefreshing: false,
+      error: null,
+      lastFetched: null,
+    });
   },
 }));
 

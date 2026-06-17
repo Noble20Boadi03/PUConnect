@@ -23,6 +23,7 @@ interface ServiceRequestsState {
   subscribeToUpdates: () => () => void;
   getActiveCount: () => number;
   getCompletedDealsForReviews: () => CompletedDeal[];
+  reset: () => void;
 }
 
 function upsertById(list: DbServiceRequest[], item: DbServiceRequest): DbServiceRequest[] {
@@ -159,6 +160,16 @@ export const useServiceRequestsStore = create<ServiceRequestsState>((set, get) =
         serviceRequestId: r.id,
       }))
       .filter((d) => d.revieweeUsername && d.postId);
+  },
+  
+  reset: () => {
+    set({
+      requests: [],
+      isLoading: false,
+      isRefreshing: false,
+      error: null,
+      hydrated: false,
+    });
   },
 }));
 
