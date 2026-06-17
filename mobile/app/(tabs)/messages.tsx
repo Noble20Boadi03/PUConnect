@@ -31,7 +31,7 @@ export default function MessagesScreen() {
       fetchMessages(
         conversation.providerUsername,
         conversation.participant,
-        conversation.postId ? { postId: conversation.postId, title: '', tag: 'Service', priceLabel: '' } : undefined
+        conversation.postId ? { postId: conversation.postId, title: '', tag: 'Service', priceLabel: '', authorId: '' } : undefined
       );
     },
     [fetchMessages]

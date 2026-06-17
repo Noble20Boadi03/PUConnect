@@ -34,6 +34,7 @@ import type {
   ChatMessage,
   ChatThread,
 } from '../../types';
+import type { OfficialEngagementStatus } from '../../types/chat';
 import type { ServiceEngagementState } from '../../lib/mapServiceRequest';
 
 const REQUEST_ACCENT = '#F59E0B';
@@ -693,7 +694,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
         onMoreOptions={handleMoreOptions}
       />
 
-      {thread.postContext ? (
+      {thread.postContext && !((officialEngagementStatus as OfficialEngagementStatus) === 'completed') ? (
         <ChatContextBanner
           context={thread.postContext}
           cardBg={cardBg}

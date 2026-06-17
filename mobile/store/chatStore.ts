@@ -94,7 +94,8 @@ const buildPostContext = (post: any): ChatPostContext => {
     postId: post.id,
     title: post.title,
     tag: post.tag as 'Service' | 'Request',
-    priceLabel
+    priceLabel,
+    authorId: post.authorId
   };
 };
 

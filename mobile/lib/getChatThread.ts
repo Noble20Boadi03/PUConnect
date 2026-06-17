@@ -21,6 +21,7 @@ export function getChatThread(
           title: post.title,
           tag: post.tag,
           priceLabel: formatPostPrice(post.price),
+          authorId: post.author.username.replace('@', ''),
         }
       : undefined;
 
