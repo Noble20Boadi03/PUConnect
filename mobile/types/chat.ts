@@ -31,6 +31,7 @@ export interface ChatPostContext {
   title: string;
   tag: MarketPostTag;
   priceLabel?: string;
+  authorId: string;
 }
 
 export interface ChatParticipant {

@@ -18,7 +18,7 @@ import { ReviewPromptDialog } from '../ReviewPromptDialog';
 import { useAppRouter, useConfirmDialog, useThemeColor } from '../../hooks';
 import { useProviderReviewsStore } from '../../store/providerReviewsStore';
 import { Spacing, Typography } from '../../constants';
-import { getProviderServices, isCurrentUserProvider } from '../../lib';
+import { getProviderServices, isCurrentUserProvider, isCurrentUserRequester } from '../../lib';
 import { ChatHeader } from './ChatHeader';
 import { ChatContextBanner } from './ChatContextBanner';
 import { ChatMessageBubble } from './ChatMessageBubble';
@@ -109,6 +109,9 @@ export interface ChatViewProps {
   onLoadMore?: () => void;
   hasMore?: boolean;
   onDeleteMessage?: (messageId: string) => void;
+  currentUserId: string;
+  serviceRequest: any;
+  onClearPostContext: () => void;
 }
 
 export const ChatView: React.FC<ChatViewProps> = ({
@@ -131,7 +134,11 @@ export const ChatView: React.FC<ChatViewProps> = ({
   onLoadMore,
   hasMore = false,
   onDeleteMessage,
+  currentUserId,
+  serviceRequest,
+  onClearPostContext,
 }) => {
+  const userIsProvider = isCurrentUserProvider(currentUserId, serviceRequest);
   const router = useAppRouter();
   const Colors = useThemeColor();
   const insets = useSafeAreaInsets();
@@ -215,10 +222,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
     !thread.postContext || thread.postContext.tag === 'Service';
   const hasOfficialEngagement =
     officialEngagementStatus === 'active' || officialEngagementStatus === 'completed';
-
-  const userIsProvider = thread.postContext
-    ? isCurrentUserProvider(thread.postContext.tag)
-    : false;
 
   const contextAccent =
     thread.postContext?.tag === 'Request' ? REQUEST_ACCENT : Colors.primary;
@@ -558,6 +561,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
         } else {
           muteConversation(thread.providerUsername);
         }
+      } else if (action === 'notInterested') {
+        onClearPostContext();
       }
     },
     [
@@ -571,6 +576,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
       isMuted,
       muteConversation,
       unmuteConversation,
+      onClearPostContext,
     ]
   );
 
@@ -711,8 +717,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
       >
         <ScrollView
           ref={scrollRef}
@@ -781,14 +787,13 @@ export const ChatView: React.FC<ChatViewProps> = ({
       <ChatOptionsSheet
         visible={optionsVisible}
         showBrowseServices={!thread.postContext}
-        showOfficialService={canOfficialService}
-        showOfficialRequest={canOfficialRequest}
         showViewProviderProfile={showViewProviderProfile}
         officialEngagementActive={hasOfficialEngagement}
         officialEngagementCompleted={officialEngagementStatus === 'completed'}
-        engagementTag={thread.postContext?.tag}
+        postContext={thread.postContext}
         completionPhase={completionPhase}
-        isCurrentUserProvider={userIsProvider}
+        currentUserId={currentUserId}
+        serviceRequest={serviceRequest}
         isMuted={isMuted}
         onSelect={handleMenuSelect}
         onClose={() => setOptionsVisible(false)}

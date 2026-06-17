@@ -34,6 +34,7 @@ interface ChatState {
   unsubscribeFromMessages: () => void;
   clearCache: () => void;
   removeMessage: (messageId: string) => void;
+  clearPostContext: () => void;
 }
 
 const formatMessages = (messages: BackendChatMessage[], currentUserId: string): ChatDateGroup[] => {
@@ -253,6 +254,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
     })).filter(g => g.messages.length > 0);
     
     set({ activeThread: { ...activeThread, dateGroups: newGroups } });
+  },
+
+  clearPostContext: () => {
+    const { activeThread } = get();
+    if (!activeThread) return;
+    set({ activeThread: { ...activeThread, postContext: undefined } });
   },
 
   sendMessage: async (receiverUsername, content, postId) => {

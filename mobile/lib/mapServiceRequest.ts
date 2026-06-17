@@ -108,6 +108,7 @@ export function mapDbPostToChatPostContext(post: DbPost): ChatPostContext {
     postId: post.id,
     title: post.title,
     tag: post.tag,
-    priceLabel
+    priceLabel,
+    authorId: post.authorId
   };
 }

@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { useThemeColor } from '../../hooks';
+import { isCurrentUserProvider, isCurrentUserRequester } from '../../lib';
 import type { MarketPostTag, OfficialCompletionPhase } from '../../types';
 
 const REQUEST_ACCENT = '#F59E0B';
@@ -28,21 +29,28 @@ export type ChatMenuAction =
   | 'viewProviderProfile'
   | 'mute'
   | 'report'
+  | 'notInterested'
   | 'cancel';
 
 export interface ChatOptionsSheetProps {
   visible: boolean;
   showBrowseServices?: boolean;
-  showOfficialService?: boolean;
-  showOfficialRequest?: boolean;
-  /** Service provider profile (same entry as from service post detail). */
   showViewProviderProfile?: boolean;
   /** Active official engagement — show manage actions instead of initiators. */
   officialEngagementActive?: boolean;
   officialEngagementCompleted?: boolean;
-  engagementTag?: MarketPostTag;
+  postContext?: {
+    postId: string;
+    tag: MarketPostTag;
+    authorId: string;
+  };
   completionPhase?: OfficialCompletionPhase;
-  isCurrentUserProvider?: boolean;
+  currentUserId: string;
+  serviceRequest?: {
+    providerId: string;
+    requesterId: string;
+    status: string;
+  } | null;
   isMuted?: boolean;
   onSelect: (action: ChatMenuAction) => void;
   onClose: () => void;
@@ -58,14 +66,13 @@ type MenuItem = {
 export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
   visible,
   showBrowseServices = false,
-  showOfficialService = false,
-  showOfficialRequest = false,
   showViewProviderProfile = false,
   officialEngagementActive = false,
   officialEngagementCompleted = false,
-  engagementTag,
+  postContext,
   completionPhase = 'none',
-  isCurrentUserProvider = false,
+  currentUserId,
+  serviceRequest,
   isMuted = false,
   onSelect,
   onClose,
@@ -76,55 +83,68 @@ export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
 
+  const isUserProvider = isCurrentUserProvider(currentUserId, serviceRequest);
+  const isUserRequester = isCurrentUserRequester(currentUserId, serviceRequest);
+
   const menuItems = useMemo(() => {
     const items: MenuItem[] = [];
 
     if (officialEngagementActive || officialEngagementCompleted) {
-      if (!officialEngagementCompleted) {
-        if (engagementTag === 'Service') {
+      if (!officialEngagementCompleted && serviceRequest) {
+        if (isUserRequester && serviceRequest.status === 'active') {
           items.push({
             key: 'cancelOfficialRequest',
             label: 'Cancel Official Request',
             destructive: true,
           });
-        } else if (engagementTag === 'Request') {
+        }
+        if (isUserProvider && serviceRequest.status === 'active') {
           items.push({
             key: 'withdrawOfficialResponse',
             label: 'Withdraw Official Response',
             destructive: true,
           });
         }
-        if (completionPhase === 'none' && isCurrentUserProvider) {
+        if (completionPhase === 'none' && isUserProvider && serviceRequest.status === 'active') {
           items.push({
             key: 'requestOfficialCompletion',
             label: 'Request Completion',
-            accentColor: engagementTag === 'Request' ? REQUEST_ACCENT : Colors.primary,
+            accentColor: postContext?.tag === 'Request' ? REQUEST_ACCENT : Colors.primary,
           });
         }
-        if (completionPhase === 'pending_review' && !isCurrentUserProvider) {
+        if (completionPhase === 'pending_review' && isUserRequester) {
           items.push({
             key: 'reviewOfficialCompletion',
             label: 'Review Service & Confirm',
-            accentColor: engagementTag === 'Request' ? REQUEST_ACCENT : Colors.primary,
+            accentColor: postContext?.tag === 'Request' ? REQUEST_ACCENT : Colors.primary,
           });
         }
       }
       items.push({ key: 'viewOfficialDetails', label: 'View service status' });
     } else {
-      if (showOfficialService) {
+      if (postContext && postContext.tag === 'Service' && postContext.authorId !== currentUserId) {
         items.push({
           key: 'officialService',
           label: 'Request Service',
           accentColor: Colors.primary,
         });
       }
-      if (showOfficialRequest) {
+      if (postContext && postContext.tag === 'Request' && postContext.authorId !== currentUserId) {
+        // TODO: Check user is provider via their profile if needed
         items.push({
           key: 'officialRequest',
           label: 'Submit Official Response',
           accentColor: REQUEST_ACCENT,
         });
       }
+    }
+
+    // Add Not Interested if there's a post context but no active service request
+    if (postContext && !serviceRequest) {
+      items.push({
+        key: 'notInterested',
+        label: 'Not Interested',
+      });
     }
 
     if (showViewProviderProfile) {
@@ -139,16 +159,17 @@ export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
     return items;
   }, [
     showBrowseServices,
-    showOfficialService,
-    showOfficialRequest,
     showViewProviderProfile,
     officialEngagementActive,
     officialEngagementCompleted,
-    engagementTag,
+    postContext,
     completionPhase,
-    isCurrentUserProvider,
+    currentUserId,
+    serviceRequest,
     isMuted,
     Colors.primary,
+    isUserProvider,
+    isUserRequester,
   ]);
 
   const handlePress = (action: ChatMenuAction) => {

@@ -27,6 +27,11 @@ export interface ChatOfficialDetailsCardProps {
   mutedColor: string;
   subtleBg: string;
   primaryColor: string;
+  currentUserId: string;
+  serviceRequest: {
+    providerId: string;
+    requesterId: string;
+  };
 }
 
 type StepState = 'done' | 'current' | 'upcoming';
@@ -82,6 +87,8 @@ export const ChatOfficialDetailsCard: React.FC<ChatOfficialDetailsCardProps> = (
   mutedColor,
   subtleBg,
   primaryColor,
+  currentUserId,
+  serviceRequest,
 }) => {
   const isRequest = context.tag === 'Request';
   const accent = isRequest ? REQUEST_ACCENT : primaryColor;
@@ -133,13 +140,13 @@ export const ChatOfficialDetailsCard: React.FC<ChatOfficialDetailsCardProps> = (
       <View style={styles.metaGrid}>
         <MetaRow
           label="Provider"
-          value={providerPartyName(context, contactName)}
+          value={providerPartyName(context, contactName, currentUserId, serviceRequest)}
           textColor={textColor}
           mutedColor={mutedColor}
         />
         <MetaRow
           label="Client"
-          value={clientPartyName(context, contactName)}
+          value={clientPartyName(context, contactName, currentUserId, serviceRequest)}
           textColor={textColor}
           mutedColor={mutedColor}
         />

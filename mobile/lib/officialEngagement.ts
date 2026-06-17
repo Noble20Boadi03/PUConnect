@@ -1,8 +1,19 @@
 import type { ChatPostContext, MarketPostTag, OfficialCompletionPhase, OfficialEngagementStatus } from '../types';
 
-/** Responder on a request listing; service owner on a service listing. */
-export function isCurrentUserProvider(tag: MarketPostTag): boolean {
-  return tag === 'Request';
+export function isCurrentUserProvider(
+  currentUserId: string,
+  serviceRequest: { providerId: string } | null | undefined
+): boolean {
+  if (!serviceRequest) return false;
+  return serviceRequest.providerId === currentUserId;
+}
+
+export function isCurrentUserRequester(
+  currentUserId: string,
+  serviceRequest: { requesterId: string } | null | undefined
+): boolean {
+  if (!serviceRequest) return false;
+  return serviceRequest.requesterId === currentUserId;
 }
 
 export function officialEngagementKindLabel(tag: MarketPostTag): string {
@@ -19,10 +30,10 @@ export function engagementStatusLabel(
   return 'Not started';
 }
 
-export function providerPartyName(context: ChatPostContext, contactName: string): string {
-  return isCurrentUserProvider(context.tag) ? 'You' : contactName;
+export function providerPartyName(context: ChatPostContext, contactName: string, currentUserId: string, serviceRequest: { providerId: string } | null | undefined): string {
+  return isCurrentUserProvider(currentUserId, serviceRequest) ? 'You' : contactName;
 }
 
-export function clientPartyName(context: ChatPostContext, contactName: string): string {
-  return isCurrentUserProvider(context.tag) ? contactName : 'You';
+export function clientPartyName(context: ChatPostContext, contactName: string, currentUserId: string, serviceRequest: { requesterId: string } | null | undefined): string {
+  return isCurrentUserRequester(currentUserId, serviceRequest) ? 'You' : contactName;
 }

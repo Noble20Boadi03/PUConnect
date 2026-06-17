@@ -324,6 +324,12 @@ export const sendChatMessage = async (req: Request, res: Response) => {
       });
     }
 
+    // Get sender's username to check if receiver has muted the conversation
+    const sender = await prisma.user.findUnique({
+      where: { id: senderId },
+      select: { username: true }
+    });
+
     const message = await prisma.chatMessage.create({
       data: {
         senderId,
@@ -344,13 +350,25 @@ export const sendChatMessage = async (req: Request, res: Response) => {
     // Also emit to sender (for consistency across devices)
     io.to(senderId).emit('newMessage', message);
     
-    // Create DB notification and send push
-    await notifyUser(
-      receiver.id,
-      'message',
-      message.sender.name || message.sender.username,
-      message.content.length > 100 ? message.content.substring(0, 100) + '...' : message.content
-    );
+    // Check if receiver has muted the conversation with sender before sending notification
+    if (sender) {
+      const isMuted = await prisma.mutedConversation.findFirst({
+        where: {
+          userId: receiver.id,
+          participantUsername: sender.username
+        }
+      });
+
+      if (!isMuted) {
+        // Create DB notification and send push
+        await notifyUser(
+          receiver.id,
+          'message',
+          message.sender.name || message.sender.username,
+          message.content.length > 100 ? message.content.substring(0, 100) + '...' : message.content
+        );
+      }
+    }
 
     return res.status(201).json({
       status: 201,

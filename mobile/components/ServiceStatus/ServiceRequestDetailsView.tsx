@@ -303,6 +303,8 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
               mutedColor={Colors.icon}
               subtleBg={subtleBg}
               primaryColor={Colors.primary}
+              currentUserId={authUserId ?? ''}
+              serviceRequest={serviceRequest}
             />
           </View>
         )}
@@ -406,7 +408,7 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
                       </Text>
                     </TouchableOpacity>
                   )}
-                  {isRequest && userIsProvider && (
+                  {userIsProvider && (
                     <TouchableOpacity
                       style={[styles.destructiveButton, { backgroundColor: Colors.error + '15' }]}
                       onPress={handleWithdrawOfficialResponse}

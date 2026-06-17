@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { ChatView } from '../../components/Chat';
-import { buildProviderProfileHref, isCurrentUserProvider, mapServiceRequestToEngagement } from '../../lib';
+import { buildProviderProfileHref, isCurrentUserProvider, isCurrentUserRequester, mapServiceRequestToEngagement } from '../../lib';
 import { useAppRouter } from '../../hooks';
 import { useChat } from '../../hooks/useChat';
 import { Spacing, Typography } from '../../constants';
@@ -15,6 +15,7 @@ import { postService } from '../../services/postService';
 import { parsePostPrice } from '../../lib/mapDbPost';
 import { useServiceRequestsStore } from '../../store';
 import { useProviderReviewsStore } from '../../store/providerReviewsStore';
+import { useAuthStore } from '../../store';
 import { ChatPostContext, ChatThread } from '../../types';
 
 export default function ChatScreen() {
@@ -25,12 +26,14 @@ export default function ChatScreen() {
   const router = useAppRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const screenBg = isDark ? '#09090B' : '#F4F4F5';
+  const screenBg = isDark ? '#09090B' : '#F4F4F4';
   const textColor = isDark ? '#ECEDEE' : '#11181C';
 
+  const currentUser = useAuthStore((s) => s.user);
+  const currentUserId = currentUser?.id ?? '';
   const resolvedPostId = typeof postId === 'string' ? postId : undefined;
 
-  const { activeThread, isLoading, isRefreshing, error, fetchMessages, sendMessage, subscribeToMessages, isLoadingMoreMessages, hasMoreMessages, loadMoreMessages, removeMessage } = useChat();
+  const { activeThread, isLoading, isRefreshing, error, fetchMessages, sendMessage, subscribeToMessages, isLoadingMoreMessages, hasMoreMessages, loadMoreMessages, removeMessage, clearPostContext } = useChat();
 
   const handleRefresh = useCallback(() => {
     if (username && activeThread) {
@@ -67,6 +70,7 @@ export default function ChatScreen() {
               title: post.title,
               tag: post.tag as 'Service' | 'Request',
               priceLabel,
+              authorId: post.authorId,
             };
           }
 
@@ -204,14 +208,12 @@ export default function ChatScreen() {
 
   const handleCancelOfficialEngagement = useCallback(async () => {
     if (!chatServiceRequest) throw new Error('No active engagement');
-    const isRequestPost = activeThread?.postContext?.tag === 'Request';
-    const userIsProvider = activeThread?.postContext
-      ? isCurrentUserProvider(activeThread.postContext.tag)
-      : false;
+    const userIsProvider = isCurrentUserProvider(currentUserId, chatServiceRequest);
+    const userIsRequester = isCurrentUserRequester(currentUserId, chatServiceRequest);
     const action =
-      isRequestPost && userIsProvider ? 'withdraw' : 'cancel';
+      userIsProvider ? 'withdraw' : 'cancel';
     await transition(chatServiceRequest.id, action);
-  }, [chatServiceRequest, activeThread, transition]);
+  }, [chatServiceRequest, currentUserId, transition]);
 
   const handleRequestCompletion = useCallback(async () => {
     if (!chatServiceRequest) throw new Error('No active engagement');
@@ -272,6 +274,9 @@ export default function ChatScreen() {
       onLoadMore={loadMoreMessages}
       hasMore={hasMoreMessages}
       onDeleteMessage={removeMessage}
+      currentUserId={currentUserId}
+      serviceRequest={chatServiceRequest}
+      onClearPostContext={clearPostContext}
     />
   );
 }
