@@ -3,6 +3,33 @@ import prisma from '../config/db';
 import { io } from '../index';
 import { notifyUser } from './serviceRequestController';
 
+export async function sendSystemMessage(
+  senderId: string,
+  receiverId: string,
+  content: string,
+  postId?: string
+) {
+  const message = await prisma.chatMessage.create({
+    data: {
+      senderId,
+      receiverId,
+      content,
+      postId,
+      kind: 'system'
+    },
+    include: {
+      sender: { select: safeUserSelect },
+      receiver: { select: safeUserSelect },
+      post: { select: postSelect }
+    }
+  });
+
+  io.to(senderId).emit('newMessage', message);
+  io.to(receiverId).emit('newMessage', message);
+
+  return message;
+}
+
 const safeUserSelect = {
   id: true,
   name: true,

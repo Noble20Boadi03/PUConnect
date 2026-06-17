@@ -47,7 +47,7 @@ const formatMessages = (messages: BackendChatMessage[], currentUserId: string): 
     
     const uiMsg: ChatMessage = {
       id: msg.id,
-      kind: msg.senderId === currentUserId ? 'sent' : 'received',
+      kind: msg.kind === 'system' ? 'system' : msg.senderId === currentUserId ? 'sent' : 'received',
       text: msg.content,
       time: date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
     };
@@ -444,7 +444,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           
           const uiMsg: ChatMessage = {
             id: newMsg.id,
-            kind: newMsg.senderId === user.id ? 'sent' : 'received',
+            kind: newMsg.kind === 'system' ? 'system' : newMsg.senderId === user.id ? 'sent' : 'received',
             text: newMsg.content,
             time: date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
           };

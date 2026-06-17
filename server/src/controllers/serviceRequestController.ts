@@ -3,6 +3,7 @@ import prisma from '../config/db';
 import { io } from '../index';
 import type { ServiceRequestKind, ServiceRequestStatus } from '@prisma/client';
 import { sendPushNotification } from '../services/pushService';
+import { sendSystemMessage } from './chatController';
 
 const safeUserSelect = {
   id: true,
@@ -301,10 +302,17 @@ export const createServiceRequest = async (req: Request, res: Response) => {
     await notifyUser(notifyTargetId, 'request', title, body);
     emitServiceRequestUpdate(request);
 
+    // Send system message to both parties
+    const systemContent =
+      kind === 'service'
+        ? `📋 ${initiator?.name || 'Someone'} has officially requested your service.`
+        : `📋 ${initiator?.name || 'Someone'} has submitted an official response.`;
+    await sendSystemMessage(requesterId, providerId, systemContent, postId);
+
     return res.status(201).json({
       status: 201,
       message: 'Official engagement started',
-      data: request,
+      data: request
     });
   } catch (error) {
     console.error('CreateServiceRequest error:', error);
@@ -436,6 +444,30 @@ export const transitionServiceRequest = async (req: Request, res: Response) => {
       await notifyUser(notifyTargetId, 'service', notifyTitle, notifyBody);
     }
     emitServiceRequestUpdate(updatedRequest);
+
+    // Send system message
+    let systemContent: string | undefined;
+    const providerName = updatedRequest.provider?.name || 'The provider';
+
+    switch (action) {
+      case 'cancel':
+      case 'withdraw':
+        systemContent = `❌ The service request has been cancelled.`;
+        await sendSystemMessage(updatedRequest.requesterId, updatedRequest.providerId, systemContent, updatedRequest.postId);
+        break;
+      case 'request_completion':
+        systemContent = `✅ ${providerName} has marked the service as complete. Please confirm or request more work.`;
+        await sendSystemMessage(updatedRequest.providerId, updatedRequest.requesterId, systemContent, updatedRequest.postId);
+        break;
+      case 'confirm_completion':
+        systemContent = `🎉 Service completed! You can now leave a review.`;
+        await sendSystemMessage(updatedRequest.providerId, updatedRequest.requesterId, systemContent, updatedRequest.postId);
+        break;
+      case 'decline_completion':
+        systemContent = `🔄 Completion was declined. Service is still in progress.`;
+        await sendSystemMessage(updatedRequest.requesterId, updatedRequest.providerId, systemContent, updatedRequest.postId);
+        break;
+    }
 
     return res.status(200).json({
       status: 200,

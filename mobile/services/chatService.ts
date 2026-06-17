@@ -6,6 +6,7 @@ export interface BackendChatMessage {
   receiverId: string;
   content: string;
   postId?: string;
+  kind: 'text' | 'system';
   isRead: boolean;
   createdAt: string;
   sender?: any;

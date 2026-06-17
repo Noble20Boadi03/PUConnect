@@ -29,6 +29,11 @@ enum NotificationKind {
   system
 }
 
+enum MessageKind {
+  text
+  system
+}
+
 model Category {
   id          ExploreCategoryId @id
   title       String
@@ -169,13 +174,14 @@ model ServiceRequest {
 }
 
 model ChatMessage {
-  id         String   @id @default(uuid())
+  id         String      @id @default(uuid())
   senderId   String
   receiverId String
   content    String
   postId     String?
-  isRead     Boolean  @default(false)
-  createdAt  DateTime @default(now())
+  kind       MessageKind @default(text)
+  isRead     Boolean     @default(false)
+  createdAt  DateTime    @default(now())
 
   sender   User  @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
   receiver User  @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
