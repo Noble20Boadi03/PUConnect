@@ -183,6 +183,8 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
     [updateFromScroll]
   );
 
+  const hasImages = post.images && post.images.length > 0;
+
   return (
     <View style={[styles.root, { backgroundColor: screenBg }]}>
       <StatusBar style={chrome.statusBarStyle} animated translucent backgroundColor="transparent" />
@@ -197,12 +199,17 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
         }}
         refreshControl={refreshControl}
       >
-        <PostImageGallery
-          images={post.images}
-          recyclingKeyPrefix={`post-${post.id}`}
-          screenBg={screenBg}
-          topInset={insets.top}
-        />
+        {hasImages ? (
+          <PostImageGallery
+            images={post.images}
+            recyclingKeyPrefix={`post-${post.id}`}
+            screenBg={screenBg}
+            topInset={insets.top}
+          />
+        ) : (
+          // Add top padding for safe area when no image gallery
+          <View style={{ height: insets.top + Spacing.sm }} />
+        )}
 
         <View style={[styles.contentCard, { backgroundColor: cardBg }]}>
           <View style={styles.metaRow}>

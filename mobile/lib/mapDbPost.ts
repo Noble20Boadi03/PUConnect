@@ -56,6 +56,8 @@ export function mapDbPostToFeaturedPost(post: DbPost): FeaturedPost {
     };
   }
 
+  // For request posts, include images only if they exist
+  const hasImages = post.images.length > 0;
   return {
     id: post.id,
     title: post.title,
@@ -64,6 +66,10 @@ export function mapDbPostToFeaturedPost(post: DbPost): FeaturedPost {
     authorName,
     authorInitials: initialsFromName(authorName),
     tag: 'Request',
+    ...(hasImages ? {
+      thumbnail: post.images[0],
+      images: post.images
+    } : {}),
     price,
     postedAt,
   };

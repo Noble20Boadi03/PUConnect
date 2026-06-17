@@ -46,6 +46,10 @@ export interface ServicePost extends MarketPostBase {
 /** Request listings keep the text-only card layout. */
 export interface RequestPost extends MarketPostBase {
   tag: 'Request';
+  /** Remote image URL for the card thumbnail (backward compatibility). */
+  thumbnail?: string;
+  /** Array of images attached to the request. */
+  images?: string[];
 }
 
 export type FeaturedPost = ServicePost | RequestPost;
