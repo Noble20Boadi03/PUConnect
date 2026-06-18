@@ -10,6 +10,7 @@ import {
   BackHandler,
   RefreshControl,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,7 +26,8 @@ import { MessagesSelectionActionBar } from './MessagesSelectionActionBar';
 import { MessagesSelectionMoreSheet } from './MessagesSelectionMoreSheet';
 import { TabHeader } from '../TabHeader';
 import type { ConversationPreview } from '../../types';
-import { useChatStore } from '../../store';
+import { useChatStore, useServiceRequestsStore, useAuthStore } from '../../store';
+import { isActiveServiceStatus } from '../../lib/mapServiceRequest';
 
 type InboxFilter = 'all' | 'unread';
 
@@ -69,6 +71,132 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
   const isSelectionMode = selectedIds.length > 0;
   const navigation = useNavigation();
 
+  const { user: currentUser } = useAuthStore();
+  const { 
+    deleteConversation, 
+    muteConversation, 
+    unmuteConversation, 
+    pinConversation, 
+    unpinConversation, 
+    markMessagesAsRead: markRead, 
+    fetchUnreadCount 
+  } = useChatStore();
+  const serviceRequests = useServiceRequestsStore(s => s.requests);
+
+  // Selection handlers - declared early to avoid "used before declaration" errors
+  const toggleSelection = useCallback((id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedIds([]);
+  }, []);
+
+  // Get selected conversations
+  const selectedConversations = useMemo(() => {
+    return conversations.filter(c => selectedIds.includes(c.id));
+  }, [conversations, selectedIds]);
+
+  // Check if any selected has active service
+  const hasActiveService = useMemo(() => {
+    if (!currentUser) return false;
+    return selectedConversations.some(conv => {
+      return serviceRequests.some(req => {
+        if (!isActiveServiceStatus(req.status)) return false;
+        return (req.requesterId === currentUser.id || req.providerId === currentUser.id) &&
+               (req.requesterId === conv.id || req.providerId === conv.id);
+      });
+    });
+  }, [selectedConversations, serviceRequests, currentUser]);
+
+  // Action handlers
+  const handleDelete = useCallback(async () => {
+    const eligible = selectedConversations.filter(conv => {
+      if (!currentUser) return true;
+      const hasActive = serviceRequests.some(req => {
+        if (!isActiveServiceStatus(req.status)) return false;
+        return (req.requesterId === currentUser.id || req.providerId === currentUser.id) &&
+               (req.requesterId === conv.id || req.providerId === conv.id);
+      });
+      return !hasActive;
+    });
+
+    if (eligible.length === 0) {
+      Alert.alert('Cannot Delete', 'Selected conversations have active services.');
+      clearSelection();
+      return;
+    }
+
+    if (eligible.length < selectedConversations.length) {
+      Alert.alert('Note', 'Some conversations were skipped because they have active services.');
+    }
+
+    for (const conv of eligible) {
+      try {
+        await deleteConversation(conv.providerUsername);
+      } catch (err) {
+        console.error('Failed to delete conversation:', err);
+      }
+    }
+
+    clearSelection();
+  }, [selectedConversations, deleteConversation, currentUser, serviceRequests, clearSelection]);
+
+  const handleMarkRead = useCallback(async () => {
+    for (const conv of selectedConversations) {
+      try {
+        await markRead(conv.providerUsername);
+      } catch (err) {
+        console.error('Failed to mark as read:', err);
+      }
+    }
+    fetchUnreadCount();
+    clearSelection();
+  }, [selectedConversations, markRead, fetchUnreadCount, clearSelection]);
+
+  const handlePin = useCallback(async () => {
+    for (const conv of selectedConversations) {
+      try {
+        if (conv.isPinned) {
+          await unpinConversation(conv.providerUsername);
+        } else {
+          await pinConversation(conv.providerUsername);
+        }
+      } catch (err) {
+        console.error('Failed to pin/unpin conversation:', err);
+      }
+    }
+    clearSelection();
+  }, [selectedConversations, pinConversation, unpinConversation, clearSelection]);
+
+  const handleMute = useCallback(async () => {
+    for (const conv of selectedConversations) {
+      try {
+        if (conv.isMuted) {
+          await unmuteConversation(conv.providerUsername);
+        } else {
+          await muteConversation(conv.providerUsername);
+        }
+      } catch (err) {
+        console.error('Failed to mute/unmute conversation:', err);
+      }
+    }
+    clearSelection();
+  }, [selectedConversations, muteConversation, unmuteConversation, clearSelection]);
+
+  const handleViewProfile = useCallback(() => {
+    if (selectedConversations.length !== 1) return;
+    const conv = selectedConversations[0];
+    if (conv.participantRole !== 'provider') return;
+    clearSelection();
+    setShowMoreSheet(false);
+    router.push(`/profile/${conv.providerUsername}` as any);
+  }, [selectedConversations, clearSelection, router]);
+
   const handleCompose = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push('/chat/new' as any);
@@ -96,18 +224,6 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
     const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
     return () => subscription.remove();
   }, [isSelectionMode]);
-
-  const toggleSelection = useCallback((id: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
-  }, []);
-
-  const clearSelection = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSelectedIds([]);
-  }, []);
 
   const allSelected = selectedIds.length === conversations.length && conversations.length > 0;
   
@@ -508,10 +624,10 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
 
       <MessagesSelectionActionBar
         isVisible={isSelectionMode}
-        onPin={() => { clearSelection(); }}
-        onMute={() => { clearSelection(); }}
-        onDelete={() => { clearSelection(); }}
-        onMarkRead={() => { clearSelection(); }}
+        onPin={handlePin}
+        onMute={handleMute}
+        onDelete={handleDelete}
+        onMarkRead={handleMarkRead}
         onMore={() => setShowMoreSheet(true)}
       />
 
@@ -521,11 +637,8 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
         onToggleSelectAll={toggleSelectAll}
         allSelected={allSelected}
         onViewProfile={
-          selectedIds.length === 1
-            ? () => {
-                // Future profile navigation
-                clearSelection();
-              }
+          selectedIds.length === 1 && selectedConversations[0]?.participantRole === 'provider'
+            ? handleViewProfile
             : undefined
         }
       />

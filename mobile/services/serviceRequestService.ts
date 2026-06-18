@@ -15,6 +15,11 @@ export const serviceRequestService = {
     return response.data.data;
   },
 
+  async getActiveCount(): Promise<{ count: number }> {
+    const response = await apiClient.get<ApiResponse<{ count: number }>>('/service-requests/active-count');
+    return response.data.data;
+  },
+
   async getForChat(postId: string, peerUsername: string): Promise<DbServiceRequest | null> {
     const response = await apiClient.get<ApiResponse<DbServiceRequest | null>>(
       '/service-requests/chat',

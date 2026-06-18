@@ -48,11 +48,13 @@ export default function MessagesScreen() {
       handle: `@${c.user.username}`,
       avatarUrl: c.user.avatarUrl || '',
     },
+    participantRole: c.user.role,
     lastMessage: c.lastMessage.content,
     timestamp: new Date(c.lastMessage.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
     unread: !c.lastMessage.isRead && c.lastMessage.receiverId === currentUser?.id,
     postId: c.lastMessage.post?.id,
     isMuted: c.isMuted,
+    isPinned: c.isPinned,
   }));
 
   return (

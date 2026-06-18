@@ -119,6 +119,32 @@ export const getServiceRequests = async (req: Request, res: Response) => {
 };
 
 /**
+ * Get active service request count for authenticated user
+ * @route GET /api/service-requests/active-count
+ */
+export const getActiveServiceRequestCount = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const count = await prisma.serviceRequest.count({
+      where: {
+        OR: [{ requesterId: userId }, { providerId: userId }],
+        status: { in: ACTIVE_STATUSES },
+      },
+    });
+    return res.status(200).json({
+      status: 200,
+      data: { count },
+    });
+  } catch (error) {
+    console.error('GetActiveServiceRequestCount error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error',
+    });
+  }
+};
+
+/**
  * Get service request for a chat context (post + peer)
  * @route GET /api/service-requests/chat
  */

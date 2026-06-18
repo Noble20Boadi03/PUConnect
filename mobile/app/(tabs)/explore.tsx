@@ -11,12 +11,14 @@ import {
 } from '../../components';
 import type { ExploreTab } from '../../types';
 import { Spacing } from '../../constants';
+import { useTabBarHeight } from '../../hooks';
 import { useExploreStore } from '../../store/exploreStore';
 
 export default function ExploreScreen() {
   const [activeTab, setActiveTab] = useState<ExploreTab>('categories');
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const tabBarHeight = useTabBarHeight();
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
@@ -49,7 +51,7 @@ export default function ExploreScreen() {
         </ExploreHeader>
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight }]}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.list}>
@@ -92,7 +94,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: 120,
   },
   list: {
     gap: Spacing.sm + 4,

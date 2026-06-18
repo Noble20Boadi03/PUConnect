@@ -29,8 +29,12 @@ interface ChatState {
   loadMoreMessages: () => Promise<void>;
   sendMessage: (receiverUsername: string, content: string, postId?: string) => Promise<void>;
   deleteMessage: (messageId: string) => Promise<void>;
+  deleteConversation: (username: string) => Promise<void>;
   muteConversation: (username: string) => Promise<void>;
   unmuteConversation: (username: string) => Promise<void>;
+  pinConversation: (username: string) => Promise<void>;
+  unpinConversation: (username: string) => Promise<void>;
+  markMessagesAsRead: (username: string) => Promise<void>;
   fetchUnreadCount: () => Promise<void>;
   subscribeToMessages: () => void;
   unsubscribeFromMessages: () => void;
@@ -240,7 +244,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
         });
       }
       
-      chatService.markMessagesAsRead(username).catch(() => {});
+      chatService.markMessagesAsRead(username).then(() => {
+        get().fetchUnreadCount();
+      }).catch(() => {});
     } catch (error) {
       console.error('fetchMessages error:', error);
       set({ 
@@ -414,6 +420,61 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
+  deleteConversation: async (username: string) => {
+    try {
+      await chatService.deleteConversation(username);
+      set((state) => ({
+        conversations: state.conversations.filter((conv) => conv.user.username !== username)
+      }));
+    } catch (error) {
+      console.error('DeleteConversation error:', error);
+      throw error;
+    }
+  },
+
+  pinConversation: async (username: string) => {
+    try {
+      await chatService.pinConversation(username);
+      set((state) => ({
+        conversations: state.conversations.map((conv) =>
+          conv.user.username === username ? { ...conv, isPinned: true } : conv
+        )
+      }));
+    } catch (error) {
+      console.error('PinConversation error:', error);
+    }
+  },
+
+  unpinConversation: async (username: string) => {
+    try {
+      await chatService.unpinConversation(username);
+      set((state) => ({
+        conversations: state.conversations.map((conv) =>
+          conv.user.username === username ? { ...conv, isPinned: false } : conv
+        )
+      }));
+    } catch (error) {
+      console.error('UnpinConversation error:', error);
+    }
+  },
+
+  markMessagesAsRead: async (username: string) => {
+    try {
+      await chatService.markMessagesAsRead(username);
+      set((state) => ({
+        conversations: state.conversations.map((conv) => {
+          if (conv.user.username !== username) return conv;
+          return {
+            ...conv,
+            lastMessage: { ...conv.lastMessage, isRead: true }
+          };
+        })
+      }));
+    } catch (error) {
+      console.error('MarkMessagesAsRead error:', error);
+    }
+  },
+
   subscribeToMessages: () => {
     const user = useAuthStore.getState().user;
     if (!user) return;
@@ -452,10 +513,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
           
           if (messageExists) {
             if (newMsg.receiverId === user.id) {
-              chatService.markMessagesAsRead(activeThread.providerUsername).catch(() => {});
+              chatService.markMessagesAsRead(activeThread.providerUsername).then(() => {
+                fetchConversations();
+                fetchUnreadCount();
+              }).catch(() => {});
+            } else {
+              fetchConversations();
+              fetchUnreadCount();
             }
-            fetchConversations();
-            fetchUnreadCount();
             return;
           }
 
@@ -492,10 +557,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
             set({ activeThread: { ...activeThread, dateGroups: newGroups, postContext: newPostContext } });
             
             if (newMsg.receiverId === user.id) {
-              chatService.markMessagesAsRead(activeThread.providerUsername).catch(() => {});
+              chatService.markMessagesAsRead(activeThread.providerUsername).then(() => {
+                fetchConversations();
+                fetchUnreadCount();
+              }).catch(() => {});
+            } else {
+              fetchConversations();
+              fetchUnreadCount();
             }
-            fetchConversations();
-            fetchUnreadCount();
             return;
           }
 
@@ -518,12 +587,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
           
           // Mark messages as read if we received them
           if (newMsg.receiverId === user.id) {
-            chatService.markMessagesAsRead(activeThread.providerUsername).catch(() => {});
+            chatService.markMessagesAsRead(activeThread.providerUsername).then(() => {
+              fetchConversations();
+              fetchUnreadCount();
+            }).catch(() => {});
+          } else {
+            fetchConversations();
+            fetchUnreadCount();
           }
+          return; // Skip the outer fetch calls since they're handled here
         }
       }
       
-      // Refresh conversations list
+      // Refresh conversations list for irrelevant messages or if no active thread
       fetchConversations();
       fetchUnreadCount();
     });

@@ -5,8 +5,7 @@ import * as Haptics from 'expo-haptics';
 
 import { GuardedPressable } from '../GuardedPressable';
 import { useAppRouter } from '../../hooks';
-import { useAuthStore, useServiceRequestsStore } from '../../store';
-import { isActiveServiceStatus } from '../../lib/mapServiceRequest';
+import { useServiceRequestsStore } from '../../store';
 
 export interface ServiceStatusButtonProps {
   backgroundColor: string;
@@ -22,14 +21,7 @@ export const ServiceStatusButton: React.FC<ServiceStatusButtonProps> = ({
   size = 40,
 }) => {
   const router = useAppRouter();
-  const userId = useAuthStore((s) => s.user?.id);
-  const requests = useServiceRequestsStore((s) => s.requests);
-  const activeCount = requests.filter(
-    (r) =>
-      !!userId &&
-      isActiveServiceStatus(r.status) &&
-      (r.requesterId === userId || r.providerId === userId)
-  ).length;
+  const activeCount = useServiceRequestsStore((s) => s.activeCount);
 
   const handlePress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

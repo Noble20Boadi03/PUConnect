@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { useAppRouter, useThemeColor, useThemeToggle, useChangeProfilePhoto } from '../../hooks';
+import { useAppRouter, useThemeColor, useThemeToggle, useChangeProfilePhoto, useTabBarHeight } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import {
   ProfileHeroSection,
@@ -33,6 +33,7 @@ export default function ProfileScreen() {
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const tabBarHeight = useTabBarHeight();
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
@@ -151,7 +152,7 @@ export default function ProfileScreen() {
       />
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -297,7 +298,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: 120,
   },
   sectionHeader: {
     marginTop: Spacing.lg + 4,

@@ -20,9 +20,11 @@ export interface BackendConversation {
     username: string;
     name: string;
     avatarUrl: string;
+    role?: string;
   };
   lastMessage: BackendChatMessage;
   isMuted?: boolean;
+  isPinned?: boolean;
 }
 
 export interface GetConversationsResponse {
@@ -71,11 +73,23 @@ export const chatService = {
     await apiClient.delete(`/chat/message/${messageId}`);
   },
 
+  deleteConversation: async (username: string): Promise<void> => {
+    await apiClient.delete(`/chat/conversation/${username}`);
+  },
+
   muteConversation: async (username: string): Promise<void> => {
     await apiClient.post(`/chat/${username}/mute`);
   },
 
   unmuteConversation: async (username: string): Promise<void> => {
     await apiClient.delete(`/chat/${username}/mute`);
+  },
+
+  pinConversation: async (username: string): Promise<void> => {
+    await apiClient.post(`/chat/${username}/pin`);
+  },
+
+  unpinConversation: async (username: string): Promise<void> => {
+    await apiClient.delete(`/chat/${username}/pin`);
   },
 };

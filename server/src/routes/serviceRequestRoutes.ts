@@ -3,6 +3,7 @@ import {
   getServiceRequests,
   getServiceRequestById,
   getServiceRequestForChat,
+  getActiveServiceRequestCount,
   createServiceRequest,
   transitionServiceRequest,
   updateServiceRequest,
@@ -14,6 +15,7 @@ import { protect } from '../middlewares/authMiddleware';
 const router = express.Router();
 
 router.get('/', protect, getServiceRequests);
+router.get('/active-count', protect, getActiveServiceRequestCount);
 router.get('/chat', protect, getServiceRequestForChat);
 router.get('/:id', protect, getServiceRequestById);
 router.post('/', protect, createServiceRequest);

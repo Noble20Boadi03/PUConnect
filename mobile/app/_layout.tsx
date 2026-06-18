@@ -25,7 +25,7 @@ export default function RootLayout() {
   const hydrateProfile = useProfileStore((s) => s.hydrate);
   const { subscribeToMessages, fetchConversations, fetchUnreadCount } = useChatStore();
   const { subscribeToNotifications, fetchNotifications, fetchUnreadCount: fetchNotificationUnreadCount } = useNotificationsStore();
-  const { fetchRequests, subscribeToUpdates } = useServiceRequestsStore();
+  const { fetchRequests, subscribeToUpdates, fetchActiveCount } = useServiceRequestsStore();
   const { fetchPosts } = useMarketStore();
   const { fetchExploreData } = useExploreStore();
   const { fetchProfile } = useUserProfileStore();
@@ -42,6 +42,7 @@ export default function RootLayout() {
       void hydrateProfile(user);
       void fetchUnreadCount();
       void fetchNotificationUnreadCount();
+      void fetchActiveCount();
       subscribeToMessages();
       subscribeToNotifications();
       const unsubscribeServiceRequests = subscribeToUpdates();
@@ -68,6 +69,7 @@ export default function RootLayout() {
     hydrateProfile,
     fetchUnreadCount,
     fetchNotificationUnreadCount,
+    fetchActiveCount,
     subscribeToMessages,
     subscribeToNotifications,
     subscribeToUpdates,

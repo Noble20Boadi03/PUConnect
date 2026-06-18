@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View, ScrollView, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Spacing } from '../../constants';
-import { useThemeColor } from '../../hooks';
+import { useThemeColor, useTabBarHeight } from '../../hooks';
 import { Shimmer } from '../Shimmer';
 import { FeaturedPostCardSkeleton } from '../FeaturedPostCard';
 
@@ -10,6 +10,7 @@ export const ProfileViewSkeleton: React.FC = () => {
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const tabBarHeight = useTabBarHeight();
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
 
@@ -24,7 +25,7 @@ export const ProfileViewSkeleton: React.FC = () => {
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Hero Section */}
@@ -104,7 +105,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: 120,
   },
   heroSection: {
     borderRadius: 20,

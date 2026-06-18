@@ -27,6 +27,7 @@ export interface ExplorePeoplePanelProps {
   onProviderPress: (provider: ExploreProvider) => void;
   searchQuery?: string;
   refreshControl?: React.ReactElement<RefreshControlProps>;
+  tabBarHeight: number;
 }
 
 export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
@@ -43,6 +44,7 @@ export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
   onProviderPress,
   searchQuery = '',
   refreshControl,
+  tabBarHeight,
 }) => {
   const filtered = useMemo(
     () => filterExploreProviders(providers, activeFilter, searchQuery),
@@ -77,7 +79,7 @@ export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
         borderColor={borderColor}
       />
 
-      <View style={styles.scrollContent}>
+      <View style={[styles.scrollContent, { paddingBottom: tabBarHeight }]}>
         {filtered.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={[styles.emptyText, { color: mutedColor }]}>{emptyMessage}</Text>
@@ -110,7 +112,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: 120,
   },
   list: {
     gap: CARD_GAP,

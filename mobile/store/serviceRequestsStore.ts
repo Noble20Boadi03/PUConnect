@@ -10,12 +10,14 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 interface ServiceRequestsState {
   requests: DbServiceRequest[];
+  activeCount: number;
   isLoading: boolean;
   isRefreshing: boolean;
   error: string | null;
   hydrated: boolean;
   lastFetched: number | null;
   fetchRequests: (isRefresh?: boolean) => Promise<void>;
+  fetchActiveCount: () => Promise<void>;
   fetchForChat: (postId: string, peerUsername: string) => Promise<DbServiceRequest | null>;
   createOfficialEngagement: (postId: string) => Promise<DbServiceRequest>;
   transition: (
@@ -41,11 +43,21 @@ function upsertById(list: DbServiceRequest[], item: DbServiceRequest): DbService
 
 export const useServiceRequestsStore = create<ServiceRequestsState>((set, get) => ({
   requests: [],
+  activeCount: 0,
   isLoading: false,
   isRefreshing: false,
   error: null,
   hydrated: false,
   lastFetched: null,
+
+  fetchActiveCount: async () => {
+    try {
+      const { count } = await serviceRequestService.getActiveCount();
+      set({ activeCount: count });
+    } catch (error) {
+      console.error('Failed to fetch active service request count:', error);
+    }
+  },
 
   fetchRequests: async (isRefresh = false) => {
     const { requests, lastFetched } = get();
@@ -151,6 +163,7 @@ export const useServiceRequestsStore = create<ServiceRequestsState>((set, get) =
 
     const handler = (request: DbServiceRequest) => {
       get().upsertRequest(request);
+      get().fetchActiveCount();
     };
 
     socket.on('serviceRequestUpdated', handler);
@@ -194,6 +207,7 @@ export const useServiceRequestsStore = create<ServiceRequestsState>((set, get) =
   reset: () => {
     set({
       requests: [],
+      activeCount: 0,
       isLoading: false,
       isRefreshing: false,
       error: null,

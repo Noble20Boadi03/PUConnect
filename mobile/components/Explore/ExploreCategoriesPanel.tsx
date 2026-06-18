@@ -11,14 +11,16 @@ export interface ExploreCategoriesPanelProps {
   categories: ExploreCategory[];
   onCategoryPress?: (category: ExploreCategory) => void;
   refreshControl?: React.ReactElement<RefreshControlProps>;
+  tabBarHeight: number;
 }
 
 export const ExploreCategoriesPanel: React.FC<ExploreCategoriesPanelProps> = ({
   categories,
   onCategoryPress,
   refreshControl,
+  tabBarHeight,
 }) => (
-  <View style={styles.scrollContent}>
+  <View style={[styles.scrollContent, { paddingBottom: tabBarHeight }]}>
     <View style={styles.list}>
       {categories.map((category) => (
         <ExploreCategoryCard
@@ -34,7 +36,6 @@ export const ExploreCategoriesPanel: React.FC<ExploreCategoriesPanelProps> = ({
 const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: HORIZONTAL_PAD,
-    paddingBottom: 120,
   },
   list: {
     gap: LIST_GAP,

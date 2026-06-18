@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 
-import { useAppRouter, useThemeColor } from '../../hooks';
+import { useAppRouter, useThemeColor, useTabBarHeight } from '../../hooks';
 import { useAuthStore } from '../../store';
 import { buildExploreCategoryHref, buildProviderProfileHref } from '../../lib';
 
@@ -51,6 +51,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const tabBarHeight = useTabBarHeight();
 
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
@@ -207,6 +208,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
               onProviderPress={handleProviderPress}
               searchQuery={searchQuery}
               refreshControl={undefined}
+              tabBarHeight={tabBarHeight}
               {...peopleTheme}
             />
           ) : (
@@ -214,6 +216,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
               categories={categories}
               onCategoryPress={handleCategoryPress}
               refreshControl={undefined}
+              tabBarHeight={tabBarHeight}
             />
           )}
         </View>

@@ -83,36 +83,37 @@ model User {
   updatedAt     DateTime           @updatedAt
   otpCode       String?
   otpExpires    DateTime?
-  pushToken     String?  @map("push_token")
+  pushToken     String?            @map("push_token")
 
   // Relations
-  posts            Post[]
-  sentMessages     ChatMessage[]     @relation("SentMessages")
-  receivedMessages ChatMessage[]     @relation("ReceivedMessages")
-  sentReviews      Review[]          @relation("SentReviews")
-  receivedReviews  Review[]          @relation("ReceivedReviews")
-  sentRequests     ServiceRequest[]  @relation("SentRequests")
-  receivedRequests ServiceRequest[]  @relation("ReceivedRequests")
-  services         ProviderService[]
-  notifications    Notification[]
-  mutedConversations MutedConversation[]
-  category         Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  posts               Post[]
+  sentMessages        ChatMessage[]        @relation("SentMessages")
+  receivedMessages    ChatMessage[]        @relation("ReceivedMessages")
+  sentReviews         Review[]             @relation("SentReviews")
+  receivedReviews     Review[]             @relation("ReceivedReviews")
+  sentRequests        ServiceRequest[]     @relation("SentRequests")
+  receivedRequests    ServiceRequest[]     @relation("ReceivedRequests")
+  services            ProviderService[]
+  notifications       Notification[]
+  mutedConversations  MutedConversation[]
+  pinnedConversations PinnedConversation[]
+  category            Category?            @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
   @@map("users")
 }
 
 model Post {
-  id               String         @id @default(uuid())
-  title            String
-  description      String
-  tag              String // "Service" or "Request"
-  price            Json
-  images           String[]
-  hashtags         String[]
-  helpCategoryIds  String[]
-  authorId         String
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id              String   @id @default(uuid())
+  title           String
+  description     String
+  tag             String // "Service" or "Request"
+  price           Json
+  images          String[]
+  hashtags        String[]
+  helpCategoryIds String[]
+  authorId        String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   author       User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
   requests     ServiceRequest[]
@@ -212,16 +213,16 @@ model Review {
 }
 
 model Notification {
-  id          String           @id @default(uuid())
-  userId      String
-  kind        NotificationKind
-  title       String
-  body        String
-  read        Boolean          @default(false)
-  targetId    String?
+  id           String           @id @default(uuid())
+  userId       String
+  kind         NotificationKind
+  title        String
+  body         String
+  read         Boolean          @default(false)
+  targetId     String?
   targetScreen String?
-  data        Json?
-  createdAt   DateTime         @default(now())
+  data         Json?
+  createdAt    DateTime         @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -229,13 +230,25 @@ model Notification {
 }
 
 model MutedConversation {
-  id                 String   @id @default(uuid())
-  userId             String
+  id                  String   @id @default(uuid())
+  userId              String
   participantUsername String
-  createdAt          DateTime @default(now())
+  createdAt           DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, participantUsername])
   @@map("muted_conversations")
+}
+
+model PinnedConversation {
+  id                  String   @id @default(uuid())
+  userId              String
+  participantUsername String
+  createdAt           DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, participantUsername])
+  @@map("pinned_conversations")
 }

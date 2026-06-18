@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View, ScrollView, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Spacing } from '../constants';
-import { useThemeColor } from '../hooks';
+import { useThemeColor, useTabBarHeight } from '../hooks';
 import { Shimmer } from './Shimmer';
 import { FeaturedPostCardSkeleton } from './FeaturedPostCard';
 
@@ -10,6 +10,7 @@ export const MarketViewSkeleton: React.FC = () => {
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const tabBarHeight = useTabBarHeight();
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
@@ -39,7 +40,7 @@ export const MarketViewSkeleton: React.FC = () => {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Popular Services */}
@@ -156,7 +157,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: Spacing.lg,
-    paddingBottom: 120,
   },
   section: {
     marginBottom: Spacing.lg,

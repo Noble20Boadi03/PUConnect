@@ -1,17 +1,11 @@
 import React from 'react';
-import { Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColor } from '../../hooks';
 import { useChatStore, useNotificationsStore } from '../../store';
-
-/**
- * Base height of the tab bar content (icons + labels) before safe-area padding.
- * Android Material guidelines use 56; iOS HIG use 49.
- */
-const TAB_BAR_BASE_HEIGHT = Platform.OS === 'ios' ? 49 : 56;
+import { TAB_BAR_BASE_HEIGHT } from '../../constants';
 
 export default function TabsLayout() {
   const colorScheme = useColorScheme();

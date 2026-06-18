@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
-import { useAppRouter, useThemeColor } from '../../hooks';
+import { useAppRouter, useThemeColor, useTabBarHeight } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { MarketHeaderTop, MarketFeedHeader, FeaturedPostCard, MarketViewSkeleton } from '../../components';
 import type { FeaturedPost, MarketFilter } from '../../types';
@@ -44,6 +44,7 @@ export default function MarketScreen() {
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const tabBarHeight = useTabBarHeight();
 
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
@@ -260,7 +261,7 @@ export default function MarketScreen() {
         ListHeaderComponent={ListHeaderComponent}
         ListFooterComponent={renderFooter}
         ListEmptyComponent={renderEmptyComponent}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled
@@ -300,7 +301,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: Spacing.lg,
-    paddingBottom: 120,
   },
   featuredItem: {
     paddingHorizontal: Spacing.lg,

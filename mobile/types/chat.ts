@@ -58,6 +58,7 @@ export interface ConversationPreview {
   id: string;
   providerUsername: string;
   participant: ChatParticipant;
+  participantRole?: string;
   contextLine?: ConversationContextLine;
   lastMessage: string;
   timestamp: string;

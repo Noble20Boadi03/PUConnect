@@ -212,12 +212,17 @@ export const getConversations = async (req: Request, res: Response) => {
     const skip = (pageNumber - 1) * limitNumber;
 
     console.log('[TIMESTAMP] getConversations before mutedConversations:', new Date().toISOString());
-    // First get all muted conversations for user
+    // First get all muted and pinned conversations for user
     const mutedConversations = await prisma.mutedConversation.findMany({
       where: { userId },
       select: { participantUsername: true }
     });
+    const pinnedConversations = await prisma.pinnedConversation.findMany({
+      where: { userId },
+      select: { participantUsername: true }
+    });
     const mutedUsernames = new Set(mutedConversations.map(mc => mc.participantUsername));
+    const pinnedUsernames = new Set(pinnedConversations.map(pc => pc.participantUsername));
 
     console.log('[TIMESTAMP] getConversations before allLastMessages:', new Date().toISOString());
     // First get all unique user IDs and last messages with proper ordering
@@ -238,7 +243,7 @@ export const getConversations = async (req: Request, res: Response) => {
     });
 
     console.log('[TIMESTAMP] getConversations after allLastMessages, before grouping:', new Date().toISOString());
-    // Group by user and add isMuted
+    // Group by user and add isMuted/isPinned
     const conversationMap = new Map();
     for (const msg of allLastMessages) {
       const otherUserId = msg.senderId === userId ? msg.receiverId : msg.senderId;
@@ -247,12 +252,19 @@ export const getConversations = async (req: Request, res: Response) => {
         conversationMap.set(otherUserId, {
           user: otherUser,
           lastMessage: msg,
-          isMuted: mutedUsernames.has(otherUser.username)
+          isMuted: mutedUsernames.has(otherUser.username),
+          isPinned: pinnedUsernames.has(otherUser.username)
         });
       }
     }
 
-    const allConversations = Array.from(conversationMap.values());
+    const allConversations = Array.from(conversationMap.values()).sort((a, b) => {
+      // Pinned conversations first
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      // Then by last message date (newest first)
+      return new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime();
+    });
     const total = allConversations.length;
     const paginatedConversations = allConversations.slice(skip, skip + limitNumber);
     const hasMore = skip + limitNumber < total;
@@ -267,6 +279,160 @@ export const getConversations = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('GetConversations error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error'
+    });
+  }
+};
+
+/**
+ * Delete a conversation
+ * @route DELETE /api/chat/conversation/:username
+ */
+export const deleteConversation = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const { username } = req.params;
+
+    // Find the other user
+    const otherUser = await prisma.user.findUnique({
+      where: { username },
+      select: { id: true, username: true }
+    });
+    if (!otherUser) {
+      return res.status(404).json({
+        status: 404,
+        message: 'User not found'
+      });
+    }
+
+    // Check for active service requests
+    const activeServiceRequest = await prisma.serviceRequest.findFirst({
+      where: {
+        OR: [
+          { requesterId: userId, providerId: otherUser.id },
+          { requesterId: otherUser.id, providerId: userId }
+        ],
+        status: { in: ['pending', 'active', 'pending_review'] }
+      }
+    });
+    if (activeServiceRequest) {
+      return res.status(409).json({
+        status: 409,
+        message: 'Cannot delete conversation with an ongoing service'
+      });
+    }
+
+    // Delete all messages between the two users
+    await prisma.chatMessage.deleteMany({
+      where: {
+        OR: [
+          { senderId: userId, receiverId: otherUser.id },
+          { senderId: otherUser.id, receiverId: userId }
+        ]
+      }
+    });
+
+    // Also delete muted/pinned conversation entries for this user
+    await prisma.mutedConversation.deleteMany({
+      where: {
+        userId,
+        participantUsername: username
+      }
+    });
+    await prisma.pinnedConversation.deleteMany({
+      where: {
+        userId,
+        participantUsername: username
+      }
+    });
+
+    return res.status(200).json({
+      status: 200,
+      message: 'Conversation deleted successfully'
+    });
+  } catch (error) {
+    console.error('DeleteConversation error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error'
+    });
+  }
+};
+
+/**
+ * Pin a conversation
+ * @route POST /api/chat/:username/pin
+ */
+export const pinConversation = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const { username } = req.params;
+
+    // Check if user exists
+    const participant = await prisma.user.findUnique({
+      where: { username },
+      select: { id: true, username: true }
+    });
+    if (!participant) {
+      return res.status(404).json({
+        status: 404,
+        message: 'User not found'
+      });
+    }
+
+    // Create or upsert pinned conversation
+    await prisma.pinnedConversation.upsert({
+      where: {
+        userId_participantUsername: {
+          userId,
+          participantUsername: username
+        }
+      },
+      create: {
+        userId,
+        participantUsername: username
+      },
+      update: {}
+    });
+
+    return res.status(200).json({
+      status: 200,
+      message: 'Conversation pinned'
+    });
+  } catch (error) {
+    console.error('PinConversation error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error'
+    });
+  }
+};
+
+/**
+ * Unpin a conversation
+ * @route DELETE /api/chat/:username/pin
+ */
+export const unpinConversation = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const { username } = req.params;
+
+    // Delete pinned conversation
+    await prisma.pinnedConversation.deleteMany({
+      where: {
+        userId,
+        participantUsername: username
+      }
+    });
+
+    return res.status(200).json({
+      status: 200,
+      message: 'Conversation unpinned'
+    });
+  } catch (error) {
+    console.error('UnpinConversation error:', error);
     return res.status(500).json({
       status: 500,
       message: 'Server error'

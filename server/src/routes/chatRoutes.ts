@@ -7,7 +7,10 @@ import {
   deleteChatMessage,
   muteConversation,
   unmuteConversation,
-  getUnreadCount
+  getUnreadCount,
+  deleteConversation,
+  pinConversation,
+  unpinConversation
 } from '../controllers/chatController';
 import { protect } from '../middlewares/authMiddleware';
 
@@ -20,7 +23,10 @@ router.get('/:username', protect, getChatMessages);
 router.post('/', protect, sendChatMessage);
 router.put('/:username/read', protect, markMessagesAsRead);
 router.delete('/message/:messageId', protect, deleteChatMessage);
+router.delete('/conversation/:username', protect, deleteConversation);
 router.post('/:username/mute', protect, muteConversation);
 router.delete('/:username/mute', protect, unmuteConversation);
+router.post('/:username/pin', protect, pinConversation);
+router.delete('/:username/pin', protect, unpinConversation);
 
 export default router;
