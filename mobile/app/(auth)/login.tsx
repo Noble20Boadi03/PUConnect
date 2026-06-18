@@ -48,6 +48,7 @@ export default function LoginScreen() {
   }, [registered]);
 
   const handleSignIn = async () => {
+    console.log('[TIMESTAMP] 1. handleSignIn start:', new Date().toISOString());
     if (!emailOrUsername.trim() || !password) {
       setErrorMsg('Please fill in all fields.');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -59,6 +60,7 @@ export default function LoginScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     
     try {
+      console.log('[TIMESTAMP] 2. Before authService.login call:', new Date().toISOString());
       const response = await authService.login({ emailOrUsername: emailOrUsername.trim(), password });
       
       if (registered === 'true') {

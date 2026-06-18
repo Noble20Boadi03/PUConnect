@@ -16,6 +16,7 @@ export const authService = {
    * Logs in a user with email and password.
    */
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
+    console.log('[TIMESTAMP] 3. Before apiClient.post call in authService:', new Date().toISOString());
     const response = await apiClient.post<ApiResponse<AuthResponse>>('/auth/login', credentials);
     return response.data.data;
   },

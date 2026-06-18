@@ -1,15 +1,19 @@
 import { create } from 'zustand';
 import { PROVIDER_REVIEWS_MOCK } from '../constants/providerReviewsMock';
 import type { CompletedDeal, ProviderReview, ProviderReviewSummary } from '../types/review';
+import { reviewService, type DbEligibleReview } from '../services/reviewService';
 
 interface ProviderReviewsState {
   completedDeals: CompletedDeal[];
   submittedReviews: ProviderReview[];
   dismissedDealIds: string[];
+  eligibleReviews: DbEligibleReview[];
   recordCompletedDeal: (deal: Omit<CompletedDeal, 'id'> & { id?: string }) => string;
   dismissReviewPrompt: (dealId: string) => void;
   submitReview: (review: Omit<ProviderReview, 'id' | 'isOwn'>) => ProviderReview;
   syncCompletedDealsFromRequests: (deals: CompletedDeal[]) => void;
+  fetchEligibleReviews: () => Promise<void>;
+  removeEligibleReview: (serviceRequestId: string) => void;
   reset: () => void;
 }
 
@@ -90,10 +94,18 @@ export function selectReviewableDeal(
   );
 }
 
-export const useProviderReviewsStore = create<ProviderReviewsState>((set) => ({
+export function selectIsEligibleForReview(
+  eligibleReviews: DbEligibleReview[],
+  serviceRequestId: string
+): boolean {
+  return eligibleReviews.some(review => review.id === serviceRequestId);
+}
+
+export const useProviderReviewsStore = create<ProviderReviewsState>((set, get) => ({
   completedDeals: [],
   submittedReviews: [],
   dismissedDealIds: [],
+  eligibleReviews: [],
 
   recordCompletedDeal: (deal) => {
     const id = deal.id ?? deal.serviceRequestId ?? dealId(deal.revieweeUsername, deal.postId);
@@ -135,12 +147,28 @@ export const useProviderReviewsStore = create<ProviderReviewsState>((set) => ({
       return { completedDeals: merged };
     });
   },
+
+  fetchEligibleReviews: async () => {
+    try {
+      const eligible = await reviewService.getEligibleReviews();
+      set({ eligibleReviews: eligible });
+    } catch (err) {
+      console.error('Failed to fetch eligible reviews:', err);
+    }
+  },
+
+  removeEligibleReview: (serviceRequestId) => {
+    set((state) => ({
+      eligibleReviews: state.eligibleReviews.filter(r => r.id !== serviceRequestId)
+    }));
+  },
   
   reset: () => {
     set({
       completedDeals: [],
       submittedReviews: [],
       dismissedDealIds: [],
+      eligibleReviews: [],
     });
   },
 }));

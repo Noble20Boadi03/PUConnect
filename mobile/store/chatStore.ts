@@ -12,6 +12,7 @@ interface ChatState {
   activeThread: ChatThread | null;
   currentId: string | null;
   lastFetched: number | null;
+  unreadCount: number;
   isLoading: boolean;
   isRefreshing: boolean;
   error: string | null;
@@ -30,6 +31,7 @@ interface ChatState {
   deleteMessage: (messageId: string) => Promise<void>;
   muteConversation: (username: string) => Promise<void>;
   unmuteConversation: (username: string) => Promise<void>;
+  fetchUnreadCount: () => Promise<void>;
   subscribeToMessages: () => void;
   unsubscribeFromMessages: () => void;
   clearCache: () => void;
@@ -107,6 +109,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   activeThread: null,
   currentId: null,
   lastFetched: null,
+  unreadCount: 0,
   isLoading: false,
   isRefreshing: false,
   error: null,
@@ -118,6 +121,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isLoadingMoreMessages: false,
 
   fetchConversations: async (forceRefresh = false) => {
+    const { lastFetched } = get();
+    const now = Date.now();
+    if (!forceRefresh && lastFetched && now - lastFetched < CACHE_TTL) {
+      return;
+    }
     try {
       set({ isRefreshing: true });
       const response: GetConversationsResponse = await chatService.getConversations(1, 20);
@@ -126,11 +134,21 @@ export const useChatStore = create<ChatState>((set, get) => ({
         error: null, 
         isRefreshing: false,
         conversationsPage: 1,
-        hasMoreConversations: response.hasMore
+        hasMoreConversations: response.hasMore,
+        lastFetched: now
       });
     } catch (error) {
       console.error('fetchConversations error:', error);
       set({ error: error instanceof Error ? error.message : 'Failed to load conversations', isRefreshing: false });
+    }
+  },
+
+  fetchUnreadCount: async () => {
+    try {
+      const { count } = await chatService.getUnreadCount();
+      set({ unreadCount: count });
+    } catch (error) {
+      console.error('fetchUnreadCount error:', error);
     }
   },
 
@@ -409,7 +427,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     
     // Listen for new messages
     socketInstance.on('newMessage', (newMsg: BackendChatMessage) => {
-      const { activeThread, fetchConversations } = get();
+      const { activeThread, fetchConversations, fetchUnreadCount } = get();
       
       // Update active thread if the message is part of the current conversation
       if (activeThread) {
@@ -437,6 +455,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
               chatService.markMessagesAsRead(activeThread.providerUsername).catch(() => {});
             }
             fetchConversations();
+            fetchUnreadCount();
             return;
           }
 
@@ -476,6 +495,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
               chatService.markMessagesAsRead(activeThread.providerUsername).catch(() => {});
             }
             fetchConversations();
+            fetchUnreadCount();
             return;
           }
 
@@ -505,6 +525,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       
       // Refresh conversations list
       fetchConversations();
+      fetchUnreadCount();
     });
 
     // Listen for message deleted events
@@ -531,6 +552,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       activeThread: null,
       currentId: null,
       lastFetched: null,
+      unreadCount: 0,
       isLoading: false,
       isRefreshing: false,
       error: null,

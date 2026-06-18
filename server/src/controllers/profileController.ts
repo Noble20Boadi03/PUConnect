@@ -35,8 +35,10 @@ const postSelect = {
  * @route GET /api/profile/:username
  */
 export const getProfile = async (req: Request, res: Response) => {
+  console.log('[TIMESTAMP] getProfile start:', new Date().toISOString(), 'username:', req.params.username);
   try {
     const { username } = req.params;
+    console.log('[TIMESTAMP] getProfile before findUnique user:', new Date().toISOString());
     const user = await prisma.user.findUnique({
       where: { username },
       select: {
@@ -50,6 +52,7 @@ export const getProfile = async (req: Request, res: Response) => {
         }
       }
     });
+    console.log('[TIMESTAMP] getProfile after findUnique user:', new Date().toISOString());
     if (!user) {
       return res.status(404).json({
         status: 404,
@@ -57,6 +60,7 @@ export const getProfile = async (req: Request, res: Response) => {
       });
     }
 
+    console.log('[TIMESTAMP] getProfile before categoryServices:', new Date().toISOString());
     const categoryServices = user.serviceIds && user.serviceIds.length > 0
       ? await prisma.categoryService.findMany({
           where: { id: { in: user.serviceIds } }
@@ -72,6 +76,7 @@ export const getProfile = async (req: Request, res: Response) => {
       }))
     };
 
+    console.log('[TIMESTAMP] getProfile before sending response:', new Date().toISOString());
     return res.status(200).json({
       status: 200,
       data: safeUserWithServices

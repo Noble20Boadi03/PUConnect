@@ -3,9 +3,10 @@ import {
   StyleSheet,
   View,
   Text,
-  ScrollView,
+  FlatList,
   useColorScheme,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -13,10 +14,26 @@ import * as Haptics from 'expo-haptics';
 import { useAppRouter, useThemeColor } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { MarketHeaderTop, MarketFeedHeader, FeaturedPostCard, MarketViewSkeleton } from '../../components';
-import { filterMarketPosts } from '../../lib';
 import type { FeaturedPost, MarketFilter } from '../../types';
 import { useAuthStore } from '../../store';
 import { useMarketStore } from '../../store/marketStore';
+
+// Debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 /**
  * Market feed backed by GET /api/posts. Popular services and promo sections
@@ -34,11 +51,30 @@ export default function MarketScreen() {
   const borderColor = isDark ? '#30363D' : 'rgba(0, 0, 0, 0.08)';
 
   const user = useAuthStore((s) => s.user);
-  const { posts, isLoading, isRefreshing, error, fetchPosts } = useMarketStore();
+  const { 
+    posts, 
+    isLoading, 
+    isRefreshing, 
+    isLoadingMore, 
+    error, 
+    fetchPosts, 
+    loadMorePosts, 
+    searchPosts, 
+    setFilter, 
+    activeFilter,
+    searchQuery
+  } = useMarketStore();
 
   const [showMarketTip, setShowMarketTip] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<MarketFilter>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(localSearchQuery, 400);
+
+  // Sync local search query with store search query on debounce
+  useEffect(() => {
+    if (debouncedSearchQuery !== searchQuery) {
+      searchPosts(debouncedSearchQuery);
+    }
+  }, [debouncedSearchQuery, searchQuery, searchPosts]);
 
   const onRefresh = useCallback(() => {
     fetchPosts(true);
@@ -53,11 +89,11 @@ export default function MarketScreen() {
   }, []);
 
   const handleFilterChange = useCallback((filter: MarketFilter) => {
-    setActiveFilter(filter);
-  }, []);
+    setFilter(filter);
+  }, [setFilter]);
 
   const handleSearchChange = useCallback((query: string) => {
-    setSearchQuery(query);
+    setLocalSearchQuery(query);
   }, []);
 
   const handleCardPress = useCallback(
@@ -71,20 +107,15 @@ export default function MarketScreen() {
 
   const handleSeeAllServices = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setActiveFilter('services');
-  }, []);
+    setFilter('services');
+  }, [setFilter]);
 
   const handleSeeAllRequests = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setActiveFilter('requests');
-  }, []);
+    setFilter('requests');
+  }, [setFilter]);
 
   const showDiscoverySections = activeFilter === 'all' && !searchQuery;
-
-  const filteredPosts = useMemo(
-    () => filterMarketPosts(posts, activeFilter, searchQuery),
-    [posts, activeFilter, searchQuery]
-  );
 
   const emptyMessage = useMemo(() => {
     switch (activeFilter) {
@@ -109,7 +140,7 @@ export default function MarketScreen() {
       onDismissTip: toggleTip,
       activeFilter,
       onFilterChange: handleFilterChange,
-      searchQuery,
+      searchQuery: localSearchQuery,
       onSearchChange: handleSearchChange,
     }),
     [
@@ -123,7 +154,7 @@ export default function MarketScreen() {
       toggleTip,
       activeFilter,
       handleFilterChange,
-      searchQuery,
+      localSearchQuery,
       handleSearchChange,
     ]
   );
@@ -167,6 +198,54 @@ export default function MarketScreen() {
     [cardBg, searchBg, Colors.text, Colors.icon, Colors.primary, borderColor]
   );
 
+  const keyExtractor = useCallback((item: FeaturedPost) => item.id, []);
+
+  const renderItem = useCallback(({ item }: { item: FeaturedPost }) => {
+    return (
+      <View style={styles.featuredItem}>
+        <FeaturedPostCard
+          item={item}
+          layout="stack"
+          onPress={() => handleCardPress(item)}
+          {...postCardTheme}
+        />
+      </View>
+    );
+  }, [handleCardPress, postCardTheme]);
+
+  const renderFooter = useCallback(() => {
+    if (!isLoadingMore) return null;
+    return (
+      <View style={styles.footer}>
+        <ActivityIndicator size="small" color={Colors.primary} />
+      </View>
+    );
+  }, [isLoadingMore, Colors.primary]);
+
+  const renderEmptyComponent = useCallback(() => {
+    if (showDiscoverySections || isLoading) return null;
+    return (
+      <View style={styles.emptyState}>
+        <Text style={[styles.emptyText, { color: Colors.icon }]}>{emptyMessage}</Text>
+      </View>
+    );
+  }, [showDiscoverySections, isLoading, Colors.icon, emptyMessage]);
+
+  const ListHeaderComponent = useCallback(() => (
+    <>
+      {error ? (
+        <View style={styles.errorState}>
+          <Text style={[styles.errorText, { color: Colors.icon }]}>{error}</Text>
+        </View>
+      ) : null}
+      <MarketFeedHeader {...feedHeaderTheme} />
+    </>
+  ), [error, Colors.icon, feedHeaderTheme]);
+
+  const onEndReached = useCallback(() => {
+    loadMorePosts();
+  }, [loadMorePosts]);
+
   if (isLoading) {
     return <MarketViewSkeleton />;
   }
@@ -174,43 +253,25 @@ export default function MarketScreen() {
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
       <MarketHeaderTop {...headerTheme} />
-      <ScrollView
-        style={[styles.scroll, { backgroundColor: screenBg }]}
+      <FlatList
+        data={showDiscoverySections ? [] : posts}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        ListHeaderComponent={ListHeaderComponent}
+        ListFooterComponent={renderFooter}
+        ListEmptyComponent={renderEmptyComponent}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled
         overScrollMode="never"
         removeClippedSubviews
+        onEndReached={onEndReached}
+        onEndReachedThreshold={0.5}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
         }
-      >
-        {error ? (
-          <View style={styles.errorState}>
-            <Text style={[styles.errorText, { color: Colors.icon }]}>{error}</Text>
-          </View>
-        ) : null}
-
-        <MarketFeedHeader {...feedHeaderTheme} />
-
-        {!showDiscoverySections && filteredPosts.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={[styles.emptyText, { color: Colors.icon }]}>{emptyMessage}</Text>
-          </View>
-        ) : !showDiscoverySections ? (
-          filteredPosts.map((item) => (
-            <View key={item.id} style={styles.featuredItem}>
-              <FeaturedPostCard
-                item={item}
-                layout="stack"
-                onPress={() => handleCardPress(item)}
-                {...postCardTheme}
-              />
-            </View>
-          ))
-        ) : null}
-      </ScrollView>
+      />
     </View>
   );
 }
@@ -237,9 +298,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
-  scroll: {
-    flex: 1,
-  },
   scrollContent: {
     paddingTop: Spacing.lg,
     paddingBottom: 120,
@@ -257,5 +315,9 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  footer: {
+    paddingVertical: Spacing.md,
+    alignItems: 'center',
   },
 });

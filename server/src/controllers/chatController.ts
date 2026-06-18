@@ -203,6 +203,7 @@ export const getChatMessages = async (req: Request, res: Response) => {
  * @route GET /api/chat
  */
 export const getConversations = async (req: Request, res: Response) => {
+  console.log('[TIMESTAMP] getConversations start:', new Date().toISOString());
   try {
     const userId = (req as any).user.id;
     const { page = 1, limit = 20 } = req.query;
@@ -210,6 +211,7 @@ export const getConversations = async (req: Request, res: Response) => {
     const limitNumber = parseInt(limit as string, 10);
     const skip = (pageNumber - 1) * limitNumber;
 
+    console.log('[TIMESTAMP] getConversations before mutedConversations:', new Date().toISOString());
     // First get all muted conversations for user
     const mutedConversations = await prisma.mutedConversation.findMany({
       where: { userId },
@@ -217,6 +219,7 @@ export const getConversations = async (req: Request, res: Response) => {
     });
     const mutedUsernames = new Set(mutedConversations.map(mc => mc.participantUsername));
 
+    console.log('[TIMESTAMP] getConversations before allLastMessages:', new Date().toISOString());
     // First get all unique user IDs and last messages with proper ordering
     const allLastMessages = await prisma.chatMessage.findMany({
       where: {
@@ -234,6 +237,7 @@ export const getConversations = async (req: Request, res: Response) => {
       distinct: ['senderId', 'receiverId']
     });
 
+    console.log('[TIMESTAMP] getConversations after allLastMessages, before grouping:', new Date().toISOString());
     // Group by user and add isMuted
     const conversationMap = new Map();
     for (const msg of allLastMessages) {
@@ -253,6 +257,7 @@ export const getConversations = async (req: Request, res: Response) => {
     const paginatedConversations = allConversations.slice(skip, skip + limitNumber);
     const hasMore = skip + limitNumber < total;
 
+    console.log('[TIMESTAMP] getConversations before sending response:', new Date().toISOString());
     return res.status(200).json({
       status: 200,
       data: paginatedConversations,
@@ -410,7 +415,10 @@ export const sendChatMessage = async (req: Request, res: Response) => {
           receiver.id,
           'message',
           message.sender.name || message.sender.username,
-          message.content.length > 100 ? message.content.substring(0, 100) + '...' : message.content
+          message.content.length > 100 ? message.content.substring(0, 100) + '...' : message.content,
+          message.sender.username,
+          `/chat/${message.sender.username}`,
+          { type: 'message', username: message.sender.username }
         );
       }
     }
@@ -464,6 +472,32 @@ export const markMessagesAsRead = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('MarkMessagesAsRead error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error'
+    });
+  }
+};
+
+/**
+ * Get unread messages count for authenticated user
+ * @route GET /api/chat/unread-count
+ */
+export const getUnreadCount = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const unreadCount = await prisma.chatMessage.count({
+      where: {
+        receiverId: userId,
+        isRead: false
+      }
+    });
+    return res.status(200).json({
+      status: 200,
+      data: { count: unreadCount }
+    });
+  } catch (error) {
+    console.error('GetUnreadCount error:', error);
     return res.status(500).json({
       status: 500,
       message: 'Server error'

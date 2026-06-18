@@ -8,6 +8,7 @@ import { useAuthStore, useProfileStore, useChatStore, useNotificationsStore, use
 import { useProviderReviewsStore } from '../store/providerReviewsStore';
 import { initializeThemePreference } from '../lib/themePreference';
 import { runGuardedNavigation } from '../lib/guardedNavigation';
+import { handleNotificationNavigation } from '../lib';
 import { useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { applyThemeSystemChrome } from '../lib/systemChrome';
@@ -22,8 +23,8 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const { isAuthenticated, isLoading, initialize, user, isFirstLoginSession, hasCompletedOnboarding } = useAuthStore();
   const hydrateProfile = useProfileStore((s) => s.hydrate);
-  const { subscribeToMessages, fetchConversations } = useChatStore();
-  const { subscribeToNotifications, fetchNotifications } = useNotificationsStore();
+  const { subscribeToMessages, fetchConversations, fetchUnreadCount } = useChatStore();
+  const { subscribeToNotifications, fetchNotifications, fetchUnreadCount: fetchNotificationUnreadCount } = useNotificationsStore();
   const { fetchRequests, subscribeToUpdates } = useServiceRequestsStore();
   const { fetchPosts } = useMarketStore();
   const { fetchExploreData } = useExploreStore();
@@ -39,14 +40,10 @@ export default function RootLayout() {
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
       void hydrateProfile(user);
-      fetchConversations();
+      void fetchUnreadCount();
+      void fetchNotificationUnreadCount();
       subscribeToMessages();
-      fetchNotifications();
       subscribeToNotifications();
-      void fetchRequests().then(() => {
-        const deals = useServiceRequestsStore.getState().getCompletedDealsForReviews();
-        useProviderReviewsStore.getState().syncCompletedDealsFromRequests(deals);
-      });
       const unsubscribeServiceRequests = subscribeToUpdates();
       
       // Notification listeners
@@ -55,25 +52,8 @@ export default function RootLayout() {
       });
       const subscription2 = Notifications.addNotificationResponseReceivedListener((response) => {
         const data = response.notification.request.content.data as any;
-        const type = data?.type;
-        
-        if (type === 'MESSAGE') {
-          router.push('/(tabs)/messages');
-        } else if (type === 'SERVICE_REQUEST') {
-          router.push('/service-status');
-        } else if (type === 'REVIEW') {
-          router.push('/(tabs)/profile');
-        } else {
-          router.push('/notifications');
-        }
+        handleNotificationNavigation({ data }, router);
       });
-      
-      // Background prefetching (fire-and-forget, respect cache TTL)
-      fetchPosts();
-      fetchExploreData();
-      if (user?.username) {
-        fetchProfile(user.username);
-      }
       
       return () => {
         unsubscribeServiceRequests();
@@ -86,15 +66,11 @@ export default function RootLayout() {
     isAuthenticated,
     user,
     hydrateProfile,
-    fetchConversations,
+    fetchUnreadCount,
+    fetchNotificationUnreadCount,
     subscribeToMessages,
-    fetchNotifications,
     subscribeToNotifications,
-    fetchRequests,
     subscribeToUpdates,
-    fetchPosts,
-    fetchExploreData,
-    fetchProfile,
     router,
   ]);
 

@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
+import { useFocusEffect } from 'expo-router';
 
 import { MessagesInboxView } from '../../components/Messages';
 import { buildChatHref } from '../../lib';
@@ -13,10 +14,12 @@ export default function MessagesScreen() {
   const { conversations, fetchConversations, subscribeToMessages, isRefreshing, isLoadingMoreConversations, loadMoreConversations } = useChat();
   const { fetchMessages } = useChatStore();
 
-  useEffect(() => {
-    fetchConversations();
-    subscribeToMessages();
-  }, [fetchConversations, subscribeToMessages]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchConversations();
+      subscribeToMessages();
+    }, [fetchConversations, subscribeToMessages])
+  );
 
   const handleConversationPress = useCallback(
     (conversation: ConversationPreview) => {

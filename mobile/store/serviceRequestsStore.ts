@@ -6,12 +6,15 @@ import type { CompletedDeal } from '../types/review';
 import { getSocket } from '../lib/socket';
 import { useAuthStore } from './authStore';
 
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 interface ServiceRequestsState {
   requests: DbServiceRequest[];
   isLoading: boolean;
   isRefreshing: boolean;
   error: string | null;
   hydrated: boolean;
+  lastFetched: number | null;
   fetchRequests: (isRefresh?: boolean) => Promise<void>;
   fetchForChat: (postId: string, peerUsername: string) => Promise<DbServiceRequest | null>;
   createOfficialEngagement: (postId: string) => Promise<DbServiceRequest>;
@@ -19,6 +22,8 @@ interface ServiceRequestsState {
     id: string,
     action: Parameters<typeof serviceRequestService.transition>[1]
   ) => Promise<DbServiceRequest>;
+  accept: (id: string) => Promise<DbServiceRequest>;
+  decline: (id: string) => Promise<DbServiceRequest>;
   upsertRequest: (request: DbServiceRequest) => void;
   subscribeToUpdates: () => () => void;
   getActiveCount: () => number;
@@ -40,10 +45,16 @@ export const useServiceRequestsStore = create<ServiceRequestsState>((set, get) =
   isRefreshing: false,
   error: null,
   hydrated: false,
+  lastFetched: null,
 
   fetchRequests: async (isRefresh = false) => {
-    const { requests } = get();
+    const { requests, lastFetched } = get();
+    const now = Date.now();
     const hasExistingData = requests.length > 0;
+
+    if (!isRefresh && lastFetched && now - lastFetched < CACHE_TTL) {
+      return;
+    }
 
     set({
       isLoading: !isRefresh && !hasExistingData,
@@ -53,7 +64,13 @@ export const useServiceRequestsStore = create<ServiceRequestsState>((set, get) =
 
     try {
       const requests = await serviceRequestService.getAll();
-      set({ requests, hydrated: true });
+      set({ requests, hydrated: true, lastFetched: now });
+      
+      // Sync completed deals to provider reviews store
+      const deals = get().getCompletedDealsForReviews();
+      void import('./providerReviewsStore').then(({ useProviderReviewsStore }) => {
+        useProviderReviewsStore.getState().syncCompletedDealsFromRequests(deals);
+      });
     } catch (error) {
       console.error('Failed to fetch service requests:', error);
       set({ error: error instanceof Error ? error.message : 'Failed to load requests' });
@@ -83,6 +100,18 @@ export const useServiceRequestsStore = create<ServiceRequestsState>((set, get) =
 
   transition: async (id, action) => {
     const request = await serviceRequestService.transition(id, action);
+    set((state) => ({ requests: upsertById(state.requests, request) }));
+    return request;
+  },
+
+  accept: async (id) => {
+    const request = await serviceRequestService.accept(id);
+    set((state) => ({ requests: upsertById(state.requests, request) }));
+    return request;
+  },
+
+  decline: async (id) => {
+    const request = await serviceRequestService.decline(id);
     set((state) => ({ requests: upsertById(state.requests, request) }));
     return request;
   },
@@ -169,6 +198,7 @@ export const useServiceRequestsStore = create<ServiceRequestsState>((set, get) =
       isRefreshing: false,
       error: null,
       hydrated: false,
+      lastFetched: null,
     });
   },
 }));

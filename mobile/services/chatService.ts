@@ -46,6 +46,11 @@ export const chatService = {
     return response.data;
   },
 
+  getUnreadCount: async (): Promise<{ count: number }> => {
+    const response = await apiClient.get('/chat/unread-count');
+    return response.data.data;
+  },
+
   getMessages: async (username: string, cursor?: string, limit: number = 30): Promise<GetMessagesResponse> => {
     const params: any = { limit };
     if (cursor) params.cursor = cursor;

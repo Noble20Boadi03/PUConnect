@@ -3,7 +3,7 @@ import type { MarketIconName, MarketPostTag } from './market';
 export type ChatMessageKind = 'sent' | 'received' | 'system';
 
 /** PuConnect-tracked official action tied to the contextual listing (service or request). */
-export type OfficialEngagementStatus = 'none' | 'active' | 'completed';
+export type OfficialEngagementStatus = 'none' | 'pending' | 'active' | 'completed' | 'declined';
 
 /** Two-party completion: provider requests, client reviews and confirms. */
 export type OfficialCompletionPhase = 'none' | 'pending_review' | 'completed';

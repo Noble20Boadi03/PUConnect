@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { StyleSheet, View, ScrollView, useColorScheme, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from 'expo-router';
 import {
   ExploreView,
   ExploreHeader,
@@ -22,13 +23,15 @@ export default function ExploreScreen() {
 
   const { categories, providers, isLoading, isRefreshing, error, fetchExploreData } = useExploreStore();
 
-  const onRefresh = () => {
+  const onRefresh = useCallback(() => {
     fetchExploreData(true);
-  };
-
-  useEffect(() => {
-    fetchExploreData();
   }, [fetchExploreData]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchExploreData();
+    }, [fetchExploreData])
+  );
 
   if (isLoading) {
     return (

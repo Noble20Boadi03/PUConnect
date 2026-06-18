@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
+import { useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 
 import { NotificationsView } from '../components/Notifications';
@@ -9,9 +10,11 @@ export default function NotificationsScreen() {
   const router = useAppRouter();
   const fetchNotifications = useNotificationsStore((s) => s.fetchNotifications);
 
-  useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchNotifications();
+    }, [fetchNotifications])
+  );
 
   const handleBack = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

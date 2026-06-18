@@ -1,4 +1,4 @@
-export type NotificationKind = 'message' | 'service' | 'request' | 'system';
+export type NotificationKind = 'message' | 'service' | 'request' | 'system' | 'review';
 
 export interface AppNotification {
   id: string;
@@ -7,6 +7,9 @@ export interface AppNotification {
   body: string;
   time: string;
   read: boolean;
+  targetId?: string;
+  targetScreen?: string;
+  data?: any;
 }
 
 export const NOTIFICATIONS_MOCK: AppNotification[] = [

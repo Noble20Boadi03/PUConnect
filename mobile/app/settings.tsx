@@ -169,6 +169,26 @@ export default function SettingsScreen() {
         <View style={[styles.settingsCard, { backgroundColor: cardBg }]}>
           <TouchableOpacity
             style={styles.settingsRow}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/change-password');
+            }}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.rowIconCircle, { backgroundColor: Colors.primary + '15' }]}>
+              <Ionicons name="key-outline" size={20} color={Colors.primary} />
+            </View>
+            <View style={styles.rowContent}>
+              <Text style={[styles.rowTitle, { color: Colors.text }]}>Change Password</Text>
+              <Text style={[styles.rowSubtitle, { color: Colors.icon }]}>
+                Update your current password
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={Colors.icon} />
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.settingsRow}
             onPress={handleResetPassword}
             activeOpacity={0.7}
           >
@@ -178,7 +198,7 @@ export default function SettingsScreen() {
             <View style={styles.rowContent}>
               <Text style={[styles.rowTitle, { color: Colors.text }]}>Reset Password</Text>
               <Text style={[styles.rowSubtitle, { color: Colors.icon }]}>
-                Change your security credentials
+                Forgot your password? Reset via email
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={Colors.icon} />

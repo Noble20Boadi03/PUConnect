@@ -2,8 +2,17 @@ import { apiClient } from './apiClient';
 import type { ApiResponse, DbPost } from '../types';
 
 export interface GetPostsParams {
-  tag?: 'Service' | 'Request';
+  type?: 'service' | 'request';
   search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface GetPostsResponse {
+  posts: DbPost[];
+  totalCount: number;
+  hasMore: boolean;
+  nextPage: number | null;
 }
 
 /**
@@ -11,11 +20,11 @@ export interface GetPostsParams {
  */
 export const postService = {
   /**
-   * Fetches all market posts.
+   * Fetches all market posts with pagination and filters.
    * @route GET /api/posts
    */
-  async getPosts(params?: GetPostsParams): Promise<DbPost[]> {
-    const response = await apiClient.get<ApiResponse<DbPost[]>>('/posts', { params });
+  async getPosts(params?: GetPostsParams): Promise<GetPostsResponse> {
+    const response = await apiClient.get<ApiResponse<GetPostsResponse>>('/posts', { params });
     return response.data.data;
   },
 

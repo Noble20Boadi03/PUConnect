@@ -160,9 +160,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
   clearSession: async () => {
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
-    await SecureStore.deleteItemAsync(HAS_COMPLETED_ONBOARDING_KEY);
-    await SecureStore.deleteItemAsync(IS_FIRST_LOGIN_SESSION_KEY);
+    // Use try/catch to make this idempotent — safe to call multiple times
+    try {
+      await SecureStore.deleteItemAsync(TOKEN_KEY);
+    } catch {}
+    try {
+      await SecureStore.deleteItemAsync(HAS_COMPLETED_ONBOARDING_KEY);
+    } catch {}
+    try {
+      await SecureStore.deleteItemAsync(IS_FIRST_LOGIN_SESSION_KEY);
+    } catch {}
+    // Check if we're already cleared to avoid duplicate work
+    const currentState = get();
+    if (!currentState.user && !currentState.token && !currentState.isAuthenticated) {
+      return;
+    }
     // Call clearAllStoresAndSocket to reset everything
     await get().clearAllStoresAndSocket();
     // Reset profile store as well (since it's already being done before)
@@ -185,14 +197,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         apiReached: false,
       };
     }
-    // Clear push token on logout
-    (async () => {
-      try {
-        await authService.updatePushToken(null);
-      } catch (error) {
-        console.error('Error clearing push token during logout:', error);
-      }
-    })();
     // Clear all stores and disconnect socket
     await get().clearAllStoresAndSocket();
     // Reset profile store

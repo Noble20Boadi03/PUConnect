@@ -94,14 +94,14 @@ export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
         if (isUserRequester && serviceRequest.status === 'active') {
           items.push({
             key: 'cancelOfficialRequest',
-            label: 'Cancel Official Request',
+            label: 'Cancel Request',
             destructive: true,
           });
         }
         if (isUserProvider && serviceRequest.status === 'active') {
           items.push({
             key: 'withdrawOfficialResponse',
-            label: 'Withdraw Official Response',
+            label: postContext?.tag === 'Service' ? 'Decline Request' : 'Withdraw Response',
             destructive: true,
           });
         }

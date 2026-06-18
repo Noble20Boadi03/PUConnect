@@ -27,6 +27,8 @@ export function engagementStatusLabel(
   if (status === 'completed' || completionPhase === 'completed') return 'Completed';
   if (completionPhase === 'pending_review') return 'Awaiting Confirmation';
   if (status === 'active') return 'Active';
+  if (status === 'pending') return 'Pending';
+  if (status === 'declined') return 'Declined';
   return 'Not started';
 }
 

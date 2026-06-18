@@ -40,13 +40,18 @@ export function mapServiceRequestToEngagement(
 
   switch (request.status as DbServiceRequestStatus) {
     case 'active':
-    case 'pending':
     case 'pending_review':
       officialEngagementStatus = 'active';
+      break;
+    case 'pending':
+      officialEngagementStatus = 'pending';
       break;
     case 'completed':
       officialEngagementStatus = 'completed';
       completionPhase = 'completed';
+      break;
+    case 'declined':
+      officialEngagementStatus = 'declined';
       break;
     default:
       officialEngagementStatus = 'none';

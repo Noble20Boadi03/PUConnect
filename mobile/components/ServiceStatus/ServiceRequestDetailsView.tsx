@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -15,12 +15,14 @@ import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { useThemeColor, useConfirmDialog } from '../../hooks';
 import { ConfirmDialog } from '../ConfirmDialog';
+import { ReviewPromptDialog } from '../ReviewPromptDialog';
 import {
   mapDbPostToChatPostContext,
   mapServiceRequestToEngagement,
 } from '../../lib/mapServiceRequest';
 import { ChatOfficialDetailsCard } from '../Chat/ChatOfficialDetailsCard';
 import { useServiceRequestsStore } from '../../store/serviceRequestsStore';
+import { useProviderReviewsStore, selectIsEligibleForReview } from '../../store/providerReviewsStore';
 import { useAuthStore } from '../../store/authStore';
 import { useAppRouter } from '../../hooks';
 import { buildChatHref } from '../../lib';
@@ -48,8 +50,15 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
 
   const { showConfirm, confirmVisible, confirmOptions, handleConfirm, handleCancel } =
     useConfirmDialog();
-  const { transition } = useServiceRequestsStore();
+  const { transition, accept, decline } = useServiceRequestsStore();
   const [actionLoading, setActionLoading] = useState(false);
+
+  const [reviewPromptVisible, setReviewPromptVisible] = useState(false);
+  const [pendingReviewDealId, setPendingReviewDealId] = useState<string | null>(null);
+  const recordCompletedDeal = useProviderReviewsStore((s) => s.recordCompletedDeal);
+  const dismissReviewPrompt = useProviderReviewsStore((s) => s.dismissReviewPrompt);
+  const eligibleReviews = useProviderReviewsStore((s) => s.eligibleReviews);
+  const fetchEligibleReviews = useProviderReviewsStore((s) => s.fetchEligibleReviews);
 
   const authUserId = useAuthStore((state) => state.user?.id);
   
@@ -64,6 +73,13 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     ? mapDbPostToChatPostContext(activeRequest.post)
     : null;
   const isRequester = activeRequest.requesterId === authUserId;
+  
+  const isEligibleForReview = isRequester && selectIsEligibleForReview(eligibleReviews, activeRequest.id);
+  
+  // Fetch eligible reviews on mount
+  useEffect(() => {
+    fetchEligibleReviews();
+  }, [fetchEligibleReviews]);
   const peer = isRequester ? activeRequest.provider : activeRequest.requester;
   const contactName = peer?.name ?? 'Unknown';
   const isRequest = postContext?.tag === 'Request';
@@ -78,6 +94,8 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     engagement.officialEngagementStatus === 'active' &&
     engagement.completionPhase === 'pending_review' &&
     !userIsProvider;
+  const canAccept = engagement.officialEngagementStatus === 'pending' && userIsProvider;
+  const canDecline = engagement.officialEngagementStatus === 'pending' && userIsProvider;
 
   const handleOpenPost = useCallback(async () => {
     if (!postContext || actionLoading) return;
@@ -198,6 +216,59 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     activeRequest.id,
   ]);
 
+  const promptOptionalReview = useCallback(
+    (dealId: string) => {
+      setPendingReviewDealId(dealId);
+      setReviewPromptVisible(true);
+    },
+    []
+  );
+
+  const completeUndertakingAsClient = useCallback(
+    (ctx: NonNullable<typeof postContext>) => {
+      if (!peer?.username) return;
+      const dealId = recordCompletedDeal({
+        id: activeRequest.id,
+        revieweeUsername: peer.username,
+        postId: ctx.postId,
+        postTitle: ctx.title,
+        completedAt: new Date().toLocaleDateString([], {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        }),
+        serviceRequestId: activeRequest.id,
+      });
+      promptOptionalReview(dealId);
+    },
+    [activeRequest.id, peer?.username, recordCompletedDeal, promptOptionalReview]
+  );
+
+  const handleReviewNow = useCallback(() => {
+    if (!postContext || !peer?.username) return;
+    setReviewPromptVisible(false);
+    const query = activeRequest.id
+      ? `postId=${encodeURIComponent(postContext.postId)}&serviceRequestId=${encodeURIComponent(activeRequest.id)}`
+      : `postId=${encodeURIComponent(postContext.postId)}`;
+    router.push(`/provider/${peer.username}/review?${query}` as any);
+  }, [postContext, peer?.username, activeRequest.id, router]);
+
+  const handleReviewLater = useCallback(() => {
+    if (pendingReviewDealId) {
+      dismissReviewPrompt(pendingReviewDealId);
+    }
+    setReviewPromptVisible(false);
+    setPendingReviewDealId(null);
+  }, [pendingReviewDealId, dismissReviewPrompt]);
+
+  const handleLeaveReview = useCallback(() => {
+    if (!postContext || !peer?.username) return;
+    const query = activeRequest.id
+      ? `postId=${encodeURIComponent(postContext.postId)}&serviceRequestId=${encodeURIComponent(activeRequest.id)}`
+      : `postId=${encodeURIComponent(postContext.postId)}`;
+    router.push(`/provider/${peer.username}/review?${query}` as any);
+  }, [postContext, peer?.username, activeRequest.id, router]);
+
   const handleConfirmOfficialCompletion = useCallback(async () => {
     if (
       !postContext ||
@@ -220,6 +291,7 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     try {
       await transition(activeRequest.id, 'confirm_completion');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      completeUndertakingAsClient(ctx);
     } catch (err) {
       console.error('Failed to confirm completion:', err);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -234,6 +306,7 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     showConfirm,
     transition,
     activeRequest.id,
+    completeUndertakingAsClient,
   ]);
 
   const handleDeclineOfficialCompletion = useCallback(async () => {
@@ -276,6 +349,53 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     activeRequest.id,
   ]);
 
+  const handleAccept = useCallback(async () => {
+    if (!postContext || actionLoading || !canAccept) return;
+    const ctx = postContext;
+    const confirmed = await showConfirm({
+      title: 'Accept Request?',
+      message: `Accept this official request for "${ctx.title}"? This will start the service engagement.`,
+      confirmLabel: 'Accept',
+      cancelLabel: 'Cancel',
+      icon: 'checkmark-circle-outline',
+    });
+    if (!confirmed) return;
+    setActionLoading(true);
+    try {
+      await accept(activeRequest.id);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (err) {
+      console.error('Failed to accept request:', err);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setActionLoading(false);
+    }
+  }, [postContext, actionLoading, canAccept, showConfirm, accept, activeRequest.id]);
+
+  const handleDecline = useCallback(async () => {
+    if (!postContext || actionLoading || !canDecline) return;
+    const ctx = postContext;
+    const confirmed = await showConfirm({
+      title: 'Decline Request?',
+      message: `Decline this official request for "${ctx.title}"? The requester will be notified.`,
+      confirmLabel: 'Decline',
+      cancelLabel: 'Cancel',
+      variant: 'destructive',
+      icon: 'close-circle-outline',
+    });
+    if (!confirmed) return;
+    setActionLoading(true);
+    try {
+      await decline(activeRequest.id);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    } catch (err) {
+      console.error('Failed to decline request:', err);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setActionLoading(false);
+    }
+  }, [postContext, actionLoading, canDecline, showConfirm, decline, activeRequest.id]);
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
       <View style={styles.header}>
@@ -315,6 +435,28 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
           </View>
         )}
 
+        {engagement.officialEngagementStatus === 'pending' && !userIsProvider && (
+          <View style={[styles.infoBlock, { backgroundColor: subtleBg }]}>
+            <Text style={[styles.infoTitle, { color: Colors.text }]}>
+              Waiting for provider to accept
+            </Text>
+            <Text style={[styles.infoBody, { color: Colors.icon }]}>
+              The provider has been notified and will review your request for "{postContext?.title}".
+            </Text>
+          </View>
+        )}
+
+        {engagement.officialEngagementStatus === 'declined' && (
+          <View style={[styles.infoBlock, { backgroundColor: Colors.error + '15' }]}>
+            <Text style={[styles.infoTitle, { color: Colors.error }]}>
+              Request declined
+            </Text>
+            <Text style={[styles.infoBody, { color: Colors.icon }]}>
+              The provider has declined this request. You can continue chatting or create a new request.
+            </Text>
+          </View>
+        )}
+
         {engagement.completionPhase === 'pending_review' && userIsProvider && (
           <View style={[styles.infoBlock, { backgroundColor: subtleBg }]}>
             <Text style={[styles.infoTitle, { color: Colors.text }]}>
@@ -334,7 +476,19 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
             </Text>
             <Text style={[styles.infoBody, { color: Colors.icon }]}>
               {contactName} has requested to close this undertaking. Confirm only if the
-              service was delivered as agreed for “{postContext?.title}”.
+              service was delivered as agreed for "{postContext?.title}".
+            </Text>
+          </View>
+        )}
+
+        {isEligibleForReview && (
+          <View style={[styles.infoBlock, { backgroundColor: Colors.primary + '15' }]}>
+            <Ionicons name="star-outline" size={24} color={Colors.primary} />
+            <Text style={[styles.infoTitle, { color: Colors.primary }]}>
+              Leave a review
+            </Text>
+            <Text style={[styles.infoBody, { color: Colors.icon }]}>
+              Help {contactName} by sharing your experience with "{postContext?.title}".
             </Text>
           </View>
         )}
@@ -364,6 +518,29 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
               >
                 <Ionicons name="chatbubble-outline" size={18} color={Colors.text} />
                 <Text style={[styles.secondaryLabel, { color: Colors.text }]}>Open Chat</Text>
+              </TouchableOpacity>
+            )}
+
+            {canAccept && (
+              <TouchableOpacity
+                style={[styles.primaryButton, { backgroundColor: accent }]}
+                onPress={handleAccept}
+                activeOpacity={0.9}
+              >
+                <Ionicons name="checkmark-circle-outline" size={22} color="#FFFFFF" />
+                <Text style={styles.primaryLabel}>Accept</Text>
+              </TouchableOpacity>
+            )}
+
+            {canDecline && (
+              <TouchableOpacity
+                style={[styles.destructiveButton, { backgroundColor: Colors.error + '15' }]}
+                onPress={handleDecline}
+                activeOpacity={0.85}
+              >
+                <Text style={[styles.destructiveLabel, { color: Colors.error }]}>
+                  Decline
+                </Text>
               </TouchableOpacity>
             )}
 
@@ -400,36 +577,47 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
               </>
             )}
 
-            {engagement.officialEngagementStatus === 'active' &&
-              engagement.completionPhase === 'none' && (
-                <>
-                  {isRequester && (
-                    <TouchableOpacity
-                      style={[styles.destructiveButton, { backgroundColor: Colors.error + '15' }]}
-                      onPress={handleCancelOfficialRequest}
-                      activeOpacity={0.85}
-                    >
-                      <Text style={[styles.destructiveLabel, { color: Colors.error }]}>
-                        Cancel Request
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                  {userIsProvider && (
-                    <TouchableOpacity
-                      style={[styles.destructiveButton, { backgroundColor: Colors.error + '15' }]}
-                      onPress={handleWithdrawOfficialResponse}
-                      activeOpacity={0.85}
-                    >
-                      <Text style={[styles.destructiveLabel, { color: Colors.error }]}>
-                        Withdraw Response
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </>
-              )}
-          </>
-        )}
-      </View>
+            {isEligibleForReview && (
+            <TouchableOpacity
+              style={[styles.primaryButton, { backgroundColor: Colors.primary }]}
+              onPress={handleLeaveReview}
+              activeOpacity={0.9}
+            >
+              <Ionicons name="star-outline" size={22} color="#FFFFFF" />
+              <Text style={styles.primaryLabel}>Leave a Review</Text>
+            </TouchableOpacity>
+          )}
+
+          {(engagement.officialEngagementStatus === 'active' || engagement.officialEngagementStatus === 'pending') &&
+            engagement.completionPhase === 'none' && (
+              <>
+                {isRequester && (
+                  <TouchableOpacity
+                    style={[styles.destructiveButton, { backgroundColor: Colors.error + '15' }]}
+                    onPress={handleCancelOfficialRequest}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={[styles.destructiveLabel, { color: Colors.error }]}>
+                      Cancel Request
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                {userIsProvider && engagement.officialEngagementStatus === 'active' && (
+                  <TouchableOpacity
+                    style={[styles.destructiveButton, { backgroundColor: Colors.error + '15' }]}
+                    onPress={handleWithdrawOfficialResponse}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={[styles.destructiveLabel, { color: Colors.error }]}>
+                      {postContext?.tag === 'Service' ? 'Decline Request' : 'Withdraw Response'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
+        </>
+      )}
+    </View>
 
       {confirmOptions && (
         <ConfirmDialog
@@ -444,6 +632,14 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
           onCancel={handleCancel}
         />
       )}
+
+      <ReviewPromptDialog
+        visible={reviewPromptVisible}
+        providerName={peer?.name ?? 'the provider'}
+        serviceTitle={postContext?.title ?? 'this service'}
+        onReviewNow={handleReviewNow}
+        onLater={handleReviewLater}
+      />
     </SafeAreaView>
   );
 };

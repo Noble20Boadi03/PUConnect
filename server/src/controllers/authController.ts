@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import prisma from '../config/db';
 import { emailService } from '../services/emailService';
+import { notifyUser } from './serviceRequestController';
 
 const safeUserSelect = {
   id: true,
@@ -125,6 +126,17 @@ export const register = async (req: Request, res: Response) => {
       }
     });
 
+    // 5a. Send welcome system notification
+    await notifyUser(
+      user.id,
+      'system',
+      'Welcome to PUConnect 🎉',
+      'You\'re all set! Browse services, connect with providers, and start collaborating with peers on campus.',
+      undefined,
+      undefined,
+      { type: 'system' }
+    );
+
     // 6. Generate session token
     const token = generateToken(user.id);
 
@@ -151,6 +163,7 @@ export const register = async (req: Request, res: Response) => {
  * @route POST /api/auth/login
  */
 export const login = async (req: Request, res: Response) => {
+  console.log('[TIMESTAMP] 6. Server login handler entered:', new Date().toISOString());
   try {
     const { emailOrUsername, email, password } = req.body;
     const identifier = emailOrUsername || email;
@@ -164,6 +177,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // 2. Find user in PostgreSQL Supabase database by email or username
+    console.log('[TIMESTAMP] 6a. Before prisma.user.findFirst:', new Date().toISOString(), 'identifier:', identifier);
     const user = await prisma.user.findFirst({
       where: {
         OR: [
@@ -186,6 +200,7 @@ export const login = async (req: Request, res: Response) => {
         expertiseTags: true
       }
     });
+    console.log('[TIMESTAMP] 6b. After prisma.user.findFirst:', new Date().toISOString(), 'user found:', !!user);
     if (!user) {
       return res.status(401).json({
         status: 401,
@@ -194,7 +209,9 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // 3. Compare passwords explicitly using bcryptjs
+    console.log('[TIMESTAMP] 7a. Before bcrypt.compare:', new Date().toISOString());
     const isMatch = await bcrypt.compare(password, user.password) as boolean;
+    console.log('[TIMESTAMP] 7b. After bcrypt.compare:', new Date().toISOString());
     if (!isMatch) {
       return res.status(401).json({
         status: 401,
@@ -203,9 +220,12 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // 4. Generate token
+    console.log('[TIMESTAMP] 8a. Before generateToken:', new Date().toISOString());
     const token = generateToken(user.id);
+    console.log('[TIMESTAMP] 8b. After generateToken:', new Date().toISOString());
 
     // 5. Return response containing user and token
+    console.log('[TIMESTAMP] 9. Before sending response:', new Date().toISOString());
     return res.status(200).json({
       status: 200,
       message: 'Login successful.',

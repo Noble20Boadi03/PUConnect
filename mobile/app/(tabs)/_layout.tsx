@@ -5,11 +5,11 @@ import { useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColor } from '../../hooks';
-import { useChatStore, useAuthStore } from '../../store';
+import { useChatStore, useNotificationsStore } from '../../store';
 
 /**
  * Base height of the tab bar content (icons + labels) before safe-area padding.
- * Android Material guidelines use 56; iOS HIG uses 49.
+ * Android Material guidelines use 56; iOS HIG use 49.
  */
 const TAB_BAR_BASE_HEIGHT = Platform.OS === 'ios' ? 49 : 56;
 
@@ -25,17 +25,13 @@ export default function TabsLayout() {
   // Use the raw inset value directly. In edge-to-edge mode, the system nav
   // bar overlaps the content and `insets.bottom` tells us how much space the
   // gesture handle / nav buttons occupy. On fresh launch the value may be 0
-  // momentarily — that's fine because `position: 'absolute'` + `bottom: 0`
+  // momentarily — that's fine because `position: 'absolute' + `bottom: 0`
   // keeps the bar visually pinned regardless. Using a hardcoded fallback here
   // was the original bug: it inflated the height before the real inset arrived.
   const bottomPadding = insets.bottom;
 
-  const { conversations } = useChatStore();
-  const { user: currentUser } = useAuthStore();
-
-  const unreadCount = conversations.filter(
-    (c) => !c.lastMessage.isRead && c.lastMessage.receiverId === currentUser?.id
-  ).length;
+  const { unreadCount: chatUnreadCount } = useChatStore();
+  const { unreadCount: notificationUnreadCount } = useNotificationsStore();
 
   return (
     <Tabs
@@ -80,7 +76,7 @@ export default function TabsLayout() {
         name="messages"
         options={{
           title: 'Messages',
-          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+          tabBarBadge: chatUnreadCount > 0 ? chatUnreadCount : undefined,
           tabBarBadgeStyle: {
             backgroundColor: Colors.primary,
             color: '#FFFFFF',

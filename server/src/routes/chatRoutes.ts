@@ -6,7 +6,8 @@ import {
   markMessagesAsRead,
   deleteChatMessage,
   muteConversation,
-  unmuteConversation
+  unmuteConversation,
+  getUnreadCount
 } from '../controllers/chatController';
 import { protect } from '../middlewares/authMiddleware';
 
@@ -14,6 +15,7 @@ const router = express.Router();
 
 // All routes are protected
 router.get('/', protect, getConversations);
+router.get('/unread-count', protect, getUnreadCount);
 router.get('/:username', protect, getChatMessages);
 router.post('/', protect, sendChatMessage);
 router.put('/:username/read', protect, markMessagesAsRead);

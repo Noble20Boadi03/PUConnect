@@ -4,13 +4,17 @@ import type { AppNotification } from '../constants/notificationsMock';
 import { getSocket } from '../lib/socket';
 import { useAuthStore } from './authStore';
 
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 interface NotificationsState {
   items: AppNotification[];
   unreadCount: number;
   isLoading: boolean;
   isRefreshing: boolean;
   error: string | null;
+  lastFetched: number | null;
   fetchNotifications: (isRefresh?: boolean) => Promise<void>;
+  fetchUnreadCount: () => Promise<void>;
   markRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
   subscribeToNotifications: () => void;
@@ -40,6 +44,9 @@ function toAppNotification(backend: BackendNotification): AppNotification {
     body: backend.body,
     time: formatTime(backend.createdAt),
     read: backend.read,
+    targetId: backend.targetId,
+    targetScreen: backend.targetScreen,
+    data: backend.data,
   };
 }
 
@@ -55,10 +62,16 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
   isLoading: false,
   isRefreshing: false,
   error: null,
+  lastFetched: null,
 
   fetchNotifications: async (isRefresh = false) => {
-    const { items } = get();
+    const { items, lastFetched } = get();
+    const now = Date.now();
     const hasExistingData = items.length > 0;
+
+    if (!isRefresh && lastFetched && now - lastFetched < CACHE_TTL) {
+      return;
+    }
 
     set({
       isLoading: !isRefresh && !hasExistingData,
@@ -69,12 +82,21 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
     try {
       const data = await notificationService.getNotifications();
       const mapped = data.map(toAppNotification);
-      set({ items: mapped, unreadCount: countUnread(mapped) });
+      set({ items: mapped, unreadCount: countUnread(mapped), lastFetched: now });
     } catch (error) {
-      console.error('Failed to fetch notifications', error);
+      console.error('Failed to fetch notifications:', error);
       set({ error: error instanceof Error ? error.message : 'Failed to load notifications' });
     } finally {
       set({ isLoading: false, isRefreshing: false });
+    }
+  },
+
+  fetchUnreadCount: async () => {
+    try {
+      const { count } = await notificationService.getUnreadCount();
+      set({ unreadCount: count });
+    } catch (error) {
+      console.error('Failed to fetch unread count:', error);
     }
   },
 
@@ -115,11 +137,13 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
     socketInstance.emit('join', user.id);
 
     socketInstance.on('newNotification', (backend: BackendNotification) => {
-      const { items } = get();
+      const { items, fetchUnreadCount } = get();
       const appNotif = toAppNotification(backend);
       // Prepend the new notification
       const newItems = [appNotif, ...items];
       set({ items: newItems, unreadCount: countUnread(newItems) });
+      // Also fetch unread count from server for consistency
+      fetchUnreadCount();
     });
   },
 
@@ -137,6 +161,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
       isLoading: false,
       isRefreshing: false,
       error: null,
+      lastFetched: null,
     });
   }
 }));

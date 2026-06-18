@@ -8,7 +8,7 @@ import { Alert } from '../Alert';
 import { EditInfoField } from '../EditInfo/EditInfoField';
 import { Spacing, Typography } from '../../constants';
 import { useThemeColor, useAppRouter } from '../../hooks';
-import { useProfileStore } from '../../store';
+import { useProfileStore, useMarketStore } from '../../store';
 import { pruneTagsForServices } from '../../lib/editInfoForm';
 import {
   buildPostPriceFromForm,
@@ -47,6 +47,7 @@ export const NewPostView: React.FC<NewPostViewProps> = ({ onPublished }) => {
   const isProvider = useProfileStore((s) => s.isProvider);
   const providerServiceIds = useProfileStore((s) => s.providerServiceIds);
   const providerTags = useProfileStore((s) => s.providerTags);
+  const { invalidateCache, fetchPosts } = useMarketStore();
 
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
@@ -206,10 +207,15 @@ export const NewPostView: React.FC<NewPostViewProps> = ({ onPublished }) => {
         setPublishMessage('Your post was published.');
       }
 
+      // Invalidate market cache and refresh posts
+      invalidateCache();
+      await fetchPosts(true);
+
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       onPublished?.();
       setTimeout(() => {
-        router.replace('/(tabs)/profile' as any);
+        // After creating/editing, go to market tab so user can see the post
+        router.replace('/(tabs)/market' as any);
       }, 900);
     } catch (error) {
       console.error('Error publishing post:', error);

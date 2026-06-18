@@ -187,6 +187,8 @@ model ChatMessage {
   receiver User  @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
   post     Post? @relation(fields: [postId], references: [id], onDelete: SetNull)
 
+  @@index([senderId])
+  @@index([receiverId])
   @@map("chat_messages")
 }
 
@@ -210,13 +212,16 @@ model Review {
 }
 
 model Notification {
-  id        String           @id @default(uuid())
-  userId    String
-  kind      NotificationKind
-  title     String
-  body      String
-  read      Boolean          @default(false)
-  createdAt DateTime         @default(now())
+  id          String           @id @default(uuid())
+  userId      String
+  kind        NotificationKind
+  title       String
+  body        String
+  read        Boolean          @default(false)
+  targetId    String?
+  targetScreen String?
+  data        Json?
+  createdAt   DateTime         @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

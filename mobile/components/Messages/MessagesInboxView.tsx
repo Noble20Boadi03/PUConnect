@@ -25,6 +25,7 @@ import { MessagesSelectionActionBar } from './MessagesSelectionActionBar';
 import { MessagesSelectionMoreSheet } from './MessagesSelectionMoreSheet';
 import { TabHeader } from '../TabHeader';
 import type { ConversationPreview } from '../../types';
+import { useChatStore } from '../../store';
 
 type InboxFilter = 'all' | 'unread';
 
@@ -119,11 +120,7 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
     }
   }, [conversations, allSelected]);
 
-  const totalUnread = useMemo(
-    () =>
-      conversations.reduce((sum, c) => sum + (c.unread ? (c.unreadCount ?? 1) : 0), 0),
-    [conversations]
-  );
+  const totalUnread = useChatStore((s) => s.unreadCount);
 
   const filteredConversations = useMemo(() => {
     const q = query.trim().toLowerCase();

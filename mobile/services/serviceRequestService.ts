@@ -44,6 +44,16 @@ export const serviceRequestService = {
     return response.data.data;
   },
 
+  async accept(id: string): Promise<DbServiceRequest> {
+    const response = await apiClient.patch<ApiResponse<DbServiceRequest>>(`/service-requests/${id}/accept`);
+    return response.data.data;
+  },
+
+  async decline(id: string): Promise<DbServiceRequest> {
+    const response = await apiClient.patch<ApiResponse<DbServiceRequest>>(`/service-requests/${id}/decline`);
+    return response.data.data;
+  },
+
   async getEligibleForReview(): Promise<DbServiceRequest[]> {
     const response = await apiClient.get<ApiResponse<DbServiceRequest[]>>('/reviews/eligible/me');
     return response.data.data;

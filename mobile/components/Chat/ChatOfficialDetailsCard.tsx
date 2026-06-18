@@ -48,11 +48,13 @@ function buildProgressSteps(
 ): ProgressStep[] {
   const submitted: StepState = status === 'none' ? 'upcoming' : 'done';
   const inProgress: StepState =
-    status === 'active' && completionPhase === 'none'
+    status === 'pending'
       ? 'current'
-      : status !== 'none'
-        ? 'done'
-        : 'upcoming';
+      : status === 'active' && completionPhase === 'none'
+        ? 'current'
+        : status !== 'none' && status !== 'declined'
+          ? 'done'
+          : 'upcoming';
   const requested: StepState =
     completionPhase === 'pending_review'
       ? 'current'
@@ -105,7 +107,11 @@ export const ChatOfficialDetailsCard: React.FC<ChatOfficialDetailsCardProps> = (
         ? REQUEST_ACCENT
         : engagementStatus === 'active'
           ? accent
-          : mutedColor;
+          : engagementStatus === 'pending'
+            ? REQUEST_ACCENT
+            : engagementStatus === 'declined'
+              ? mutedColor
+              : mutedColor;
 
   return (
     <View style={[styles.card, { backgroundColor: subtleBg }]}>

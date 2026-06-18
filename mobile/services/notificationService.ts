@@ -3,16 +3,24 @@ import apiClient from './apiClient';
 export interface BackendNotification {
   id: string;
   userId: string;
-  kind: 'message' | 'service' | 'request' | 'system';
+  kind: 'message' | 'service' | 'request' | 'system' | 'review';
   title: string;
   body: string;
   read: boolean;
   createdAt: string;
+  targetId?: string;
+  targetScreen?: string;
+  data?: any;
 }
 
 export const notificationService = {
   getNotifications: async (): Promise<BackendNotification[]> => {
     const response = await apiClient.get('/notifications');
+    return response.data.data;
+  },
+
+  getUnreadCount: async (): Promise<{ count: number }> => {
+    const response = await apiClient.get('/notifications/unread-count');
     return response.data.data;
   },
 

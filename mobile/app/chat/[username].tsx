@@ -143,6 +143,12 @@ export default function ChatScreen() {
     ) {
       return;
     }
+    
+    // Only the client (requester) should record the completed deal to leave a review
+    if (chatServiceRequest.requesterId !== currentUserId) {
+      return;
+    }
+
     recordCompletedDeal({
       id: chatServiceRequest.id,
       serviceRequestId: chatServiceRequest.id,
@@ -161,7 +167,7 @@ export default function ChatScreen() {
             year: 'numeric',
           }),
     });
-  }, [chatServiceRequest, activeThread, recordCompletedDeal]);
+  }, [chatServiceRequest, activeThread, currentUserId, recordCompletedDeal]);
 
   const exitToMessages = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

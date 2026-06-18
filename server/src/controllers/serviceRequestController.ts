@@ -58,10 +58,13 @@ export async function notifyUser(
   userId: string,
   kind: 'message' | 'service' | 'request' | 'system',
   title: string,
-  body: string
+  body: string,
+  targetId?: string,
+  targetScreen?: string,
+  data?: any
 ) {
   const notification = await prisma.notification.create({
-    data: { userId, kind, title, body },
+    data: { userId, kind, title, body, targetId, targetScreen, data } as any,
   });
   io.to(userId).emit('newNotification', notification);
   
@@ -73,7 +76,12 @@ export async function notifyUser(
         select: { pushToken: true },
       });
       if (user?.pushToken) {
-        await sendPushNotification(user.pushToken, title, body);
+        await sendPushNotification(
+          user.pushToken, 
+          title, 
+          body, 
+          data
+        );
       }
     } catch (error) {
       console.error('Error sending push notification from notifyUser:', error);
@@ -276,7 +284,6 @@ export const createServiceRequest = async (req: Request, res: Response) => {
       });
     }
 
-    const now = new Date();
     const request = await prisma.serviceRequest.create({
       data: {
         requesterId,
@@ -284,8 +291,7 @@ export const createServiceRequest = async (req: Request, res: Response) => {
         postId,
         kind,
         message,
-        status: 'active',
-        acceptedAt: now,
+        status: 'pending',
       },
       include: includeRelations(),
     });
@@ -299,7 +305,15 @@ export const createServiceRequest = async (req: Request, res: Response) => {
         ? `${initiator?.name ?? 'Someone'} started an official service request for "${post.title}".`
         : `${initiator?.name ?? 'Someone'} submitted an official response to your request "${post.title}".`;
 
-    await notifyUser(notifyTargetId, 'request', title, body);
+    await notifyUser(
+      notifyTargetId, 
+      'request', 
+      title, 
+      body, 
+      request.id, 
+      `/service-request/${request.id}`,
+      { type: 'request', serviceRequestId: request.id }
+    );
     emitServiceRequestUpdate(request);
 
     // Send system message to both parties
@@ -395,7 +409,7 @@ export const transitionServiceRequest = async (req: Request, res: Response) => {
 
     switch (action) {
       case 'cancel':
-        if (!isRequester || request.status !== 'active') {
+        if (!isRequester || (request.status !== 'active' && request.status !== 'pending')) {
           return res.status(400).json({ status: 400, message: 'Invalid transition' });
         }
         updateData = { status: 'cancelled' };
@@ -405,7 +419,7 @@ export const transitionServiceRequest = async (req: Request, res: Response) => {
         break;
 
       case 'withdraw':
-        if (!isProvider || request.status !== 'active') {
+        if (!isProvider || (request.status !== 'active' && request.status !== 'pending')) {
           return res.status(400).json({ status: 400, message: 'Invalid transition' });
         }
         updateData = { status: 'cancelled' };
@@ -455,7 +469,15 @@ export const transitionServiceRequest = async (req: Request, res: Response) => {
     });
 
     if (notifyTargetId) {
-      await notifyUser(notifyTargetId, 'service', notifyTitle, notifyBody);
+      await notifyUser(
+        notifyTargetId, 
+        'service', 
+        notifyTitle, 
+        notifyBody, 
+        updatedRequest.id, 
+        `/service-request/${updatedRequest.id}`,
+        { type: 'service', serviceRequestId: updatedRequest.id }
+      );
     }
     emitServiceRequestUpdate(updatedRequest);
 
@@ -524,6 +546,127 @@ export const transitionServiceRequest = async (req: Request, res: Response) => {
       status: 500,
       message: 'Server error',
     });
+  }
+};
+
+/**
+ * Accept a pending service request (provider only)
+ * @route PATCH /api/service-requests/:id/accept
+ */
+export const acceptServiceRequest = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const { id } = req.params;
+
+    const request = await prisma.serviceRequest.findUnique({
+      where: { id },
+      include: includeRelations(),
+    });
+    if (!request) {
+      return res.status(404).json({ status: 404, message: 'Request not found' });
+    }
+    if (request.providerId !== userId) {
+      return res.status(403).json({ status: 403, message: 'Unauthorized' });
+    }
+    if (request.status !== 'pending') {
+      return res.status(400).json({ status: 400, message: 'Request is not pending' });
+    }
+
+    const now = new Date();
+    const updatedRequest = await prisma.serviceRequest.update({
+      where: { id },
+      data: { status: 'active', acceptedAt: now },
+      include: includeRelations(),
+    });
+
+    const postTitle = updatedRequest.post?.title ?? 'this listing';
+    await notifyUser(
+      updatedRequest.requesterId, 
+      'request', 
+      'Request Accepted', 
+      `Your request for "${postTitle}" was accepted!`, 
+      updatedRequest.id, 
+      `/service-request/${updatedRequest.id}`,
+      { type: 'request', serviceRequestId: updatedRequest.id }
+    );
+    emitServiceRequestUpdate(updatedRequest);
+
+    await sendSystemMessage(
+      updatedRequest.providerId,
+      updatedRequest.requesterId,
+      "✅ You accepted the service request.",
+      "✅ Your service request was accepted!",
+      updatedRequest.postId || undefined
+    );
+
+    return res.status(200).json({
+      status: 200,
+      message: 'Request accepted',
+      data: updatedRequest,
+    });
+  } catch (error) {
+    console.error('AcceptServiceRequest error:', error);
+    return res.status(500).json({ status: 500, message: 'Server error' });
+  }
+};
+
+/**
+ * Decline a pending service request (provider only)
+ * @route PATCH /api/service-requests/:id/decline
+ */
+export const declineServiceRequest = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const { id } = req.params;
+
+    const request = await prisma.serviceRequest.findUnique({
+      where: { id },
+      include: includeRelations(),
+    });
+    if (!request) {
+      return res.status(404).json({ status: 404, message: 'Request not found' });
+    }
+    if (request.providerId !== userId) {
+      return res.status(403).json({ status: 403, message: 'Unauthorized' });
+    }
+    if (request.status !== 'pending') {
+      return res.status(400).json({ status: 400, message: 'Request is not pending' });
+    }
+
+    const updatedRequest = await prisma.serviceRequest.update({
+      where: { id },
+      data: { status: 'declined' },
+      include: includeRelations(),
+    });
+
+    const postTitle = updatedRequest.post?.title ?? 'this listing';
+    await notifyUser(
+      updatedRequest.requesterId, 
+      'request', 
+      'Request Declined', 
+      `Your request for "${postTitle}" was declined.`, 
+      updatedRequest.id, 
+      `/service-request/${updatedRequest.id}`,
+      { type: 'request', serviceRequestId: updatedRequest.id }
+    );
+    emitServiceRequestUpdate(updatedRequest);
+
+    await sendSystemMessage(
+      updatedRequest.providerId,
+      updatedRequest.requesterId,
+      "❌ You declined the service request.",
+      "❌ Your service request was declined.",
+      updatedRequest.postId || undefined
+    );
+
+    return res.status(200).json({
+      status: 200,
+      message: 'Request declined',
+      data: updatedRequest,
+    });
+  } catch (error) {
+    console.error('DeclineServiceRequest error:', error);
+    return res.status(500).json({ status: 500, message: 'Server error' });
   }
 };
 

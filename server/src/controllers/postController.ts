@@ -46,13 +46,49 @@ const deleteImagesFromStorage = async (imageUrls: string[]) => {
  */
 export const getPosts = async (req: Request, res: Response) => {
   try {
+    const { search, type, page = 1, limit = 10 } = req.query;
+    const pageNumber = parseInt(page as string, 10);
+    const limitNumber = parseInt(limit as string, 10);
+    const skip = (pageNumber - 1) * limitNumber;
+
+    // Build where clause
+    const where: any = {};
+    
+    if (type) {
+      // Map "service"/"request" to "Service"/"Request" (case-insensitive)
+      where.tag = (type as string).charAt(0).toUpperCase() + (type as string).slice(1);
+    }
+    
+    if (search) {
+      where.OR = [
+        { title: { contains: search as string, mode: 'insensitive' } },
+        { description: { contains: search as string, mode: 'insensitive' } }
+      ];
+    }
+
+    // Get total count for pagination
+    const totalCount = await prisma.post.count({ where });
+    
+    // Get paginated posts
     const posts = await prisma.post.findMany({
+      where,
       include: { author: { select: safeUserSelect } },
       orderBy: { createdAt: 'desc' },
+      skip,
+      take: limitNumber,
     });
+
+    const hasMore = skip + posts.length < totalCount;
+    const nextPage = hasMore ? pageNumber + 1 : null;
+
     return res.status(200).json({
       status: 200,
-      data: posts,
+      data: {
+        posts,
+        totalCount,
+        hasMore,
+        nextPage,
+      },
     });
   } catch (error) {
     console.error('GetPosts error:', error);

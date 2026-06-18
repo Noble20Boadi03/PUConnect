@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
+import { useFocusEffect } from 'expo-router';
 import {
   StyleSheet,
   View,
@@ -16,6 +17,7 @@ import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { useThemeColor, useAppRouter } from '../../hooks';
 import { useAuthStore, useServiceRequestsStore } from '../../store';
+import { useProviderReviewsStore, selectIsEligibleForReview } from '../../store/providerReviewsStore';
 import { serviceKindLabel, serviceStatusLabel } from '../../lib';
 import type { DbServiceRequest } from '../../types/core';
 
@@ -38,6 +40,16 @@ export const ServiceStatusView: React.FC<ServiceStatusViewProps> = ({ onBack }) 
   const requests = useServiceRequestsStore((s) => s.requests);
   const isLoading = useServiceRequestsStore((s) => s.isLoading);
   const fetchRequests = useServiceRequestsStore((s) => s.fetchRequests);
+  const eligibleReviews = useProviderReviewsStore((s) => s.eligibleReviews);
+  const fetchEligibleReviews = useProviderReviewsStore((s) => s.fetchEligibleReviews);
+
+  // Fetch requests and eligible reviews on focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchRequests();
+      fetchEligibleReviews();
+    }, [fetchRequests, fetchEligibleReviews])
+  );
 
   const sortedRequests = useMemo(() => {
     return [...requests].sort(
@@ -81,6 +93,7 @@ export const ServiceStatusView: React.FC<ServiceStatusViewProps> = ({ onBack }) 
           : 'Your response';
       const accent = item.kind === 'response' ? REQUEST_ACCENT : Colors.primary;
       const status = serviceStatusLabel(item.status);
+      const needsReview = isRequester && selectIsEligibleForReview(eligibleReviews, item.id);
 
       return (
         <TouchableOpacity
@@ -94,8 +107,16 @@ export const ServiceStatusView: React.FC<ServiceStatusViewProps> = ({ onBack }) 
                 {serviceKindLabel(item.kind)}
               </Text>
             </View>
-            <View style={[styles.statusPill, { backgroundColor: subtleBg }]}>
-              <Text style={[styles.statusText, { color: Colors.text }]}>{status}</Text>
+            <View style={{ flexDirection: 'row', gap: Spacing.xs, alignItems: 'center' }}>
+              {needsReview && (
+                <View style={[styles.reviewPill, { backgroundColor: Colors.primary + '18' }]}>
+                  <Ionicons name="star-outline" size={14} color={Colors.primary} />
+                  <Text style={[styles.reviewPillText, { color: Colors.primary }]}>Review Pending</Text>
+                </View>
+              )}
+              <View style={[styles.statusPill, { backgroundColor: subtleBg }]}>
+                <Text style={[styles.statusText, { color: Colors.text }]}>{status}</Text>
+              </View>
             </View>
           </View>
           <Text style={[styles.title, { color: Colors.text }]} numberOfLines={2}>
@@ -113,7 +134,7 @@ export const ServiceStatusView: React.FC<ServiceStatusViewProps> = ({ onBack }) 
         </TouchableOpacity>
       );
     },
-    [userId, cardBg, subtleBg, Colors, handleOpenDetails]
+    [userId, cardBg, subtleBg, Colors, handleOpenDetails, eligibleReviews]
   );
 
   return (
@@ -230,6 +251,18 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   statusText: {
+    fontSize: Typography.size.xs,
+    fontWeight: '700',
+  },
+  reviewPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  reviewPillText: {
     fontSize: Typography.size.xs,
     fontWeight: '700',
   },

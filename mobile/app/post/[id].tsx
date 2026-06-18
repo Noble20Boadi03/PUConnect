@@ -15,7 +15,7 @@ import {
 } from '../../lib';
 import { useAppRouter, useConfirmDialog } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
-import { useAuthStore, useProfileStore, usePostStore } from '../../store';
+import { useAuthStore, useProfileStore, usePostStore, useMarketStore } from '../../store';
 import { useChat } from '../../hooks/useChat';
 import { EDIT_INFO_SERVICE_OPTIONS } from '../../constants/editInfoServices';
 import { postService } from '../../services';
@@ -51,6 +51,7 @@ export default function PostDetailScreen() {
   const { conversations, fetchConversations } = useChat();
 
   const { data: post, isLoading, isRefreshing, fetchPost, clearCache } = usePostStore();
+  const { removePost, invalidateCache } = useMarketStore();
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isHiding, setIsHiding] = useState(false);
@@ -235,6 +236,10 @@ export default function PostDetailScreen() {
     setIsDeleting(true);
 
     try {
+      // Optimistic delete from market store
+      removePost(id);
+      invalidateCache();
+      
       await postService.deletePost(id);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setActionMessage('Post deleted.');
@@ -249,7 +254,7 @@ export default function PostDetailScreen() {
     } finally {
       setIsDeleting(false);
     }
-  }, [post, id, showConfirm, handleBack, isDeleting]);
+  }, [post, id, showConfirm, handleBack, isDeleting, removePost, invalidateCache]);
 
   if (isLoading) {
     return <PostDetailViewSkeleton />;

@@ -91,3 +91,29 @@ export const markAllNotificationsAsRead = async (req: Request, res: Response) =>
     });
   }
 };
+
+/**
+ * Get unread notifications count for authenticated user
+ * @route GET /api/notifications/unread-count
+ */
+export const getUnreadCount = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const unreadCount = await prisma.notification.count({
+      where: {
+        userId,
+        read: false
+      }
+    });
+    return res.status(200).json({
+      status: 200,
+      data: { count: unreadCount }
+    });
+  } catch (error) {
+    console.error('GetUnreadCount error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error'
+    });
+  }
+};

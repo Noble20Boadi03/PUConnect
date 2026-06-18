@@ -44,6 +44,7 @@ export const SubmitProviderReviewView: React.FC<SubmitProviderReviewViewProps> =
   const accentColor = '#F59E0B';
 
   const submitReview = useProviderReviewsStore((s) => s.submitReview);
+  const removeEligibleReview = useProviderReviewsStore((s) => s.removeEligibleReview);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -82,6 +83,10 @@ export const SubmitProviderReviewView: React.FC<SubmitProviderReviewViewProps> =
           year: 'numeric',
         }),
       });
+      
+      if (deal.serviceRequestId) {
+        removeEligibleReview(deal.serviceRequestId);
+      }
       
       onSubmitted();
     } catch (err) {
