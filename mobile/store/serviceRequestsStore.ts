@@ -19,6 +19,7 @@ interface ServiceRequestsState {
   fetchRequests: (isRefresh?: boolean) => Promise<void>;
   fetchActiveCount: () => Promise<void>;
   fetchForChat: (postId: string, peerUsername: string) => Promise<DbServiceRequest | null>;
+  fetchStatusForPost: (postId: string) => Promise<DbServiceRequest | null>;
   createOfficialEngagement: (postId: string) => Promise<DbServiceRequest>;
   transition: (
     id: string,
@@ -30,6 +31,7 @@ interface ServiceRequestsState {
   subscribeToUpdates: () => () => void;
   getActiveCount: () => number;
   getCompletedDealsForReviews: () => CompletedDeal[];
+  getPastServicesWithUser: (peerId: string) => DbServiceRequest[];
   reset: () => void;
 }
 
@@ -100,6 +102,19 @@ export const useServiceRequestsStore = create<ServiceRequestsState>((set, get) =
       return request;
     } catch (error) {
       console.error('Failed to fetch chat service request:', error);
+      return null;
+    }
+  },
+
+  fetchStatusForPost: async (postId) => {
+    try {
+      const request = await serviceRequestService.getStatusForPost(postId);
+      if (request) {
+        set((state) => ({ requests: upsertById(state.requests, request) }));
+      }
+      return request;
+    } catch (error) {
+      console.error('Failed to fetch post service status:', error);
       return null;
     }
   },
@@ -204,6 +219,15 @@ export const useServiceRequestsStore = create<ServiceRequestsState>((set, get) =
       .filter((d) => d.revieweeUsername && d.postId);
   },
   
+  getPastServicesWithUser: (peerId: string) => {
+    return get()
+      .requests.filter((r) => 
+        (r.requesterId === peerId || r.providerId === peerId) &&
+        ['completed', 'cancelled', 'declined'].includes(r.status)
+      )
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  },
+  
   reset: () => {
     set({
       requests: [],
@@ -214,6 +238,8 @@ export const useServiceRequestsStore = create<ServiceRequestsState>((set, get) =
       hydrated: false,
       lastFetched: null,
     });
+  },
+});
   },
 }));
 

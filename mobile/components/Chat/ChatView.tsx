@@ -117,6 +117,8 @@ export interface ChatViewProps {
   currentUserId: string;
   serviceRequest: any;
   onClearPostContext: () => void;
+  hasPastServices?: boolean;
+  onPastServices?: () => void;
 }
 
 export const ChatView: React.FC<ChatViewProps> = ({
@@ -144,6 +146,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
   currentUserId,
   serviceRequest,
   onClearPostContext,
+  hasPastServices = false,
+  onPastServices,
 }) => {
   const userIsProvider = isCurrentUserProvider(currentUserId, serviceRequest);
   const router = useAppRouter();
@@ -800,6 +804,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
         currentUserId={currentUserId}
         serviceRequest={serviceRequest}
         isMuted={isMuted}
+        hasPastServices={hasPastServices}
+        onPastServices={onPastServices}
         onSelect={handleMenuSelect}
         onClose={() => setOptionsVisible(false)}
       />

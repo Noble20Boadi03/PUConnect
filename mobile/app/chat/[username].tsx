@@ -41,12 +41,16 @@ export default function ChatScreen() {
     }
   }, [username, activeThread, fetchMessages]);
   const requests = useServiceRequestsStore((s) => s.requests);
+  const hydrated = useServiceRequestsStore((s) => s.hydrated);
+  const fetchRequests = useServiceRequestsStore((s) => s.fetchRequests);
+  const getPastServicesWithUser = useServiceRequestsStore((s) => s.getPastServicesWithUser);
   const fetchForChat = useServiceRequestsStore((s) => s.fetchForChat);
   const createOfficialEngagement = useServiceRequestsStore((s) => s.createOfficialEngagement);
   const transition = useServiceRequestsStore((s) => s.transition);
   const accept = useServiceRequestsStore((s) => s.accept);
   const decline = useServiceRequestsStore((s) => s.decline);
   const [engagementLoading, setEngagementLoading] = React.useState(false);
+  const [peerId, setPeerId] = React.useState<string | null>(null);
 
   useEffect(() => {
     const loadChat = async () => {
@@ -54,6 +58,10 @@ export default function ChatScreen() {
         try {
           // First fetch participant profile (always required)
           const participantProfile = await profileService.getPublicProfile(username);
+          setPeerId(participantProfile.id);
+          
+          // Fetch service requests to check past services
+          await fetchRequests();
           
           // Then try to fetch post context, but don't fail the whole chat if it fails
           let post;
@@ -109,7 +117,7 @@ export default function ChatScreen() {
       }
     };
     loadChat();
-  }, [username, resolvedPostId, fetchMessages, subscribeToMessages]);
+  }, [username, resolvedPostId, fetchMessages, subscribeToMessages, fetchRequests]);
 
   useEffect(() => {
     if (!username || !resolvedPostId) return;
@@ -216,6 +224,17 @@ export default function ChatScreen() {
     router.push(buildProviderProfileHref(username) as any);
   }, [username, router]);
 
+  const handlePastServices = useCallback(() => {
+    if (typeof username !== 'string') return;
+    router.push(`/past-services/${username}` as any);
+  }, [username, router]);
+
+  const hasPastServices = useMemo(() => {
+    if (!peerId || !hydrated) return false;
+    const pastServices = getPastServicesWithUser(peerId);
+    return pastServices.length > 0;
+  }, [peerId, getPastServicesWithUser, hydrated]);
+
   const handleSendMessage = useCallback(
     (text: string) => {
       if (username) {
@@ -311,6 +330,8 @@ export default function ChatScreen() {
       currentUserId={currentUserId}
       serviceRequest={chatServiceRequest}
       onClearPostContext={clearPostContext}
+      hasPastServices={hasPastServices}
+      onPastServices={handlePastServices}
     />
   );
 }

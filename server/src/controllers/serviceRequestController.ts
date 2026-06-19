@@ -232,6 +232,38 @@ export const getServiceRequestById = async (req: Request, res: Response) => {
 };
 
 /**
+ * Get service request status for a specific post and current user (as requester)
+ * @route GET /api/service-requests/post/:postId/status
+ */
+export const getPostServiceStatus = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const { postId } = req.params;
+
+    const request = await prisma.serviceRequest.findFirst({
+      where: {
+        postId,
+        requesterId: userId,
+        status: { in: ['pending', 'active', 'pending_review', 'completed'] },
+      },
+      include: includeRelations(),
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return res.status(200).json({
+      status: 200,
+      data: request,
+    });
+  } catch (error) {
+    console.error('GetPostServiceStatus error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error',
+    });
+  }
+};
+
+/**
  * Create an official service request or response
  * @route POST /api/service-requests
  */

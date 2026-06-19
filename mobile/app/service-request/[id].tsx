@@ -10,7 +10,7 @@ import type { DbServiceRequest } from '../../types/core';
 import { useLocalSearchParams } from 'expo-router';
 
 export default function ServiceRequestDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, readOnly } = useLocalSearchParams<{ id: string, readOnly?: string }>();
   const router = useAppRouter();
   const Colors = useThemeColor();
 
@@ -81,5 +81,5 @@ export default function ServiceRequestDetailScreen() {
     );
   }
 
-  return <ServiceRequestDetailsView serviceRequest={serviceRequest} onBack={handleBack} />;
+  return <ServiceRequestDetailsView serviceRequest={serviceRequest} onBack={handleBack} readOnly={readOnly === 'true'} />;
 }

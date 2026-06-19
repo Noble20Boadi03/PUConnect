@@ -28,6 +28,13 @@ export const serviceRequestService = {
     return response.data.data;
   },
 
+  async getStatusForPost(postId: string): Promise<DbServiceRequest | null> {
+    const response = await apiClient.get<ApiResponse<DbServiceRequest | null>>(
+      `/service-requests/post/${postId}/status`
+    );
+    return response.data.data;
+  },
+
   async getById(id: string): Promise<DbServiceRequest> {
     const response = await apiClient.get<ApiResponse<DbServiceRequest>>(`/service-requests/${id}`);
     return response.data.data;

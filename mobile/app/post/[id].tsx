@@ -15,10 +15,11 @@ import {
 } from '../../lib';
 import { useAppRouter, useConfirmDialog } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
-import { useAuthStore, useProfileStore, usePostStore, useMarketStore } from '../../store';
+import { useAuthStore, useProfileStore, usePostStore, useMarketStore, useServiceRequestsStore } from '../../store';
 import { useChat } from '../../hooks/useChat';
 import { EDIT_INFO_SERVICE_OPTIONS } from '../../constants/editInfoServices';
 import { postService } from '../../services';
+import type { DbServiceRequest } from '../../types/core';
 
 function isTruthyParam(value: string | undefined): boolean {
   return value === '1' || value === 'true';
@@ -54,9 +55,11 @@ export default function PostDetailScreen() {
 
   const { data: post, isLoading, isRefreshing, fetchPost, clearCache } = usePostStore();
   const { removePost, invalidateCache, trackPostView } = useMarketStore();
+  const { fetchStatusForPost } = useServiceRequestsStore();
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isHiding, setIsHiding] = useState(false);
+  const [activeServiceRequest, setActiveServiceRequest] = useState<DbServiceRequest | null>(null);
 
   const isOwnPost = useMemo(() => {
     if (!post || !user) return false;
@@ -98,6 +101,16 @@ export default function PostDetailScreen() {
       trackPostView(post.id);
     }
   }, [post, isOwnPost, trackPostView]);
+
+  useEffect(() => {
+    async function loadServiceStatus() {
+      if (post && !isOwnPost) {
+        const status = await fetchStatusForPost(post.id);
+        setActiveServiceRequest(status);
+      }
+    }
+    loadServiceStatus();
+  }, [post, isOwnPost, fetchStatusForPost]);
 
   // Check if user is eligible to respond to this request
   const eligibility = useMemo(() => {
@@ -201,6 +214,10 @@ export default function PostDetailScreen() {
     },
     [router]
   );
+
+  const handleResumeService = useCallback((serviceRequestId: string) => {
+    router.push(`/service-request/${serviceRequestId}` as any);
+  }, [router]);
 
   const handleEdit = useCallback(() => {
     if (!post) return;
@@ -329,6 +346,8 @@ export default function PostDetailScreen() {
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
         }
+        activeServiceRequest={activeServiceRequest}
+        onResumeService={handleResumeService}
       />
     </View>
   );

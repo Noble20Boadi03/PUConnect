@@ -55,6 +55,8 @@ export interface PostDetailViewProps {
   disabledReason?: string | null;
   hasExistingConversation?: boolean;
   refreshControl?: React.ReactElement<RefreshControlProps>;
+  activeServiceRequest?: any;
+  onResumeService?: (serviceRequestId: string) => void;
 }
 
 export const PostDetailView: React.FC<PostDetailViewProps> = ({
@@ -78,6 +80,8 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
   disabledReason,
   hasExistingConversation = false,
   refreshControl,
+  activeServiceRequest,
+  onResumeService,
 }) => {
   const Colors = useThemeColor();
   const insets = useSafeAreaInsets();
@@ -147,25 +151,35 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
     onDelete?.();
   }, [onDelete]);
 
+  const isActiveRequest = activeServiceRequest && 
+    ['active', 'pending', 'pending_review'].includes(activeServiceRequest.status);
+  const isCompletedRequest = activeServiceRequest?.status === 'completed';
+
   const footerTitle = returnToChat
     ? 'Return to Chat'
     : requestService
       ? 'Request This Service'
-      : hasExistingConversation
-        ? 'Continue Chat'
-        : copy.cta;
+      : isActiveRequest
+        ? 'Resume Ongoing Service'
+        : hasExistingConversation
+          ? 'Continue Chat'
+          : copy.cta;
   const footerIcon = returnToChat
     ? ('arrow-back-circle-outline' as const)
     : requestService
       ? ('checkmark-circle-outline' as const)
-      : isService
-        ? ('chatbubble-outline' as const)
-        : ('hand-right-outline' as const);
+      : isActiveRequest
+        ? ('sync-outline' as const)
+        : isService
+          ? ('chatbubble-outline' as const)
+          : ('hand-right-outline' as const);
   const footerPress = returnToChat
     ? handleReturnToChat
     : requestService
       ? handleRequestService
-      : handleSendMessage;
+      : isActiveRequest && onResumeService
+        ? () => onResumeService(activeServiceRequest.id)
+        : handleSendMessage;
 
   const handleViewProvider = useCallback(() => {
     if (!isService) return;
@@ -451,7 +465,11 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
               leftIcon={<Ionicons name={footerIcon} size={20} color="#FFFFFF" />}
               disabled={actionDisabled}
             />
-            {disabledReason ? (
+            {isCompletedRequest ? (
+              <Text style={[styles.disabledReason, { color: Colors.icon }]}>
+                You've previously engaged this provider.
+              </Text>
+            ) : disabledReason ? (
               <Text style={[styles.disabledReason, { color: Colors.icon }]}>
                 {disabledReason}
               </Text>

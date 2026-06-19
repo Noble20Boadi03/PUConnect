@@ -32,6 +32,7 @@ export type ChatMenuAction =
   | 'mute'
   | 'report'
   | 'notInterested'
+  | 'pastServices'
   | 'cancel';
 
 export interface ChatOptionsSheetProps {
@@ -54,7 +55,9 @@ export interface ChatOptionsSheetProps {
     status: string;
   } | null;
   isMuted?: boolean;
+  hasPastServices?: boolean;
   onSelect: (action: ChatMenuAction) => void;
+  onPastServices?: () => void;
   onClose: () => void;
 }
 
@@ -76,7 +79,9 @@ export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
   currentUserId,
   serviceRequest,
   isMuted = false,
+  hasPastServices = false,
   onSelect,
+  onPastServices,
   onClose,
 }) => {
   const Colors = useThemeColor();
@@ -181,6 +186,9 @@ export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
     if (showBrowseServices) {
       items.push({ key: 'browseServices', label: 'Browse Services' });
     }
+    if (hasPastServices) {
+      items.push({ key: 'pastServices', label: 'Past Services' });
+    }
     items.push({ key: 'mute', label: isMuted ? 'Unmute' : 'Mute' });
     items.push({ key: 'report', label: 'Report', destructive: true });
     return items;
@@ -194,6 +202,7 @@ export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
     currentUserId,
     serviceRequest,
     isMuted,
+    hasPastServices,
     Colors.primary,
     isUserProvider,
     isUserRequester,
@@ -206,7 +215,11 @@ export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
     if (action === 'cancelOfficialRequest' || action === 'withdrawOfficialResponse') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     }
-    onSelect(action);
+    if (action === 'pastServices' && onPastServices) {
+      onPastServices();
+    } else {
+      onSelect(action);
+    }
     onClose();
   };
 

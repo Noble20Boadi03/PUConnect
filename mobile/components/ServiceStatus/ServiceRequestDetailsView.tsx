@@ -33,11 +33,13 @@ const REQUEST_ACCENT = '#F59E0B';
 export interface ServiceRequestDetailsViewProps {
   serviceRequest: DbServiceRequest;
   onBack: () => void;
+  readOnly?: boolean;
 }
 
 export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps> = ({
   serviceRequest,
   onBack,
+  readOnly = false,
 }) => {
   const Colors = useThemeColor();
   const router = useAppRouter();
@@ -430,6 +432,15 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + Spacing.xl }]}
         showsVerticalScrollIndicator={false}
       >
+        {readOnly && (
+          <View style={[styles.infoBlock, { backgroundColor: Colors.primary + '15', flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }]}>
+            <Ionicons name="eye-outline" size={24} color={Colors.primary} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.infoTitle, { color: Colors.primary }]}>This is a past service</Text>
+              <Text style={[styles.infoBody, { color: Colors.icon }]}>No actions available.</Text>
+            </View>
+          </View>
+        )}
         {postContext && (
           <View style={styles.cardContainer}>
             <ChatOfficialDetailsCard
@@ -512,129 +523,133 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
       </ScrollView>
 
       <View style={[styles.buttonContainer, { paddingBottom: insets.bottom }]}>
-        {actionLoading ? (
-          <ActivityIndicator size="large" color={Colors.primary} />
-        ) : (
+        {postContext && (
+          <TouchableOpacity
+            style={[styles.secondaryButton, { backgroundColor: subtleBg }]}
+            onPress={handleOpenPost}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="open-outline" size={18} color={Colors.text} />
+            <Text style={[styles.secondaryLabel, { color: Colors.text }]}>View Listing</Text>
+          </TouchableOpacity>
+        )}
+
+        {peer?.username && (
+          <TouchableOpacity
+            style={[styles.secondaryButton, { backgroundColor: subtleBg }]}
+            onPress={handleOpenChat}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="chatbubble-outline" size={18} color={Colors.text} />
+            <Text style={[styles.secondaryLabel, { color: Colors.text }]}>Open Chat</Text>
+          </TouchableOpacity>
+        )}
+
+        {!readOnly && (
           <>
-            {postContext && (
-              <TouchableOpacity
-                style={[styles.secondaryButton, { backgroundColor: subtleBg }]}
-                onPress={handleOpenPost}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="open-outline" size={18} color={Colors.text} />
-                <Text style={[styles.secondaryLabel, { color: Colors.text }]}>View Listing</Text>
-              </TouchableOpacity>
-            )}
-
-            {peer?.username && (
-              <TouchableOpacity
-                style={[styles.secondaryButton, { backgroundColor: subtleBg }]}
-                onPress={handleOpenChat}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="chatbubble-outline" size={18} color={Colors.text} />
-                <Text style={[styles.secondaryLabel, { color: Colors.text }]}>Open Chat</Text>
-              </TouchableOpacity>
-            )}
-
-            {canAccept && (
-              <TouchableOpacity
-                style={[styles.primaryButton, { backgroundColor: accent }]}
-                onPress={handleAccept}
-                activeOpacity={0.9}
-              >
-                <Ionicons name="checkmark-circle-outline" size={22} color="#FFFFFF" />
-                <Text style={styles.primaryLabel}>Accept</Text>
-              </TouchableOpacity>
-            )}
-
-            {canDecline && (
-              <TouchableOpacity
-                style={[styles.destructiveButton, { backgroundColor: Colors.error + '15' }]}
-                onPress={handleDecline}
-                activeOpacity={0.85}
-              >
-                <Text style={[styles.destructiveLabel, { color: Colors.error }]}>
-                  Decline
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            {canRequestCompletion && (
-              <TouchableOpacity
-                style={[styles.primaryButton, { backgroundColor: accent }]}
-                onPress={handleRequestOfficialCompletion}
-                activeOpacity={0.9}
-              >
-                <Ionicons name="checkmark-done-outline" size={22} color="#FFFFFF" />
-                <Text style={styles.primaryLabel}>Request Completion</Text>
-              </TouchableOpacity>
-            )}
-
-            {canReviewCompletion && (
+            {actionLoading ? (
+              <ActivityIndicator size="large" color={Colors.primary} />
+            ) : (
               <>
-                <TouchableOpacity
-                  style={[styles.primaryButton, { backgroundColor: accent }]}
-                  onPress={handleConfirmOfficialCompletion}
-                  activeOpacity={0.9}
-                >
-                  <Ionicons name="checkmark-circle-outline" size={22} color="#FFFFFF" />
-                  <Text style={styles.primaryLabel}>Confirm Service Delivered</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.declineButton, { backgroundColor: subtleBg }]}
-                  onPress={handleDeclineOfficialCompletion}
-                  activeOpacity={0.85}
-                >
-                  <Text style={[styles.declineLabel, { color: Colors.error }]}>
-                    Needs More Work
-                  </Text>
-                </TouchableOpacity>
-              </>
-            )}
+                {canAccept && (
+                  <TouchableOpacity
+                    style={[styles.primaryButton, { backgroundColor: accent }]}
+                    onPress={handleAccept}
+                    activeOpacity={0.9}
+                  >
+                    <Ionicons name="checkmark-circle-outline" size={22} color="#FFFFFF" />
+                    <Text style={styles.primaryLabel}>Accept</Text>
+                  </TouchableOpacity>
+                )}
 
-            {isEligibleForReview && (
-            <TouchableOpacity
-              style={[styles.primaryButton, { backgroundColor: Colors.primary }]}
-              onPress={handleLeaveReview}
-              activeOpacity={0.9}
-            >
-              <Ionicons name="star-outline" size={22} color="#FFFFFF" />
-              <Text style={styles.primaryLabel}>Leave a Review</Text>
-            </TouchableOpacity>
-          )}
-
-          {(engagement.officialEngagementStatus === 'active' || engagement.officialEngagementStatus === 'pending') &&
-            engagement.completionPhase === 'none' && (
-              <>
-                {isRequester && (
+                {canDecline && (
                   <TouchableOpacity
                     style={[styles.destructiveButton, { backgroundColor: Colors.error + '15' }]}
-                    onPress={handleCancelOfficialRequest}
+                    onPress={handleDecline}
                     activeOpacity={0.85}
                   >
                     <Text style={[styles.destructiveLabel, { color: Colors.error }]}>
-                      Cancel Request
+                      Decline
                     </Text>
                   </TouchableOpacity>
                 )}
-                {userIsProvider && engagement.officialEngagementStatus === 'active' && (
+
+                {canRequestCompletion && (
                   <TouchableOpacity
-                    style={[styles.destructiveButton, { backgroundColor: Colors.error + '15' }]}
-                    onPress={handleWithdrawOfficialResponse}
-                    activeOpacity={0.85}
+                    style={[styles.primaryButton, { backgroundColor: accent }]}
+                    onPress={handleRequestOfficialCompletion}
+                    activeOpacity={0.9}
                   >
-                    <Text style={[styles.destructiveLabel, { color: Colors.error }]}>
-                      {postContext?.tag === 'Service' ? 'Decline Request' : 'Withdraw Response'}
-                    </Text>
+                    <Ionicons name="checkmark-done-outline" size={22} color="#FFFFFF" />
+                    <Text style={styles.primaryLabel}>Request Completion</Text>
                   </TouchableOpacity>
                 )}
+
+                {canReviewCompletion && (
+                  <>
+                    <TouchableOpacity
+                      style={[styles.primaryButton, { backgroundColor: accent }]}
+                      onPress={handleConfirmOfficialCompletion}
+                      activeOpacity={0.9}
+                    >
+                      <Ionicons name="checkmark-circle-outline" size={22} color="#FFFFFF" />
+                      <Text style={styles.primaryLabel}>Confirm Service Delivered</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.declineButton, { backgroundColor: subtleBg }]}
+                      onPress={handleDeclineOfficialCompletion}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={[styles.declineLabel, { color: Colors.error }]}>
+                        Needs More Work
+                      </Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+
+                {isEligibleForReview && (
+                  <TouchableOpacity
+                    style={[styles.primaryButton, { backgroundColor: Colors.primary }]}
+                    onPress={handleLeaveReview}
+                    activeOpacity={0.9}
+                  >
+                    <Ionicons name="star-outline" size={22} color="#FFFFFF" />
+                    <Text style={styles.primaryLabel}>Leave a Review</Text>
+                  </TouchableOpacity>
+                )}
+
+                {(engagement.officialEngagementStatus === 'active' || engagement.officialEngagementStatus === 'pending') &&
+                  engagement.completionPhase === 'none' && (
+                    <>
+                      {isRequester && (
+                        <TouchableOpacity
+                          style={[styles.destructiveButton, { backgroundColor: Colors.error + '15' }]}
+                          onPress={handleCancelOfficialRequest}
+                          activeOpacity={0.85}
+                        >
+                          <Text style={[styles.destructiveLabel, { color: Colors.error }]}>
+                            Cancel Request
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                      {userIsProvider && engagement.officialEngagementStatus === 'active' && (
+                        <TouchableOpacity
+                          style={[styles.destructiveButton, { backgroundColor: Colors.error + '15' }]}
+                          onPress={handleWithdrawOfficialResponse}
+                          activeOpacity={0.85}
+                        >
+                          <Text style={[styles.destructiveLabel, { color: Colors.error }]}>
+                            {postContext?.tag === 'Service' ? 'Decline Request' : 'Withdraw Response'}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </>
+                  )}
               </>
             )}
-        </>
-      )}
-    </View>
+          </>
+        )}
+      </View>
 
       {confirmOptions && (
         <ConfirmDialog

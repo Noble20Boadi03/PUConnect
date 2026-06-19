@@ -4,6 +4,7 @@ import {
   getServiceRequestById,
   getServiceRequestForChat,
   getActiveServiceRequestCount,
+  getPostServiceStatus,
   createServiceRequest,
   transitionServiceRequest,
   updateServiceRequest,
@@ -18,6 +19,7 @@ router.get('/', protect, getServiceRequests);
 router.get('/active-count', protect, getActiveServiceRequestCount);
 router.get('/chat', protect, getServiceRequestForChat);
 router.get('/:id', protect, getServiceRequestById);
+router.get('/post/:postId/status', protect, getPostServiceStatus);
 router.post('/', protect, createServiceRequest);
 router.patch('/:id/transition', protect, transitionServiceRequest);
 router.patch('/:id/accept', protect, acceptServiceRequest);
