@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 
-import { useAppRouter, useThemeColor, useTabBarHeight } from '../../hooks';
+import { useAppRouter, useThemeColor, useTabBarHeight, useDebounce } from '../../hooks';
 import { useAuthStore } from '../../store';
 import { buildExploreCategoryHref, buildProviderProfileHref } from '../../lib';
 
@@ -63,6 +63,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   const [activeTab, setActiveTab] = useState<ExploreTab>('categories');
   const [peopleFilter, setPeopleFilter] = useState<ExploreCategoryFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const searchInputRef = useRef<TextInput>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -197,6 +198,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
         style={styles.scroll}
         showsVerticalScrollIndicator={false}
         refreshControl={refreshControl}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.panel}>
           {isSearchExpanded || activeTab === 'people' ? (
@@ -206,7 +208,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
               activeFilter={peopleFilter}
               onFilterChange={setPeopleFilter}
               onProviderPress={handleProviderPress}
-              searchQuery={searchQuery}
+              searchQuery={debouncedSearchQuery}
               refreshControl={undefined}
               tabBarHeight={tabBarHeight}
               {...peopleTheme}

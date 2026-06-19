@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, View, Text, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import {
@@ -44,6 +45,7 @@ export const ExploreServiceProvidersPanel: React.FC<ExploreServiceProvidersPanel
   subtleBg,
   onProviderPress,
 }) => {
+  const insets = useSafeAreaInsets();
   const serviceProviders = useMemo(
     () => getExploreProvidersForService(providers, service),
     [providers, service]
@@ -82,7 +84,7 @@ export const ExploreServiceProvidersPanel: React.FC<ExploreServiceProvidersPanel
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: Spacing.xxl + insets.bottom }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -121,7 +123,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: 120,
   },
   list: {
     gap: CARD_GAP,

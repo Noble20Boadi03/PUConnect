@@ -89,6 +89,7 @@ model User {
   posts               Post[]
   sentMessages        ChatMessage[]        @relation("SentMessages")
   receivedMessages    ChatMessage[]        @relation("ReceivedMessages")
+  visibleToMessages   ChatMessage[]        @relation("VisibleToMessages")
   sentReviews         Review[]             @relation("SentReviews")
   receivedReviews     Review[]             @relation("ReceivedReviews")
   sentRequests        ServiceRequest[]     @relation("SentRequests")
@@ -182,14 +183,17 @@ model ChatMessage {
   postId     String?
   kind       MessageKind @default(text)
   isRead     Boolean     @default(false)
+  visibleToId String?
   createdAt  DateTime    @default(now())
 
-  sender   User  @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver User  @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
-  post     Post? @relation(fields: [postId], references: [id], onDelete: SetNull)
+  sender    User  @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver  User  @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  visibleTo User? @relation("VisibleToMessages", fields: [visibleToId], references: [id], onDelete: Cascade)
+  post      Post? @relation(fields: [postId], references: [id], onDelete: SetNull)
 
   @@index([senderId])
   @@index([receiverId])
+  @@index([visibleToId])
   @@map("chat_messages")
 }
 

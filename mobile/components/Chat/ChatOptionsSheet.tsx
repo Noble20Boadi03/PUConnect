@@ -23,6 +23,8 @@ export type ChatMenuAction =
   | 'officialRequest'
   | 'cancelOfficialRequest'
   | 'withdrawOfficialResponse'
+  | 'acceptOfficialEngagement'
+  | 'declineOfficialEngagement'
   | 'viewOfficialDetails'
   | 'requestOfficialCompletion'
   | 'reviewOfficialCompletion'
@@ -89,35 +91,60 @@ export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
   const menuItems = useMemo(() => {
     const items: MenuItem[] = [];
 
-    if (officialEngagementActive || officialEngagementCompleted) {
+    if (officialEngagementActive || officialEngagementCompleted || (serviceRequest && serviceRequest.status === 'pending')) {
       if (!officialEngagementCompleted && serviceRequest) {
-        if (isUserRequester && serviceRequest.status === 'active') {
-          items.push({
-            key: 'cancelOfficialRequest',
-            label: 'Cancel Request',
-            destructive: true,
-          });
+        if (serviceRequest.status === 'pending') {
+          // Determine if current user can accept/decline
+          const isResponseKind = (serviceRequest as any).kind === 'response';
+          const canAccept = isResponseKind ? isUserRequester : isUserProvider;
+          const canDecline = isResponseKind ? isUserRequester : isUserProvider;
+          
+          if (canAccept) {
+            items.push({
+              key: 'acceptOfficialEngagement',
+              label: isResponseKind ? 'Accept Response' : 'Accept Request',
+              accentColor: postContext?.tag === 'Request' ? REQUEST_ACCENT : Colors.primary,
+            });
+          }
+          
+          if (canDecline) {
+            items.push({
+              key: 'declineOfficialEngagement',
+              label: isResponseKind ? 'Decline Response' : 'Decline Request',
+              destructive: true,
+            });
+          }
         }
-        if (isUserProvider && serviceRequest.status === 'active') {
-          items.push({
-            key: 'withdrawOfficialResponse',
-            label: postContext?.tag === 'Service' ? 'Decline Request' : 'Withdraw Response',
-            destructive: true,
-          });
-        }
-        if (completionPhase === 'none' && isUserProvider && serviceRequest.status === 'active') {
-          items.push({
-            key: 'requestOfficialCompletion',
-            label: 'Request Completion',
-            accentColor: postContext?.tag === 'Request' ? REQUEST_ACCENT : Colors.primary,
-          });
-        }
-        if (completionPhase === 'pending_review' && isUserRequester) {
-          items.push({
-            key: 'reviewOfficialCompletion',
-            label: 'Review Service & Confirm',
-            accentColor: postContext?.tag === 'Request' ? REQUEST_ACCENT : Colors.primary,
-          });
+        
+        if (serviceRequest.status === 'active') {
+          if (isUserRequester) {
+            items.push({
+              key: 'cancelOfficialRequest',
+              label: 'Cancel Request',
+              destructive: true,
+            });
+          }
+          if (isUserProvider) {
+            items.push({
+              key: 'withdrawOfficialResponse',
+              label: postContext?.tag === 'Service' ? 'Decline Request' : 'Withdraw Response',
+              destructive: true,
+            });
+          }
+          if (completionPhase === 'none' && isUserProvider) {
+            items.push({
+              key: 'requestOfficialCompletion',
+              label: 'Request Completion',
+              accentColor: postContext?.tag === 'Request' ? REQUEST_ACCENT : Colors.primary,
+            });
+          }
+          if (completionPhase === 'pending_review' && isUserRequester) {
+            items.push({
+              key: 'reviewOfficialCompletion',
+              label: 'Review Service & Confirm',
+              accentColor: postContext?.tag === 'Request' ? REQUEST_ACCENT : Colors.primary,
+            });
+          }
         }
       }
       items.push({ key: 'viewOfficialDetails', label: 'View service status' });

@@ -44,6 +44,8 @@ export default function ChatScreen() {
   const fetchForChat = useServiceRequestsStore((s) => s.fetchForChat);
   const createOfficialEngagement = useServiceRequestsStore((s) => s.createOfficialEngagement);
   const transition = useServiceRequestsStore((s) => s.transition);
+  const accept = useServiceRequestsStore((s) => s.accept);
+  const decline = useServiceRequestsStore((s) => s.decline);
   const [engagementLoading, setEngagementLoading] = React.useState(false);
 
   useEffect(() => {
@@ -186,7 +188,7 @@ export default function ChatScreen() {
 
   const handleOpenPost = useCallback(
     (id: string) => {
-      router.push(`/post/${id}?fromProvider=1&fromChat=1` as any);
+      router.push(`/post/${id}?fromProvider=1&fromChat=1&forceNonOwner=1` as any);
     },
     [router]
   );
@@ -216,8 +218,21 @@ export default function ChatScreen() {
 
   const handleCreateOfficialEngagement = useCallback(async () => {
     if (!resolvedPostId) throw new Error('Missing post context');
-    await createOfficialEngagement(resolvedPostId);
-  }, [resolvedPostId, createOfficialEngagement]);
+    const request = await createOfficialEngagement(resolvedPostId);
+    if (request.kind === 'response') {
+      await accept(request.id);
+    }
+  }, [resolvedPostId, createOfficialEngagement, accept]);
+
+  const handleAcceptOfficialEngagement = useCallback(async () => {
+    if (!chatServiceRequest) throw new Error('No active engagement');
+    await accept(chatServiceRequest.id);
+  }, [chatServiceRequest, accept]);
+
+  const handleDeclineOfficialEngagement = useCallback(async () => {
+    if (!chatServiceRequest) throw new Error('No active engagement');
+    await decline(chatServiceRequest.id);
+  }, [chatServiceRequest, decline]);
 
   const handleCancelOfficialEngagement = useCallback(async () => {
     if (!chatServiceRequest) throw new Error('No active engagement');
@@ -281,6 +296,8 @@ export default function ChatScreen() {
       onRequestCompletion={handleRequestCompletion}
       onConfirmCompletion={handleConfirmCompletion}
       onDeclineCompletion={handleDeclineCompletion}
+      onAcceptOfficialEngagement={handleAcceptOfficialEngagement}
+      onDeclineOfficialEngagement={handleDeclineOfficialEngagement}
       isRefreshing={isRefreshing}
       onRefresh={handleRefresh}
       isLoadingMore={isLoadingMoreMessages}

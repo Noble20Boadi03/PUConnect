@@ -106,6 +106,8 @@ export interface ChatViewProps {
   onRequestCompletion: () => Promise<void>;
   onConfirmCompletion: () => Promise<void>;
   onDeclineCompletion: () => Promise<void>;
+  onAcceptOfficialEngagement?: () => Promise<void>;
+  onDeclineOfficialEngagement?: () => Promise<void>;
   isRefreshing?: boolean;
   onRefresh?: () => void;
   isLoadingMore?: boolean;
@@ -131,6 +133,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
   onRequestCompletion,
   onConfirmCompletion,
   onDeclineCompletion,
+  onAcceptOfficialEngagement,
+  onDeclineOfficialEngagement,
   isRefreshing = false,
   onRefresh,
   isLoadingMore = false,
@@ -229,7 +233,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const canOfficialRequest =
     thread.postContext?.tag === 'Request' && officialEngagementStatus === 'none' && !engagementLoading;
   const showViewProviderProfile =
-    !thread.postContext || thread.postContext.tag === 'Service';
+    (!thread.postContext || thread.postContext.tag === 'Service') && !userIsProvider;
   const hasOfficialEngagement =
     officialEngagementStatus === 'active' || officialEngagementStatus === 'completed';
 
@@ -458,6 +462,47 @@ export const ChatView: React.FC<ChatViewProps> = ({
     setPendingReviewDealId(null);
   }, [pendingReviewDealId, dismissReviewPrompt]);
 
+  const handleConfirmOfficialEngagement = useCallback(async () => {
+    if (!thread.postContext || actionLoading) return;
+    const ctx = thread.postContext;
+    setActionLoading(true);
+    try {
+      await onCreateOfficialEngagement();
+    } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setActionLoading(false);
+    }
+  }, [thread.postContext, actionLoading, onCreateOfficialEngagement]);
+
+  const handleAcceptOfficialEngagement = useCallback(async () => {
+    if (!thread.postContext || actionLoading || !onAcceptOfficialEngagement) return;
+    const ctx = thread.postContext;
+    setActionLoading(true);
+    try {
+      await onAcceptOfficialEngagement();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setActionLoading(false);
+    }
+  }, [thread.postContext, actionLoading, onAcceptOfficialEngagement]);
+
+  const handleDeclineOfficialEngagement = useCallback(async () => {
+    if (!thread.postContext || actionLoading || !onDeclineOfficialEngagement) return;
+    const ctx = thread.postContext;
+    setActionLoading(true);
+    try {
+      await onDeclineOfficialEngagement();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setActionLoading(false);
+    }
+  }, [thread.postContext, actionLoading, onDeclineOfficialEngagement]);
+
   const handleMenuSelect = useCallback(
     (action: ChatMenuAction) => {
       if (action === 'browseServices') {
@@ -471,6 +516,10 @@ export const ChatView: React.FC<ChatViewProps> = ({
         handleCancelOfficialRequest();
       } else if (action === 'withdrawOfficialResponse') {
         handleWithdrawOfficialResponse();
+      } else if (action === 'acceptOfficialEngagement') {
+        handleAcceptOfficialEngagement();
+      } else if (action === 'declineOfficialEngagement') {
+        handleDeclineOfficialEngagement();
       } else if (action === 'viewOfficialDetails' || action === 'reviewOfficialCompletion') {
         openOfficialDetails();
       } else if (action === 'requestOfficialCompletion') {
@@ -492,6 +541,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
       thread.providerUsername,
       handleCancelOfficialRequest,
       handleWithdrawOfficialResponse,
+      handleAcceptOfficialEngagement,
+      handleDeclineOfficialEngagement,
       openOfficialDetails,
       handleRequestOfficialCompletion,
       onViewProviderProfile,
@@ -501,19 +552,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
       onClearPostContext,
     ]
   );
-
-  const handleConfirmOfficialEngagement = useCallback(async () => {
-    if (!thread.postContext || actionLoading) return;
-    const ctx = thread.postContext;
-    setActionLoading(true);
-    try {
-      await onCreateOfficialEngagement();
-    } catch {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    } finally {
-      setActionLoading(false);
-    }
-  }, [thread.postContext, actionLoading, onCreateOfficialEngagement]);
 
   const handleAttachSelect = useCallback(async (action: ChatAttachmentAction) => {
     if (isUploading) return;
@@ -653,7 +691,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <ChatHeader
@@ -777,6 +815,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
             contactName={thread.participant.displayName}
             onConfirm={handleConfirmOfficialEngagement}
             onClose={() => setEngagementSheetVisible(false)}
+            isLoading={actionLoading}
           />
         </>
       ) : null}

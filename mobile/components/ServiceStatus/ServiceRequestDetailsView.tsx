@@ -85,6 +85,8 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
   const isRequest = postContext?.tag === 'Request';
   const accent = isRequest ? REQUEST_ACCENT : Colors.primary;
   const userIsProvider = activeRequest.providerId === authUserId;
+  const userIsRequester = activeRequest.requesterId === authUserId;
+  const isResponseKind = activeRequest.kind === 'response';
 
   const canRequestCompletion =
     engagement.officialEngagementStatus === 'active' &&
@@ -94,8 +96,12 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     engagement.officialEngagementStatus === 'active' &&
     engagement.completionPhase === 'pending_review' &&
     !userIsProvider;
-  const canAccept = engagement.officialEngagementStatus === 'pending' && userIsProvider;
-  const canDecline = engagement.officialEngagementStatus === 'pending' && userIsProvider;
+  const canAccept = engagement.officialEngagementStatus === 'pending' && (
+    (isResponseKind && userIsRequester) || (!isResponseKind && userIsProvider)
+  );
+  const canDecline = engagement.officialEngagementStatus === 'pending' && (
+    (isResponseKind && userIsRequester) || (!isResponseKind && userIsProvider)
+  );
 
   const handleOpenPost = useCallback(async () => {
     if (!postContext || actionLoading) return;
@@ -352,9 +358,13 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
   const handleAccept = useCallback(async () => {
     if (!postContext || actionLoading || !canAccept) return;
     const ctx = postContext;
+    const title = isResponseKind ? 'Accept Response?' : 'Accept Request?';
+    const message = isResponseKind 
+      ? `Accept this official response for "${ctx.title}"? This will start the service engagement.` 
+      : `Accept this official request for "${ctx.title}"? This will start the service engagement.`;
     const confirmed = await showConfirm({
-      title: 'Accept Request?',
-      message: `Accept this official request for "${ctx.title}"? This will start the service engagement.`,
+      title,
+      message,
       confirmLabel: 'Accept',
       cancelLabel: 'Cancel',
       icon: 'checkmark-circle-outline',
@@ -370,14 +380,18 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     } finally {
       setActionLoading(false);
     }
-  }, [postContext, actionLoading, canAccept, showConfirm, accept, activeRequest.id]);
+  }, [postContext, actionLoading, canAccept, showConfirm, accept, activeRequest.id, isResponseKind]);
 
   const handleDecline = useCallback(async () => {
     if (!postContext || actionLoading || !canDecline) return;
     const ctx = postContext;
+    const title = isResponseKind ? 'Decline Response?' : 'Decline Request?';
+    const message = isResponseKind 
+      ? `Decline this official response for "${ctx.title}"? The provider will be notified.` 
+      : `Decline this official request for "${ctx.title}"? The requester will be notified.`;
     const confirmed = await showConfirm({
-      title: 'Decline Request?',
-      message: `Decline this official request for "${ctx.title}"? The requester will be notified.`,
+      title,
+      message,
       confirmLabel: 'Decline',
       cancelLabel: 'Cancel',
       variant: 'destructive',
@@ -394,7 +408,7 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     } finally {
       setActionLoading(false);
     }
-  }, [postContext, actionLoading, canDecline, showConfirm, decline, activeRequest.id]);
+  }, [postContext, actionLoading, canDecline, showConfirm, decline, activeRequest.id, isResponseKind]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
@@ -435,13 +449,16 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
           </View>
         )}
 
-        {engagement.officialEngagementStatus === 'pending' && !userIsProvider && (
+        {engagement.officialEngagementStatus === 'pending' && !canAccept && !canDecline && (
           <View style={[styles.infoBlock, { backgroundColor: subtleBg }]}>
             <Text style={[styles.infoTitle, { color: Colors.text }]}>
-              Waiting for provider to accept
+              {isResponseKind ? 'Waiting for client to accept' : 'Waiting for provider to accept'}
             </Text>
             <Text style={[styles.infoBody, { color: Colors.icon }]}>
-              The provider has been notified and will review your request for "{postContext?.title}".
+              {isResponseKind 
+                ? `The client has been notified and will review your response for "${postContext?.title}".` 
+                : `The provider has been notified and will review your request for "${postContext?.title}".`
+              }
             </Text>
           </View>
         )}

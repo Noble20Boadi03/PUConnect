@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Pressable,
   useColorScheme,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,6 +25,7 @@ export interface ChatOfficialEngagementSheetProps {
   contactName: string;
   onConfirm: () => void;
   onClose: () => void;
+  isLoading?: boolean;
 }
 
 function copyForTag(tag: MarketPostTag) {
@@ -55,6 +57,7 @@ export const ChatOfficialEngagementSheet: React.FC<ChatOfficialEngagementSheetPr
   contactName,
   onConfirm,
   onClose,
+  isLoading = false,
 }) => {
   const Colors = useThemeColor();
   const insets = useSafeAreaInsets();
@@ -124,12 +127,19 @@ export const ChatOfficialEngagementSheet: React.FC<ChatOfficialEngagementSheetPr
           </View>
 
           <TouchableOpacity
-            style={[styles.confirmButton, { backgroundColor: accent }]}
+            style={[styles.confirmButton, { backgroundColor: accent, opacity: isLoading ? 0.6 : 1 }]}
             onPress={handleConfirm}
             activeOpacity={0.9}
+            disabled={isLoading}
           >
-            <Ionicons name={copy.confirmIcon} size={22} color={confirmTextColor} />
-            <Text style={[styles.confirmLabel, { color: confirmTextColor }]}>{copy.confirmLabel}</Text>
+            {isLoading ? (
+              <ActivityIndicator color={confirmTextColor} />
+            ) : (
+              <>
+                <Ionicons name={copy.confirmIcon} size={22} color={confirmTextColor} />
+                <Text style={[styles.confirmLabel, { color: confirmTextColor }]}>{copy.confirmLabel}</Text>
+              </>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity

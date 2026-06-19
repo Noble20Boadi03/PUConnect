@@ -11,29 +11,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
-import { useAppRouter, useThemeColor, useTabBarHeight } from '../../hooks';
+import { useAppRouter, useThemeColor, useTabBarHeight, useDebounce } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { MarketHeaderTop, MarketFeedHeader, FeaturedPostCard, MarketViewSkeleton } from '../../components';
 import type { FeaturedPost, MarketFilter } from '../../types';
 import { useAuthStore } from '../../store';
 import { useMarketStore } from '../../store/marketStore';
-
-// Debounce hook
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-}
 
 /**
  * Market feed backed by GET /api/posts. Popular services and promo sections

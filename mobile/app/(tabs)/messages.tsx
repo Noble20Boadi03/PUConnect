@@ -3,13 +3,14 @@ import { useFocusEffect } from 'expo-router';
 
 import { MessagesInboxView } from '../../components/Messages';
 import { buildChatHref } from '../../lib';
-import { useAppRouter } from '../../hooks';
+import { useAppRouter, useTabBarHeight } from '../../hooks';
 import { useAuthStore, useChatStore } from '../../store';
 import { useChat } from '../../hooks/useChat';
 import type { ConversationPreview } from '../../types';
 
 export default function MessagesScreen() {
   const router = useAppRouter();
+  const tabBarHeight = useTabBarHeight();
   const { user: currentUser } = useAuthStore();
   const { conversations, fetchConversations, subscribeToMessages, isRefreshing, isLoadingMoreConversations, loadMoreConversations } = useChat();
   const { fetchMessages } = useChatStore();
@@ -66,6 +67,7 @@ export default function MessagesScreen() {
       onRefresh={fetchConversations}
       isLoadingMore={isLoadingMoreConversations}
       onLoadMore={loadMoreConversations}
+      tabBarHeight={tabBarHeight}
     />
   );
 }

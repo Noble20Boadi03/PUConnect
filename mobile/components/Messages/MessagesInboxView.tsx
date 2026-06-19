@@ -17,7 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useNavigation, useRouter } from 'expo-router';
 
-import { useThemeColor } from '../../hooks';
+import { useThemeColor, useDebounce } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { ConversationListItem } from './ConversationListItem';
 import { NotificationBellButton } from '../NotificationBellButton';
@@ -39,6 +39,7 @@ export interface MessagesInboxViewProps {
   onRefresh?: () => void;
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
+  tabBarHeight: number;
 }
 
 export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
@@ -49,6 +50,7 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
   onRefresh,
   isLoadingMore = false,
   onLoadMore,
+  tabBarHeight,
 }) => {
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
@@ -63,6 +65,7 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
   const contextPillBg = isDark ? '#27272A' : '#F4F4F5';
 
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebounce(query, 300);
   const [filter, setFilter] = useState<InboxFilter>('all');
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -239,7 +242,7 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
   const totalUnread = useChatStore((s) => s.unreadCount);
 
   const filteredConversations = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = debouncedQuery.trim().toLowerCase();
     return conversations.filter((c) => {
       if (filter === 'unread' && !c.unread) return false;
       if (!q) return true;
@@ -254,7 +257,7 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [conversations, filter, query]);
+  }, [conversations, filter, debouncedQuery]);
 
   const pinned = useMemo(
     () => filteredConversations.filter((c) => c.isPinned),
@@ -449,7 +452,7 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
               contentContainerStyle={
                 [
                   sections.length === 0 ? styles.listEmptyContent : styles.listContent,
-                  isSelectionMode && { paddingBottom: Spacing.xxl + 80 } // Add extra padding for selection action bar
+                  { paddingBottom: isSelectionMode ? (tabBarHeight + Spacing.xxl + 80) : tabBarHeight }
                 ]
               }
               refreshControl={
@@ -461,10 +464,10 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
                     <Ionicons name="chatbubbles-outline" size={32} color={Colors.icon} />
                   </View>
                   <Text style={[styles.emptyTitle, { color: Colors.text }]}>
-                    {query || filter === 'unread' ? 'No matches' : 'No messages yet'}
+                    {debouncedQuery || filter === 'unread' ? 'No matches' : 'No messages yet'}
                   </Text>
                   <Text style={[styles.emptyBody, { color: Colors.icon }]}>
-                    {query
+                    {debouncedQuery
                       ? 'Try a different name, topic, or keyword.'
                       : filter === 'unread'
                         ? 'You are all caught up.'
@@ -602,10 +605,10 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
                       <Ionicons name="chatbubbles-outline" size={32} color={Colors.icon} />
                     </View>
                     <Text style={[styles.emptyTitle, { color: Colors.text }]}>
-                      {query || filter === 'unread' ? 'No matches' : 'No messages yet'}
+                      {debouncedQuery || filter === 'unread' ? 'No matches' : 'No messages yet'}
                     </Text>
                     <Text style={[styles.emptyBody, { color: Colors.icon }]}>
-                      {query
+                      {debouncedQuery
                         ? 'Try a different name, topic, or keyword.'
                         : filter === 'unread'
                           ? 'You are all caught up.'
@@ -779,11 +782,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   listContent: {
-    paddingBottom: 120,
   },
   listEmptyContent: {
     flexGrow: 1,
-    paddingBottom: 120,
   },
   emptyState: {
     flex: 1,

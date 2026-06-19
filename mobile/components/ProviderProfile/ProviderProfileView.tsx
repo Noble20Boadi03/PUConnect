@@ -7,7 +7,7 @@ import {
   useColorScheme,
   RefreshControlProps,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
@@ -52,6 +52,7 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
+  const insets = useSafeAreaInsets();
 
   const initials = profile.displayName
     .split(' ')
@@ -82,7 +83,7 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: Spacing.xxl + insets.bottom }]}
         showsVerticalScrollIndicator={false}
         refreshControl={refreshControl}
       >

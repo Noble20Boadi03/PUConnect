@@ -25,12 +25,13 @@ function isTruthyParam(value: string | undefined): boolean {
 }
 
 export default function PostDetailScreen() {
-  const { id, fromProvider, fromChat, fromRequestService, fromOwner } = useLocalSearchParams<{
+  const { id, fromProvider, fromChat, fromRequestService, fromOwner, forceNonOwner } = useLocalSearchParams<{
     id: string;
     fromProvider?: string;
     fromChat?: string;
     fromRequestService?: string;
     fromOwner?: string;
+    forceNonOwner?: string;
   }>();
   const ownerView = isTruthyParam(fromOwner);
   const hideAuthorProfile =
@@ -40,6 +41,7 @@ export default function PostDetailScreen() {
     isTruthyParam(fromRequestService);
   const returnToChat = isTruthyParam(fromChat) && !isTruthyParam(fromRequestService);
   const requestService = isTruthyParam(fromRequestService);
+  const forceNonOwnerView = isTruthyParam(forceNonOwner);
   const router = useAppRouter();
   const user = useAuthStore((s) => s.user);
   const isProvider = useProfileStore((s) => s.isProvider);
@@ -62,7 +64,7 @@ export default function PostDetailScreen() {
     return post.author.username === `@${user.username}`;
   }, [post, user]);
 
-  const effectiveOwnerView = ownerView || isOwnPost;
+  const effectiveOwnerView = forceNonOwnerView ? false : (ownerView || isOwnPost);
 
   const {
     showConfirm,

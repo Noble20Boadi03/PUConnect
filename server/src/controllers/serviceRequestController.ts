@@ -318,6 +318,7 @@ export const createServiceRequest = async (req: Request, res: Response) => {
         kind,
         message,
         status: 'pending',
+        acceptedAt: null,
       },
       include: includeRelations(),
     });
@@ -576,7 +577,7 @@ export const transitionServiceRequest = async (req: Request, res: Response) => {
 };
 
 /**
- * Accept a pending service request (provider only)
+ * Accept a pending service request
  * @route PATCH /api/service-requests/:id/accept
  */
 export const acceptServiceRequest = async (req: Request, res: Response) => {
@@ -591,7 +592,8 @@ export const acceptServiceRequest = async (req: Request, res: Response) => {
     if (!request) {
       return res.status(404).json({ status: 404, message: 'Request not found' });
     }
-    if (request.providerId !== userId) {
+    const expectedAcceptor = request.kind === 'response' ? request.requesterId : request.providerId;
+    if (expectedAcceptor !== userId) {
       return res.status(403).json({ status: 403, message: 'Unauthorized' });
     }
     if (request.status !== 'pending') {
@@ -606,24 +608,43 @@ export const acceptServiceRequest = async (req: Request, res: Response) => {
     });
 
     const postTitle = updatedRequest.post?.title ?? 'this listing';
+    const isResponseKind = request.kind === 'response';
+    const notifyTargetId = isResponseKind ? updatedRequest.providerId : updatedRequest.requesterId;
+    const notifyTitle = isResponseKind ? 'Response Accepted' : 'Request Accepted';
+    const notifyBody = isResponseKind 
+      ? `Your response for "${postTitle}" was accepted — the service is now active!` 
+      : `Your request for "${postTitle}" was accepted!`;
+
     await notifyUser(
-      updatedRequest.requesterId, 
+      notifyTargetId, 
       'request', 
-      'Request Accepted', 
-      `Your request for "${postTitle}" was accepted!`, 
+      notifyTitle, 
+      notifyBody, 
       updatedRequest.id, 
       `/service-request/${updatedRequest.id}`,
       { type: 'request', serviceRequestId: updatedRequest.id }
     );
     emitServiceRequestUpdate(updatedRequest);
 
-    await sendSystemMessage(
-      updatedRequest.providerId,
-      updatedRequest.requesterId,
-      "✅ You accepted the service request.",
-      "✅ Your service request was accepted!",
-      updatedRequest.postId || undefined
-    );
+    if (isResponseKind) {
+      // Client accepted provider's response
+      await sendSystemMessage(
+        updatedRequest.requesterId,
+        updatedRequest.providerId,
+        "✅ Service is now active",
+        "✅ Service is now active",
+        updatedRequest.postId || undefined
+      );
+    } else {
+      // Provider accepted client's service request
+      await sendSystemMessage(
+        updatedRequest.providerId,
+        updatedRequest.requesterId,
+        "✅ You accepted the service request.",
+        "✅ Your service request was accepted!",
+        updatedRequest.postId || undefined
+      );
+    }
 
     return res.status(200).json({
       status: 200,
@@ -637,7 +658,7 @@ export const acceptServiceRequest = async (req: Request, res: Response) => {
 };
 
 /**
- * Decline a pending service request (provider only)
+ * Decline a pending service request
  * @route PATCH /api/service-requests/:id/decline
  */
 export const declineServiceRequest = async (req: Request, res: Response) => {
@@ -652,7 +673,8 @@ export const declineServiceRequest = async (req: Request, res: Response) => {
     if (!request) {
       return res.status(404).json({ status: 404, message: 'Request not found' });
     }
-    if (request.providerId !== userId) {
+    const expectedDecliner = request.kind === 'response' ? request.requesterId : request.providerId;
+    if (expectedDecliner !== userId) {
       return res.status(403).json({ status: 403, message: 'Unauthorized' });
     }
     if (request.status !== 'pending') {
@@ -666,24 +688,43 @@ export const declineServiceRequest = async (req: Request, res: Response) => {
     });
 
     const postTitle = updatedRequest.post?.title ?? 'this listing';
+    const isResponseKind = request.kind === 'response';
+    const notifyTargetId = isResponseKind ? updatedRequest.providerId : updatedRequest.requesterId;
+    const notifyTitle = isResponseKind ? 'Response Declined' : 'Request Declined';
+    const notifyBody = isResponseKind 
+      ? `Your response for "${postTitle}" was declined.` 
+      : `Your request for "${postTitle}" was declined.`;
+
     await notifyUser(
-      updatedRequest.requesterId, 
+      notifyTargetId, 
       'request', 
-      'Request Declined', 
-      `Your request for "${postTitle}" was declined.`, 
+      notifyTitle, 
+      notifyBody, 
       updatedRequest.id, 
       `/service-request/${updatedRequest.id}`,
       { type: 'request', serviceRequestId: updatedRequest.id }
     );
     emitServiceRequestUpdate(updatedRequest);
 
-    await sendSystemMessage(
-      updatedRequest.providerId,
-      updatedRequest.requesterId,
-      "❌ You declined the service request.",
-      "❌ Your service request was declined.",
-      updatedRequest.postId || undefined
-    );
+    if (isResponseKind) {
+      // Client declined provider's response
+      await sendSystemMessage(
+        updatedRequest.requesterId,
+        updatedRequest.providerId,
+        "❌ You declined the official response.",
+        "❌ The client declined your response.",
+        updatedRequest.postId || undefined
+      );
+    } else {
+      // Provider declined client's service request
+      await sendSystemMessage(
+        updatedRequest.providerId,
+        updatedRequest.requesterId,
+        "❌ You declined the service request.",
+        "❌ Your service request was declined.",
+        updatedRequest.postId || undefined
+      );
+    }
 
     return res.status(200).json({
       status: 200,

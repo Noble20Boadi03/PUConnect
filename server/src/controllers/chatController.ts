@@ -45,7 +45,8 @@ export async function sendSystemMessage(
       receiverId,
       content: senderContent,
       postId,
-      kind: 'system'
+      kind: 'system',
+      visibleToId: senderId
     },
     include: {
       sender: { select: safeUserSelect },
@@ -57,11 +58,12 @@ export async function sendSystemMessage(
   // Create message for receiver
   const receiverMessage = await prisma.chatMessage.create({
     data: {
-      senderId: receiverId,
-      receiverId: senderId,
+      senderId,
+      receiverId,
       content: receiverContent,
       postId,
-      kind: 'system'
+      kind: 'system',
+      visibleToId: receiverId
     },
     include: {
       sender: { select: safeUserSelect },
@@ -157,9 +159,20 @@ export const getChatMessages = async (req: Request, res: Response) => {
 
     const messages = await prisma.chatMessage.findMany({
       where: {
-        OR: [
-          { senderId: userId, receiverId: otherUser.id },
-          { senderId: otherUser.id, receiverId: userId }
+        AND: [
+          {
+            OR: [
+              { senderId: userId, receiverId: otherUser.id },
+              { senderId: otherUser.id, receiverId: userId }
+            ]
+          },
+          {
+            OR: [
+              { kind: { not: 'system' } },
+              { visibleToId: null },
+              { visibleToId: userId }
+            ]
+          }
         ]
       },
       include: {
@@ -228,9 +241,20 @@ export const getConversations = async (req: Request, res: Response) => {
     // First get all unique user IDs and last messages with proper ordering
     const allLastMessages = await prisma.chatMessage.findMany({
       where: {
-        OR: [
-          { senderId: userId },
-          { receiverId: userId }
+        AND: [
+          {
+            OR: [
+              { senderId: userId },
+              { receiverId: userId }
+            ]
+          },
+          {
+            OR: [
+              { kind: { not: 'system' } },
+              { visibleToId: null },
+              { visibleToId: userId }
+            ]
+          }
         ]
       },
       include: { 

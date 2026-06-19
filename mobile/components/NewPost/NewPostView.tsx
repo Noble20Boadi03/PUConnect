@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View, Text, useColorScheme } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardLayout } from '../KeyboardLayout';
 import { Button } from '../Button';
 import { Alert } from '../Alert';
@@ -55,6 +56,7 @@ export const NewPostView: React.FC<NewPostViewProps> = ({ onPublished }) => {
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
+  const insets = useSafeAreaInsets();
 
   const [postType, setPostType] = useState<NewPostType>(() =>
     resolveInitialPostType(params.type, isProvider)
@@ -255,7 +257,7 @@ export const NewPostView: React.FC<NewPostViewProps> = ({ onPublished }) => {
   }
 
   return (
-    <KeyboardLayout contentContainerStyle={styles.scrollContent}>
+    <KeyboardLayout contentContainerStyle={[styles.scrollContent, { paddingBottom: Spacing.xxl + insets.bottom }]}>
       <View style={[styles.card, { backgroundColor: cardBg }]}>
         <NewPostTypePicker
           value={postType}

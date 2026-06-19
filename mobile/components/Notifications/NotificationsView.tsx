@@ -11,7 +11,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -44,6 +44,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
   const overlayBg = isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.5)';
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const items = useNotificationsStore((s) => s.items);
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
@@ -169,6 +170,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
         renderItem={renderItem}
         contentContainerStyle={[
           styles.listContent,
+          { paddingBottom: Spacing.xxl + insets.bottom },
           items.length === 0 && styles.emptyListContent,
         ]}
         showsVerticalScrollIndicator={false}
@@ -192,7 +194,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
         onRequestClose={closeModal}
       >
         <View style={[styles.modalOverlay, { backgroundColor: overlayBg }]}>
-          <View style={[styles.modalContent, { backgroundColor: cardBg }]}>
+          <View style={[styles.modalContent, { backgroundColor: cardBg, paddingBottom: Math.max(insets.bottom, Spacing.xxl) }]}>
             <View style={styles.modalHeader}>
               <View style={{ width: 32 }} />
               <View style={styles.modalHandle} />
