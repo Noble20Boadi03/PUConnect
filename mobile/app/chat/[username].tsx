@@ -151,10 +151,22 @@ export default function ChatScreen() {
       return;
     }
 
+    // Get reviewee username - prefer chatServiceRequest data, fall back to activeThread or route param
+    let revieweeUsername: string;
+    if (chatServiceRequest.provider?.username) {
+      revieweeUsername = chatServiceRequest.provider.username;
+    } else if (chatServiceRequest.requester?.username && chatServiceRequest.requester.username !== username) {
+      revieweeUsername = chatServiceRequest.requester.username;
+    } else if (activeThread?.providerUsername) {
+      revieweeUsername = activeThread.providerUsername;
+    } else {
+      revieweeUsername = username;
+    }
+
     recordCompletedDeal({
       id: chatServiceRequest.id,
       serviceRequestId: chatServiceRequest.id,
-      revieweeUsername: activeThread.providerUsername,
+      revieweeUsername,
       postId: activeThread.postContext.postId,
       postTitle: activeThread.postContext.title,
       completedAt: chatServiceRequest.completedAt
@@ -169,7 +181,7 @@ export default function ChatScreen() {
             year: 'numeric',
           }),
     });
-  }, [chatServiceRequest, activeThread, currentUserId, recordCompletedDeal]);
+  }, [chatServiceRequest, activeThread, currentUserId, recordCompletedDeal, username]);
 
   const exitToMessages = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -258,13 +270,7 @@ export default function ChatScreen() {
     await transition(chatServiceRequest.id, 'decline_completion');
   }, [chatServiceRequest, transition]);
 
-  if (isLoading) {
-    return (
-      <SafeAreaView style={[styles.center, { backgroundColor: screenBg }]} edges={['top', 'bottom']}>
-        <ActivityIndicator size="large" color={textColor} />
-      </SafeAreaView>
-    );
-  }
+  // Removed initial loading indicator
 
   if (!activeThread && !isLoading) {
     return (

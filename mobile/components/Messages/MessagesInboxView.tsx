@@ -342,14 +342,7 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
     [sections.length, Colors.icon]
   );
 
-  const renderFooter = useCallback(() => {
-    if (!isLoadingMore) return null;
-    return (
-      <View style={styles.footerContainer}>
-        <ActivityIndicator size="small" color={Colors.primary} />
-      </View>
-    );
-  }, [isLoadingMore, Colors.primary]);
+  // Removed footer loading indicator
 
   const handleEndReached = useCallback(() => {
     if (!isLoadingMore && onLoadMore) {
@@ -477,7 +470,6 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
               }
               onEndReached={handleEndReached}
               onEndReachedThreshold={0.1}
-              ListFooterComponent={renderFooter}
             />
           </View>
         </SafeAreaView>
@@ -618,7 +610,6 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
                 }
                 onEndReached={handleEndReached}
                 onEndReachedThreshold={0.1}
-                ListFooterComponent={renderFooter}
               />
             </View>
           </View>

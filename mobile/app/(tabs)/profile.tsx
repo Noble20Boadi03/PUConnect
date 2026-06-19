@@ -247,17 +247,18 @@ export default function ProfileScreen() {
         </View>
 
         <ProfilePostsSection
-          posts={posts}
-          isProvider={isProvider}
-          cardBg={cardBg}
-          subtleBg={subtleBg}
-          textColor={Colors.text}
-          mutedColor={Colors.icon}
-          primaryColor={Colors.primary}
-          hideAuthorOnCards
-          onPostPress={handlePostPress}
-          onBecomeProvider={handleBecomeProvider}
-        />
+        posts={posts}
+        isProvider={isProvider}
+        isOwnProfile={true}
+        cardBg={cardBg}
+        subtleBg={subtleBg}
+        textColor={Colors.text}
+        mutedColor={Colors.icon}
+        primaryColor={Colors.primary}
+        hideAuthorOnCards
+        onPostPress={handlePostPress}
+        onBecomeProvider={handleBecomeProvider}
+      />
       </ScrollView>
 
       <ProfileChangePhotoSheet

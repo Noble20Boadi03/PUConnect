@@ -25,6 +25,8 @@ export interface ProfilePostsSectionProps {
   showCreateFab?: boolean;
   /** Hide author avatar/name on post cards (signed-in owner profile). */
   hideAuthorOnCards?: boolean;
+  /** Whether this is the current user's own profile */
+  isOwnProfile?: boolean;
 }
 
 export const ProfilePostsSection: React.FC<ProfilePostsSectionProps> = ({
@@ -39,6 +41,7 @@ export const ProfilePostsSection: React.FC<ProfilePostsSectionProps> = ({
   onBecomeProvider = () => {},
   showCreateFab = true,
   hideAuthorOnCards = false,
+  isOwnProfile = true,
 }) => {
   const router = useAppRouter();
   const Colors = useThemeColor();
@@ -104,8 +107,12 @@ export const ProfilePostsSection: React.FC<ProfilePostsSectionProps> = ({
             <Text style={[styles.emptyTitle, { color: textColor }]}>No posts yet</Text>
             <Text style={[styles.emptyBody, { color: mutedColor }]}>
               {activeTab === 'services'
-                ? 'Create a service listing to appear here.'
-                : 'Create a request to find help from peers on campus.'}
+                ? isOwnProfile
+                  ? 'Create a service listing to appear here.'
+                  : 'This provider has no service listings yet.'
+                : isOwnProfile
+                  ? 'Create a request to find help from peers on campus.'
+                  : 'This provider has no requests yet.'}
             </Text>
           </View>
         ) : (

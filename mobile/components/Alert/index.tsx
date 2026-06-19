@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, useColorScheme, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { useThemeColor } from '../../hooks';
@@ -34,6 +34,7 @@ export const Alert: React.FC<AlertProps> = ({
   const colorScheme = useColorScheme();
   const Colors = useThemeColor();
   const isDark = colorScheme === 'dark';
+  const cardBg = isDark ? '#18181B' : '#FFFFFF';
 
   // Auto-dismiss logic
   useEffect(() => {
@@ -48,32 +49,25 @@ export const Alert: React.FC<AlertProps> = ({
   // Curated premium alert color configurations
   const alertStyles = {
     error: {
-      bg: isDark ? '#1E1E1E' : '#FFFFFF',
       accent: '#EF4444',
-      text: isDark ? '#E5E5E5' : '#171717',
       icon: 'alert-circle' as const,
     },
     success: {
-      bg: isDark ? '#1E1E1E' : '#FFFFFF',
       accent: Colors.primary || '#22C55E',
-      text: isDark ? '#E5E5E5' : '#171717',
       icon: 'checkmark-circle' as const,
     },
     info: {
-      bg: isDark ? '#1E1E1E' : '#FFFFFF',
       accent: '#3B82F6',
-      text: isDark ? '#E5E5E5' : '#171717',
       icon: 'information-circle' as const,
     },
     warning: {
-      bg: isDark ? '#1E1E1E' : '#FFFFFF',
       accent: '#F59E0B',
-      text: isDark ? '#E5E5E5' : '#171717',
       icon: 'warning' as const,
     },
   };
 
   const styleConfig = alertStyles[type];
+  const isErrorOrWarning = type === 'error' || type === 'warning';
 
   const handleDismiss = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -102,33 +96,47 @@ export const Alert: React.FC<AlertProps> = ({
           style={[
             styles.alertCard,
             {
-              backgroundColor: styleConfig.bg,
-              borderColor: isDark ? '#333333' : '#E5E5E5',
+              backgroundColor: cardBg,
             },
           ]}
         >
-          <Ionicons
-            name={styleConfig.icon}
-            size={48}
-            color={styleConfig.accent}
-            style={styles.icon}
-          />
-          <View style={styles.contentContainer}>
-            {title ? (
-              <Text style={[styles.title, { color: styleConfig.text }]}>
-                {title}
-              </Text>
-            ) : null}
-            <Text style={[styles.message, { color: isDark ? styleConfig.text + 'CC' : '#525252' }]}>
-              {message}
-            </Text>
+          <View
+            style={[
+              styles.iconCircle,
+              {
+                backgroundColor: styleConfig.accent + '18',
+              },
+            ]}
+          >
+            <Ionicons
+              name={styleConfig.icon}
+              size={28}
+              color={styleConfig.accent}
+            />
           </View>
-          <View style={styles.divider} />
+          {title ? (
+            <Text style={[styles.title, { color: Colors.text }]}>
+              {title}
+            </Text>
+          ) : null}
+          <Text style={[styles.message, { color: Colors.icon }]}>
+            {message}
+          </Text>
           <TouchableOpacity
             onPress={handleDismiss}
-            style={[styles.button, { borderColor: styleConfig.accent }]}
+            style={[
+              styles.button,
+              {
+                backgroundColor: styleConfig.accent,
+              },
+            ]}
           >
-            <Text style={[styles.buttonText, { color: styleConfig.accent }]}>
+            <Text style={[
+              styles.buttonText,
+              {
+                color: isErrorOrWarning ? '#FFFFFF' : Colors.onPrimary,
+              },
+            ]}>
               {buttonText}
             </Text>
           </TouchableOpacity>
@@ -141,63 +149,56 @@ export const Alert: React.FC<AlertProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0,0,0,0.55)',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
   },
   alertCard: {
-    width: '80%',
-    maxWidth: 360,
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: Spacing.xl,
-    alignItems: 'center',
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 12,
-  },
-  icon: {
-    marginBottom: Spacing.lg,
-  },
-  contentContainer: {
     width: '100%',
+    maxWidth: 360,
+    borderRadius: 20,
+    padding: Spacing.lg,
     alignItems: 'center',
-    marginBottom: Spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  iconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
   },
   title: {
-    fontSize: Typography.size.xl,
-    fontWeight: '700',
-    marginBottom: Spacing.sm,
+    fontSize: Typography.size.lg,
+    fontWeight: '800',
     textAlign: 'center',
+    letterSpacing: -0.3,
+    marginBottom: Spacing.sm,
   },
   message: {
-    fontSize: Typography.size.md,
-    lineHeight: 22,
-    fontWeight: '400',
+    fontSize: Typography.size.sm,
+    fontWeight: '500',
     textAlign: 'center',
-  },
-  divider: {
-    width: '100%',
-    height: 1,
-    backgroundColor: '#333333',
+    lineHeight: 20,
     marginBottom: Spacing.lg,
-    opacity: 0.5,
   },
   button: {
     width: '100%',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.sm + 4,
     borderRadius: 12,
-    borderWidth: 2,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
   },
   buttonText: {
-    fontSize: Typography.size.lg,
-    fontWeight: '600',
+    fontSize: Typography.size.sm,
+    fontWeight: '700',
   },
 });
 

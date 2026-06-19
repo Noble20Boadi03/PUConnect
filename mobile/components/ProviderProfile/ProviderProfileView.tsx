@@ -214,16 +214,17 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
         </View>
 
         <ProfilePostsSection
-          posts={profile.posts}
-          isProvider
-          showCreateFab={false}
-          cardBg={cardBg}
-          subtleBg={subtleBg}
-          textColor={Colors.text}
-          mutedColor={Colors.icon}
-          primaryColor={Colors.primary}
-          onPostPress={onPostPress}
-        />
+        posts={profile.posts}
+        isProvider
+        showCreateFab={false}
+        isOwnProfile={false}
+        cardBg={cardBg}
+        subtleBg={subtleBg}
+        textColor={Colors.text}
+        mutedColor={Colors.icon}
+        primaryColor={Colors.primary}
+        onPostPress={onPostPress}
+      />
       </ScrollView>
     </SafeAreaView>
   );
