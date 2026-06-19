@@ -13,8 +13,8 @@ import {
 
 interface KeyboardLayoutProps extends ScrollViewProps {
   children: React.ReactNode;
-  style?: ViewStyle;
-  contentContainerStyle?: ViewStyle;
+  style?: ViewStyle | ViewStyle[];
+  contentContainerStyle?: ViewStyle | ViewStyle[];
   keyboardVerticalOffset?: number;
 }
 

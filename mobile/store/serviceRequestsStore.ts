@@ -239,8 +239,6 @@ export const useServiceRequestsStore = create<ServiceRequestsState>((set, get) =
       lastFetched: null,
     });
   },
-});
-  },
 }));
 
 export default useServiceRequestsStore;
