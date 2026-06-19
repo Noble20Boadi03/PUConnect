@@ -25,10 +25,11 @@ import {
   selectSummaryForProvider,
   useProviderReviewsStore,
 } from '../../store/providerReviewsStore';
-import type { ProviderProfile } from '../../types';
+import type { ProviderProfile, ProviderReview } from '../../types';
 
 export interface ProviderProfileViewProps {
   profile: ProviderProfile;
+  reviews?: ProviderReview[];
   onBack: () => void;
   onPostPress?: (postId: string) => void;
   onSendMessage?: () => void;
@@ -39,6 +40,7 @@ export interface ProviderProfileViewProps {
 
 export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
   profile,
+  reviews = [],
   onBack,
   onPostPress,
   onSendMessage,
@@ -64,10 +66,23 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
   const submittedReviews = useProviderReviewsStore((s) => s.submittedReviews);
   const completedDeals = useProviderReviewsStore((s) => s.completedDeals);
 
-  const reviewSummary = useMemo(
-    () => selectSummaryForProvider(submittedReviews, profile.username),
-    [submittedReviews, profile.username]
-  );
+  // Combine fetched reviews with user's own reviews
+  const ownReviews = submittedReviews
+    .filter(r => r.revieweeUsername === profile.username)
+    .map(r => ({ ...r, isOwn: true } as ProviderReview));
+  const allReviews = [...ownReviews, ...reviews];
+
+  // Compute summary from all reviews
+  const reviewSummary = useMemo(() => {
+    if (allReviews.length === 0) {
+      return { averageRating: 0, reviewCount: 0 };
+    }
+    const total = allReviews.reduce((sum, r) => sum + r.rating, 0);
+    return {
+      averageRating: Math.round((total / allReviews.length) * 10) / 10,
+      reviewCount: allReviews.length,
+    };
+  }, [allReviews]);
 
   const canLeaveReview = useMemo(
     () => selectCanReviewProvider(completedDeals, submittedReviews, profile.username),
