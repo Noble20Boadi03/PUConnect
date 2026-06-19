@@ -35,7 +35,7 @@ export const ReviewPromptDialog: React.FC<ReviewPromptDialogProps> = ({
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
 
   const handleLater = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     onLater();
   };
 

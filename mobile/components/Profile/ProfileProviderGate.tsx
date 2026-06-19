@@ -35,7 +35,7 @@ export const ProfileProviderGate: React.FC<ProfileProviderGateProps> = ({
       <TouchableOpacity
         style={[styles.cta, { backgroundColor: primaryColor }]}
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          
           onBecomeProvider();
         }}
         activeOpacity={0.9}

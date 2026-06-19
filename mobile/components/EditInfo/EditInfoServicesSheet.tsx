@@ -86,7 +86,7 @@ export const EditInfoServicesSheet: React.FC<EditInfoServicesSheetProps> = ({
                         },
                       ]}
                       onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        
                         onToggleService(service.id);
                       }}
                       activeOpacity={0.85}
@@ -111,7 +111,7 @@ export const EditInfoServicesSheet: React.FC<EditInfoServicesSheetProps> = ({
           <TouchableOpacity
             style={[styles.doneButton, { backgroundColor: Colors.primary }]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              
               onClose();
             }}
             activeOpacity={0.9}

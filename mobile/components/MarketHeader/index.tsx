@@ -57,14 +57,14 @@ const MarketHeaderTopComponent: React.FC<MarketHeaderTopProps> = ({
 
   const handleFilterPress = useCallback(
     (filter: MarketFilter) => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      
       onFilterChange(filter);
     },
     [onFilterChange]
   );
 
   const handleToggleTip = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     if (showTip) {
       onDismissTip();
     } else {

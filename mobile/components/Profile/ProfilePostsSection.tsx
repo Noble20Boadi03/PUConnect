@@ -72,7 +72,6 @@ export const ProfilePostsSection: React.FC<ProfilePostsSectionProps> = ({
           <TouchableOpacity
             style={[styles.createButton, { backgroundColor: primaryColor }]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               handleCreatePress();
             }}
             activeOpacity={0.8}
@@ -127,7 +126,6 @@ export const ProfilePostsSection: React.FC<ProfilePostsSectionProps> = ({
               primaryColor={primaryColor}
               showAuthor={!hideAuthorOnCards}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 onPostPress?.(post.id);
               }}
             />

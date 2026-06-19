@@ -32,7 +32,7 @@ export const ExploreTopTabs: React.FC<ExploreTopTabsProps> = ({
           key={tab.key}
           style={[styles.tab, isActive && { backgroundColor: cardBg }]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            
             onTabChange(tab.key);
           }}
           activeOpacity={0.85}

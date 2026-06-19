@@ -46,7 +46,7 @@ export const EditInfoServicesPicker: React.FC<EditInfoServicesPickerProps> = ({
       <TouchableOpacity
         style={[styles.trigger, { backgroundColor: screenBg, borderColor }]}
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          
           setSheetVisible(true);
         }}
         activeOpacity={0.85}
@@ -82,7 +82,7 @@ export const EditInfoServicesPicker: React.FC<EditInfoServicesPickerProps> = ({
               <TouchableOpacity
                 hitSlop={8}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  
                   onChange(selectedIds.filter((id) => id !== service.id));
                 }}
               >

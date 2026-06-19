@@ -41,7 +41,7 @@ export const ExploreTagFilterPills: React.FC<ExploreTagFilterPillsProps> = ({
 
   const handlePress = useCallback(
     (filter: ExploreServiceTagFilter) => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      
       onFilterChange(filter);
     },
     [onFilterChange]

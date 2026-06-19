@@ -21,7 +21,7 @@ export default function NewPostScreen() {
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
 
   const handleBack = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     if (router.canGoBack()) {
       router.back();
     } else {

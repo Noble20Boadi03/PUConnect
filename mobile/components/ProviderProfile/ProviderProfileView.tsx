@@ -95,7 +95,6 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
   );
 
   const handleSendMessage = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onSendMessage?.();
   }, [onSendMessage]);
 
@@ -192,7 +191,6 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
               <GuardedPressable
                 style={styles.leaveReviewRow}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                   onLeaveReview?.();
                 }}
                 activeOpacity={0.85}
@@ -212,7 +210,6 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
             textColor={Colors.text}
             mutedColor={Colors.icon}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               onOpenReviews?.();
             }}
           />

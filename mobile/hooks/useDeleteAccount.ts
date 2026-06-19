@@ -18,7 +18,7 @@ export function useDeleteAccount() {
 
   const openDeleteAccountDialog = useCallback(() => {
     if (state.isLoading) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     setState((prev) => ({ ...prev, confirmVisible: true, error: null }));
   }, [state.isLoading]);
 

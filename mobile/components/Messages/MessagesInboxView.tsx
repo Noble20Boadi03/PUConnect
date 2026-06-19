@@ -89,14 +89,12 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
 
   // Selection handlers - declared early to avoid "used before declaration" errors
   const toggleSelection = useCallback((id: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
   }, []);
 
   const clearSelection = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedIds([]);
   }, []);
 
@@ -202,7 +200,6 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
   }, [selectedConversations, clearSelection, router]);
 
   const handleCompose = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push('/chat/new' as any);
   }, [router]);
 
@@ -232,7 +229,6 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
   const allSelected = selectedIds.length === conversations.length && conversations.length > 0;
   
   const toggleSelectAll = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (allSelected) {
       setSelectedIds([]);
     } else {
@@ -276,7 +272,6 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
   }, [pinned, rest]);
 
   const setInboxFilter = useCallback((next: InboxFilter) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setFilter(next);
   }, []);
 
@@ -305,7 +300,6 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
         onSelectToggle={() => toggleSelection(item.id)}
         onLongPress={() => toggleSelection(item.id)}
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           onConversationPress(item);
         }}
         onPressIn={() => {

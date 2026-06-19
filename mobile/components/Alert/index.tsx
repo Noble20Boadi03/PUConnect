@@ -70,7 +70,6 @@ export const Alert: React.FC<AlertProps> = ({
   const isErrorOrWarning = type === 'error' || type === 'warning';
 
   const handleDismiss = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (onDismiss) {
       onDismiss();
     }

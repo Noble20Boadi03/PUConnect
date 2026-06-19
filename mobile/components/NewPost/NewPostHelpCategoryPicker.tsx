@@ -50,7 +50,7 @@ export const NewPostHelpCategoryPicker: React.FC<NewPostHelpCategoryPickerProps>
       <TouchableOpacity
         style={[styles.trigger, { backgroundColor: screenBg, borderColor: error ? '#EF4444' : borderColor }]}
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          
           setSheetVisible(true);
         }}
         activeOpacity={0.85}
@@ -79,7 +79,7 @@ export const NewPostHelpCategoryPicker: React.FC<NewPostHelpCategoryPickerProps>
               <TouchableOpacity
                 hitSlop={8}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  
                   onChange(selectedIds.filter((id) => id !== service.id));
                 }}
               >

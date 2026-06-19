@@ -98,7 +98,6 @@ export default function ProfileScreen() {
       : user?.expertiseTags || [];
 
   const handleOpenSettings = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push('/settings' as any);
   };
 
@@ -110,18 +109,15 @@ export default function ProfileScreen() {
   );
 
   const handleEditInfo = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push('/edit-info' as any);
   }, [router]);
 
   const handleBecomeProvider = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push('/edit-info' as any);
   }, [router]);
 
   const handleOpenReviews = useCallback(() => {
     if (!user?.username) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push(`/provider/${user.username}/reviews` as any);
   }, [user?.username, router]);
 

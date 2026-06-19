@@ -1,8 +1,11 @@
 import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { postService, exploreService } from '../services';
 import type { FeaturedPost, DbCategoryServiceWithCategory, ExploreCategoryService, MarketFilter } from '../types';
 import { mapDbPostToFeaturedPost } from '../lib';
 import { mapDbCategoryServiceToExploreCategoryService } from './categoryDetailStore';
+
+const RECENTLY_VIEWED_KEY = 'market_recently_viewed_ids';
 
 interface MarketState {
   posts: FeaturedPost[];
@@ -18,6 +21,7 @@ interface MarketState {
   hasMore: boolean;
   activeFilter: MarketFilter;
   searchQuery: string;
+  recentlyViewedIds: string[];
   fetchPosts: (isRefresh?: boolean) => Promise<void>;
   loadMorePosts: () => Promise<void>;
   searchPosts: (query: string) => Promise<void>;
@@ -26,6 +30,8 @@ interface MarketState {
   reset: () => void;
   invalidateCache: () => void;
   removePost: (postId: string) => void;
+  trackPostView: (postId: string) => Promise<void>;
+  initializeRecentlyViewed: () => Promise<void>;
 }
 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -55,7 +61,33 @@ export const useMarketStore = create<MarketState>((set, get) => ({
   hasMore: false,
   activeFilter: 'all',
   searchQuery: '',
+  recentlyViewedIds: [],
   
+  initializeRecentlyViewed: async () => {
+    try {
+      const stored = await AsyncStorage.getItem(RECENTLY_VIEWED_KEY);
+      if (stored) {
+        set({ recentlyViewedIds: JSON.parse(stored) });
+      }
+    } catch (error) {
+      console.error('Error loading recently viewed:', error);
+    }
+  },
+
+  trackPostView: async (postId: string) => {
+    set((state) => {
+      const newIds = [postId, ...state.recentlyViewedIds.filter(id => id !== postId)].slice(0, 5);
+      (async () => {
+        try {
+          await AsyncStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(newIds));
+        } catch (error) {
+          console.error('Error saving recently viewed:', error);
+        }
+      })();
+      return { recentlyViewedIds: newIds };
+    });
+  },
+
   fetchPosts: async (isRefresh = false) => {
     const { lastFetched, activeFilter, searchQuery } = get();
     const now = Date.now();

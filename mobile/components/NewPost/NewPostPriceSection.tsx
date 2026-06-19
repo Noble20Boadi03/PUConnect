@@ -61,7 +61,7 @@ export const NewPostPriceSection: React.FC<NewPostPriceSectionProps> = ({
       <TouchableOpacity
         style={[styles.trigger, { backgroundColor: screenBg, borderColor }]}
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          
           setSheetVisible(true);
         }}
         activeOpacity={0.85}
@@ -145,7 +145,7 @@ export const NewPostPriceSection: React.FC<NewPostPriceSectionProps> = ({
                   key={opt.kind}
                   style={[styles.option, { backgroundColor: selected ? Colors.primary + '12' : subtleBg }]}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    
                     onPriceKindChange(opt.kind);
                     setSheetVisible(false);
                   }}

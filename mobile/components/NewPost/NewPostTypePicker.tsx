@@ -52,7 +52,7 @@ export const NewPostTypePicker: React.FC<NewPostTypePickerProps> = ({
         ]}
         onPress={() => {
           if (locked) return;
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          
           setSheetVisible(true);
         }}
         activeOpacity={locked ? 1 : 0.85}
@@ -82,7 +82,7 @@ export const NewPostTypePicker: React.FC<NewPostTypePickerProps> = ({
                   key={opt.value}
                   style={[styles.option, { backgroundColor: selected ? Colors.primary + '12' : subtleBg }]}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    
                     onChange(opt.value);
                     setSheetVisible(false);
                   }}

@@ -74,7 +74,7 @@ export default function CategoryServiceProvidersScreen() {
   const [activeTagFilter, setActiveTagFilter] = useState<ExploreServiceTagFilter>('all');
 
   const handleBack = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     if (router.canGoBack()) {
       router.back();
     } else if (id) {

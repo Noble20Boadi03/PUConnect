@@ -145,7 +145,7 @@ export const ChatOfficialEngagementSheet: React.FC<ChatOfficialEngagementSheetPr
           <TouchableOpacity
             style={[styles.cancelRow, { backgroundColor: subtleBg }]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              
               onClose();
             }}
             activeOpacity={0.85}

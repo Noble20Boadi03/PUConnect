@@ -44,7 +44,7 @@ export const CategoryDetailView: React.FC<CategoryDetailViewProps> = ({
 
   const handleServicePress = useCallback(
     (service: ExploreCategoryService) => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      
       onServicePress?.(service);
     },
     [onServicePress]
@@ -65,7 +65,7 @@ export const CategoryDetailView: React.FC<CategoryDetailViewProps> = ({
         <GuardedPressable
           style={[styles.backButton, { backgroundColor: subtleBg }]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            
             onBack();
           }}
           accessibilityRole="button"

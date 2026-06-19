@@ -50,7 +50,7 @@ export const SubmitProviderReviewView: React.FC<SubmitProviderReviewViewProps> =
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSelectRating = useCallback((value: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     setRating(value);
   }, []);
 

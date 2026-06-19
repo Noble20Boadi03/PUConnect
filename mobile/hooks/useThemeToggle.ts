@@ -13,7 +13,7 @@ export function useThemeToggle() {
   const iconName: MarketIconName = isDark ? 'sunny-outline' : 'moon-outline';
 
   const handleToggle = useCallback(async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     await toggleThemePreference();
   }, []);
 

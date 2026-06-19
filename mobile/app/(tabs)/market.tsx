@@ -46,7 +46,9 @@ export default function MarketScreen() {
     searchPosts, 
     setFilter, 
     activeFilter,
-    searchQuery
+    searchQuery,
+    initializeRecentlyViewed,
+    recentlyViewedIds
   } = useMarketStore();
 
   const [showMarketTip, setShowMarketTip] = useState(false);
@@ -68,7 +70,8 @@ export default function MarketScreen() {
 
   useEffect(() => {
     fetchPosts();
-  }, [fetchPosts]);
+    initializeRecentlyViewed();
+  }, [fetchPosts, initializeRecentlyViewed]);
 
   const toggleTip = useCallback(() => {
     setShowMarketTip(prev => !prev);
@@ -84,7 +87,6 @@ export default function MarketScreen() {
 
   const handleCardPress = useCallback(
     (post: FeaturedPost) => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const isOwner = user?.id === post.authorId;
       router.push(`/post/${post.id}${isOwner ? '?fromOwner=1' : ''}` as any);
     },
@@ -92,12 +94,10 @@ export default function MarketScreen() {
   );
 
   const handleSeeAllServices = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setFilter('services');
   }, [setFilter]);
 
   const handleSeeAllRequests = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setFilter('requests');
   }, [setFilter]);
 
@@ -154,6 +154,7 @@ export default function MarketScreen() {
       primaryColor: Colors.primary,
       showDiscoverySections,
       posts,
+      recentlyViewedIds,
       onPostPress: handleCardPress,
       onSeeAllServicesPress: handleSeeAllServices,
       onSeeAllRequestsPress: handleSeeAllRequests,
@@ -166,6 +167,7 @@ export default function MarketScreen() {
       Colors.primary,
       showDiscoverySections,
       posts,
+      recentlyViewedIds,
       handleCardPress,
       handleSeeAllServices,
       handleSeeAllRequests,

@@ -240,7 +240,7 @@ export default function LandingPage() {
   }
 
   const handleNext = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     if (isLastSlide) {
       router.push('/(auth)/login' as any);
     } else {
@@ -249,14 +249,14 @@ export default function LandingPage() {
   };
 
   const handleBack = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
     }
   };
 
   const toggleTheme = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     Appearance.setColorScheme(colorScheme === 'dark' ? 'light' : 'dark');
   };
 

@@ -62,7 +62,7 @@ export const ExplorePeoplePanel: React.FC<ExplorePeoplePanelProps> = ({
 
   const handleProviderPress = useCallback(
     (provider: ExploreProvider) => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      
       onProviderPress(provider);
     },
     [onProviderPress]

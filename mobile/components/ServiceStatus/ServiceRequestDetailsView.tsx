@@ -107,7 +107,7 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     if (!postContext || actionLoading) return;
     setActionLoading(true);
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
       router.push(`/post/${postContext.postId}` as any);
     } catch (err) {
       console.error('Failed to open post:', err);
@@ -121,7 +121,7 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     if (!peer?.username || actionLoading) return;
     setActionLoading(true);
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
       const href = postContext
         ? buildChatHref(peer.username, postContext.postId)
         : buildChatHref(peer.username);
@@ -204,7 +204,7 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     setActionLoading(true);
     try {
       await transition(activeRequest.id, 'request_completion');
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
     } catch (err) {
       console.error('Failed to request completion:', err);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);

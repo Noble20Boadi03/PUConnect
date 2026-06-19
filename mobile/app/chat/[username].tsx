@@ -184,7 +184,6 @@ export default function ChatScreen() {
   }, [chatServiceRequest, activeThread, currentUserId, recordCompletedDeal, username]);
 
   const exitToMessages = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.replace('/(tabs)/messages' as any);
   }, [router]);
 
@@ -214,7 +213,6 @@ export default function ChatScreen() {
 
   const handleViewProviderProfile = useCallback(() => {
     if (typeof username !== 'string') return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push(buildProviderProfileHref(username) as any);
   }, [username, router]);
 

@@ -200,17 +200,8 @@ export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
   ]);
 
   const handlePress = (action: ChatMenuAction) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (action === 'report') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    }
-    if (
-      action === 'officialService' ||
-      action === 'officialRequest' ||
-      action === 'requestOfficialCompletion' ||
-      action === 'reviewOfficialCompletion'
-    ) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     if (action === 'cancelOfficialRequest' || action === 'withdrawOfficialResponse') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);

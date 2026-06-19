@@ -176,7 +176,7 @@ export const NewPostView: React.FC<NewPostViewProps> = ({ onPublished }) => {
     setHelpCategoryError(null);
     setIsPublishing(true);
     setPublishMessage(null);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
 
     try {
       // Upload images first (only local URIs, skip already uploaded ones)

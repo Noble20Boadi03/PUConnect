@@ -53,7 +53,7 @@ export default function PostDetailScreen() {
   const { conversations, fetchConversations } = useChat();
 
   const { data: post, isLoading, isRefreshing, fetchPost, clearCache } = usePostStore();
-  const { removePost, invalidateCache } = useMarketStore();
+  const { removePost, invalidateCache, trackPostView } = useMarketStore();
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isHiding, setIsHiding] = useState(false);
@@ -92,6 +92,12 @@ export default function PostDetailScreen() {
     }
     fetchConversations();
   }, [id, fetchPost, fetchConversations]);
+
+  useEffect(() => {
+    if (post && !isOwnPost) {
+      trackPostView(post.id);
+    }
+  }, [post, isOwnPost, trackPostView]);
 
   // Check if user is eligible to respond to this request
   const eligibility = useMemo(() => {
@@ -133,7 +139,6 @@ export default function PostDetailScreen() {
   }, [post, isProvider, providerServiceIds]);
 
   const handleBack = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (router.canGoBack()) {
       router.back();
     } else if (effectiveOwnerView) {
@@ -176,7 +181,6 @@ export default function PostDetailScreen() {
   }, [post, router, eligibility, isProvider, showConfirm]);
 
   const handleReturnToChat = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (router.canGoBack()) {
       router.back();
       return;

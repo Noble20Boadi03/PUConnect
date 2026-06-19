@@ -17,7 +17,7 @@ export default function NotificationsScreen() {
   );
 
   const handleBack = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     if (router.canGoBack()) {
       router.back();
     } else {

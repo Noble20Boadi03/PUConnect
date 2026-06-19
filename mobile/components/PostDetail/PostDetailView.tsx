@@ -118,32 +118,32 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
   const isOverGallery = chrome.phase === 'gallery';
 
   const handleSendMessage = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
     onSendMessage?.();
   }, [onSendMessage]);
 
   const handleReturnToChat = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     onReturnToChat?.();
   }, [onReturnToChat]);
 
   const handleRequestService = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
     onRequestService?.();
   }, [onRequestService]);
 
   const handleEdit = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
     onEdit?.();
   }, [onEdit]);
 
   const handleHide = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     onHide?.();
   }, [onHide]);
 
   const handleDelete = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     onDelete?.();
   }, [onDelete]);
 
@@ -169,7 +169,7 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
 
   const handleViewProvider = useCallback(() => {
     if (!isService) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     onViewProvider?.(post.author.username);
   }, [isService, onViewProvider, post.author.username]);
 

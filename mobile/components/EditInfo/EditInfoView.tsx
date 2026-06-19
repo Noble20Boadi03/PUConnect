@@ -153,7 +153,7 @@ export const EditInfoView: React.FC<EditInfoViewProps> = ({ onSaved }) => {
 
     setIsSaving(true);
     setSaveMessage(null);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
 
     try {
       // Update the main profile (name, username, email)
@@ -209,7 +209,7 @@ export const EditInfoView: React.FC<EditInfoViewProps> = ({ onSaved }) => {
 
   const handleOpenRevokeDialog = useCallback(() => {
     if (isSaving || isRevoking) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     setRevokeConfirmVisible(true);
   }, [isSaving, isRevoking]);
 

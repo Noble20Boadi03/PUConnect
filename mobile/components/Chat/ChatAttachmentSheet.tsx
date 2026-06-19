@@ -61,7 +61,7 @@ export const ChatAttachmentSheet: React.FC<ChatAttachmentSheetProps> = ({
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
 
   const handlePress = (action: ChatAttachmentAction) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     onSelect(action);
     onClose();
   };

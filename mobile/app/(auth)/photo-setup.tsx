@@ -142,7 +142,7 @@ export default function PhotoSetupScreen() {
               variant={hasSelectedPhoto ? 'primary' : 'outline'}
               size="md"
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                
                 if (hasSelectedPhoto) {
                   handleSavePhoto();
                 } else {

@@ -58,7 +58,7 @@ export default function RegisterScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         return;
       }
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      
       setStep(2);
     } else if (step === 2) {
       if (!password || !confirmPassword) {
@@ -76,7 +76,7 @@ export default function RegisterScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         return;
       }
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      
       setStep(3);
     } else if (step === 3) {
       if (!username.trim()) {
@@ -86,7 +86,7 @@ export default function RegisterScreen() {
       }
       
       setIsSubmitting(true);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      
       
       try {
         await authService.register({
@@ -118,7 +118,7 @@ export default function RegisterScreen() {
   };
 
   const handleBack = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     if (step > 1) {
       setStep(prev => (prev - 1) as WizardStep);
     } else {
@@ -412,7 +412,7 @@ export default function RegisterScreen() {
                 <TouchableOpacity 
                   style={styles.loginLink}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    
                     router.push('/(auth)/login' as any);
                   }}
                 >

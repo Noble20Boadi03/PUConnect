@@ -42,7 +42,7 @@ export const ProfileSegmentedTabs: React.FC<ProfileSegmentedTabsProps> = ({
             dimmed && styles.tabDisabled,
           ]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            
             onTabChange(tab.key);
           }}
           activeOpacity={0.85}

@@ -72,7 +72,6 @@ export const ServiceStatusView: React.FC<ServiceStatusViewProps> = ({ onBack }) 
   const handleOpenDetails = useCallback(
     async (request: DbServiceRequest) => {
       try {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.push(`/service-request/${request.id}` as any);
       } catch (err) {
         console.error('Failed to open service request details:', err);

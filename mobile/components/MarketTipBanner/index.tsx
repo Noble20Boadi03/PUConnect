@@ -22,7 +22,7 @@ const MarketTipBannerComponent: React.FC<MarketTipBannerProps> = ({
   const text = isDark ? '#93C5FD' : '#1D4ED8';
 
   const handleDismiss = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     onDismiss();
   };
 

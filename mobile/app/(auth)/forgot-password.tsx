@@ -31,7 +31,7 @@ export default function ForgotPasswordScreen() {
   const [focusedInput, setFocusedInput] = useState<boolean>(false);
 
   const handleBack = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     if (router.canGoBack()) {
       router.back();
     } else {
@@ -49,7 +49,7 @@ export default function ForgotPasswordScreen() {
     setErrorMsg(null);
     setSuccessMsg(null);
     setIsSubmitting(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
 
     try {
       const response = await authService.forgotPassword(emailOrUsername.trim());
@@ -150,7 +150,7 @@ export default function ForgotPasswordScreen() {
                 variant="ghost"
                 size="sm"
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  
                   router.push('/(auth)/login' as any);
                 }}
               />

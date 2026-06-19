@@ -78,7 +78,6 @@ export default function ProviderProfileScreen() {
   }, [username, fetchProviderProfile, fetchReviews]);
 
   const handleBack = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (router.canGoBack()) {
       router.back();
     } else {

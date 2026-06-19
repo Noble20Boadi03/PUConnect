@@ -43,7 +43,7 @@ export default function ResetPasswordScreen() {
   const targetEmailOrUsername = emailOrUsername || user?.email || user?.username || '';
 
   const handleBack = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     if (router.canGoBack()) {
       router.back();
     } else {
@@ -79,7 +79,7 @@ export default function ResetPasswordScreen() {
     setErrorMsg(null);
     setSuccessMsg(null);
     setIsSubmitting(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
 
     try {
       const response = await authService.resetPassword(targetEmailOrUsername, otp, newPassword, confirmPassword);
@@ -105,7 +105,7 @@ export default function ResetPasswordScreen() {
     setErrorMsg(null);
     setSuccessMsg(null);
     setIsSubmitting(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
 
     try {
       const response = await authService.forgotPassword(targetEmailOrUsername);

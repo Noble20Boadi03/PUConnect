@@ -58,7 +58,7 @@ export default function SettingsScreen() {
   const platformLabel = Platform.OS === 'ios' ? 'ios' : 'android';
 
   const handleBack = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     if (router.canGoBack()) {
       router.back();
     } else {
@@ -67,7 +67,7 @@ export default function SettingsScreen() {
   };
 
   const handleResetPassword = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     setOtpError(null);
     setResetConfirmVisible(true);
   };
@@ -87,7 +87,7 @@ export default function SettingsScreen() {
 
     setIsSendingOTP(true);
     setOtpError(null);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
 
     try {
       await authService.forgotPassword(emailOrUsername);
@@ -171,7 +171,7 @@ export default function SettingsScreen() {
           <TouchableOpacity
             style={styles.settingsRow}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              
               router.push('/change-password');
             }}
             activeOpacity={0.7}

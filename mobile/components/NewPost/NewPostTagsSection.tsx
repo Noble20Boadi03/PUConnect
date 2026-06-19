@@ -46,7 +46,7 @@ export const NewPostTagsSection: React.FC<NewPostTagsSectionProps> = ({
   }, [isProvider, postType, providerServiceIds, helpCategoryIds]);
 
   const toggleTag = (tag: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     if (selectedSet.has(tag)) {
       onChange(selectedTags.filter((t) => t !== tag));
     } else {

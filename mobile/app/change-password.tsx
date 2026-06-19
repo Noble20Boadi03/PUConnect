@@ -39,7 +39,7 @@ export default function ChangePasswordScreen() {
   const confirmPasswordInputRef = useRef<TextInput>(null);
 
   const handleBack = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     if (router.canGoBack()) {
       router.back();
     } else {
@@ -63,7 +63,7 @@ export default function ChangePasswordScreen() {
     setErrorMsg(null);
     setSuccessMsg(null);
     setIsSubmitting(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
 
     try {
       const response = await authService.changePassword(currentPassword, newPassword, confirmNewPassword);

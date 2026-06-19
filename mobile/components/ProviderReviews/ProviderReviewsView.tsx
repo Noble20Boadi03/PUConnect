@@ -138,7 +138,7 @@ export const ProviderReviewsView: React.FC<ProviderReviewsViewProps> = ({
             <TouchableOpacity
               style={[styles.leaveReviewBtn, { backgroundColor: Colors.primary }]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                
                 onLeaveReview?.();
               }}
               activeOpacity={0.9}

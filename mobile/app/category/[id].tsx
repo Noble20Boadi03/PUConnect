@@ -31,7 +31,7 @@ export default function CategoryDetailScreen() {
   const services = data?.services || [];
 
   const handleBack = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     if (router.canGoBack()) {
       router.back();
     } else {

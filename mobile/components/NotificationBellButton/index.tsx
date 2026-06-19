@@ -24,7 +24,7 @@ export const NotificationBellButton: React.FC<NotificationBellButtonProps> = ({
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
 
   const handlePress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     router.push('/notifications' as any);
   }, [router]);
 

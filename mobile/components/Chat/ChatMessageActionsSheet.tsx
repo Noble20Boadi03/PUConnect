@@ -104,7 +104,7 @@ export const ChatMessageActionsSheet: React.FC<ChatMessageActionsSheetProps> = (
           <TouchableOpacity
             style={[styles.cancelRow, { backgroundColor: subtleBg }]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              
               onClose();
             }}
             activeOpacity={0.85}

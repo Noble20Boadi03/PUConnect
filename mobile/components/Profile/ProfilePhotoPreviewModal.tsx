@@ -35,12 +35,12 @@ export const ProfilePhotoPreviewModal: React.FC<ProfilePhotoPreviewModalProps> =
   const ctaOnDark = isDark ? '#09090B' : '#FFFFFF';
 
   const handleConfirm = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
     onConfirm();
   };
 
   const handleCancel = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     onCancel();
   };
 

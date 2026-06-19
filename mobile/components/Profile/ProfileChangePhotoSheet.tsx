@@ -65,7 +65,7 @@ export const ProfileChangePhotoSheet: React.FC<ProfileChangePhotoSheetProps> = (
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
 
   const handlePress = (action: ChangePhotoAction) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     onSelect(action);
     onClose();
   };

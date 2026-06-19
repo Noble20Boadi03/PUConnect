@@ -45,8 +45,6 @@ export const ProfileHeroSection: React.FC<ProfileHeroSectionProps> = ({
   const isOwner = variant === 'owner';
   const Colors = useThemeColor();
 
-  const fireHaptic = () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
   return (
     <View style={[styles.profileSection, { backgroundColor: cardBg }]}>
       <View style={styles.avatarContainer}>
@@ -73,10 +71,7 @@ export const ProfileHeroSection: React.FC<ProfileHeroSectionProps> = ({
         <View style={styles.actionRow}>
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: primaryColor }]}
-            onPress={() => {
-              fireHaptic();
-              onChangePhoto?.();
-            }}
+            onPress={() => onChangePhoto?.()}
           >
             <Ionicons name="image-outline" size={16} color={Colors.onPrimary} />
             <Text style={[styles.actionButtonText, { color: Colors.onPrimary }]}>Change Photo</Text>
@@ -86,10 +81,7 @@ export const ProfileHeroSection: React.FC<ProfileHeroSectionProps> = ({
               styles.actionButton,
               { backgroundColor: subtleBg, borderColor: mutedColor + '40', borderWidth: 1 },
             ]}
-            onPress={() => {
-              fireHaptic();
-              onEditInfo?.();
-            }}
+            onPress={() => onEditInfo?.()}
           >
             <Ionicons name="create-outline" size={16} color={textColor} />
             <Text style={[styles.actionButtonText, { color: textColor }]}>Edit Info</Text>
@@ -98,10 +90,7 @@ export const ProfileHeroSection: React.FC<ProfileHeroSectionProps> = ({
       ) : (
         <TouchableOpacity
           style={[styles.messageButton, { backgroundColor: primaryColor }]}
-          onPress={() => {
-            fireHaptic();
-            onMessage?.();
-          }}
+          onPress={() => onMessage?.()}
           activeOpacity={0.9}
         >
           <Ionicons name="chatbubble-outline" size={18} color={Colors.onPrimary} />

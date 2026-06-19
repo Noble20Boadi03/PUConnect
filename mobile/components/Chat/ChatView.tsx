@@ -212,12 +212,10 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
   const handleOpenPost = useCallback(() => {
     if (!thread.postContext) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onOpenPost?.(thread.postContext.postId);
   }, [thread.postContext, onOpenPost]);
 
   const handleMoreOptions = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setOptionsVisible(true);
   }, []);
 
@@ -243,7 +241,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
   const openOfficialDetails = useCallback(() => {
     if (!serviceRequestId) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push(`/service-request/${serviceRequestId}` as any);
   }, [serviceRequestId, router]);
 
@@ -333,7 +330,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
     setActionLoading(true);
     try {
       await onRequestCompletion();
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
@@ -632,14 +628,12 @@ export const ChatView: React.FC<ChatViewProps> = ({
   }, [pickFromCamera, pickFromGallery, onSendMessage, isUploading]);
 
   const handleAttach = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setAttachVisible(true);
   }, []);
 
   const handleSend = useCallback(() => {
     const trimmed = draft.trim();
     if (!trimmed) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (onSendMessage) {
       onSendMessage(trimmed);
     } else {

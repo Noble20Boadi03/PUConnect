@@ -56,7 +56,7 @@ export const BecomeProviderSection: React.FC<BecomeProviderSectionProps> = ({
 }) => {
   const handleHeaderPress = () => {
     if (lockedExpanded) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     onToggleExpanded();
   };
 

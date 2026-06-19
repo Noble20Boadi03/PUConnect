@@ -37,7 +37,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
   const handleCancel = () => {
     if (isLoading) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     onCancel();
   };
 

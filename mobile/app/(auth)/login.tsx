@@ -57,7 +57,7 @@ export default function LoginScreen() {
     
     setErrorMsg(null);
     setIsSubmitting(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
     
     try {
       console.log('[TIMESTAMP] 2. Before authService.login call:', new Date().toISOString());
@@ -84,7 +84,7 @@ export default function LoginScreen() {
   };
 
   const handleBack = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     if (router.canGoBack()) {
       router.back();
     } else {
@@ -195,7 +195,7 @@ export default function LoginScreen() {
               <TouchableOpacity 
                 style={styles.forgotPasswordContainer}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  
                   router.push('/(auth)/forgot-password' as any);
                 }}
               >
@@ -220,7 +220,7 @@ export default function LoginScreen() {
                   variant="ghost" 
                   size="sm" 
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    
                     router.push('/(auth)/register' as any);
                   }} 
                 />
@@ -229,9 +229,7 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.footerContainer}>
-            <TouchableOpacity
-              onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-            >
+            <TouchableOpacity>
               <Text style={[styles.adminLoginText, { color: Colors.icon }]}>
                 Admin Login (Testing)
               </Text>

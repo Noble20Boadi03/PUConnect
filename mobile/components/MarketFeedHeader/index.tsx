@@ -3,7 +3,6 @@ import { StyleSheet, View, ScrollView, ActivityIndicator } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Spacing } from '../../constants';
 import {
-  RECENTLY_VIEWED_MOCK,
   MARKET_PROMO,
   FEATURED_POSTS_MOCK,
 } from '../../constants';
@@ -31,6 +30,7 @@ export interface MarketFeedHeaderProps {
   showDiscoverySections: boolean;
   /** Live posts from the API; when omitted, mock data is used. */
   posts?: FeaturedPost[];
+  recentlyViewedIds: string[];
   onPostPress: (post: FeaturedPost) => void;
   onSeeAllServicesPress?: () => void;
   onSeeAllRequestsPress?: () => void;
@@ -103,6 +103,7 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
   primaryColor,
   showDiscoverySections,
   posts,
+  recentlyViewedIds,
   onPostPress,
   onSeeAllServicesPress,
   onSeeAllRequestsPress,
@@ -117,13 +118,11 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
   }, [showDiscoverySections, fetchPopularServices]);
 
   const onSeeAllPopular = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push('/(tabs)/explore' as any);
   }, [router]);
 
   const onPopularServicePress = useCallback(
     (service: ExploreCategoryService, categoryId: string) => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       router.push(buildExploreServiceHref(categoryId, service.id) as any);
     },
     [router]
@@ -148,11 +147,25 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
   );
 
   const feedPosts = posts ?? FEATURED_POSTS_MOCK;
-  const recentlyViewedPosts = posts ? feedPosts.slice(0, 5) : RECENTLY_VIEWED_MOCK;
 
-  // Split posts into services and requests
-  const servicePosts = useMemo(() => feedPosts.filter((p) => p.tag === 'Service'), [feedPosts]);
-  const requestPosts = useMemo(() => feedPosts.filter((p) => p.tag === 'Request'), [feedPosts]);
+  // Derive recently viewed posts by tag, preserving order
+  const { recentlyViewedServices, recentlyViewedRequests } = useMemo(() => {
+    const services: FeaturedPost[] = [];
+    const requests: FeaturedPost[] = [];
+    
+    for (const id of recentlyViewedIds) {
+      const post = feedPosts.find(p => p.id === id);
+      if (post) {
+        if (post.tag === 'Service' && services.length < 5) {
+          services.push(post);
+        } else if (post.tag === 'Request' && requests.length < 5) {
+          requests.push(post);
+        }
+      }
+    }
+    
+    return { recentlyViewedServices: services, recentlyViewedRequests: requests };
+  }, [feedPosts, recentlyViewedIds]);
 
   return (
     <View>
@@ -201,37 +214,13 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
             )}
           </View>
 
-          <View style={styles.block}>
-            <View style={styles.heading}>
-              <SectionHeader
-                title="Recently Viewed"
-                titleColor={textColor}
-              />
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              nestedScrollEnabled
-              overScrollMode="never"
-              contentContainerStyle={styles.hListContent}
-            >
-              {recentlyViewedPosts.map((item, index) => (
-                <View key={item.id} style={index > 0 ? styles.hItemGapWide : undefined}>
-                  <RecentRow item={item} {...recentCardProps} />
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-
-          {/* Services Subsection */}
-          {servicePosts.length > 0 && (
+          {/* Recently Viewed Services */}
+          {recentlyViewedServices.length > 0 && (
             <View style={styles.block}>
               <View style={styles.heading}>
                 <SectionHeader
-                  title="Services"
+                  title="Recently Viewed Services"
                   titleColor={textColor}
-                  actionColor={primaryColor}
-                  onActionPress={onSeeAllServicesPress}
                 />
               </View>
               <ScrollView
@@ -241,7 +230,7 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
                 overScrollMode="never"
                 contentContainerStyle={styles.hListContent}
               >
-                {servicePosts.map((item, index) => (
+                {recentlyViewedServices.map((item, index) => (
                   <View key={item.id} style={index > 0 ? styles.hItemGapWide : undefined}>
                     <RecentRow item={item} {...recentCardProps} />
                   </View>
@@ -250,15 +239,13 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
             </View>
           )}
 
-          {/* Requests Subsection */}
-          {requestPosts.length > 0 && (
+          {/* Recently Viewed Requests */}
+          {recentlyViewedRequests.length > 0 && (
             <View style={styles.block}>
               <View style={styles.heading}>
                 <SectionHeader
-                  title="Requests"
+                  title="Recently Viewed Requests"
                   titleColor={textColor}
-                  actionColor={primaryColor}
-                  onActionPress={onSeeAllRequestsPress}
                 />
               </View>
               <ScrollView
@@ -268,7 +255,7 @@ const MarketFeedHeaderComponent: React.FC<MarketFeedHeaderProps> = ({
                 overScrollMode="never"
                 contentContainerStyle={styles.hListContent}
               >
-                {requestPosts.map((item, index) => (
+                {recentlyViewedRequests.map((item, index) => (
                   <View key={item.id} style={index > 0 ? styles.hItemGapWide : undefined}>
                     <RecentRow item={item} {...recentCardProps} />
                   </View>

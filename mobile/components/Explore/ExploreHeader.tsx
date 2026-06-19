@@ -24,7 +24,7 @@ const ExploreHeaderComponent: React.FC<ExploreHeaderProps> = ({
   children,
 }) => {
   const handleSearchPress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     onSearchPress?.();
   }, [onSearchPress]);
 

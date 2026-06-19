@@ -75,7 +75,6 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
 
   const handleCategoryPress = useCallback(
     (category: ExploreCategory) => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       if (onCategoryPress) {
         onCategoryPress(category);
         return;
@@ -106,7 +105,6 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   }, []);
 
   const handleSearchPress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsSearchExpanded(true);
     Animated.timing(fadeAnim, {
       toValue: 1,
@@ -118,7 +116,6 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   }, [fadeAnim]);
 
   const handleSearchClose = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Animated.timing(fadeAnim, {
       toValue: 0,
       duration: 200,

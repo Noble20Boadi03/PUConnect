@@ -43,7 +43,7 @@ export const ExploreCategoryFilterPills: React.FC<ExploreCategoryFilterPillsProp
 
   const handlePress = useCallback(
     (filter: ExploreCategoryFilter) => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      
       onFilterChange(filter);
     },
     [onFilterChange]

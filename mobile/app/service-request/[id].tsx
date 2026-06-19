@@ -20,7 +20,7 @@ export default function ServiceRequestDetailScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const handleBack = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     if (router.canGoBack()) {
       router.back();
     } else {

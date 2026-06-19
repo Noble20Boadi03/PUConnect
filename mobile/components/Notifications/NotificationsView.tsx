@@ -64,12 +64,10 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
   const { panHandlers } = usePullToRefreshOnHeader({ onRefresh, isRefreshing });
 
   const handleMarkAll = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     markAllRead();
   }, [markAllRead]);
 
   const handleNotificationPress = useCallback((item: AppNotification) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (!item.read) {
       markRead(item.id);
     }

@@ -84,7 +84,7 @@ export const ProviderServicesSheet: React.FC<ProviderServicesSheetProps> = ({
                   key={service.id}
                   style={[styles.serviceRow, { backgroundColor: subtleBg }]}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    
                     onSelectService(service.id);
                     onClose();
                   }}
@@ -113,7 +113,7 @@ export const ProviderServicesSheet: React.FC<ProviderServicesSheetProps> = ({
           <TouchableOpacity
             style={[styles.cancelRow, { borderColor: subtleBg }]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              
               onClose();
             }}
             activeOpacity={0.85}

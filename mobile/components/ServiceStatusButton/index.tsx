@@ -24,7 +24,7 @@ export const ServiceStatusButton: React.FC<ServiceStatusButtonProps> = ({
   const activeCount = useServiceRequestsStore((s) => s.activeCount);
 
   const handlePress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     router.push('/service-status' as any);
   }, [router]);
 

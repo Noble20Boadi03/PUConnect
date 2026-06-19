@@ -74,17 +74,17 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
         ]
       );
     } else if (isImage) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      
       setPreviewVisible(true);
     } else if (isDocument) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      
       Linking.openURL(docUrl);
     }
   };
 
   const handleLongPressHandler = () => {
     if (onLongPress) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      
       onLongPress(message);
     }
   };

@@ -58,12 +58,12 @@ export default function NewChatScreen() {
   }, []);
 
   const handleSelectUser = useCallback((provider: ExploreProvider) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     router.push(`/chat/${provider.username}` as any);
   }, [router]);
 
   const handleBack = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     router.back();
   }, [router]);
 

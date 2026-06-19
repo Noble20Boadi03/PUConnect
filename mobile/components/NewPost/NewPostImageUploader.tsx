@@ -164,7 +164,7 @@ export const NewPostImageUploader: React.FC<NewPostImageUploaderProps> = ({
   };
 
   const removeImage = (uri: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     onChange(imageUris.filter((u) => u !== uri));
   };
 
