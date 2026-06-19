@@ -17,7 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useNavigation, useRouter } from 'expo-router';
 
-import { useThemeColor, useDebounce } from '../../hooks';
+import { useThemeColor, useDebounce, usePullToRefreshOnHeader } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { ConversationListItem } from './ConversationListItem';
 import { NotificationBellButton } from '../NotificationBellButton';
@@ -56,6 +56,7 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const router = useRouter();
+  const { panHandlers } = usePullToRefreshOnHeader({ onRefresh: onRefresh || (() => {}), isRefreshing });
 
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
   const listBg = isDark ? '#18181B' : '#FFFFFF';
@@ -475,22 +476,24 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
         </SafeAreaView>
       ) : (
         <>
-          <TabHeader
-            title="Messages"
-            rightActions={
-              <View style={styles.headerActions}>
-                <TouchableOpacity
-                  onPress={handleCompose}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  style={{ width: 44, height: 44, justifyContent: 'center', alignItems: 'center', backgroundColor: listBg, borderRadius: 22 }}
-                >
-                  <Ionicons name="create-outline" size={22} color={Colors.text} />
-                </TouchableOpacity>
-                <ServiceStatusButton backgroundColor={listBg} iconColor={Colors.text} size={44} />
-                <NotificationBellButton backgroundColor={listBg} iconColor={Colors.text} size={44} />
-              </View>
-            }
-          />
+          <View {...panHandlers}>
+            <TabHeader
+              title="Messages"
+              rightActions={
+                <View style={styles.headerActions}>
+                  <TouchableOpacity
+                    onPress={handleCompose}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    style={{ width: 44, height: 44, justifyContent: 'center', alignItems: 'center', backgroundColor: listBg, borderRadius: 22 }}
+                  >
+                    <Ionicons name="create-outline" size={22} color={Colors.text} />
+                  </TouchableOpacity>
+                  <ServiceStatusButton backgroundColor={listBg} iconColor={Colors.text} size={44} />
+                  <NotificationBellButton backgroundColor={listBg} iconColor={Colors.text} size={44} />
+                </View>
+              }
+            />
+          </View>
           <View style={styles.subtitleContainer}>
             {totalUnread > 0 ? (
               <View style={[styles.unreadSummary, { backgroundColor: Colors.primary + '22' }]}>

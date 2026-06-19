@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
-import { useAppRouter, useThemeColor, useTabBarHeight, useDebounce } from '../../hooks';
+import { useAppRouter, useThemeColor, useTabBarHeight, useDebounce, usePullToRefreshOnHeader } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { MarketHeaderTop, MarketFeedHeader, FeaturedPostCard, MarketViewSkeleton } from '../../components';
 import type { FeaturedPost, MarketFilter } from '../../types';
@@ -63,6 +63,8 @@ export default function MarketScreen() {
   const onRefresh = useCallback(() => {
     fetchPosts(true);
   }, [fetchPosts]);
+
+  const { panHandlers } = usePullToRefreshOnHeader({ onRefresh, isRefreshing });
 
   useEffect(() => {
     fetchPosts();
@@ -236,7 +238,9 @@ export default function MarketScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
-      <MarketHeaderTop {...headerTheme} />
+      <View {...panHandlers}>
+        <MarketHeaderTop {...headerTheme} />
+      </View>
       <FlatList
         data={showDiscoverySections ? [] : posts}
         keyExtractor={keyExtractor}

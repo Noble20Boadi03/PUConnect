@@ -139,6 +139,8 @@ export default function ProviderProfileScreen() {
       refreshControl={
         <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
       }
+      onRefresh={onRefresh}
+      isRefreshing={isRefreshing}
     />
   );
 }

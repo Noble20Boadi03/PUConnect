@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { Spacing, Typography } from '../../constants';
-import { useThemeColor, useAppRouter } from '../../hooks';
+import { useThemeColor, useAppRouter, usePullToRefreshOnHeader } from '../../hooks';
 import { useAuthStore, useServiceRequestsStore } from '../../store';
 import { useProviderReviewsStore, selectIsEligibleForReview } from '../../store/providerReviewsStore';
 import { serviceKindLabel, serviceStatusLabel } from '../../lib';
@@ -66,6 +66,8 @@ export const ServiceStatusView: React.FC<ServiceStatusViewProps> = ({ onBack }) 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   }, [fetchRequests]);
+
+  const { panHandlers } = usePullToRefreshOnHeader({ onRefresh: handleRefresh, isRefreshing: isLoading });
 
   const handleOpenDetails = useCallback(
     async (request: DbServiceRequest) => {
@@ -140,7 +142,7 @@ export const ServiceStatusView: React.FC<ServiceStatusViewProps> = ({ onBack }) 
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
-      <View style={styles.header}>
+      <View {...panHandlers} style={styles.header}>
         <TouchableOpacity
           style={[styles.backButton, { backgroundColor: subtleBg }]}
           onPress={onBack}

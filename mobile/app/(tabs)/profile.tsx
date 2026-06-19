@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { useAppRouter, useThemeColor, useThemeToggle, useChangeProfilePhoto, useTabBarHeight } from '../../hooks';
+import { useAppRouter, useThemeColor, useThemeToggle, useChangeProfilePhoto, useTabBarHeight, usePullToRefreshOnHeader } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import {
   ProfileHeroSection,
@@ -80,6 +80,8 @@ export default function ProfileScreen() {
     }
   }, [user?.username, fetchProfile]);
 
+  const { panHandlers } = usePullToRefreshOnHeader({ onRefresh, isRefreshing: refreshing });
+
   const initials = user?.name
     ? user.name
         .split(' ')
@@ -129,27 +131,29 @@ export default function ProfileScreen() {
 
   return (
     <View style={[styles.rootContainer, { backgroundColor: screenBg }]}>
-      <TabHeader
-        title="Profile"
-        rightActions={
-          <View style={styles.headerActions}>
-            <TouchableOpacity
-              style={[styles.headerButton, { backgroundColor: subtleBg }]}
-              onPress={handleToggle}
-            >
-              <Ionicons name={iconName} size={22} color={Colors.text} />
-            </TouchableOpacity>
-            <ServiceStatusButton backgroundColor={subtleBg} iconColor={Colors.text} size={44} />
-            <NotificationBellButton backgroundColor={subtleBg} iconColor={Colors.text} size={44} />
-            <TouchableOpacity
-              style={[styles.headerButton, { backgroundColor: subtleBg }]}
-              onPress={handleOpenSettings}
-            >
-              <Ionicons name="settings-outline" size={22} color={Colors.text} />
-            </TouchableOpacity>
-          </View>
-        }
-      />
+      <View {...panHandlers}>
+        <TabHeader
+          title="Profile"
+          rightActions={
+            <View style={styles.headerActions}>
+              <TouchableOpacity
+                style={[styles.headerButton, { backgroundColor: subtleBg }]}
+                onPress={handleToggle}
+              >
+                <Ionicons name={iconName} size={22} color={Colors.text} />
+              </TouchableOpacity>
+              <ServiceStatusButton backgroundColor={subtleBg} iconColor={Colors.text} size={44} />
+              <NotificationBellButton backgroundColor={subtleBg} iconColor={Colors.text} size={44} />
+              <TouchableOpacity
+                style={[styles.headerButton, { backgroundColor: subtleBg }]}
+                onPress={handleOpenSettings}
+              >
+                <Ionicons name="settings-outline" size={22} color={Colors.text} />
+              </TouchableOpacity>
+            </View>
+          }
+        />
+      </View>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight }]}

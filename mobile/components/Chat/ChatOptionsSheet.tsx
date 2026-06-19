@@ -147,7 +147,7 @@ export const ChatOptionsSheet: React.FC<ChatOptionsSheetProps> = ({
           }
         }
       }
-      items.push({ key: 'viewOfficialDetails', label: 'View service status' });
+      items.push({ key: 'viewOfficialDetails', label: officialEngagementCompleted ? 'View last service' : 'View service status' });
     } else {
       if (postContext && postContext.tag === 'Service' && postContext.authorId !== currentUserId) {
         items.push({

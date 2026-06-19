@@ -11,7 +11,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { useThemeColor } from '../../hooks';
+import { useThemeColor, usePullToRefreshOnHeader } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { GuardedPressable } from '../GuardedPressable';
 import {
@@ -36,6 +36,8 @@ export interface ProviderProfileViewProps {
   onOpenReviews?: () => void;
   onLeaveReview?: () => void;
   refreshControl?: React.ReactElement<RefreshControlProps>;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
 export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
@@ -47,6 +49,8 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
   onOpenReviews,
   onLeaveReview,
   refreshControl,
+  onRefresh,
+  isRefreshing = false,
 }) => {
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
@@ -55,6 +59,7 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
   const insets = useSafeAreaInsets();
+  const { panHandlers } = usePullToRefreshOnHeader({ onRefresh: onRefresh || (() => {}), isRefreshing });
 
   const initials = profile.displayName
     .split(' ')
@@ -102,7 +107,7 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
         showsVerticalScrollIndicator={false}
         refreshControl={refreshControl}
       >
-        <View style={styles.header}>
+        <View {...panHandlers} style={styles.header}>
           <GuardedPressable
             style={[styles.backButton, { backgroundColor: subtleBg }]}
             onPress={onBack}

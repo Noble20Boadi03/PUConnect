@@ -16,7 +16,7 @@ import * as Haptics from 'expo-haptics';
 
 import { ConfirmDialog } from '../ConfirmDialog';
 import { ReviewPromptDialog } from '../ReviewPromptDialog';
-import { useAppRouter, useConfirmDialog, useThemeColor, useImagePicker } from '../../hooks';
+import { useAppRouter, useConfirmDialog, useThemeColor, useImagePicker, usePullToRefreshOnHeader } from '../../hooks';
 import { useProviderReviewsStore } from '../../store/providerReviewsStore';
 import { Spacing, Typography } from '../../constants';
 import { getProviderServices, isCurrentUserProvider, isCurrentUserRequester } from '../../lib';
@@ -149,6 +149,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const router = useAppRouter();
   const Colors = useThemeColor();
   const insets = useSafeAreaInsets();
+  const { panHandlers } = usePullToRefreshOnHeader({ onRefresh: onRefresh || (() => {}), isRefreshing });
   const {
     showConfirm,
     confirmVisible,
@@ -694,15 +695,17 @@ export const ChatView: React.FC<ChatViewProps> = ({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <ChatHeader
-          participant={thread.participant}
-          subtleBg={subtleBg}
-          textColor={Colors.text}
-          mutedColor={Colors.icon}
-          primaryColor={Colors.primary}
-          onBack={onBack}
-          onMoreOptions={handleMoreOptions}
-        />
+        <View {...panHandlers}>
+          <ChatHeader
+            participant={thread.participant}
+            subtleBg={subtleBg}
+            textColor={Colors.text}
+            mutedColor={Colors.icon}
+            primaryColor={Colors.primary}
+            onBack={onBack}
+            onMoreOptions={handleMoreOptions}
+          />
+        </View>
 
         <ScrollView
           ref={scrollRef}

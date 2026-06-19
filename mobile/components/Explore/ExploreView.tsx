@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 
-import { useAppRouter, useThemeColor, useTabBarHeight, useDebounce } from '../../hooks';
+import { useAppRouter, useThemeColor, useTabBarHeight, useDebounce, usePullToRefreshOnHeader } from '../../hooks';
 import { useAuthStore } from '../../store';
 import { buildExploreCategoryHref, buildProviderProfileHref } from '../../lib';
 
@@ -37,6 +37,8 @@ export interface ExploreViewProps {
   onCategoryPress?: (category: ExploreCategory) => void;
   onProviderPress?: (provider: ExploreProvider) => void;
   refreshControl?: React.ReactElement<RefreshControlProps>;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
 export const ExploreView: React.FC<ExploreViewProps> = ({
@@ -46,12 +48,15 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   onCategoryPress,
   onProviderPress,
   refreshControl,
+  onRefresh,
+  isRefreshing = false,
 }) => {
   const router = useAppRouter();
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const tabBarHeight = useTabBarHeight();
+  const { panHandlers } = usePullToRefreshOnHeader({ onRefresh: onRefresh || (() => {}), isRefreshing });
 
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
@@ -147,12 +152,13 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
-      <ExploreHeader 
-        textColor={Colors.text} 
-        buttonBg={cardBg}
-        onSearchPress={isSearchExpanded ? undefined : handleSearchPress}
-        hideSearchIcon={isSearchExpanded}
-      >
+      <View {...panHandlers}>
+        <ExploreHeader 
+          textColor={Colors.text} 
+          buttonBg={cardBg}
+          onSearchPress={isSearchExpanded ? undefined : handleSearchPress}
+          hideSearchIcon={isSearchExpanded}
+        >
         {error ? (
           <View style={styles.errorState}>
             <RNText style={[styles.errorText, { color: Colors.icon }]}>{error}</RNText>
@@ -194,6 +200,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
           )}
         </View>
       </ExploreHeader>
+      </View>
       <ScrollView
         style={styles.scroll}
         showsVerticalScrollIndicator={false}

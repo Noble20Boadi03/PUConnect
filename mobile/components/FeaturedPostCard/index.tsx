@@ -286,16 +286,11 @@ const FeaturedPostCardComponent: React.FC<FeaturedPostCardProps> = ({
             <View style={[styles.requestBackground, { backgroundColor: tagBg + '30' }]} />
             
             <View style={styles.requestInner}>
-              <View style={styles.requestTopSection}>
-                <View style={[styles.requestIconContainer, { backgroundColor: tagBg, borderColor: tagColor }]}>
-                  <Ionicons name="hand-left-outline" size={32} color={tagColor} />
+              <View style={styles.topRow}>
+                <View style={[styles.tag, { backgroundColor: tagBg }]}>
+                  <Text style={[styles.tagText, { color: tagColor }]}>{item.tag}</Text>
                 </View>
-                <View style={styles.requestMeta}>
-                  <View style={[styles.requestTag, { backgroundColor: tagBg, borderColor: tagColor }]}>
-                    <Text style={[styles.requestTagText, { color: tagColor }]}>{item.tag}</Text>
-                  </View>
-                  <Text style={[styles.requestDate, { color: mutedColor }]}>{timeLabel}</Text>
-                </View>
+                <Text style={[styles.postedAt, { color: mutedColor }]}>{timeLabel}</Text>
               </View>
 
               <View style={styles.requestContent}>
@@ -326,7 +321,7 @@ const FeaturedPostCardComponent: React.FC<FeaturedPostCardProps> = ({
                 ) : null}
                 <View style={styles.requestPriceSection}>
                   <Text style={[styles.requestPrice, { color: tagColor }]}>{priceLabel}</Text>
-                  <Ionicons name="arrow-forward-circle-outline" size={20} color={tagColor} />
+                  <Ionicons name="chevron-forward" size={18} color={mutedColor} />
                 </View>
               </View>
             </View>

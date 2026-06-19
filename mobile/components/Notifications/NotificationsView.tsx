@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 
-import { useThemeColor } from '../../hooks';
+import { useThemeColor, usePullToRefreshOnHeader } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { useNotificationsStore } from '../../store/notificationsStore';
 import type { MarketIconName } from '../../types';
@@ -60,6 +60,8 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
   const onRefresh = useCallback(async () => {
     await fetchNotifications(true);
   }, [fetchNotifications]);
+
+  const { panHandlers } = usePullToRefreshOnHeader({ onRefresh, isRefreshing });
 
   const handleMarkAll = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -147,7 +149,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
-      <View style={styles.header}>
+      <View {...panHandlers} style={styles.header}>
         <TouchableOpacity
           style={[styles.backButton, { backgroundColor: subtleBg }]}
           onPress={onBack}
