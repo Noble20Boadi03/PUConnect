@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { chatService, BackendChatMessage, BackendConversation, GetMessagesResponse, GetConversationsResponse } from '../services/chatService';
 import { useAuthStore } from './authStore';
+import { useServiceRequestsStore } from './serviceRequestsStore';
+import { profileService } from '../services/profileService';
+import { postService } from '../services/postService';
 import { getSocket } from '../lib/socket';
 import { ChatMessage, ChatDateGroup, ChatParticipant, ChatThread, ChatPostContext } from '../types';
 import { parsePostPrice } from '../lib/mapDbPost';
@@ -9,6 +12,13 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 export interface ChatState {
   conversations: BackendConversation[];
+  threads: Record<string, {
+    thread: ChatThread;
+    participantProfile: any;
+    lastFetched: number;
+  }>;
+  activeUsername: string | null;
+  accessOrder: string[];
   activeThread: ChatThread | null;
   currentId: string | null;
   lastFetched: number | null;
@@ -25,6 +35,7 @@ export interface ChatState {
   
   fetchConversations: (forceRefresh?: boolean) => Promise<void>;
   loadMoreConversations: () => Promise<void>;
+  openChat: (username: string, postId?: string) => Promise<void>;
   fetchMessages: (username: string, participant: ChatParticipant, postContext?: ChatPostContext, forceRefresh?: boolean, cursor?: string) => Promise<void>;
   loadMoreMessages: () => Promise<void>;
   sendMessage: (receiverUsername: string, content: string, postId?: string) => Promise<void>;
@@ -110,6 +121,9 @@ let socketInstance: any = null;
 
 export const useChatStore = create<ChatState>((set, get) => ({
   conversations: [],
+  threads: {},
+  activeUsername: null,
+  accessOrder: [],
   activeThread: null,
   currentId: null,
   lastFetched: null,
@@ -178,16 +192,122 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  fetchMessages: async (username, participant, postContext, forceRefresh = false, cursor?: string) => {
-    const { currentId, lastFetched, activeThread } = get();
+  openChat: async (username, postId) => {
+    const { threads, fetchMessages, accessOrder } = get();
     const now = Date.now();
 
-    // Check cache only for initial load without cursor
-    if (!forceRefresh && !cursor && currentId === username && lastFetched && now - lastFetched < CACHE_TTL) {
+    // 1. Synchronously set activeUsername and update LRU access order
+    const newOrder = [username, ...accessOrder.filter(u => u !== username)].slice(0, 10);
+    const cached = threads[username];
+    
+    set({ 
+      activeUsername: username,
+      accessOrder: newOrder,
+      activeThread: cached?.thread ?? null,
+      currentId: username,
+      isLoading: !cached,
+      error: null
+    });
+
+    const refresh = async () => {
+      try {
+        // First fetch participant profile (always required)
+        const participantProfile = await profileService.getPublicProfile(username);
+        
+        // Fetch service requests (using the store directly)
+        await useServiceRequestsStore.getState().fetchRequests();
+        
+        // Fetch post context if needed
+        let post;
+        try {
+          post = postId ? await postService.getPostById(postId) : undefined;
+        } catch (postError) {
+          console.warn('Failed to fetch post context for chat:', postError);
+          post = undefined;
+        }
+
+        let postContext: ChatPostContext | undefined = undefined;
+        if (post) {
+          const price = parsePostPrice(post.price);
+          let priceLabel = '';
+          if (price.kind === 'fixed') {
+            priceLabel = `$${price.amount}`;
+          } else if (price.kind === 'range') {
+            priceLabel = `$${price.min}-$${price.max}`;
+          }
+
+          postContext = {
+            postId: post.id,
+            title: post.title,
+            tag: post.tag as 'Service' | 'Request',
+            priceLabel,
+            authorId: post.authorId,
+          };
+        }
+
+        // Fetch messages and update the specific thread in cache
+        await fetchMessages(
+          username,
+          {
+            displayName: participantProfile.name || username,
+            handle: `@${participantProfile.username || username}`,
+            avatarUrl: participantProfile.avatarUrl || '',
+          },
+          postContext,
+          true // Force refresh to update cache
+        );
+
+        // Update the profile and lastFetched timestamp in our threads cache
+        set(state => {
+          if (!state.threads[username]) return state; // Should be populated by fetchMessages now
+          return {
+            threads: {
+              ...state.threads,
+              [username]: {
+                ...state.threads[username],
+                participantProfile,
+                lastFetched: Date.now()
+              }
+            }
+          };
+        });
+
+        // Refresh conversations and unread count
+        get().fetchConversations(true);
+        get().fetchUnreadCount();
+      } catch (error) {
+        console.error('openChat refresh error:', error);
+        if (!cached) {
+          set({ error: error instanceof Error ? error.message : 'Failed to load chat', isLoading: false });
+        }
+      }
+    };
+
+    if (cached && (now - cached.lastFetched < CACHE_TTL)) {
+      // Very fresh, no need even for background refresh
       return;
     }
 
-    const hasExistingData = currentId === username && activeThread !== null;
+    if (cached) {
+      // Stale-while-revalidate: refresh in background
+      refresh();
+    } else {
+      // Block for initial load
+      await refresh();
+    }
+  },
+
+  fetchMessages: async (username, participant, postContext, forceRefresh = false, cursor?: string) => {
+    const { threads, activeUsername } = get();
+    const cached = threads[username];
+    const now = Date.now();
+
+    // Check cache only for initial load without cursor
+    if (!forceRefresh && !cursor && cached && now - cached.lastFetched < CACHE_TTL) {
+      return;
+    }
+
+    const hasExistingData = !!cached;
 
     set({ 
       isLoading: !hasExistingData && !forceRefresh && !cursor, 
@@ -213,36 +333,55 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }
       }
 
-      if (cursor && activeThread) {
-        // Merge with existing messages
-        const mergedGroups = mergeDateGroups(activeThread.dateGroups, dateGroups);
-        
-        set({
-          activeThread: {
-            ...activeThread,
+      set(state => {
+        let newThread: ChatThread;
+        const existingThread = state.threads[username]?.thread;
+
+        if (cursor && existingThread) {
+          // Merge with existing messages
+          const mergedGroups = mergeDateGroups(existingThread.dateGroups, dateGroups);
+          newThread = {
+            ...existingThread,
             dateGroups: mergedGroups,
-          },
-          nextCursor: response.nextCursor,
-          hasMoreMessages: response.hasMore,
-          isLoadingMoreMessages: false,
-        });
-      } else {
-        set({
-          activeThread: {
+          };
+        } else {
+          newThread = {
             providerUsername: username,
             participant,
             postContext: finalPostContext,
             dateGroups,
-          },
-          currentId: username,
-          lastFetched: now,
-          nextCursor: response.nextCursor,
-          hasMoreMessages: response.hasMore,
+          };
+        }
+
+        const updatedThreads = {
+          ...state.threads,
+          [username]: {
+            thread: newThread,
+            participantProfile: state.threads[username]?.participantProfile || {},
+            lastFetched: now,
+          }
+        };
+
+        // LRU Eviction: only keep 10 most recent
+        const newAccessOrder = [username, ...state.accessOrder.filter(u => u !== username)].slice(0, 10);
+        const prunedThreads: Record<string, any> = {};
+        newAccessOrder.forEach(u => {
+          if (updatedThreads[u]) prunedThreads[u] = updatedThreads[u];
+        });
+
+        return {
+          threads: prunedThreads,
+          accessOrder: newAccessOrder,
+          activeThread: state.activeUsername === username ? newThread : state.activeThread,
+          currentId: state.activeUsername === username ? username : state.currentId,
+          lastFetched: state.activeUsername === username ? now : state.lastFetched,
+          nextCursor: state.activeUsername === username ? response.nextCursor : state.nextCursor,
+          hasMoreMessages: state.activeUsername === username ? response.hasMore : state.hasMoreMessages,
           isLoading: false,
           isRefreshing: false,
           isLoadingMoreMessages: false,
-        });
-      }
+        };
+      });
       
       chatService.markMessagesAsRead(username).then(() => {
         get().fetchUnreadCount();
@@ -267,25 +406,50 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   clearCache: () => {
-    set({ lastFetched: null });
+    set({ threads: {}, accessOrder: [], activeThread: null, currentId: null, lastFetched: null });
   },
 
   removeMessage: (messageId) => {
-    const { activeThread } = get();
-    if (!activeThread) return;
-    
-    const newGroups = activeThread.dateGroups.map(g => ({
-      ...g,
-      messages: g.messages.filter(m => m.id !== messageId)
-    })).filter(g => g.messages.length > 0);
-    
-    set({ activeThread: { ...activeThread, dateGroups: newGroups } });
+    set(state => {
+      const updatedThreads = { ...state.threads };
+      let updatedActiveThread = state.activeThread;
+
+      Object.keys(updatedThreads).forEach(username => {
+        const thread = updatedThreads[username].thread;
+        const newGroups = thread.dateGroups.map(g => ({
+          ...g,
+          messages: g.messages.filter(m => m.id !== messageId)
+        })).filter(g => g.messages.length > 0);
+        
+        updatedThreads[username] = {
+          ...updatedThreads[username],
+          thread: { ...thread, dateGroups: newGroups }
+        };
+
+        if (state.activeUsername === username) {
+          updatedActiveThread = updatedThreads[username].thread;
+        }
+      });
+
+      return { threads: updatedThreads, activeThread: updatedActiveThread };
+    });
   },
 
   clearPostContext: () => {
-    const { activeThread } = get();
-    if (!activeThread) return;
-    set({ activeThread: { ...activeThread, postContext: undefined } });
+    set(state => {
+      if (!state.activeUsername || !state.threads[state.activeUsername]) return state;
+      
+      const username = state.activeUsername;
+      const updatedThread = { ...state.threads[username].thread, postContext: undefined };
+      
+      return {
+        threads: {
+          ...state.threads,
+          [username]: { ...state.threads[username], thread: updatedThread }
+        },
+        activeThread: updatedThread
+      };
+    });
   },
 
   sendMessage: async (receiverUsername, content, postId) => {
@@ -294,8 +458,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const user = useAuthStore.getState().user;
       if (!user) return;
       
-      const { activeThread } = get();
-      if (!activeThread || activeThread.providerUsername !== receiverUsername) return;
+      const { threads } = get();
+      const threadEntry = threads[receiverUsername];
+      if (!threadEntry) return;
+      const activeThread = threadEntry.thread;
       
       // Add optimistic update
       const date = new Date();
@@ -318,63 +484,86 @@ export const useChatStore = create<ChatState>((set, get) => ({
         newGroups.push({ dateLabel, messages: [uiMsg] });
       }
 
-      // If we have a post and no current post context, set it now
-      let newPostContext = activeThread.postContext;
-      
-      set({
-        activeThread: {
-          ...activeThread,
-          dateGroups: newGroups,
-          postContext: newPostContext,
+      const optimisticThread = {
+        ...activeThread,
+        dateGroups: newGroups,
+      };
+
+      set(state => ({
+        threads: {
+          ...state.threads,
+          [receiverUsername]: { ...state.threads[receiverUsername], thread: optimisticThread }
         },
-      });
+        activeThread: state.activeUsername === receiverUsername ? optimisticThread : state.activeThread
+      }));
 
       // Actual send
       const newMsg = await chatService.sendMessage(receiverUsername, content, postId);
       
       // Replace optimistic with real
-      const { activeThread: updatedThread } = get();
-      if (!updatedThread || updatedThread.providerUsername !== receiverUsername) return;
-      
-      const finalGroups = [...updatedThread.dateGroups.map((g) => ({
-        ...g,
-        messages: g.messages.map((m) => m.id === uiMsgId ? {
-          id: newMsg.id,
-          kind: 'sent' as const,
-          text: newMsg.content,
-          time: new Date(newMsg.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
-          status: 'sent' as const,
-        } : m),
-      }))];
+      set(state => {
+        const currentEntry = state.threads[receiverUsername];
+        if (!currentEntry) return state;
+        const currentThread = currentEntry.thread;
 
-      if (!newPostContext && newMsg.post) {
-        newPostContext = buildPostContext(newMsg.post);
-      }
-      
-      set({
-        activeThread: { ...updatedThread,
+        const finalGroups = [...currentThread.dateGroups.map((g) => ({
+          ...g,
+          messages: g.messages.map((m) => m.id === uiMsgId ? {
+            id: newMsg.id,
+            kind: 'sent' as const,
+            text: newMsg.content,
+            time: new Date(newMsg.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+            status: 'sent' as const,
+          } : m),
+        }))];
+
+        let newPostContext = currentThread.postContext;
+        if (!newPostContext && newMsg.post) {
+          newPostContext = buildPostContext(newMsg.post);
+        }
+        
+        const updatedThread = {
+          ...currentThread,
           dateGroups: finalGroups,
           postContext: newPostContext,
-        },
+        };
+
+        return {
+          threads: {
+            ...state.threads,
+            [receiverUsername]: { ...state.threads[receiverUsername], thread: updatedThread }
+          },
+          activeThread: state.activeUsername === receiverUsername ? updatedThread : state.activeThread
+        };
       });
+
+      // Refresh conversations and unread count after sending new message
+      get().fetchConversations(true);
+      get().fetchUnreadCount();
     } catch (error) {
       console.error('sendMessage error:', error);
-      const { activeThread } = get();
-      if (!activeThread || activeThread.providerUsername !== receiverUsername || !uiMsgId) return;
-      
-      const failedGroups = [...activeThread.dateGroups.map((g) => ({
-        ...g,
-        messages: g.messages.map((m) => m.id === uiMsgId ? {
-          ...m,
-          status: 'failed' as const,
-        } : m),
-      }))];
-      
-      set({
-        activeThread: {
-          ...activeThread,
-          dateGroups: failedGroups,
-        },
+      set(state => {
+        const currentEntry = state.threads[receiverUsername];
+        if (!currentEntry || !uiMsgId) return state;
+        const currentThread = currentEntry.thread;
+
+        const failedGroups = [...currentThread.dateGroups.map((g) => ({
+          ...g,
+          messages: g.messages.map((m) => m.id === uiMsgId ? {
+            ...m,
+            status: 'failed' as const,
+          } : m),
+        }))];
+        
+        const updatedThread = { ...currentThread, dateGroups: failedGroups };
+
+        return {
+          threads: {
+            ...state.threads,
+            [receiverUsername]: { ...state.threads[receiverUsername], thread: updatedThread }
+          },
+          activeThread: state.activeUsername === receiverUsername ? updatedThread : state.activeThread
+        };
       });
     }
   },
@@ -423,9 +612,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
   deleteConversation: async (username: string) => {
     try {
       await chatService.deleteConversation(username);
-      set((state) => ({
-        conversations: state.conversations.filter((conv) => conv.user.username !== username)
-      }));
+      set((state) => {
+        const newThreads = { ...state.threads };
+        delete newThreads[username];
+        const newOrder = state.accessOrder.filter(u => u !== username);
+        
+        return {
+          conversations: state.conversations.filter((conv) => conv.user.username !== username),
+          threads: newThreads,
+          accessOrder: newOrder,
+          activeThread: state.activeUsername === username ? null : state.activeThread,
+          activeUsername: state.activeUsername === username ? null : state.activeUsername
+        };
+      });
     } catch (error) {
       console.error('DeleteConversation error:', error);
       throw error;
@@ -488,42 +687,26 @@ export const useChatStore = create<ChatState>((set, get) => ({
     
     // Listen for new messages
     socketInstance.on('newMessage', (newMsg: BackendChatMessage) => {
-      const { activeThread, fetchConversations, fetchUnreadCount } = get();
+      const { threads, activeUsername, fetchConversations, fetchUnreadCount } = get();
       
-      // Update active thread if the message is part of the current conversation
-      if (activeThread) {
-        const isRelevantMessage = 
-          (newMsg.senderId === user.id && 
-            (newMsg.receiver?.username === activeThread.providerUsername || 
-              newMsg.sender?.username === activeThread.providerUsername)) ||
-          (newMsg.receiverId === user.id && 
-            (newMsg.sender?.username === activeThread.providerUsername || 
-              newMsg.receiver?.username === activeThread.providerUsername));
-        
-        if (isRelevantMessage) {
-          // First check if we have a pending message that this should replace
-          const hasPendingMessage = activeThread.dateGroups.some(
-            group => group.messages.some(msg => msg.status === 'pending')
-          );
-          
-          // Check if message already exists with real ID
-          const messageExists = activeThread.dateGroups.some(
-            group => group.messages.some(msg => msg.id === newMsg.id)
-          );
-          
-          if (messageExists) {
-            if (newMsg.receiverId === user.id) {
-              chatService.markMessagesAsRead(activeThread.providerUsername).then(() => {
-                fetchConversations();
-                fetchUnreadCount();
-              }).catch(() => {});
-            } else {
-              fetchConversations();
-              fetchUnreadCount();
-            }
-            return;
-          }
+      // Find which conversation this message belongs to
+      let targetUsername: string | null = null;
+      if (newMsg.senderId === user.id) {
+        targetUsername = newMsg.receiver?.username || null;
+      } else if (newMsg.receiverId === user.id) {
+        targetUsername = newMsg.sender?.username || null;
+      }
 
+      if (targetUsername && threads[targetUsername]) {
+        const threadEntry = threads[targetUsername];
+        const thread = threadEntry.thread;
+        
+        // Check if message already exists
+        const messageExists = thread.dateGroups.some(
+          group => group.messages.some(msg => msg.id === newMsg.id)
+        );
+        
+        if (!messageExists) {
           const date = new Date(newMsg.createdAt);
           const dateLabel = date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase();
           
@@ -533,83 +716,69 @@ export const useChatStore = create<ChatState>((set, get) => ({
             text: newMsg.content,
             time: date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
           };
+
+          // Update thread date groups
+          const newGroups = [...thread.dateGroups.map(g => ({ ...g, messages: [...g.messages] }))];
           
-          // If we have a pending message and this is from us, replace the pending one
-          if (hasPendingMessage && newMsg.senderId === user.id) {
-            let replaced = false;
-            const newGroups = [...activeThread.dateGroups.map(g => ({
-              ...g,
-              messages: g.messages.map(m => {
+          // If we have a pending message from us, replace it
+          let replaced = false;
+          if (newMsg.senderId === user.id) {
+            newGroups.forEach(g => {
+              g.messages = g.messages.map(m => {
                 if (m.status === 'pending' && !replaced) {
                   replaced = true;
                   return uiMsg;
                 }
                 return m;
-              })
-            }))];
-            
-            // If we have a post and no current post context, set it now
-            let newPostContext = activeThread.postContext;
-            if (!newPostContext && newMsg.post) {
-              newPostContext = buildPostContext(newMsg.post);
-            }
-            
-            set({ activeThread: { ...activeThread, dateGroups: newGroups, postContext: newPostContext } });
-            
-            if (newMsg.receiverId === user.id) {
-              chatService.markMessagesAsRead(activeThread.providerUsername).then(() => {
-                fetchConversations();
-                fetchUnreadCount();
-              }).catch(() => {});
+              });
+            });
+          }
+
+          if (!replaced) {
+            const lastGroup = newGroups[newGroups.length - 1];
+            if (lastGroup && lastGroup.dateLabel === dateLabel) {
+              lastGroup.messages.push(uiMsg);
             } else {
-              fetchConversations();
-              fetchUnreadCount();
+              newGroups.push({ dateLabel, messages: [uiMsg] });
             }
-            return;
           }
 
-          // Otherwise add as new message
-          const newGroups = [...activeThread.dateGroups.map(g => ({ ...g, messages: [...g.messages] }))];
-          const lastGroup = newGroups[newGroups.length - 1];
-          if (lastGroup && lastGroup.dateLabel === dateLabel) {
-            lastGroup.messages.push(uiMsg);
-          } else {
-            newGroups.push({ dateLabel, messages: [uiMsg] });
-          }
-
-          // If we have a post and no current post context, set it now
-          let newPostContext = activeThread.postContext;
+          let newPostContext = thread.postContext;
           if (!newPostContext && newMsg.post) {
             newPostContext = buildPostContext(newMsg.post);
           }
-          
-          set({ activeThread: { ...activeThread, dateGroups: newGroups, postContext: newPostContext } });
-          
-          // Mark messages as read if we received them
-          if (newMsg.receiverId === user.id) {
-            chatService.markMessagesAsRead(activeThread.providerUsername).then(() => {
-              fetchConversations();
-              fetchUnreadCount();
-            }).catch(() => {});
-          } else {
+
+          const updatedThread = { ...thread, dateGroups: newGroups, postContext: newPostContext };
+
+          set(state => ({
+            threads: {
+              ...state.threads,
+              [targetUsername!]: { ...state.threads[targetUsername!], thread: updatedThread }
+            },
+            activeThread: state.activeUsername === targetUsername ? updatedThread : state.activeThread
+          }));
+        }
+
+        // Mark as read if we are currently looking at this chat
+        if (newMsg.receiverId === user.id && activeUsername === targetUsername) {
+          chatService.markMessagesAsRead(targetUsername).then(() => {
             fetchConversations();
             fetchUnreadCount();
-          }
-          return; // Skip the outer fetch calls since they're handled here
+          }).catch(() => {});
+        } else {
+          fetchConversations();
+          fetchUnreadCount();
         }
+      } else {
+        // Refresh conversations list for irrelevant messages or if no cached thread
+        fetchConversations();
+        fetchUnreadCount();
       }
-      
-      // Refresh conversations list for irrelevant messages or if no active thread
-      fetchConversations();
-      fetchUnreadCount();
     });
 
     // Listen for message deleted events
     socketInstance.on('messageDeleted', (data: { messageId: string, threadId: string }) => {
-      const { activeThread, removeMessage } = get();
-      if (activeThread) {
-        removeMessage(data.messageId);
-      }
+      get().removeMessage(data.messageId);
     });
   },
 
@@ -625,6 +794,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
   reset: () => {
     set({
       conversations: [],
+      threads: {},
+      activeUsername: null,
+      accessOrder: [],
       activeThread: null,
       currentId: null,
       lastFetched: null,

@@ -553,23 +553,23 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
+      <View {...panHandlers}>
+        <ChatHeader
+          participant={thread.participant}
+          subtleBg={subtleBg}
+          textColor={Colors.text}
+          mutedColor={Colors.icon}
+          primaryColor={Colors.primary}
+          onBack={onBack}
+          onMoreOptions={handleMoreOptions}
+        />
+      </View>
+
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
-        <View {...panHandlers}>
-          <ChatHeader
-            participant={thread.participant}
-            subtleBg={subtleBg}
-            textColor={Colors.text}
-            mutedColor={Colors.icon}
-            primaryColor={Colors.primary}
-            onBack={onBack}
-            onMoreOptions={handleMoreOptions}
-          />
-        </View>
-
         <ScrollView
           ref={scrollRef}
           style={styles.messagesScroll}
@@ -577,7 +577,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
-          automaticallyAdjustKeyboardInsets={true}
           refreshControl={
             <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
           }

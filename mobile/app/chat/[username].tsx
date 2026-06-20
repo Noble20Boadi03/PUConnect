@@ -8,12 +8,7 @@ import { ChatView } from '../../components/Chat';
 import { buildProviderProfileHref, isCurrentUserProvider, mapServiceRequestToEngagement } from '../../lib';
 import { useAppRouter, useProviderReviews, useChat } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
-import { profileService } from '../../services/profileService';
-import { postService } from '../../services/postService';
-import { parsePostPrice } from '../../lib/mapDbPost';
 import { useServiceRequestsStore , useAuthStore } from '../../store';
-
-import { ChatPostContext } from '../../types';
 
 export default function ChatScreen() {
   const { username, postId } = useLocalSearchParams<{
@@ -30,7 +25,21 @@ export default function ChatScreen() {
   const currentUserId = currentUser?.id ?? '';
   const resolvedPostId = typeof postId === 'string' ? postId : undefined;
 
-  const { activeThread, isLoading, isRefreshing, fetchMessages, sendMessage, subscribeToMessages, isLoadingMoreMessages, hasMoreMessages, loadMoreMessages, removeMessage, clearPostContext } = useChat();
+  const { 
+    activeThread, 
+    threads,
+    isLoading, 
+    isRefreshing, 
+    openChat, 
+    fetchMessages,
+    sendMessage, 
+    subscribeToMessages, 
+    isLoadingMoreMessages, 
+    hasMoreMessages, 
+    loadMoreMessages, 
+    removeMessage, 
+    clearPostContext 
+  } = useChat();
 
   const handleRefresh = useCallback(() => {
     if (username && activeThread) {
@@ -39,7 +48,6 @@ export default function ChatScreen() {
   }, [username, activeThread, fetchMessages]);
   const requests = useServiceRequestsStore((s) => s.requests);
   const hydrated = useServiceRequestsStore((s) => s.hydrated);
-  const fetchRequests = useServiceRequestsStore((s) => s.fetchRequests);
   const getPastServicesWithUser = useServiceRequestsStore((s) => s.getPastServicesWithUser);
   const fetchForChat = useServiceRequestsStore((s) => s.fetchForChat);
   const createOfficialEngagement = useServiceRequestsStore((s) => s.createOfficialEngagement);
@@ -47,74 +55,13 @@ export default function ChatScreen() {
   const accept = useServiceRequestsStore((s) => s.accept);
   const decline = useServiceRequestsStore((s) => s.decline);
   const [engagementLoading, setEngagementLoading] = React.useState(false);
-  const [peerId, setPeerId] = React.useState<string | null>(null);
 
   useEffect(() => {
-    const loadChat = async () => {
-      if (username) {
-        try {
-          // First fetch participant profile (always required)
-          const participantProfile = await profileService.getPublicProfile(username);
-          setPeerId(participantProfile.id);
-          
-          // Fetch service requests to check past services
-          await fetchRequests();
-          
-          // Then try to fetch post context, but don't fail the whole chat if it fails
-          let post;
-          try {
-            post = resolvedPostId ? await postService.getPostById(resolvedPostId) : undefined;
-          } catch (postError) {
-            console.warn('Failed to fetch post context for chat:', postError);
-            post = undefined;
-          }
-
-          let postContext: ChatPostContext | undefined = undefined;
-          if (post) {
-            const price = parsePostPrice(post.price);
-            let priceLabel = '';
-            if (price.kind === 'fixed') {
-              priceLabel = `$${price.amount}`;
-            } else if (price.kind === 'range') {
-              priceLabel = `$${price.min}-$${price.max}`;
-            }
-
-            postContext = {
-              postId: post.id,
-              title: post.title,
-              tag: post.tag as 'Service' | 'Request',
-              priceLabel,
-              authorId: post.authorId,
-            };
-          }
-
-          fetchMessages(
-            username,
-            {
-              displayName: participantProfile.name || username,
-              handle: `@${participantProfile.username || username}`,
-              avatarUrl: participantProfile.avatarUrl || '',
-            },
-            postContext
-          );
-        } catch (error) {
-          console.error('Failed to load chat:', error);
-          fetchMessages(
-            username,
-            {
-              displayName: username,
-              handle: `@${username}`,
-              avatarUrl: '',
-            },
-            undefined
-          );
-        }
-
-        subscribeToMessages();
-      }
-    };
-    loadChat();
-  }, [username, resolvedPostId, fetchMessages, subscribeToMessages, fetchRequests]);
+    if (username) {
+      openChat(username, resolvedPostId);
+      subscribeToMessages();
+    }
+  }, [username, resolvedPostId, openChat, subscribeToMessages]);
 
   useEffect(() => {
     if (!username || !resolvedPostId) return;
@@ -227,10 +174,11 @@ export default function ChatScreen() {
   }, [username, router]);
 
   const hasPastServices = useMemo(() => {
+    const peerId = threads[username]?.participantProfile?.id;
     if (!peerId || !hydrated) return false;
     const pastServices = getPastServicesWithUser(peerId);
     return pastServices.length > 0;
-  }, [peerId, getPastServicesWithUser, hydrated]);
+  }, [username, threads, getPastServicesWithUser, hydrated]);
 
   const handleSendMessage = useCallback(
     (text: string) => {
