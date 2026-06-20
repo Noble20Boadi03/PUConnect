@@ -33,10 +33,10 @@ export interface ChatState {
   isLoadingMoreConversations: boolean;
   isLoadingMoreMessages: boolean;
   
-  fetchConversations: (forceRefresh?: boolean) => Promise<void>;
+  fetchConversations: (forceRefresh?: boolean, isManualPull?: boolean) => Promise<void>;
   loadMoreConversations: () => Promise<void>;
   openChat: (username: string, postId?: string) => Promise<void>;
-  fetchMessages: (username: string, participant: ChatParticipant, postContext?: ChatPostContext, forceRefresh?: boolean, cursor?: string) => Promise<void>;
+  fetchMessages: (username: string, participant: ChatParticipant, postContext?: ChatPostContext, forceRefresh?: boolean, cursor?: string, isManualPull?: boolean) => Promise<void>;
   loadMoreMessages: () => Promise<void>;
   sendMessage: (receiverUsername: string, content: string, postId?: string) => Promise<void>;
   deleteMessage: (messageId: string) => Promise<void>;
@@ -138,14 +138,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isLoadingMoreConversations: false,
   isLoadingMoreMessages: false,
 
-  fetchConversations: async (forceRefresh = false) => {
+  fetchConversations: async (forceRefresh = false, isManualPull = false) => {
     const { lastFetched } = get();
     const now = Date.now();
     if (!forceRefresh && lastFetched && now - lastFetched < CACHE_TTL) {
       return;
     }
     try {
-      set({ isRefreshing: true });
+      set({ isRefreshing: isManualPull });
       const response: GetConversationsResponse = await chatService.getConversations(1, 20);
       set({ 
         conversations: response.data, 

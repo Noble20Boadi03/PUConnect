@@ -22,6 +22,10 @@ export default function MessagesScreen() {
     }, [fetchConversations, subscribeToMessages])
   );
 
+  const handleRefresh = useCallback(() => {
+    fetchConversations(false, true);
+  }, [fetchConversations]);
+
   const handleConversationPress = useCallback(
     (conversation: ConversationPreview) => {
       router.push(buildChatHref(conversation.providerUsername, conversation.postId) as any);
@@ -64,7 +68,7 @@ export default function MessagesScreen() {
       onConversationPress={handleConversationPress}
       onConversationPressIn={handleConversationPressIn}
       isRefreshing={isRefreshing}
-      onRefresh={fetchConversations}
+      onRefresh={handleRefresh}
       isLoadingMore={isLoadingMoreConversations}
       onLoadMore={loadMoreConversations}
       tabBarHeight={tabBarHeight}
