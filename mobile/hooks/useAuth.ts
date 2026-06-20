@@ -6,16 +6,7 @@ import { useAuthStore } from '../store/authStore';
  * @returns Authentication state and actions.
  */
 export function useAuth() {
-  const { user, isAuthenticated, login, logout } = useAuthStore();
-  
-  // You can add logic for token refreshing or complex auth flows here
-  
-  return {
-    user,
-    isAuthenticated,
-    login,
-    logout,
-  };
+  return useAuthStore();
 }
 
 export default useAuth;

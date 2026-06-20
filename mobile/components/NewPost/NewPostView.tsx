@@ -243,6 +243,8 @@ export const NewPostView: React.FC<NewPostViewProps> = ({ onPublished }) => {
     params.editId,
     onPublished,
     router,
+    fetchPosts,
+    invalidateCache,
   ]);
 
   const showHelpCategory = postType === 'Request';

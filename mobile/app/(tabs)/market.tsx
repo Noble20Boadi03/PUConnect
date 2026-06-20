@@ -8,15 +8,11 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
-
-import { useAppRouter, useThemeColor, useTabBarHeight, useDebounce, usePullToRefreshOnHeader } from '../../hooks';
+import { useAppRouter, useThemeColor, useTabBarHeight, useDebounce, usePullToRefreshOnHeader, useMarket } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { MarketHeaderTop, MarketFeedHeader, FeaturedPostCard, MarketViewSkeleton } from '../../components';
 import type { FeaturedPost, MarketFilter } from '../../types';
 import { useAuthStore } from '../../store';
-import { useMarketStore } from '../../store/marketStore';
 
 /**
  * Market feed backed by GET /api/posts. Popular services and promo sections
@@ -49,7 +45,7 @@ export default function MarketScreen() {
     searchQuery,
     initializeRecentlyViewed,
     recentlyViewedIds
-  } = useMarketStore();
+  } = useMarket();
 
   const [showMarketTip, setShowMarketTip] = useState(false);
   const [localSearchQuery, setLocalSearchQuery] = useState('');

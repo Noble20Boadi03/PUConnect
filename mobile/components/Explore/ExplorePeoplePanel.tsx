@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, View, Text, RefreshControlProps } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { filterExploreProviders } from '../../lib/filterExploreProviders';
 import { ExploreCategoryFilterPills } from './ExploreCategoryFilterPills';

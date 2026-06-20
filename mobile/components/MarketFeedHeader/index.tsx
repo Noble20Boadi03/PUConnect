@@ -1,16 +1,15 @@
 import React, { memo, useCallback, useMemo, useEffect } from 'react';
 import { StyleSheet, View, ScrollView, ActivityIndicator } from 'react-native';
-import * as Haptics from 'expo-haptics';
-import { Spacing } from '../../constants';
-import {
+import { Spacing ,
   MARKET_PROMO,
   FEATURED_POSTS_MOCK,
 } from '../../constants';
+
 import { SectionHeader } from '../SectionHeader';
 import { PopularServiceCard } from '../PopularServiceCard';
 import { FeaturedPostCard } from '../FeaturedPostCard';
 import { MarketPromoBanner } from '../MarketPromoBanner';
-import type { FeaturedPost, MarketFilter, DbCategoryServiceWithCategory, ExploreCategoryService } from '../../types';
+import type { FeaturedPost, DbCategoryServiceWithCategory, ExploreCategoryService } from '../../types';
 import { useAppRouter } from '../../hooks';
 import { buildExploreServiceHref } from '../../lib';
 import { useMarketStore } from '../../store';

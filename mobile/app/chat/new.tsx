@@ -12,12 +12,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 
-import { useThemeColor } from '../../hooks';
+import { useThemeColor, useExplore } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
-import { useExploreStore } from '../../store/exploreStore';
 import { useAuthStore } from '../../store';
 import { ExploreProvider } from '../../types/explore';
 
@@ -29,7 +27,7 @@ export default function NewChatScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  const { providers, isLoading, fetchExploreData } = useExploreStore();
+  const { providers, isLoading, fetchExploreData } = useExplore();
   const currentUser = useAuthStore((s) => s.user);
 
   const screenBg = isDark ? '#09090B' : '#F4F4F5';

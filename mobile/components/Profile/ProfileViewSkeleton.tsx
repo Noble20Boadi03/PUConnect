@@ -12,7 +12,6 @@ export const ProfileViewSkeleton: React.FC = () => {
   const isDark = colorScheme === 'dark';
   const tabBarHeight = useTabBarHeight();
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
-  const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#09090B' : '#F4F4F5' }]} edges={['top']}>

@@ -2,12 +2,11 @@ import React from 'react';
 import { StyleSheet, View, ScrollView, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Spacing } from '../constants';
-import { useThemeColor, useTabBarHeight } from '../hooks';
+import { useTabBarHeight } from '../hooks';
 import { Shimmer } from './Shimmer';
 import { FeaturedPostCardSkeleton } from './FeaturedPostCard';
 
 export const MarketViewSkeleton: React.FC = () => {
-  const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const tabBarHeight = useTabBarHeight();

@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react';
 import { ServiceStatusView } from '../components/ServiceStatus';
 import { useAppRouter } from '../hooks';
-import * as Haptics from 'expo-haptics';
 
 export default function ServiceStatusScreen() {
   const router = useAppRouter();

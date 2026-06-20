@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from 'react';
 import { StyleSheet, View, ScrollView, useColorScheme, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import {
   ExploreView,
@@ -11,8 +10,7 @@ import {
 } from '../../components';
 import type { ExploreTab } from '../../types';
 import { Spacing } from '../../constants';
-import { useTabBarHeight } from '../../hooks';
-import { useExploreStore } from '../../store/exploreStore';
+import { useTabBarHeight, useExplore } from '../../hooks';
 
 export default function ExploreScreen() {
   const [activeTab, setActiveTab] = useState<ExploreTab>('categories');
@@ -23,7 +21,7 @@ export default function ExploreScreen() {
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
 
-  const { categories, providers, isLoading, isRefreshing, error, fetchExploreData } = useExploreStore();
+  const { categories, providers, isLoading, isRefreshing, error, fetchExploreData } = useExplore();
 
   const onRefresh = useCallback(() => {
     fetchExploreData(true);

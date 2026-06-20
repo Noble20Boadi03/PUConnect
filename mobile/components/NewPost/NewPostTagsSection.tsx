@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, useColorScheme } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { formatExploreTagLabel } from '../../lib/formatExploreTagLabel';
 import { getTagGroupsForServices } from '../../lib/editInfoForm';

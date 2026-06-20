@@ -15,9 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { Spacing, Typography } from '../../constants';
-import { useThemeColor, useAppRouter, usePullToRefreshOnHeader } from '../../hooks';
-import { useAuthStore, useServiceRequestsStore } from '../../store';
-import { useProviderReviewsStore, selectIsEligibleForReview } from '../../store/providerReviewsStore';
+import { useThemeColor, useAppRouter, usePullToRefreshOnHeader, useProviderReviews, selectIsEligibleForReview } from '../../hooks';
 import { serviceKindLabel, serviceStatusLabel } from '../../lib';
 import type { DbServiceRequest } from '../../types/core';
 
@@ -41,8 +39,8 @@ export const ServiceStatusView: React.FC<ServiceStatusViewProps> = ({ onBack }) 
   const requests = useServiceRequestsStore((s) => s.requests);
   const isLoading = useServiceRequestsStore((s) => s.isLoading);
   const fetchRequests = useServiceRequestsStore((s) => s.fetchRequests);
-  const eligibleReviews = useProviderReviewsStore((s) => s.eligibleReviews);
-  const fetchEligibleReviews = useProviderReviewsStore((s) => s.fetchEligibleReviews);
+  const eligibleReviews = useProviderReviews((s) => s.eligibleReviews);
+  const fetchEligibleReviews = useProviderReviews((s) => s.fetchEligibleReviews);
 
   // Fetch requests and eligible reviews on focus
   useFocusEffect(

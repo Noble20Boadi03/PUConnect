@@ -10,9 +10,7 @@ import {
   Text as RNText,
   RefreshControlProps,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 
 import { useAppRouter, useThemeColor, useTabBarHeight, useDebounce, usePullToRefreshOnHeader } from '../../hooks';

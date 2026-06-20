@@ -9,12 +9,10 @@ import {
   useColorScheme,
   BackHandler,
   RefreshControl,
-  ActivityIndicator,
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { useNavigation, useRouter } from 'expo-router';
 
 import { useThemeColor, useDebounce, usePullToRefreshOnHeader } from '../../hooks';
@@ -102,18 +100,6 @@ export const MessagesInboxView: React.FC<MessagesInboxViewProps> = ({
   const selectedConversations = useMemo(() => {
     return conversations.filter(c => selectedIds.includes(c.id));
   }, [conversations, selectedIds]);
-
-  // Check if any selected has active service
-  const hasActiveService = useMemo(() => {
-    if (!currentUser) return false;
-    return selectedConversations.some(conv => {
-      return serviceRequests.some(req => {
-        if (!isActiveServiceStatus(req.status)) return false;
-        return (req.requesterId === currentUser.id || req.providerId === currentUser.id) &&
-               (req.requesterId === conv.id || req.providerId === conv.id);
-      });
-    });
-  }, [selectedConversations, serviceRequests, currentUser]);
 
   // Action handlers
   const handleDelete = useCallback(async () => {

@@ -10,14 +10,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
-import { useThemeColor } from '../../hooks';
-import { useProviderReviewsStore } from '../../store/providerReviewsStore';
+import { useThemeColor, useProviderReviews } from '../../hooks';
 import { reviewService } from '../../services';
 import type { CompletedDeal } from '../../types/review';
 
@@ -43,8 +41,8 @@ export const SubmitProviderReviewView: React.FC<SubmitProviderReviewViewProps> =
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
   const accentColor = '#F59E0B';
 
-  const submitReview = useProviderReviewsStore((s) => s.submitReview);
-  const removeEligibleReview = useProviderReviewsStore((s) => s.removeEligibleReview);
+  const submitReview = useProviderReviews((s) => s.submitReview);
+  const removeEligibleReview = useProviderReviews((s) => s.removeEligibleReview);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -96,7 +94,7 @@ export const SubmitProviderReviewView: React.FC<SubmitProviderReviewViewProps> =
     } finally {
       setIsSubmitting(false);
     }
-  }, [rating, comment, isSubmitting, submitReview, revieweeUsername, deal, onSubmitted]);
+  }, [rating, comment, isSubmitting, submitReview, removeEligibleReview, revieweeUsername, deal, onSubmitted]);
 
   const canSubmit = rating >= 1 && comment.trim().length > 0 && !isSubmitting;
 

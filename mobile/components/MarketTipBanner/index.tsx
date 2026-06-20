@@ -1,7 +1,6 @@
 import React, { memo } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 
 export interface MarketTipBannerProps {

@@ -2,11 +2,9 @@ import React from 'react';
 import { StyleSheet, View, ScrollView, useColorScheme } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Spacing } from '../../constants';
-import { useThemeColor } from '../../hooks';
 import { Shimmer } from '../Shimmer';
 
 export const PostDetailViewSkeleton: React.FC = () => {
-  const Colors = useThemeColor();
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';

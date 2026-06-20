@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { StyleSheet, View, Text, useColorScheme, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-import * as Haptics from 'expo-haptics';
 
 import { useThemeColor, useImagePicker, useAppRouter } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
@@ -88,7 +87,7 @@ export default function PhotoSetupScreen() {
       setUser(updatedUser);
       await completeOnboarding();
       router.replace('/(tabs)/market' as any);
-    } catch (e) {
+    } catch {
       Alert.alert('Error', 'Failed to upload photo. Try again.');
     } finally {
       setIsUploading(false);

@@ -3,7 +3,6 @@ import { StyleSheet, View, Text, useColorScheme } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 
 import { ExploreServiceProvidersPanel } from '../../../../components/Explore/ExploreServiceProvidersPanel';
 import { ExploreServiceProvidersPanelSkeleton } from '../../../../components/Explore/ExploreServiceProvidersPanelSkeleton';
@@ -31,7 +30,7 @@ const mapDbCategoryServiceToExploreCategoryService = (dbService: DbCategoryServi
 });
 
 const mapUserToExploreProvider = (user: User): ExploreProvider => {
-  let services: Array<{ title: string }> = (user as any).services ?? [];
+  let services: { title: string }[] = (user as any).services ?? [];
   if (services.length === 0 && user.serviceIds && user.serviceIds.length > 0) {
     services = getServiceOptionsByIds(user.serviceIds);
   }

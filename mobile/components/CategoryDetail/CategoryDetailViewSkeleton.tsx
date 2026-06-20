@@ -7,14 +7,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Spacing, Typography } from '../../constants';
-import { useThemeColor } from '../../hooks';
+import { Spacing } from '../../constants';
 import { getSafeAreaBottom, getScreenTopPadding } from '../../lib/safeAreaInsets';
 import { Shimmer } from '../Shimmer';
 import { CategoryDetailServiceRowSkeleton } from './CategoryDetailServiceRowSkeleton';
 
 export const CategoryDetailViewSkeleton: React.FC = () => {
-  const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const screenBg = isDark ? '#09090B' : '#F4F4F5';

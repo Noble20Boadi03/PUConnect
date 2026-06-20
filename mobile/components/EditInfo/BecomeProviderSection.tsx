@@ -1,7 +1,6 @@
 import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { EditInfoField } from './EditInfoField';
 import { EditInfoServicesPicker } from './EditInfoServicesPicker';

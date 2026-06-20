@@ -1,9 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, useColorScheme, ActivityIndicator, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, useColorScheme, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 
 import { ProviderReviewsView } from '../../../components/ProviderReviews';
 import { mapApiProfileToProviderProfile } from '../../../lib';

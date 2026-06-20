@@ -13,7 +13,6 @@ import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
 
 import { useThemeColor, usePostDetailChrome } from '../../hooks';
 import { Spacing, Typography, CARD_SHADOW } from '../../constants';
@@ -467,7 +466,7 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
             />
             {isCompletedRequest ? (
               <Text style={[styles.disabledReason, { color: Colors.icon }]}>
-                You've previously engaged this provider.
+                You&apos;ve previously engaged this provider.
               </Text>
             ) : disabledReason ? (
               <Text style={[styles.disabledReason, { color: Colors.icon }]}>

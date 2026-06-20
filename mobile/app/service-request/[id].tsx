@@ -1,10 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, ActivityIndicator, Text } from 'react-native';
-import * as Haptics from 'expo-haptics';
 
 import { ServiceRequestDetailsView } from '../../components/ServiceStatus/ServiceRequestDetailsView';
-import { useAppRouter, useThemeColor } from '../../hooks';
-import { useServiceRequestsStore } from '../../store/serviceRequestsStore';
+import { useAppRouter, useThemeColor, useServiceRequests } from '../../hooks';
 import { serviceRequestService } from '../../services/serviceRequestService';
 import type { DbServiceRequest } from '../../types/core';
 import { useLocalSearchParams } from 'expo-router';
@@ -14,7 +12,7 @@ export default function ServiceRequestDetailScreen() {
   const router = useAppRouter();
   const Colors = useThemeColor();
 
-  const { requests, fetchRequests, upsertRequest } = useServiceRequestsStore();
+  const { requests, fetchRequests, upsertRequest } = useServiceRequests();
   const [loading, setLoading] = useState(true);
   const [serviceRequest, setServiceRequest] = useState<DbServiceRequest | null>(null);
   const [error, setError] = useState<string | null>(null);

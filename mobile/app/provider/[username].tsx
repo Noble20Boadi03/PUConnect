@@ -5,19 +5,17 @@ import {
   TouchableOpacity,
   useColorScheme,
   RefreshControl,
-  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 
 import { ProviderProfileView, ProviderProfileViewSkeleton } from '../../components/ProviderProfile';
 import { buildChatHref } from '../../lib';
 import { useAppRouter } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { useProviderProfileStore } from '../../store';
-import { profileService, reviewService } from '../../services';
+import { reviewService } from '../../services';
 import type { ProviderReview } from '../../types/review';
 
 export default function ProviderProfileScreen() {
@@ -30,7 +28,6 @@ export default function ProviderProfileScreen() {
 
   const { data: profile, isLoading, isRefreshing, fetchProviderProfile, clearCache } = useProviderProfileStore();
   const [reviews, setReviews] = useState<ProviderReview[]>([]);
-  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   // Function to convert DbReview (API response) to ProviderReview type
   function mapDbReviewToProviderReview(review: any): ProviderReview {
@@ -49,7 +46,6 @@ export default function ProviderProfileScreen() {
   const fetchReviews = useCallback(async () => {
     if (typeof username !== 'string') return;
 
-    setReviewsLoading(true);
     try {
       const reviewsData = await reviewService.getReviewsForUser(username);
       const mappedReviews = reviewsData.map(mapDbReviewToProviderReview);
@@ -57,8 +53,6 @@ export default function ProviderProfileScreen() {
     } catch (err) {
       console.error('Error fetching reviews:', err);
       setReviews([]);
-    } finally {
-      setReviewsLoading(false);
     }
   }, [username]);
 

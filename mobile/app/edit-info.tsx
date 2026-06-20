@@ -2,7 +2,6 @@ import React, { useCallback } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 
 import { EditInfoView } from '../components/EditInfo';
 import { useAppRouter, useThemeColor } from '../hooks';

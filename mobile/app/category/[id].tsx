@@ -3,7 +3,6 @@ import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-
 import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 
 import { CategoryDetailView, CategoryDetailViewSkeleton } from '../../components/CategoryDetail';
 import {
@@ -11,7 +10,7 @@ import {
   getSafeAreaBottom,
   getScreenTopPadding,
 } from '../../lib';
-import type { ExploreCategory, ExploreCategoryService } from '../../types/explore';
+import type { ExploreCategoryService } from '../../types/explore';
 import { useAppRouter } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { useCategoryDetailStore } from '../../store';

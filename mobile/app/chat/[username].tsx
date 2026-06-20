@@ -1,21 +1,18 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { BackHandler, StyleSheet, Text, TouchableOpacity, useColorScheme, ActivityIndicator } from 'react-native';
+import { BackHandler, StyleSheet, Text, TouchableOpacity, useColorScheme } from 'react-native';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 
 import { ChatView } from '../../components/Chat';
-import { buildProviderProfileHref, isCurrentUserProvider, isCurrentUserRequester, mapServiceRequestToEngagement } from '../../lib';
-import { useAppRouter } from '../../hooks';
-import { useChat } from '../../hooks/useChat';
+import { buildProviderProfileHref, isCurrentUserProvider, mapServiceRequestToEngagement } from '../../lib';
+import { useAppRouter, useProviderReviews, useChat } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { profileService } from '../../services/profileService';
 import { postService } from '../../services/postService';
 import { parsePostPrice } from '../../lib/mapDbPost';
-import { useServiceRequestsStore } from '../../store';
-import { useProviderReviewsStore } from '../../store/providerReviewsStore';
-import { useAuthStore } from '../../store';
+import { useServiceRequestsStore , useAuthStore } from '../../store';
+
 import { ChatPostContext, ChatThread } from '../../types';
 
 export default function ChatScreen() {
@@ -33,7 +30,7 @@ export default function ChatScreen() {
   const currentUserId = currentUser?.id ?? '';
   const resolvedPostId = typeof postId === 'string' ? postId : undefined;
 
-  const { activeThread, isLoading, isRefreshing, error, fetchMessages, sendMessage, subscribeToMessages, isLoadingMoreMessages, hasMoreMessages, loadMoreMessages, removeMessage, clearPostContext } = useChat();
+  const { activeThread, isLoading, isRefreshing, fetchMessages, sendMessage, subscribeToMessages, isLoadingMoreMessages, hasMoreMessages, loadMoreMessages, removeMessage, clearPostContext } = useChat();
 
   const handleRefresh = useCallback(() => {
     if (username && activeThread) {
@@ -143,7 +140,7 @@ export default function ChatScreen() {
     [chatServiceRequest]
   );
 
-  const recordCompletedDeal = useProviderReviewsStore((s) => s.recordCompletedDeal);
+  const recordCompletedDeal = useProviderReviews((s) => s.recordCompletedDeal);
 
   useEffect(() => {
     if (
@@ -266,7 +263,6 @@ export default function ChatScreen() {
   const handleCancelOfficialEngagement = useCallback(async () => {
     if (!chatServiceRequest) throw new Error('No active engagement');
     const userIsProvider = isCurrentUserProvider(currentUserId, chatServiceRequest);
-    const userIsRequester = isCurrentUserRequester(currentUserId, chatServiceRequest);
     const action =
       userIsProvider ? 'withdraw' : 'cancel';
     await transition(chatServiceRequest.id, action);

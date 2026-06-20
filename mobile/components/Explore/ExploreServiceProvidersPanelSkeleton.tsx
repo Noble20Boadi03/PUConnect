@@ -1,19 +1,15 @@
 import React from 'react';
-import { StyleSheet, View, useColorScheme } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Spacing } from '../../constants';
-import { useThemeColor } from '../../hooks';
 import { Shimmer } from '../Shimmer';
 import { ExploreProviderCardSkeleton } from './ExploreProviderCardSkeleton';
 
-export interface ExploreServiceProvidersPanelSkeletonProps {}
+export type ExploreServiceProvidersPanelSkeletonProps = Record<string, never>;
 
-export const ExploreServiceProvidersPanelSkeleton: React.FC<ExploreServiceProvidersPanelSkeletonProps> = () => {
-  const Colors = useThemeColor();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
-
+export const ExploreServiceProvidersPanelSkeleton: React.FC<
+  ExploreServiceProvidersPanelSkeletonProps
+> = () => {
   return (
     <View style={styles.root}>
       {/* Tag pills skeleton */}

@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 
 import { GuardedPressable } from '../GuardedPressable';
 import { useAppRouter } from '../../hooks';

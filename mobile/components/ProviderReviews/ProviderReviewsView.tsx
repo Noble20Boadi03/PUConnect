@@ -9,15 +9,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
-import { useThemeColor } from '../../hooks';
-import {
-  selectCanReviewProvider,
-  selectReviewsForProvider,
-  selectSummaryForProvider,
-  useProviderReviewsStore,
-} from '../../store/providerReviewsStore';
+import { useThemeColor, useProviderReviews, selectCanReviewProvider, selectReviewsForProvider, selectSummaryForProvider } from '../../hooks';
 import type { ProviderReview } from '../../types/review';
 
 export interface ProviderReviewsViewProps {
@@ -87,8 +80,8 @@ export const ProviderReviewsView: React.FC<ProviderReviewsViewProps> = ({
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
   const accentColor = '#F59E0B';
 
-  const submittedReviews = useProviderReviewsStore((s) => s.submittedReviews);
-  const completedDeals = useProviderReviewsStore((s) => s.completedDeals);
+  const submittedReviews = useProviderReviews((s) => s.submittedReviews);
+  const completedDeals = useProviderReviews((s) => s.completedDeals);
 
   const reviews = useMemo(() => {
     if (propReviews) return propReviews;

@@ -13,7 +13,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Haptics from 'expo-haptics';
 
 import { Spacing, Typography } from '../../constants';
-import { useThemeColor, useConfirmDialog } from '../../hooks';
+import { useThemeColor, useConfirmDialog , useAppRouter, useServiceRequests, useProviderReviews, useAuth, selectIsEligibleForReview } from '../../hooks';
 import { ConfirmDialog } from '../ConfirmDialog';
 import { ReviewPromptDialog } from '../ReviewPromptDialog';
 import {
@@ -21,10 +21,6 @@ import {
   mapServiceRequestToEngagement,
 } from '../../lib/mapServiceRequest';
 import { ChatOfficialDetailsCard } from '../Chat/ChatOfficialDetailsCard';
-import { useServiceRequestsStore } from '../../store/serviceRequestsStore';
-import { useProviderReviewsStore, selectIsEligibleForReview } from '../../store/providerReviewsStore';
-import { useAuthStore } from '../../store/authStore';
-import { useAppRouter } from '../../hooks';
 import { buildChatHref } from '../../lib';
 import type { DbServiceRequest } from '../../types/core';
 
@@ -47,25 +43,24 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
-  const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
 
   const { showConfirm, confirmVisible, confirmOptions, handleConfirm, handleCancel } =
     useConfirmDialog();
-  const { transition, accept, decline } = useServiceRequestsStore();
+  const { transition, accept, decline } = useServiceRequests();
   const [actionLoading, setActionLoading] = useState(false);
 
   const [reviewPromptVisible, setReviewPromptVisible] = useState(false);
   const [pendingReviewDealId, setPendingReviewDealId] = useState<string | null>(null);
-  const recordCompletedDeal = useProviderReviewsStore((s) => s.recordCompletedDeal);
-  const dismissReviewPrompt = useProviderReviewsStore((s) => s.dismissReviewPrompt);
-  const eligibleReviews = useProviderReviewsStore((s) => s.eligibleReviews);
-  const fetchEligibleReviews = useProviderReviewsStore((s) => s.fetchEligibleReviews);
+  const recordCompletedDeal = useProviderReviews((s) => s.recordCompletedDeal);
+  const dismissReviewPrompt = useProviderReviews((s) => s.dismissReviewPrompt);
+  const eligibleReviews = useProviderReviews((s) => s.eligibleReviews);
+  const fetchEligibleReviews = useProviderReviews((s) => s.fetchEligibleReviews);
 
-  const authUserId = useAuthStore((state) => state.user?.id);
+  const authUserId = useAuth((state) => state.user?.id);
   
   // Subscribe to live store updates for this specific request
-  const liveServiceRequest = useServiceRequestsStore(
+  const liveServiceRequest = useServiceRequests(
     (state) => state.requests.find((r) => r.id === serviceRequest.id)
   );
   const activeRequest = liveServiceRequest ?? serviceRequest;
@@ -504,7 +499,7 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
             </Text>
             <Text style={[styles.infoBody, { color: Colors.icon }]}>
               {contactName} has requested to close this undertaking. Confirm only if the
-              service was delivered as agreed for "{postContext?.title}".
+              service was delivered as agreed for &quot;{postContext?.title}&quot;.
             </Text>
           </View>
         )}
@@ -516,7 +511,7 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
               Leave a review
             </Text>
             <Text style={[styles.infoBody, { color: Colors.icon }]}>
-              Help {contactName} by sharing your experience with "{postContext?.title}".
+              Help {contactName} by sharing your experience with &quot;{postContext?.title}&quot;.
             </Text>
           </View>
         )}

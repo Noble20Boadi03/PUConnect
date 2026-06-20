@@ -1,19 +1,17 @@
-import { Stack } from "expo-router";
+import { Stack , useRouter, useSegments } from "expo-router";
 import { ThemeProvider, DarkTheme, DefaultTheme } from '@react-navigation/native';
 import { useColorScheme, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { useEffect } from 'react';
-import { useAuthStore, useProfileStore, useChatStore, useNotificationsStore, useServiceRequestsStore, useUserProfileStore } from '../store';
-import { useProviderReviewsStore } from '../store/providerReviewsStore';
+import { useAuth, useChat, useNotifications, useServiceRequests } from '../hooks';
+import { useProfileStore } from '../store';
 import { initializeThemePreference } from '../lib/themePreference';
 import { runGuardedNavigation } from '../lib/guardedNavigation';
 import { handleNotificationNavigation } from '../lib';
-import { useRouter, useSegments } from 'expo-router';
+
 import * as SplashScreen from 'expo-splash-screen';
 import { applyThemeSystemChrome } from '../lib/systemChrome';
-import { useMarketStore } from '../store/marketStore';
-import { useExploreStore } from '../store/exploreStore';
 import * as Notifications from 'expo-notifications';
 
 // Keep the splash screen visible while we fetch resources
@@ -21,21 +19,18 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const { isAuthenticated, isLoading, initialize, user, isFirstLoginSession, hasCompletedOnboarding } = useAuthStore();
+  const { isAuthenticated, isLoading, initialize, user, isFirstLoginSession, hasCompletedOnboarding } = useAuth();
   const hydrateProfile = useProfileStore((s) => s.hydrate);
-  const { subscribeToMessages, fetchConversations, fetchUnreadCount } = useChatStore();
-  const { subscribeToNotifications, fetchNotifications, fetchUnreadCount: fetchNotificationUnreadCount } = useNotificationsStore();
-  const { fetchRequests, subscribeToUpdates, fetchActiveCount } = useServiceRequestsStore();
-  const { fetchPosts } = useMarketStore();
-  const { fetchExploreData } = useExploreStore();
-  const { fetchProfile } = useUserProfileStore();
+  const { subscribeToMessages, fetchUnreadCount } = useChat();
+  const { subscribeToNotifications, fetchNotifications, fetchUnreadCount: fetchNotificationUnreadCount } = useNotifications();
+  const { subscribeToUpdates, fetchActiveCount } = useServiceRequests();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
     initialize();
     initializeThemePreference();
-  }, []);
+  }, [initialize]);
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
@@ -49,7 +44,7 @@ export default function RootLayout() {
       
       // Notification listeners
       const subscription1 = Notifications.addNotificationReceivedListener(() => {
-        useNotificationsStore.getState().fetchNotifications();
+        void fetchNotifications();
       });
       const subscription2 = Notifications.addNotificationResponseReceivedListener((response) => {
         const data = response.notification.request.content.data as any;
@@ -74,6 +69,7 @@ export default function RootLayout() {
     subscribeToNotifications,
     subscribeToUpdates,
     router,
+    fetchNotifications,
   ]);
 
   // Authenticated users skip the landing page — hide splash once auth is ready.
@@ -108,7 +104,6 @@ export default function RootLayout() {
   useEffect(() => {
     if (isLoading) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
     const inTabsGroup = segments[0] === '(tabs)';
     const inSettings = segments[0] === 'settings';
 
@@ -177,10 +172,13 @@ export default function RootLayout() {
     inChat,
     inNotifications,
     inServiceStatus,
+    inServiceRequestDetail,
     inCategoryDetail,
     inEditInfo,
     inNewPost,
     inPhotoSetup,
+    inIndex,
+    router,
   ]);
 
   return (

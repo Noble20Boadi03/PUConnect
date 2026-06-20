@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, ActivityIndicator, Alert, Pressable, Modal, Dimensions, Linking, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, ActivityIndicator, Alert, Pressable, Modal, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import type { ChatMessage } from '../../types';
 
@@ -35,7 +34,6 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
   onDelete,
   onLongPress,
 }) => {
-  const accent = systemAccent ?? primaryColor;
   const [previewVisible, setPreviewVisible] = useState(false);
 
   // Check if message is an image URL

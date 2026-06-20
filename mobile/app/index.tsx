@@ -17,7 +17,6 @@ import Animated, {
   FadeIn,
   FadeOut
 } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore, useProfileStore, useMarketStore, useExploreStore } from '../store';
 

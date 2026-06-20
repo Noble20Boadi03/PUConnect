@@ -9,7 +9,6 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { MarketTipBanner } from '../MarketTipBanner';
 import { NotificationBellButton } from '../NotificationBellButton';
@@ -215,9 +214,11 @@ const styles = StyleSheet.create({
 
 export const MarketHeaderTop = memo(MarketHeaderTopComponent);
 // Keep original exports for backwards compatibility
-export const MarketHeader = memo((props: any) => (
+const MarketHeaderLegacy = memo((props: React.ComponentProps<typeof MarketHeaderTop>) => (
   <>
     <MarketHeaderTop {...props} />
   </>
 ));
+MarketHeaderLegacy.displayName = 'MarketHeader';
+export const MarketHeader = MarketHeaderLegacy;
 export default MarketHeader;

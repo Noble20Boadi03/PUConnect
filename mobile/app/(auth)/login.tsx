@@ -11,8 +11,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
-
 import { useAppRouter, useThemeColor } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { Button, Alert, KeyboardLayout } from '../../components';
@@ -109,7 +107,7 @@ export default function LoginScreen() {
             <View style={styles.titleContainer}>
               <Text style={[styles.title, { color: Colors.primary }]}>Login here</Text>
               <Text style={[styles.subtitle, { color: Colors.text }]}>
-                Welcome back you've been missed!
+                Welcome back you&apos;ve been missed!
               </Text>
             </View>
 

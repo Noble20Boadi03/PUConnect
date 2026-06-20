@@ -1,6 +1,5 @@
 import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import type { ProviderPostsTab } from '../../types';
 

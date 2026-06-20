@@ -12,14 +12,14 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as DocumentPicker from 'expo-document-picker';
 import * as Haptics from 'expo-haptics';
 
 import { ConfirmDialog } from '../ConfirmDialog';
 import { ReviewPromptDialog } from '../ReviewPromptDialog';
-import { useAppRouter, useConfirmDialog, useThemeColor, useImagePicker, usePullToRefreshOnHeader } from '../../hooks';
-import { useProviderReviewsStore } from '../../store/providerReviewsStore';
+import { useAppRouter, useConfirmDialog, useThemeColor, useImagePicker, usePullToRefreshOnHeader, useProviderReviews, useChat } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
-import { getProviderServices, isCurrentUserProvider, isCurrentUserRequester } from '../../lib';
+import { getProviderServices, isCurrentUserProvider } from '../../lib';
 import { ChatHeader } from './ChatHeader';
 import { ChatContextBanner } from './ChatContextBanner';
 import { ChatMessageBubble } from './ChatMessageBubble';
@@ -29,7 +29,6 @@ import { ChatAttachmentSheet, type ChatAttachmentAction } from './ChatAttachment
 import { ChatOfficialEngagementSheet } from './ChatOfficialEngagementSheet';
 import { ProviderServicesSheet } from './ProviderServicesSheet';
 import { ChatMessageActionsSheet } from './ChatMessageActionsSheet';
-import { useChatStore } from '../../store/chatStore';
 import { uploadService } from '../../services';
 import type {
   ChatDateGroup,
@@ -44,24 +43,6 @@ const REQUEST_ACCENT = '#F59E0B';
 function formatSentTime(): string {
   const now = new Date();
   return now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-}
-
-function formatDisplayDate(): string {
-  return new Date().toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function appendMessages(groups: ChatDateGroup[], messages: ChatMessage[]): ChatDateGroup[] {
-  if (messages.length === 0) return groups;
-
-  const next = groups.map((g) => ({ ...g, messages: [...g.messages] }));
-  const lastGroup = next[next.length - 1];
-
-  if (lastGroup) {
-    lastGroup.messages.push(...messages);
-    return next;
-  }
-
-  return [{ dateLabel: 'TODAY', messages: [...messages] }];
 }
 
 function appendSentMessage(groups: ChatDateGroup[], text: string): ChatDateGroup[] {
@@ -133,8 +114,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
   onCreateOfficialEngagement,
   onCancelOfficialEngagement,
   onRequestCompletion,
-  onConfirmCompletion,
-  onDeclineCompletion,
   onAcceptOfficialEngagement,
   onDeclineOfficialEngagement,
   isRefreshing = false,
@@ -161,8 +140,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
     handleConfirm: handleConfirmDialog,
     handleCancel: handleCancelDialog,
   } = useConfirmDialog();
-  const recordCompletedDeal = useProviderReviewsStore((s) => s.recordCompletedDeal);
-  const dismissReviewPrompt = useProviderReviewsStore((s) => s.dismissReviewPrompt);
+  const dismissReviewPrompt = useProviderReviews((s) => s.dismissReviewPrompt);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -190,10 +168,10 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const [messageActionsVisible, setMessageActionsVisible] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  const deleteMessage = useChatStore((state) => state.deleteMessage);
-  const conversations = useChatStore((state) => state.conversations);
-  const muteConversation = useChatStore((state) => state.muteConversation);
-  const unmuteConversation = useChatStore((state) => state.unmuteConversation);
+  const deleteMessage = useChat((state) => state.deleteMessage);
+  const conversations = useChat((state) => state.conversations);
+  const muteConversation = useChat((state) => state.muteConversation);
+  const unmuteConversation = useChat((state) => state.unmuteConversation);
   
   const isMuted = useMemo(() => {
     const conv = conversations.find((c) => c.user.username === thread.providerUsername);
@@ -226,15 +204,9 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const {
     officialEngagementStatus,
     completionPhase,
-    startedAt: engagementStartedAt,
-    completionRequestedAt,
     serviceRequestId,
   } = engagement;
 
-  const canOfficialService =
-    thread.postContext?.tag === 'Service' && officialEngagementStatus === 'none' && !engagementLoading;
-  const canOfficialRequest =
-    thread.postContext?.tag === 'Request' && officialEngagementStatus === 'none' && !engagementLoading;
   const showViewProviderProfile =
     (!thread.postContext || thread.postContext.tag === 'Service') && !userIsProvider;
   const hasOfficialEngagement =
@@ -258,13 +230,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
 
 
-  const promptOptionalReview = useCallback(
-    (dealId: string) => {
-      setPendingReviewDealId(dealId);
-      setReviewPromptVisible(true);
-    },
-    []
-  );
 
   const handleCancelOfficialRequest = useCallback(async () => {
     if (!thread.postContext || actionLoading) return;
@@ -350,102 +315,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
     onRequestCompletion,
   ]);
 
-  const completeUndertakingAsClient = useCallback(
-    (ctx: NonNullable<ChatThread['postContext']>) => {
-      const dealId = recordCompletedDeal({
-        id: serviceRequestId ?? undefined,
-        revieweeUsername: thread.providerUsername,
-        postId: ctx.postId,
-        postTitle: ctx.title,
-        completedAt: formatDisplayDate(),
-        serviceRequestId: serviceRequestId ?? undefined,
-      });
-      promptOptionalReview(dealId);
-    },
-    [
-      thread.providerUsername,
-      serviceRequestId,
-      recordCompletedDeal,
-      promptOptionalReview,
-    ]
-  );
-
-  const handleConfirmOfficialCompletion = useCallback(async () => {
-    if (
-      !thread.postContext ||
-      completionPhase !== 'pending_review' ||
-      userIsProvider ||
-      actionLoading
-    ) {
-      return;
-    }
-    const ctx = thread.postContext;
-    const confirmed = await showConfirm({
-      title: 'Confirm Service Delivered?',
-      message: `Both parties must agree to close this undertaking for “${ctx.title}”. Only confirm if the service met what was agreed.`,
-      confirmLabel: 'Confirm Complete',
-      cancelLabel: 'Cancel',
-      icon: 'checkmark-circle-outline',
-    });
-    if (!confirmed) return;
-    setActionLoading(true);
-    try {
-      await onConfirmCompletion();
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      completeUndertakingAsClient(ctx);
-    } catch {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    } finally {
-      setActionLoading(false);
-    }
-  }, [
-    thread.postContext,
-    completionPhase,
-    userIsProvider,
-    actionLoading,
-    showConfirm,
-    onConfirmCompletion,
-    completeUndertakingAsClient,
-  ]);
-
-  const handleDeclineOfficialCompletion = useCallback(async () => {
-    if (
-      !thread.postContext ||
-      completionPhase !== 'pending_review' ||
-      userIsProvider ||
-      actionLoading
-    ) {
-      return;
-    }
-    const ctx = thread.postContext;
-    const confirmed = await showConfirm({
-      title: 'Needs More Work?',
-      message: `Decline completion for now and let ${thread.participant.displayName} know the service for “${ctx.title}” still needs attention.`,
-      confirmLabel: 'Decline for Now',
-      cancelLabel: 'Cancel',
-      variant: 'destructive',
-      icon: 'alert-circle-outline',
-    });
-    if (!confirmed) return;
-    setActionLoading(true);
-    try {
-      await onDeclineCompletion();
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    } catch {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    } finally {
-      setActionLoading(false);
-    }
-  }, [
-    thread.postContext,
-    thread.participant.displayName,
-    completionPhase,
-    userIsProvider,
-    actionLoading,
-    showConfirm,
-    onDeclineCompletion,
-  ]);
-
   const handleReviewNow = useCallback(() => {
     if (!thread.postContext) return;
     setReviewPromptVisible(false);
@@ -465,7 +334,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
   const handleConfirmOfficialEngagement = useCallback(async () => {
     if (!thread.postContext || actionLoading) return;
-    const ctx = thread.postContext;
     setActionLoading(true);
     try {
       await onCreateOfficialEngagement();
@@ -478,7 +346,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
   const handleAcceptOfficialEngagement = useCallback(async () => {
     if (!thread.postContext || actionLoading || !onAcceptOfficialEngagement) return;
-    const ctx = thread.postContext;
     setActionLoading(true);
     try {
       await onAcceptOfficialEngagement();
@@ -492,7 +359,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
   const handleDeclineOfficialEngagement = useCallback(async () => {
     if (!thread.postContext || actionLoading || !onDeclineOfficialEngagement) return;
-    const ctx = thread.postContext;
     setActionLoading(true);
     try {
       await onDeclineOfficialEngagement();
@@ -595,7 +461,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
         setIsUploading(false);
       }
     } else if (action === 'documents') {
-      const DocumentPicker = require('expo-document-picker');
       const result = await DocumentPicker.getDocumentAsync({
         type: [
           'application/pdf',

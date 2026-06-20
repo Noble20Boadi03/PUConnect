@@ -1,13 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
 import {
   StyleSheet,
-  View,
   Text,
   ScrollView,
   TouchableOpacity,
   useColorScheme,
 } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { formatExploreTagLabel } from '../../lib/formatExploreTagLabel';
 import type { ExploreServiceTagFilter } from '../../types/explore';

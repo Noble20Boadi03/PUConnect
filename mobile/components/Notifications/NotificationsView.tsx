@@ -9,16 +9,13 @@ import {
   RefreshControl,
   Modal,
   ScrollView,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 
-import { useThemeColor, usePullToRefreshOnHeader } from '../../hooks';
+import { useThemeColor, usePullToRefreshOnHeader, useNotifications } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
-import { useNotificationsStore } from '../../store/notificationsStore';
 import type { MarketIconName } from '../../types';
 import type { AppNotification, NotificationKind } from '../../constants/notificationsMock';
 import { handleNotificationNavigation, getNotificationActionLabel } from '../../lib';
@@ -46,14 +43,14 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const items = useNotificationsStore((s) => s.items);
-  const unreadCount = useNotificationsStore((s) => s.unreadCount);
-  const isLoading = useNotificationsStore((s) => s.isLoading);
-  const isRefreshing = useNotificationsStore((s) => s.isRefreshing);
-  const error = useNotificationsStore((s) => s.error);
-  const markRead = useNotificationsStore((s) => s.markRead);
-  const markAllRead = useNotificationsStore((s) => s.markAllRead);
-  const fetchNotifications = useNotificationsStore((s) => s.fetchNotifications);
+  const items = useNotifications((s) => s.items);
+  const unreadCount = useNotifications((s) => s.unreadCount);
+  const isLoading = useNotifications((s) => s.isLoading);
+  const isRefreshing = useNotifications((s) => s.isRefreshing);
+  const error = useNotifications((s) => s.error);
+  const markRead = useNotifications((s) => s.markRead);
+  const markAllRead = useNotifications((s) => s.markAllRead);
+  const fetchNotifications = useNotifications((s) => s.fetchNotifications);
 
   const [selectedNotification, setSelectedNotification] = useState<AppNotification | null>(null);
 
@@ -129,7 +126,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
         <View style={styles.emptyContainer}>
           <Ionicons name="warning-outline" size={64} color={Colors.icon} />
           <Text style={[styles.emptyTitle, { color: Colors.text }]}>
-            Couldn't load notifications
+            Couldn&apos;t load notifications
           </Text>
           <Text style={[styles.emptyBody, { color: Colors.icon }]}>
             Pull to refresh

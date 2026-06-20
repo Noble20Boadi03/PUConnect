@@ -9,9 +9,8 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 
-import { useThemeColor, usePullToRefreshOnHeader } from '../../hooks';
+import { useThemeColor, usePullToRefreshOnHeader, useProviderReviews, selectCanReviewProvider } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { GuardedPressable } from '../GuardedPressable';
 import {
@@ -20,11 +19,6 @@ import {
   ProfileReviewsSummaryRow,
   ProfilePostsSection,
 } from '../Profile';
-import {
-  selectCanReviewProvider,
-  selectSummaryForProvider,
-  useProviderReviewsStore,
-} from '../../store/providerReviewsStore';
 import type { ProviderProfile, ProviderReview } from '../../types';
 
 export interface ProviderProfileViewProps {
@@ -68,17 +62,15 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
     .toUpperCase()
     .slice(0, 2);
 
-  const submittedReviews = useProviderReviewsStore((s) => s.submittedReviews);
-  const completedDeals = useProviderReviewsStore((s) => s.completedDeals);
+  const submittedReviews = useProviderReviews((s) => s.submittedReviews);
+  const completedDeals = useProviderReviews((s) => s.completedDeals);
 
-  // Combine fetched reviews with user's own reviews
-  const ownReviews = submittedReviews
-    .filter(r => r.revieweeUsername === profile.username)
-    .map(r => ({ ...r, isOwn: true } as ProviderReview));
-  const allReviews = [...ownReviews, ...reviews];
-
-  // Compute summary from all reviews
   const reviewSummary = useMemo(() => {
+    const ownReviews = submittedReviews
+      .filter((r) => r.revieweeUsername === profile.username)
+      .map((r) => ({ ...r, isOwn: true } as ProviderReview));
+    const allReviews = [...ownReviews, ...reviews];
+
     if (allReviews.length === 0) {
       return { averageRating: 0, reviewCount: 0 };
     }
@@ -87,7 +79,7 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
       averageRating: Math.round((total / allReviews.length) * 10) / 10,
       reviewCount: allReviews.length,
     };
-  }, [allReviews]);
+  }, [submittedReviews, reviews, profile.username]);
 
   const canLeaveReview = useMemo(
     () => selectCanReviewProvider(completedDeals, submittedReviews, profile.username),

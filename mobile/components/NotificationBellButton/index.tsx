@@ -2,10 +2,8 @@ import React, { useCallback } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import { GuardedPressable } from '../GuardedPressable';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 
-import { useNotificationsStore } from '../../store/notificationsStore';
-import { useAppRouter } from '../../hooks';
+import { useNotifications, useAppRouter } from '../../hooks';
 
 export interface NotificationBellButtonProps {
   backgroundColor: string;
@@ -21,7 +19,7 @@ export const NotificationBellButton: React.FC<NotificationBellButtonProps> = ({
   size = 40,
 }) => {
   const router = useAppRouter();
-  const unreadCount = useNotificationsStore((s) => s.unreadCount);
+  const unreadCount = useNotifications((s) => s.unreadCount);
 
   const handlePress = useCallback(() => {
     

@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { filterProviderPosts } from '../../lib';
 import { useAppRouter, useThemeColor } from '../../hooks';

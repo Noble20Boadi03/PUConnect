@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Modal,
   Alert,
-  useColorScheme,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
@@ -43,14 +42,11 @@ export const MediaPickerView: React.FC<MediaPickerProps> = ({
   const [selectedAssets, setSelectedAssets] = useState<MediaAsset[]>([]);
   const [hasNextPage, setHasNextPage] = useState(true);
   const [endCursor, setEndCursor] = useState<string | undefined>(undefined);
-  const [permissionGranted, setPermissionGranted] = useState(false);
   const [loading, setLoading] = useState(false);
   const loadingRef = useRef(false);
   const listRef = useRef<any>(null);
 
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
   const Colors = useThemeColor();
 
   const loadAssets = useCallback(async (after: string | undefined = undefined) => {
@@ -109,7 +105,6 @@ export const MediaPickerView: React.FC<MediaPickerProps> = ({
     try {
       const { status, canAskAgain } = await MediaLibrary.requestPermissionsAsync();
       if (status === 'granted') {
-        setPermissionGranted(true);
         await loadAssets();
       } else if (!canAskAgain) {
         Alert.alert(

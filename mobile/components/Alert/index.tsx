@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, useColorScheme, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { useThemeColor } from '../../hooks';
 

@@ -4,7 +4,7 @@ import { useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColor } from '../../hooks';
-import { useChatStore, useNotificationsStore } from '../../store';
+import { useChatStore } from '../../store';
 import { TAB_BAR_BASE_HEIGHT } from '../../constants';
 
 export default function TabsLayout() {
@@ -25,7 +25,6 @@ export default function TabsLayout() {
   const bottomPadding = insets.bottom;
 
   const { unreadCount: chatUnreadCount } = useChatStore();
-  const { unreadCount: notificationUnreadCount } = useNotificationsStore();
 
   return (
     <Tabs

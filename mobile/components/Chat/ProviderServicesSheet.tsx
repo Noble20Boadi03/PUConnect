@@ -12,7 +12,6 @@ import {
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
 import { formatPostPrice } from '../../lib';
 import { useThemeColor } from '../../hooks';

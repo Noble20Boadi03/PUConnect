@@ -3,7 +3,6 @@ import { StyleSheet, View, Text, TouchableOpacity, useColorScheme } from 'react-
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 
 import { NewPostView } from '../components/NewPost';
 import { useAppRouter, useThemeColor } from '../hooks';

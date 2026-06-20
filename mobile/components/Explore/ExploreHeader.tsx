@@ -1,8 +1,6 @@
 import React, { memo, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import { Spacing } from '../../constants';
 import { GuardedPressable } from '../GuardedPressable';
 import { NotificationBellButton } from '../NotificationBellButton';
 import { ServiceStatusButton } from '../ServiceStatusButton';

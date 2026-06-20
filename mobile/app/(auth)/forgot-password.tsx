@@ -88,7 +88,7 @@ export default function ForgotPasswordScreen() {
             <View style={styles.titleContainer}>
               <Text style={[styles.title, { color: Colors.primary }]}>Forgot password?</Text>
               <Text style={[styles.subtitle, { color: Colors.text }]}>
-                No worries, we'll send you a reset link to get back in!
+                No worries, we&apos;ll send you a reset link to get back in!
               </Text>
             </View>
 

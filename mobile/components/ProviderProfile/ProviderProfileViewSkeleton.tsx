@@ -2,12 +2,10 @@ import React from 'react';
 import { StyleSheet, View, ScrollView, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Spacing } from '../../constants';
-import { useThemeColor } from '../../hooks';
 import { Shimmer } from '../Shimmer';
 import { ExploreProviderCardSkeleton } from '../Explore';
 
 export const ProviderProfileViewSkeleton: React.FC = () => {
-  const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 

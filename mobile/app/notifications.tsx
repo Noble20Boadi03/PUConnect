@@ -1,14 +1,12 @@
 import React, { useCallback } from 'react';
 import { useFocusEffect } from 'expo-router';
-import * as Haptics from 'expo-haptics';
 
 import { NotificationsView } from '../components/Notifications';
-import { useAppRouter } from '../hooks';
-import { useNotificationsStore } from '../store/notificationsStore';
+import { useAppRouter, useNotifications } from '../hooks';
 
 export default function NotificationsScreen() {
   const router = useAppRouter();
-  const fetchNotifications = useNotificationsStore((s) => s.fetchNotifications);
+  const fetchNotifications = useNotifications((s) => s.fetchNotifications);
 
   useFocusEffect(
     useCallback(() => {
