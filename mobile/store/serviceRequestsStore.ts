@@ -8,7 +8,7 @@ import { useAuthStore } from './authStore';
 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-interface ServiceRequestsState {
+export interface ServiceRequestsState {
   requests: DbServiceRequest[];
   activeCount: number;
   isLoading: boolean;

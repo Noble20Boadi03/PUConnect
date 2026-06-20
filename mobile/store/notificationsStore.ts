@@ -6,7 +6,7 @@ import { useAuthStore } from './authStore';
 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-interface NotificationsState {
+export interface NotificationsState {
   items: AppNotification[];
   unreadCount: number;
   isLoading: boolean;

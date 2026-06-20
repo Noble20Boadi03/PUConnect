@@ -40,7 +40,7 @@ const mapUserToExploreProvider = (user: any): ExploreProvider => {
   };
 };
 
-interface ExploreState {
+export interface ExploreState {
   categories: ExploreCategory[];
   providers: ExploreProvider[];
   isLoading: boolean;

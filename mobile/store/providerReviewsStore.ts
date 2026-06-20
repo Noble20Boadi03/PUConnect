@@ -3,7 +3,7 @@ import { PROVIDER_REVIEWS_MOCK } from '../constants/providerReviewsMock';
 import type { CompletedDeal, ProviderReview, ProviderReviewSummary } from '../types/review';
 import { reviewService, type DbEligibleReview } from '../services/reviewService';
 
-interface ProviderReviewsState {
+export interface ProviderReviewsState {
   completedDeals: CompletedDeal[];
   submittedReviews: ProviderReview[];
   dismissedDealIds: string[];

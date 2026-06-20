@@ -7,7 +7,7 @@ import { parsePostPrice } from '../lib/mapDbPost';
 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-interface ChatState {
+export interface ChatState {
   conversations: BackendConversation[];
   activeThread: ChatThread | null;
   currentId: string | null;

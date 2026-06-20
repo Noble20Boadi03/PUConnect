@@ -7,7 +7,7 @@ import { mapDbCategoryServiceToExploreCategoryService } from './categoryDetailSt
 
 const RECENTLY_VIEWED_KEY = 'market_recently_viewed_ids';
 
-interface MarketState {
+export interface MarketState {
   posts: FeaturedPost[];
   popularServices: (DbCategoryServiceWithCategory & { service: ExploreCategoryService })[];
   popularServicesLoading: boolean;

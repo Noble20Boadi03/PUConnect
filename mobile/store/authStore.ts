@@ -8,7 +8,7 @@ import { useProfileStore } from './profileStore';
 import { registerForPushNotifications } from '../services/pushTokenService';
 import { disconnectSocket } from '../lib/socket';
 
-interface AuthState {
+export interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;

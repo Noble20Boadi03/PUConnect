@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { Spacing, Typography } from '../../constants';
-import { useThemeColor, useAppRouter, usePullToRefreshOnHeader, useProviderReviews, selectIsEligibleForReview } from '../../hooks';
+import { useThemeColor, useAppRouter, usePullToRefreshOnHeader, useProviderReviews, selectIsEligibleForReview, useAuth, useServiceRequests } from '../../hooks';
 import { serviceKindLabel, serviceStatusLabel } from '../../lib';
 import type { DbServiceRequest } from '../../types/core';
 
@@ -35,10 +35,10 @@ export const ServiceStatusView: React.FC<ServiceStatusViewProps> = ({ onBack }) 
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
   const insets = useSafeAreaInsets();
 
-  const userId = useAuthStore((s) => s.user?.id);
-  const requests = useServiceRequestsStore((s) => s.requests);
-  const isLoading = useServiceRequestsStore((s) => s.isLoading);
-  const fetchRequests = useServiceRequestsStore((s) => s.fetchRequests);
+  const userId = useAuth((s) => s.user?.id);
+  const requests = useServiceRequests((s) => s.requests);
+  const isLoading = useServiceRequests((s) => s.isLoading);
+  const fetchRequests = useServiceRequests((s) => s.fetchRequests);
   const eligibleReviews = useProviderReviews((s) => s.eligibleReviews);
   const fetchEligibleReviews = useProviderReviews((s) => s.fetchEligibleReviews);
 
