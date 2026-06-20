@@ -297,7 +297,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  fetchMessages: async (username, participant, postContext, forceRefresh = false, cursor?: string) => {
+  fetchMessages: async (username, participant, postContext, forceRefresh = false, cursor?: string, isManualPull = false) => {
     const { threads, activeUsername } = get();
     const cached = threads[username];
     const now = Date.now();
@@ -310,8 +310,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const hasExistingData = !!cached;
 
     set({ 
-      isLoading: !hasExistingData && !forceRefresh && !cursor, 
-      isRefreshing: (forceRefresh || (hasExistingData && !forceRefresh)) && !cursor,
+      isLoading: !hasExistingData && !cursor, 
+      isRefreshing: isManualPull && !cursor,
       isLoadingMoreMessages: !!cursor,
       error: null 
     });

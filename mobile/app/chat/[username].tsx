@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { BackHandler, StyleSheet, Text, TouchableOpacity, useColorScheme, ActivityIndicator } from 'react-native';
+import { BackHandler, StyleSheet, Text, TouchableOpacity, useColorScheme, ActivityIndicator, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ChatView } from '../../components/Chat';
 import { buildProviderProfileHref, isCurrentUserProvider, mapServiceRequestToEngagement } from '../../lib';
-import { useAppRouter, useProviderReviews, useChat } from '../../hooks';
+import { useAppRouter, useProviderReviews, useChat, useThemeColor } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { useServiceRequestsStore , useAuthStore } from '../../store';
 
@@ -18,8 +18,9 @@ export default function ChatScreen() {
   const router = useAppRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const screenBg = isDark ? '#09090B' : '#F4F4F4';
+  const screenBg = isDark ? '#09090B' : '#F4F4F5';
   const textColor = isDark ? '#ECEDEE' : '#11181C';
+  const Colors = useThemeColor();
 
   const currentUser = useAuthStore((s) => s.user);
   const currentUserId = currentUser?.id ?? '';
@@ -43,7 +44,7 @@ export default function ChatScreen() {
 
   const handleRefresh = useCallback(() => {
     if (username && activeThread) {
-      fetchMessages(username, activeThread.participant, activeThread.postContext, true);
+      fetchMessages(username, activeThread.participant, activeThread.postContext, true, undefined, true);
     }
   }, [username, activeThread, fetchMessages]);
   const requests = useServiceRequestsStore((s) => s.requests);
@@ -239,7 +240,7 @@ export default function ChatScreen() {
         style={[styles.notFound, { backgroundColor: screenBg }]}
         edges={['top', 'bottom']}
       >
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="small" color={Colors.icon} />
       </SafeAreaView>
     );
   } else if (!activeThread) {

@@ -589,7 +589,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
         >
           {isLoadingMore && (
             <View style={styles.loadingMoreContainer}>
-              <ActivityIndicator size="small" color={Colors.primary} />
+              <ActivityIndicator size="small" color={Colors.icon} />
             </View>
           )}
           {displayGroups.map((group) => (
