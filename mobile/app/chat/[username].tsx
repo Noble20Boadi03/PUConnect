@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { BackHandler, StyleSheet, Text, TouchableOpacity, useColorScheme } from 'react-native';
+import { BackHandler, StyleSheet, Text, TouchableOpacity, useColorScheme, ActivityIndicator } from 'react-native';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,7 +13,7 @@ import { postService } from '../../services/postService';
 import { parsePostPrice } from '../../lib/mapDbPost';
 import { useServiceRequestsStore , useAuthStore } from '../../store';
 
-import { ChatPostContext, ChatThread } from '../../types';
+import { ChatPostContext } from '../../types';
 
 export default function ChatScreen() {
   const { username, postId } = useLocalSearchParams<{
@@ -285,7 +285,16 @@ export default function ChatScreen() {
 
   // Removed initial loading indicator
 
-  if (!activeThread && !isLoading) {
+  if (isLoading && !activeThread) {
+    return (
+      <SafeAreaView
+        style={[styles.notFound, { backgroundColor: screenBg }]}
+        edges={['top', 'bottom']}
+      >
+        <ActivityIndicator size="large" />
+      </SafeAreaView>
+    );
+  } else if (!activeThread) {
     return (
       <SafeAreaView
         style={[styles.notFound, { backgroundColor: screenBg }]}
@@ -298,38 +307,38 @@ export default function ChatScreen() {
         </TouchableOpacity>
       </SafeAreaView>
     );
+  } else {
+    return (
+      <ChatView
+        thread={activeThread}
+        onBack={exitToMessages}
+        onOpenPost={handleOpenPost}
+        onOpenPostForRequest={handleOpenPostForRequest}
+        onViewProviderProfile={handleViewProviderProfile}
+        onSendMessage={handleSendMessage}
+        engagement={engagement}
+        engagementLoading={engagementLoading}
+        onCreateOfficialEngagement={handleCreateOfficialEngagement}
+        onCancelOfficialEngagement={handleCancelOfficialEngagement}
+        onRequestCompletion={handleRequestCompletion}
+        onConfirmCompletion={handleConfirmCompletion}
+        onDeclineCompletion={handleDeclineCompletion}
+        onAcceptOfficialEngagement={handleAcceptOfficialEngagement}
+        onDeclineOfficialEngagement={handleDeclineOfficialEngagement}
+        isRefreshing={isRefreshing}
+        onRefresh={handleRefresh}
+        isLoadingMore={isLoadingMoreMessages}
+        onLoadMore={loadMoreMessages}
+        hasMore={hasMoreMessages}
+        onDeleteMessage={removeMessage}
+        currentUserId={currentUserId}
+        serviceRequest={chatServiceRequest}
+        onClearPostContext={clearPostContext}
+        hasPastServices={hasPastServices}
+        onPastServices={handlePastServices}
+      />
+    );
   }
-
-  return (
-    <ChatView
-      thread={activeThread as ChatThread}
-      onBack={exitToMessages}
-      onOpenPost={handleOpenPost}
-      onOpenPostForRequest={handleOpenPostForRequest}
-      onViewProviderProfile={handleViewProviderProfile}
-      onSendMessage={handleSendMessage}
-      engagement={engagement}
-      engagementLoading={engagementLoading}
-      onCreateOfficialEngagement={handleCreateOfficialEngagement}
-      onCancelOfficialEngagement={handleCancelOfficialEngagement}
-      onRequestCompletion={handleRequestCompletion}
-      onConfirmCompletion={handleConfirmCompletion}
-      onDeclineCompletion={handleDeclineCompletion}
-      onAcceptOfficialEngagement={handleAcceptOfficialEngagement}
-      onDeclineOfficialEngagement={handleDeclineOfficialEngagement}
-      isRefreshing={isRefreshing}
-      onRefresh={handleRefresh}
-      isLoadingMore={isLoadingMoreMessages}
-      onLoadMore={loadMoreMessages}
-      hasMore={hasMoreMessages}
-      onDeleteMessage={removeMessage}
-      currentUserId={currentUserId}
-      serviceRequest={chatServiceRequest}
-      onClearPostContext={clearPostContext}
-      hasPastServices={hasPastServices}
-      onPastServices={handlePastServices}
-    />
-  );
 }
 
 const styles = StyleSheet.create({

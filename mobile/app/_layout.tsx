@@ -91,6 +91,7 @@ export default function RootLayout() {
   const inEditInfo = segments[0] === 'edit-info';
   const inNewPost = segments[0] === 'new-post';
   const inPhotoSetup = segments[0] === '(auth)' && segments[1] === 'photo-setup';
+  const inPastServices = segments[0] === 'past-services';
   const inIndex = (segments as string[]).length === 0 || (segments as string[])[0] === 'index';
   const managesOwnChrome = inPostDetail;
 
@@ -132,7 +133,8 @@ export default function RootLayout() {
       !inServiceRequestDetail &&
       !inCategoryDetail &&
       !inChangePassword &&
-      !inResetPassword
+      !inResetPassword &&
+      !inPastServices
     ) {
       runGuardedNavigation('replace:/(tabs)/market', () => {
         router.replace('/(tabs)/market' as any);
@@ -153,7 +155,8 @@ export default function RootLayout() {
         inServiceRequestDetail ||
         inCategoryDetail ||
         inChangePassword ||
-        inResetPassword)
+        inResetPassword ||
+        inPastServices)
     ) {
       runGuardedNavigation('replace:/(auth)/login', () => {
         router.replace('/(auth)/login' as any);
@@ -177,6 +180,7 @@ export default function RootLayout() {
     inEditInfo,
     inNewPost,
     inPhotoSetup,
+    inPastServices,
     inIndex,
     router,
   ]);
@@ -204,6 +208,7 @@ export default function RootLayout() {
             options={{ animation: 'slide_from_right' }}
           />
           <Stack.Screen name="chat/[username]" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="past-services/[username]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="service-status" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="service-request/[id]" options={{ animation: 'slide_from_right' }} />

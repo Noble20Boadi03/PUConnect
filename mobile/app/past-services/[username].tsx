@@ -12,9 +12,8 @@ import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-import { useAppRouter } from '../../hooks';
+import { useAppRouter, useServiceRequests } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
-import { useServiceRequestsStore } from '../../store';
 import { profileService } from '../../services';
 import type { DbServiceRequest } from '../../types/core';
 
@@ -47,12 +46,7 @@ function getStatusBadgeColor(status: string, isDark: boolean) {
 export default function PastServicesScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
   const router = useAppRouter();
-  const { getPastServicesWithUser, fetchRequests, hydrated, isLoading } = useServiceRequestsStore((s) => ({
-    getPastServicesWithUser: s.getPastServicesWithUser,
-    fetchRequests: s.fetchRequests,
-    hydrated: s.hydrated,
-    isLoading: s.isLoading
-  }));
+  const { getPastServicesWithUser, fetchRequests, hydrated, isLoading } = useServiceRequests();
   const [peerId, setPeerId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const colorScheme = useColorScheme();

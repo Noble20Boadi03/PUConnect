@@ -31,21 +31,19 @@ export default function MarketScreen() {
   const borderColor = isDark ? '#30363D' : 'rgba(0, 0, 0, 0.08)';
 
   const user = useAuthStore((s) => s.user);
-  const { 
-    posts, 
-    isLoading, 
-    isRefreshing, 
-    isLoadingMore, 
-    error, 
-    fetchPosts, 
-    loadMorePosts, 
-    searchPosts, 
-    setFilter, 
-    activeFilter,
-    searchQuery,
-    initializeRecentlyViewed,
-    recentlyViewedIds
-  } = useMarket();
+  const posts = useMarket((s) => s.posts);
+  const isLoading = useMarket((s) => s.isLoading);
+  const isRefreshing = useMarket((s) => s.isRefreshing);
+  const isLoadingMore = useMarket((s) => s.isLoadingMore);
+  const error = useMarket((s) => s.error);
+  const fetchPosts = useMarket((s) => s.fetchPosts);
+  const loadMorePosts = useMarket((s) => s.loadMorePosts);
+  const searchPosts = useMarket((s) => s.searchPosts);
+  const setFilter = useMarket((s) => s.setFilter);
+  const activeFilter = useMarket((s) => s.activeFilter);
+  const searchQuery = useMarket((s) => s.searchQuery);
+  const initializeRecentlyViewed = useMarket((s) => s.initializeRecentlyViewed);
+  const recentlyViewedIds = useMarket((s) => s.recentlyViewedIds);
 
   const [showMarketTip, setShowMarketTip] = useState(false);
   const [localSearchQuery, setLocalSearchQuery] = useState('');
