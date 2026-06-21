@@ -86,6 +86,18 @@ enum ReportStatus {
   actioned
 }
 
+enum PostStatus {
+  active
+  hidden_by_owner
+  removed_by_admin
+}
+
+enum UserStatus {
+  active
+  suspended
+  banned
+}
+
 model User {
   id            String             @id @default(uuid())
   name          String
@@ -93,6 +105,7 @@ model User {
   username      String             @unique
   password      String
   role          UserRole           @default(user)
+  status        UserStatus         @default(active)
   avatarUrl     String             @default("")
   bio           String             @default("")
   categoryId    ExploreCategoryId?
@@ -162,6 +175,7 @@ model Post {
   hashtags        String[]
   helpCategoryIds String[]
   authorId        String
+  status          PostStatus @default(active)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
