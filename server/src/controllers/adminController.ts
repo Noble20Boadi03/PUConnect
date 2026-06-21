@@ -102,6 +102,127 @@ export const updateReportStatus = async (req: Request, res: Response) => {
 };
 
 /**
+ * Get all users (admin only)
+ * @route GET /admin/users
+ */
+export const getUsers = async (req: Request, res: Response) => {
+  try {
+    const { search, role, status } = req.query;
+
+    const where: any = {};
+    
+    if (search) {
+      where.OR = [
+        { username: { contains: search as string, mode: 'insensitive' } },
+        { name: { contains: search as string, mode: 'insensitive' } },
+        { email: { contains: search as string, mode: 'insensitive' } }
+      ];
+    }
+    
+    if (role) {
+      where.role = role;
+    }
+    
+    if (status) {
+      where.status = status;
+    }
+
+    const users = await prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        username: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        avatarUrl: true,
+        createdAt: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Get report counts for each user
+    const usersWithReportCounts = await Promise.all(
+      users.map(async (user) => {
+        const reportCount = await prisma.report.count({
+          where: {
+            targetType: 'user',
+            targetId: user.id
+          }
+        });
+        return { ...user, reportCount };
+      })
+    );
+
+    return res.status(200).json({
+      status: 200,
+      data: usersWithReportCounts
+    });
+  } catch (error) {
+    console.error('GetUsers error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error retrieving users.'
+    });
+  }
+};
+
+/**
+ * Get single user detail (admin only)
+ * @route GET /admin/users/:id
+ */
+export const getUserDetail = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        username: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        avatarUrl: true,
+        bio: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status: 404,
+        message: 'User not found.'
+      });
+    }
+
+    // Get reports against this user
+    const reports = await prisma.report.findMany({
+      where: {
+        targetType: 'user',
+        targetId: id
+      },
+      include: { reporter: { select: safeUserSelect } },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return res.status(200).json({
+      status: 200,
+      data: { ...user, reports }
+    });
+  } catch (error) {
+    console.error('GetUserDetail error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error retrieving user detail.'
+    });
+  }
+};
+
+/**
  * Update user status (admin only)
  * @route PATCH /admin/users/:id/status
  */

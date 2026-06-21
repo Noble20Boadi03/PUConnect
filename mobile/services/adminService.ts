@@ -29,6 +29,24 @@ export interface Report {
   target: ReportTargetUser | ReportTargetPost | null;
 }
 
+export interface AdminUser {
+  id: string;
+  username: string;
+  name: string;
+  email: string;
+  role: 'user' | 'provider' | 'admin';
+  status: 'active' | 'suspended' | 'banned';
+  avatarUrl: string;
+  createdAt: string;
+  reportCount: number;
+}
+
+export interface AdminUserDetail extends Omit<AdminUser, 'reportCount'> {
+  bio: string;
+  updatedAt: string;
+  reports: Report[];
+}
+
 export const adminService = {
   getReports: async (status?: string): Promise<Report[]> => {
     const params = status ? { status } : {};
@@ -38,6 +56,16 @@ export const adminService = {
 
   updateReportStatus: async (id: string, status: string): Promise<Report> => {
     const response = await apiClient.patch(`/admin/reports/${id}`, { status });
+    return response.data.data;
+  },
+
+  getUsers: async (params?: { search?: string; role?: string; status?: string }): Promise<AdminUser[]> => {
+    const response = await apiClient.get('/admin/users', { params });
+    return response.data.data;
+  },
+
+  getUserDetail: async (id: string): Promise<AdminUserDetail> => {
+    const response = await apiClient.get(`/admin/users/${id}`);
     return response.data.data;
   },
 

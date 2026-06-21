@@ -2,6 +2,8 @@ import express from 'express';
 import {
   getReports,
   updateReportStatus,
+  getUsers,
+  getUserDetail,
   updateUserStatus,
   updatePostStatus
 } from '../controllers/adminController';
@@ -17,6 +19,8 @@ router.get('/reports', getReports);
 router.patch('/reports/:id', updateReportStatus);
 
 // Users
+router.get('/users', getUsers);
+router.get('/users/:id', getUserDetail);
 router.patch('/users/:id/status', updateUserStatus);
 
 // Posts
