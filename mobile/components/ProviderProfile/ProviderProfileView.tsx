@@ -42,9 +42,10 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
   onPostPress,
   onSendMessage,
   onOpenReviews,
+  onLeaveReview,
   refreshControl,
   onRefresh,
-  isRefreshing,
+  isRefreshing = false,
 }) => {
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();

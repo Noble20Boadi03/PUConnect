@@ -51,12 +51,12 @@ const toPublicUser = async (user: any) => {
 };
 
 /**
- * Helper: Generate JWT session token for a given user ID.
+ * Helper: Generate JWT session token for a given user ID and role.
  */
-const generateToken = (id: string): string => {
+const generateToken = (id: string, role: string): string => {
   const secret = process.env.JWT_SECRET || 'fallback_secret_key';
   const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
-  return jwt.sign({ id }, secret, { expiresIn: expiresIn as any });
+  return jwt.sign({ id, role }, secret, { expiresIn: expiresIn as any });
 };
 
 /**
@@ -138,7 +138,7 @@ export const register = async (req: Request, res: Response) => {
     );
 
     // 6. Generate session token
-    const token = generateToken(user.id);
+    const token = generateToken(user.id, user.role);
 
     // 7. Return response containing user and token
     return res.status(201).json({
@@ -221,7 +221,7 @@ export const login = async (req: Request, res: Response) => {
 
     // 4. Generate token
     console.log('[TIMESTAMP] 8a. Before generateToken:', new Date().toISOString());
-    const token = generateToken(user.id);
+    const token = generateToken(user.id, user.role);
     console.log('[TIMESTAMP] 8b. After generateToken:', new Date().toISOString());
 
     // 5. Return response containing user and token

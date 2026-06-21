@@ -105,7 +105,8 @@ export default function RootLayout() {
   useEffect(() => {
     if (isLoading) return;
 
-    const inTabsGroup = segments[0] === '(tabs)';
+    const inTabsGroup = (segments as any)[0] === '(tabs)';
+    const inAdminGroup = (segments as any)[0] === '(admin)';
     const inSettings = segments[0] === 'settings';
 
     const inChangePassword = segments[0] === 'change-password';
@@ -120,6 +121,7 @@ export default function RootLayout() {
       hasCompletedOnboarding &&
       !inIndex &&
       !inTabsGroup &&
+      !inAdminGroup &&
       !inSettings &&
       !inEditInfo &&
       !inNewPost &&
@@ -136,12 +138,14 @@ export default function RootLayout() {
       !inResetPassword &&
       !inPastServices
     ) {
-      runGuardedNavigation('replace:/(tabs)/market', () => {
-        router.replace('/(tabs)/market' as any);
+      const redirectPath = user?.role === 'admin' ? '/(admin)/dashboard' : '/(tabs)/market';
+      runGuardedNavigation(`replace:${redirectPath}`, () => {
+        router.replace(redirectPath as any);
       });
     } else if (
       !isAuthenticated &&
       (inTabsGroup ||
+        inAdminGroup ||
         inSettings ||
         inEditInfo ||
         inNewPost ||
@@ -182,6 +186,7 @@ export default function RootLayout() {
     inPhotoSetup,
     inPastServices,
     inIndex,
+    user,
     router,
   ]);
 
@@ -192,6 +197,7 @@ export default function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="(admin)" />
           <Stack.Screen name="settings" />
           <Stack.Screen name="change-password" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="reset-password" options={{ animation: 'slide_from_right' }} />

@@ -206,6 +206,17 @@ export default function ProfileScreen() {
             textColor={Colors.text}
             mutedColor={Colors.icon}
           />
+          {user?.role === 'admin' && (
+            <>
+              <View style={[styles.divider, { backgroundColor: Colors.border + '60' }]} />
+              <TouchableOpacity
+                style={styles.adminButton}
+                onPress={() => router.replace('/(admin)/dashboard' as any)}
+              >
+                <Text style={[styles.adminButtonText, { color: Colors.primary }]}>Switch to Admin Module</Text>
+              </TouchableOpacity>
+            </>
+          )}
           {isProvider && userSkills.length > 0 ? (
             <>
               <View style={[styles.divider, { backgroundColor: Colors.border + '60' }]} />
@@ -320,6 +331,14 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     marginLeft: 54,
+  },
+  adminButton: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: 54,
+  },
+  adminButtonText: {
+    fontSize: Typography.size.sm,
+    fontWeight: '600',
   },
   skillsBlock: {
     flexDirection: 'row',

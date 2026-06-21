@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColor, usePostDetailChrome } from '../../hooks';
 import { Spacing, Typography, CARD_SHADOW } from '../../constants';
 import { formatPostPrice } from '../../lib';
-import { getExploreCategoryFromPostTags, getExploreServicesForPost } from '../../lib/mapDbPost';
+import { getExploreCategoryFromPostTags, getExploreServicesForPost } from '../../lib/mapPostToExplore';
 import { Button } from '../Button';
 import { GuardedPressable } from '../GuardedPressable';
 import { ReportSheet } from '../ReportSheet';

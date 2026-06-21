@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { JwtPayload } from '../types';
+import prisma from '../config/db';
 
 /**
  * Middleware to protect API routes and verify JWT tokens.
@@ -17,8 +18,21 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
       // Verify the JWT signature
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key') as JwtPayload;
 
-      // Attach decoded user payload to request object
-      (req as any).user = { id: decoded.id };
+      // Get user from DB (fallback for old tokens without role)
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.id },
+        select: { id: true, role: true }
+      });
+
+      if (!user) {
+        return res.status(401).json({
+          status: 401,
+          message: 'Not authorized: user not found.',
+        });
+      }
+
+      // Attach user to request object
+      (req as any).user = { id: user.id, role: user.role };
       
       return next();
     } catch (error) {
@@ -37,4 +51,18 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
       message: 'Not authorized: no token was provided in the headers.',
     });
   }
+};
+
+/**
+ * Middleware to require admin role for API routes (must be used after protect).
+ */
+export const requireAdmin = async (req: Request, res: Response, next: NextFunction) => {
+  const user = (req as any).user;
+  if (!user || user.role !== 'admin') {
+    return res.status(403).json({
+      status: 403,
+      message: 'Not authorized: admin role required.',
+    });
+  }
+  return next();
 };
