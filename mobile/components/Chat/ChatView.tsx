@@ -17,6 +17,7 @@ import * as Haptics from 'expo-haptics';
 
 import { ConfirmDialog } from '../ConfirmDialog';
 import { ReviewPromptDialog } from '../ReviewPromptDialog';
+import { ReportSheet } from '../ReportSheet';
 import { useAppRouter, useConfirmDialog, useThemeColor, useImagePicker, usePullToRefreshOnHeader, useProviderReviews, useChat } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { getProviderServices, isCurrentUserProvider } from '../../lib';
@@ -167,6 +168,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const [selectedMessage, setSelectedMessage] = useState<ChatMessage | null>(null);
   const [messageActionsVisible, setMessageActionsVisible] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [reportSheetVisible, setReportSheetVisible] = useState(false);
 
   const deleteMessage = useChat((state) => state.deleteMessage);
   const conversations = useChat((state) => state.conversations);
@@ -401,6 +403,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
         }
       } else if (action === 'notInterested') {
         onClearPostContext();
+      } else if (action === 'report') {
+        setReportSheetVisible(true);
       }
     },
     [
@@ -699,6 +703,13 @@ export const ChatView: React.FC<ChatViewProps> = ({
         services={providerServices}
         onSelectService={(postId) => onOpenPostForRequest?.(postId)}
         onClose={() => setServicesVisible(false)}
+      />
+
+      <ReportSheet
+        visible={reportSheetVisible}
+        targetType="user"
+        targetId={conversations.find((c) => c.user.username === thread.providerUsername)?.user.id || ''}
+        onClose={() => setReportSheetVisible(false)}
       />
 
       {confirmOptions ? (

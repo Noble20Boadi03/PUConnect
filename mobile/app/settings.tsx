@@ -16,7 +16,7 @@ import Constants from 'expo-constants';
 
 import { useAppRouter, useThemeColor, useLogout, useDeleteAccount, useAuth } from '../hooks';
 import { Spacing, Typography } from '../constants';
-import { Alert, ConfirmDialog } from '../components';
+import { Alert, ConfirmDialog, FeedbackSheet } from '../components';
 import { authService } from '../services';
 
 export default function SettingsScreen() {
@@ -33,6 +33,7 @@ export default function SettingsScreen() {
   const [resetConfirmVisible, setResetConfirmVisible] = useState(false);
   const [isSendingOTP, setIsSendingOTP] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
+  const [feedbackSheetVisible, setFeedbackSheetVisible] = useState(false);
 
   const {
     isLoading: isLoggingOut,
@@ -152,6 +153,10 @@ export default function SettingsScreen() {
         onConfirm={confirmResetPassword}
         onCancel={closeResetConfirm}
       />
+      <FeedbackSheet
+        visible={feedbackSheetVisible}
+        onClose={() => setFeedbackSheetVisible(false)}
+      />
       <View style={styles.header}>
         <TouchableOpacity
           style={[styles.backButton, { backgroundColor: subtleBg }]}
@@ -200,6 +205,23 @@ export default function SettingsScreen() {
               <Text style={[styles.rowTitle, { color: Colors.text }]}>Reset Password</Text>
               <Text style={[styles.rowSubtitle, { color: Colors.icon }]}>
                 Forgot your password? Reset via email
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={Colors.icon} />
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.settingsRow}
+            onPress={() => setFeedbackSheetVisible(true)}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.rowIconCircle, { backgroundColor: Colors.secondary + '15' }]}>
+              <Ionicons name="chatbubbles-outline" size={20} color={Colors.secondary} />
+            </View>
+            <View style={styles.rowContent}>
+              <Text style={[styles.rowTitle, { color: Colors.text }]}>Send Feedback</Text>
+              <Text style={[styles.rowSubtitle, { color: Colors.icon }]}>
+                Report issues or share ideas
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={Colors.icon} />

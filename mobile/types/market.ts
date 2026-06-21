@@ -55,6 +55,7 @@ export interface RequestPost extends MarketPostBase {
 export type FeaturedPost = ServicePost | RequestPost;
 
 export interface PostAuthor {
+  id?: string;
   fullName: string;
   username: string;
   avatarUrl: string;
@@ -67,6 +68,7 @@ export type ProviderPostsTab = 'services' | 'requests';
 
 /** Public profile shown when viewing a provider from a service post. */
 export interface ProviderProfile {
+  id: string;
   /** URL slug without @, e.g. jordanp */
   username: string;
   displayName: string;

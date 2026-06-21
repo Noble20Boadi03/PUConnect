@@ -95,6 +95,7 @@ export function mapDbPostToPostDetail(post: DbPost): PostDetail {
     fullDescription: post.description,
     hashtags: post.hashtags.map((tag) => (tag.startsWith('#') ? tag : `#${tag}`)),
     author: {
+      id: author?.id,
       fullName: author?.name ?? 'Unknown',
       username: `@${username}`,
       avatarUrl: author?.avatarUrl || '',
@@ -103,6 +104,7 @@ export function mapDbPostToPostDetail(post: DbPost): PostDetail {
 }
 
 export interface ApiProfileResponse {
+  id: string;
   username: string;
   name: string;
   avatarUrl?: string;
@@ -125,6 +127,7 @@ export function mapApiProfileToProviderProfile(data: ApiProfileResponse): Provid
   }
   
   return {
+    id: data.id,
     username: data.username,
     displayName: data.name,
     handle: data.username,

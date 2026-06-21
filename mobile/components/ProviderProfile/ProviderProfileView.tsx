@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useThemeColor, usePullToRefreshOnHeader, useProviderReviews, selectCanReviewProvider } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { GuardedPressable } from '../GuardedPressable';
+import { ReportSheet } from '../ReportSheet';
 import {
   ProfileHeroSection,
   ProfileInfoRow,
@@ -41,10 +42,9 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
   onPostPress,
   onSendMessage,
   onOpenReviews,
-  onLeaveReview,
   refreshControl,
   onRefresh,
-  isRefreshing = false,
+  isRefreshing,
 }) => {
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
@@ -54,6 +54,7 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
   const insets = useSafeAreaInsets();
   const { panHandlers } = usePullToRefreshOnHeader({ onRefresh: onRefresh || (() => {}), isRefreshing });
+  const [reportSheetVisible, setReportSheetVisible] = useState(false);
 
   const initials = profile.displayName
     .split(' ')
@@ -205,7 +206,26 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
               onOpenReviews?.();
             }}
           />
+          <View style={[styles.divider, { backgroundColor: Colors.border + '60' }]} />
+          <GuardedPressable
+            style={styles.reportRow}
+            onPress={() => setReportSheetVisible(true)}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="flag-outline" size={18} color={Colors.error} />
+            <Text style={[styles.reportText, { color: Colors.error }]}>
+              Report User
+            </Text>
+            <Ionicons name="chevron-forward" size={16} color={Colors.icon} />
+          </GuardedPressable>
         </View>
+
+        <ReportSheet
+          visible={reportSheetVisible}
+          targetType="user"
+          targetId={profile.id}
+          onClose={() => setReportSheetVisible(false)}
+        />
 
         <ProfilePostsSection
         posts={profile.posts}
@@ -324,6 +344,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xs,
   },
   leaveReviewText: {
+    flex: 1,
+    fontSize: Typography.size.sm,
+    fontWeight: '700',
+  },
+  reportRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.sm + 4,
+    paddingHorizontal: Spacing.xs,
+  },
+  reportText: {
     flex: 1,
     fontSize: Typography.size.sm,
     fontWeight: '700',

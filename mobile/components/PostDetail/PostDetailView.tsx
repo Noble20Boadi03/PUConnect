@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -17,9 +17,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColor, usePostDetailChrome } from '../../hooks';
 import { Spacing, Typography, CARD_SHADOW } from '../../constants';
 import { formatPostPrice } from '../../lib';
-import { getExploreCategoryFromPostTags, getExploreServicesForPost } from '../../lib/mapPostToExplore';
+import { getExploreCategoryFromPostTags, getExploreServicesForPost } from '../../lib/mapDbPost';
 import { Button } from '../Button';
 import { GuardedPressable } from '../GuardedPressable';
+import { ReportSheet } from '../ReportSheet';
 import { PostImageGallery } from './PostImageGallery';
 import type { PostDetail } from '../../types';
 
@@ -86,6 +87,8 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const [postReportSheetVisible, setPostReportSheetVisible] = useState(false);
+  const [userReportSheetVisible, setUserReportSheetVisible] = useState(false);
 
   const screenBg = isDark ? '#09090B' : '#F4F4F5';
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
@@ -296,6 +299,19 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
             ))}
           </View>
 
+          {!isOwnPost && (
+            <GuardedPressable
+              style={styles.reportPostRow}
+              onPress={() => setPostReportSheetVisible(true)}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="flag-outline" size={18} color={Colors.error} />
+              <Text style={[styles.reportPostText, { color: Colors.error }]}>
+                Report Post
+              </Text>
+            </GuardedPressable>
+          )}
+
           {!hideAuthorProfile ? (
             <>
               <View style={[styles.divider, { backgroundColor: divider }]} />
@@ -357,6 +373,19 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
                   <Ionicons name="chevron-forward" size={20} color={Colors.icon} />
                 ) : null}
               </GuardedPressable>
+
+              {!isOwnPost && post.author.id && (
+                <GuardedPressable
+                  style={styles.reportUserRow}
+                  onPress={() => setUserReportSheetVisible(true)}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="flag-outline" size={18} color={Colors.error} />
+                  <Text style={[styles.reportUserText, { color: Colors.error }]}>
+                    Report User
+                  </Text>
+                </GuardedPressable>
+              )}
 
               {isService && post.author.skills && post.author.skills.length > 0 ? (
                 <>
@@ -474,6 +503,22 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
               </Text>
             ) : null}
           </View>
+        )}
+
+        <ReportSheet
+          visible={postReportSheetVisible}
+          targetType="post"
+          targetId={post.id}
+          onClose={() => setPostReportSheetVisible(false)}
+        />
+
+        {post.author.id && (
+          <ReportSheet
+            visible={userReportSheetVisible}
+            targetType="user"
+            targetId={post.author.id}
+            onClose={() => setUserReportSheetVisible(false)}
+          />
         )}
       </View>
     </View>
@@ -732,6 +777,28 @@ const styles = StyleSheet.create({
     fontSize: Typography.size.xs,
     fontWeight: '500',
     textAlign: 'center',
+  },
+  reportPostRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.md,
+    marginTop: Spacing.md,
+  },
+  reportPostText: {
+    fontSize: Typography.size.sm,
+    fontWeight: '700',
+  },
+  reportUserRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.md,
+    marginTop: Spacing.sm,
+  },
+  reportUserText: {
+    fontSize: Typography.size.sm,
+    fontWeight: '700',
   },
 });
 

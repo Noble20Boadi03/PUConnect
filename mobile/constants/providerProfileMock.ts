@@ -17,6 +17,7 @@ function postsForAuthor(displayName: string, extraIds: string[] = []): ProviderP
 
 export const PROVIDER_PROFILES_MOCK: Record<string, ProviderProfile> = {
   you: {
+    id: 'user-you',
     username: 'you',
     displayName: 'You',
     handle: '@you',
@@ -27,6 +28,7 @@ export const PROVIDER_PROFILES_MOCK: Record<string, ProviderProfile> = {
     posts: postsForAuthor('You'),
   },
   emilyl: {
+    id: 'user-emilyl',
     username: 'emilyl',
     displayName: 'Emily L.',
     handle: '@emilyl',
@@ -37,6 +39,7 @@ export const PROVIDER_PROFILES_MOCK: Record<string, ProviderProfile> = {
     posts: postsForAuthor('Emily L.'),
   },
   zoem: {
+    id: 'user-zoem',
     username: 'zoem',
     displayName: 'Zoe M.',
     handle: '@zoem',
@@ -47,6 +50,7 @@ export const PROVIDER_PROFILES_MOCK: Record<string, ProviderProfile> = {
     posts: postsForAuthor('Zoe M.'),
   },
   davidr: {
+    id: 'user-davidr',
     username: 'davidr',
     displayName: 'David R.',
     handle: '@davidr',
@@ -57,6 +61,7 @@ export const PROVIDER_PROFILES_MOCK: Record<string, ProviderProfile> = {
     posts: postsForAuthor('David R.'),
   },
   jamies: {
+    id: 'user-jamies',
     username: 'jamies',
     displayName: 'Jamie S.',
     handle: '@jamies',
@@ -67,6 +72,7 @@ export const PROVIDER_PROFILES_MOCK: Record<string, ProviderProfile> = {
     posts: postsForAuthor('Jamie S.'),
   },
   morganh: {
+    id: 'user-morganh',
     username: 'morganh',
     displayName: 'Morgan H.',
     handle: '@morganh',
@@ -77,6 +83,7 @@ export const PROVIDER_PROFILES_MOCK: Record<string, ProviderProfile> = {
     posts: postsForAuthor('Morgan H.'),
   },
   kevinb: {
+    id: 'user-kevinb',
     username: 'kevinb',
     displayName: 'Kevin B.',
     handle: '@kevinb',
@@ -87,6 +94,7 @@ export const PROVIDER_PROFILES_MOCK: Record<string, ProviderProfile> = {
     posts: postsForAuthor('Kevin B.'),
   },
   lisac: {
+    id: 'user-lisac',
     username: 'lisac',
     displayName: 'Lisa C.',
     handle: '@lisac',
@@ -97,6 +105,7 @@ export const PROVIDER_PROFILES_MOCK: Record<string, ProviderProfile> = {
     posts: postsForAuthor('Lisa C.'),
   },
   ryant: {
+    id: 'user-ryant',
     username: 'ryant',
     displayName: 'Ryan T.',
     handle: '@ryant',
@@ -107,6 +116,7 @@ export const PROVIDER_PROFILES_MOCK: Record<string, ProviderProfile> = {
     posts: postsForAuthor('Ryan T.'),
   },
   ninaw: {
+    id: 'user-ninaw',
     username: 'ninaw',
     displayName: 'Nina W.',
     handle: '@ninaw',
@@ -117,6 +127,7 @@ export const PROVIDER_PROFILES_MOCK: Record<string, ProviderProfile> = {
     posts: postsForAuthor('Nina W.'),
   },
   jordanp: {
+    id: 'user-jordanp',
     username: 'jordanp',
     displayName: 'Jordan P.',
     handle: '@jordanp',
@@ -140,6 +151,7 @@ export const PROVIDER_PROFILES_MOCK: Record<string, ProviderProfile> = {
     ],
   },
   mialdesign: {
+    id: 'user-mialdesign',
     username: 'mialdesign',
     displayName: 'Mia L.',
     handle: '@mialdesign',
@@ -150,6 +162,7 @@ export const PROVIDER_PROFILES_MOCK: Record<string, ProviderProfile> = {
     posts: postsForAuthor('Mia L.'),
   },
   christdev: {
+    id: 'user-christdev',
     username: 'christdev',
     displayName: 'Chris T.',
     handle: '@christdev',
@@ -173,6 +186,7 @@ export const PROVIDER_PROFILES_MOCK: Record<string, ProviderProfile> = {
     ],
   },
   priyacodes: {
+    id: 'user-priyacodes',
     username: 'priyacodes',
     displayName: 'Priya N.',
     handle: '@priyacodes',
@@ -183,6 +197,7 @@ export const PROVIDER_PROFILES_MOCK: Record<string, ProviderProfile> = {
     posts: postsForAuthor('Priya N.'),
   },
   samruns: {
+    id: 'user-samruns',
     username: 'samruns',
     displayName: 'Sam R.',
     handle: '@samruns',
@@ -193,6 +208,7 @@ export const PROVIDER_PROFILES_MOCK: Record<string, ProviderProfile> = {
     posts: postsForAuthor('Sam R.'),
   },
   alexkwrites: {
+    id: 'user-alexkwrites',
     username: 'alexkwrites',
     displayName: 'Alex K.',
     handle: '@alexkwrites',
@@ -203,6 +219,7 @@ export const PROVIDER_PROFILES_MOCK: Record<string, ProviderProfile> = {
     posts: postsForAuthor('Alex K.'),
   },
   taylorw: {
+    id: 'user-taylorw',
     username: 'taylorw',
     displayName: 'Taylor W.',
     handle: '@taylorw',
@@ -213,6 +230,7 @@ export const PROVIDER_PROFILES_MOCK: Record<string, ProviderProfile> = {
     posts: postsForAuthor('Taylor W.'),
   },
   sarahm: {
+    id: 'user-sarahm',
     username: 'sarahm',
     displayName: 'Sarah M.',
     handle: '@sarahm',

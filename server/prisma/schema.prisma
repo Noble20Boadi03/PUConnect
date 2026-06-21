@@ -66,6 +66,26 @@ model CategoryService {
   @@map("category_services")
 }
 
+enum ReportTargetType {
+  user
+  post
+}
+
+enum ReportReason {
+  spam
+  harassment
+  inappropriate_content
+  scam
+  other
+}
+
+enum ReportStatus {
+  pending
+  reviewed
+  dismissed
+  actioned
+}
+
 model User {
   id            String             @id @default(uuid())
   name          String
@@ -99,8 +119,37 @@ model User {
   mutedConversations  MutedConversation[]
   pinnedConversations PinnedConversation[]
   category            Category?            @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  reports             Report[]
+  feedbacks           Feedback[]
 
   @@map("users")
+}
+
+model Report {
+  id          String           @id @default(uuid())
+  reporterId  String
+  targetType  ReportTargetType
+  targetId    String
+  reason      ReportReason
+  description String?
+  status      ReportStatus     @default(pending)
+  createdAt   DateTime       @default(now())
+  reviewedAt  DateTime?
+  reviewedBy  String?
+  reporter    User           @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@map("reports")
+}
+
+model Feedback {
+  id        String   @id @default(uuid())
+  userId    String
+  message   String
+  createdAt DateTime @default(now())
+  status    String   @default("open")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("feedbacks")
 }
 
 model Post {

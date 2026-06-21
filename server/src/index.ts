@@ -13,6 +13,7 @@ import chatRoutes from './routes/chatRoutes';
 import reviewRoutes from './routes/reviewRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import uploadRoutes from './routes/uploadRoutes';
+import reportRoutes from './routes/reportRoutes';
 
 // Load environment variables from .env file
 // dotenv.config();
@@ -69,6 +70,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/reports', reportRoutes);
 
 // Base Health Check Route
 app.get('/', (req, res) => {
