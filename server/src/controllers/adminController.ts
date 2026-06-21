@@ -293,3 +293,131 @@ export const updatePostStatus = async (req: Request, res: Response) => {
     });
   }
 };
+
+/**
+ * Get all posts (admin only)
+ * @route GET /admin/posts
+ */
+export const getPosts = async (req: Request, res: Response) => {
+  try {
+    const { search, tag, status } = req.query;
+
+    const where: any = {};
+
+    if (search) {
+      where.title = { contains: search as string, mode: 'insensitive' };
+    }
+
+    if (tag) {
+      where.tag = tag;
+    }
+
+    if (status) {
+      where.status = status;
+    }
+
+    const posts = await prisma.post.findMany({
+      where,
+      select: {
+        id: true,
+        title: true,
+        tag: true,
+        authorId: true,
+        author: { select: { username: true } },
+        price: true,
+        status: true,
+        createdAt: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const postsWithReportCounts = await Promise.all(
+      posts.map(async (post) => {
+        const reportCount = await prisma.report.count({
+          where: {
+            targetType: 'post',
+            targetId: post.id
+          }
+        });
+        return {
+          id: post.id,
+          title: post.title,
+          tag: post.tag,
+          authorId: post.authorId,
+          authorUsername: post.author.username,
+          price: post.price,
+          status: post.status,
+          createdAt: post.createdAt,
+          reportCount
+        };
+      })
+    );
+
+    return res.status(200).json({
+      status: 200,
+      data: postsWithReportCounts
+    });
+  } catch (error) {
+    console.error('GetPosts error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error retrieving posts.'
+    });
+  }
+};
+
+/**
+ * Get single post detail (admin only)
+ * @route GET /admin/posts/:id
+ */
+export const getPostDetail = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const post = await prisma.post.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        tag: true,
+        price: true,
+        images: true,
+        hashtags: true,
+        helpCategoryIds: true,
+        authorId: true,
+        author: { select: safeUserSelect },
+        status: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+
+    if (!post) {
+      return res.status(404).json({
+        status: 404,
+        message: 'Post not found.'
+      });
+    }
+
+    const reports = await prisma.report.findMany({
+      where: {
+        targetType: 'post',
+        targetId: id
+      },
+      include: { reporter: { select: safeUserSelect } },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return res.status(200).json({
+      status: 200,
+      data: { ...post, reports }
+    });
+  } catch (error) {
+    console.error('GetPostDetail error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error retrieving post detail.'
+    });
+  }
+};

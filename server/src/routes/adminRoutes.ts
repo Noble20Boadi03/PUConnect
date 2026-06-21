@@ -5,7 +5,9 @@ import {
   getUsers,
   getUserDetail,
   updateUserStatus,
-  updatePostStatus
+  updatePostStatus,
+  getPosts,
+  getPostDetail
 } from '../controllers/adminController';
 import { protect, requireAdmin } from '../middlewares/authMiddleware';
 
@@ -24,6 +26,8 @@ router.get('/users/:id', getUserDetail);
 router.patch('/users/:id/status', updateUserStatus);
 
 // Posts
+router.get('/posts', getPosts);
+router.get('/posts/:id', getPostDetail);
 router.patch('/posts/:id/status', updatePostStatus);
 
 export default router;
