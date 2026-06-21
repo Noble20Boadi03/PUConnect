@@ -6,9 +6,12 @@ import {
   ScrollView,
   useColorScheme,
   ActivityIndicator,
-  RefreshControl
+  RefreshControl,
+  TouchableOpacity
 } from 'react-native';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useThemeColor } from '../../hooks';
 import { Spacing } from '../../constants';
 import { adminService, AnalyticsData } from '../../services/adminService';
@@ -25,13 +28,16 @@ export default function AnalyticsScreen() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchAnalytics = useCallback(async () => {
     try {
+      setError(null);
       const data = await adminService.getAnalytics();
       setAnalytics(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch analytics:', error);
+      setError(error.message || 'Failed to fetch analytics. Please check your connection and try again.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -79,10 +85,44 @@ export default function AnalyticsScreen() {
     );
   }
 
+  if (error && !refreshing) {
+    return (
+      <View style={[styles.container, { backgroundColor: bg, paddingTop: insets.top }]}>
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: Colors.text }]}>Analytics</Text>
+          <TouchableOpacity 
+            style={[styles.switchButton, { backgroundColor: Colors.primary + '15' }]}
+            onPress={() => router.replace('/(tabs)/market')}
+          >
+            <Ionicons name="apps-outline" size={16} color={Colors.primary} />
+            <Text style={[styles.switchButtonText, { color: Colors.primary }]}>User Module</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={48} color={Colors.error} />
+          <Text style={[styles.errorText, { color: Colors.text }]}>{error}</Text>
+          <TouchableOpacity 
+            style={[styles.retryButton, { backgroundColor: Colors.primary }]}
+            onPress={fetchAnalytics}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: bg, paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: Colors.text }]}>Analytics</Text>
+        <TouchableOpacity 
+          style={[styles.switchButton, { backgroundColor: Colors.primary + '15' }]}
+          onPress={() => router.replace('/(tabs)/market')}
+        >
+          <Ionicons name="apps-outline" size={16} color={Colors.primary} />
+          <Text style={[styles.switchButtonText, { color: Colors.primary }]}>User Module</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -179,10 +219,46 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
+  },
+  switchButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  switchButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+  },
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginVertical: Spacing.md,
+  },
+  retryButton: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: 12,
+  },
+  retryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   scrollView: {
     flex: 1,

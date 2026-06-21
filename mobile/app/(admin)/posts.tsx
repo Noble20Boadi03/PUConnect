@@ -12,6 +12,7 @@ import {
   RefreshControl,
   TextInput
 } from 'react-native';
+import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColor } from '../../hooks';
@@ -53,9 +54,11 @@ export default function PostsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchPosts = useCallback(async () => {
     try {
+      setError(null);
       const params: { search?: string; tag?: string; status?: string } = {};
       if (searchQuery) params.search = searchQuery;
       if (selectedTag !== 'all') params.tag = selectedTag;
@@ -63,8 +66,9 @@ export default function PostsScreen() {
       
       const data = await adminService.getPosts(params);
       setPosts(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch posts:', error);
+      setError(error.message || 'Failed to fetch posts. Please check your connection and try again.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -169,6 +173,13 @@ export default function PostsScreen() {
     <View style={[styles.container, { backgroundColor: bg, paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: Colors.text }]}>Posts</Text>
+        <TouchableOpacity 
+          style={[styles.switchButton, { backgroundColor: Colors.primary + '15' }]}
+          onPress={() => router.replace('/(tabs)/market')}
+        >
+          <Ionicons name="apps-outline" size={16} color={Colors.primary} />
+          <Text style={[styles.switchButtonText, { color: Colors.primary }]}>User Module</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={[styles.searchContainer, { paddingHorizontal: Spacing.lg }]}>
@@ -248,7 +259,20 @@ export default function PostsScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {posts.map((post) => (
+        {error && (
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle-outline" size={48} color={Colors.error} />
+            <Text style={[styles.errorText, { color: Colors.text }]}>{error}</Text>
+            <TouchableOpacity 
+              style={[styles.retryButton, { backgroundColor: Colors.primary }]}
+              onPress={fetchPosts}
+            >
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {!error && posts.map((post) => (
           <GuardedPressable
             key={post.id}
             style={[styles.postCard, { backgroundColor: cardBg }]}
@@ -473,10 +497,25 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
+  },
+  switchButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  switchButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   searchContainer: {
     paddingBottom: Spacing.md,
@@ -555,6 +594,26 @@ const styles = StyleSheet.create({
   },
   emptyStateText: {
     fontSize: 16,
+  },
+  errorContainer: {
+    paddingVertical: Spacing.xl,
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
+    paddingHorizontal: Spacing.xl,
+  },
+  retryButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   modalOverlay: {
     flex: 1,

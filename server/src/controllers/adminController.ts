@@ -142,18 +142,30 @@ export const getUsers = async (req: Request, res: Response) => {
       orderBy: { createdAt: 'desc' }
     });
 
-    // Get report counts for each user
-    const usersWithReportCounts = await Promise.all(
-      users.map(async (user) => {
-        const reportCount = await prisma.report.count({
-          where: {
-            targetType: 'user',
-            targetId: user.id
-          }
-        });
-        return { ...user, reportCount };
-      })
-    );
+    // Get report counts for each user using batched query
+    const userIds = users.map(user => user.id);
+    let reportCountsMap: Record<string, number> = {};
+    
+    if (userIds.length > 0) {
+      const reportCounts = await prisma.report.groupBy({
+        by: ['targetId'],
+        where: {
+          targetType: 'user',
+          targetId: { in: userIds }
+        },
+        _count: true
+      });
+
+      reportCountsMap = reportCounts.reduce((acc, item) => {
+        acc[item.targetId] = item._count;
+        return acc;
+      }, {} as Record<string, number>);
+    }
+
+    const usersWithReportCounts = users.map((user) => ({
+      ...user,
+      reportCount: reportCountsMap[user.id] || 0
+    }));
 
     return res.status(200).json({
       status: 200,
@@ -331,27 +343,36 @@ export const getPosts = async (req: Request, res: Response) => {
       orderBy: { createdAt: 'desc' }
     });
 
-    const postsWithReportCounts = await Promise.all(
-      posts.map(async (post) => {
-        const reportCount = await prisma.report.count({
-          where: {
-            targetType: 'post',
-            targetId: post.id
-          }
-        });
-        return {
-          id: post.id,
-          title: post.title,
-          tag: post.tag,
-          authorId: post.authorId,
-          authorUsername: post.author.username,
-          price: post.price,
-          status: post.status,
-          createdAt: post.createdAt,
-          reportCount
-        };
-      })
-    );
+    const postIds = posts.map(post => post.id);
+    let reportCountsMap: Record<string, number> = {};
+    
+    if (postIds.length > 0) {
+      const reportCounts = await prisma.report.groupBy({
+        by: ['targetId'],
+        where: {
+          targetType: 'post',
+          targetId: { in: postIds }
+        },
+        _count: true
+      });
+
+      reportCountsMap = reportCounts.reduce((acc, item) => {
+        acc[item.targetId] = item._count;
+        return acc;
+      }, {} as Record<string, number>);
+    }
+
+    const postsWithReportCounts = posts.map((post) => ({
+      id: post.id,
+      title: post.title,
+      tag: post.tag,
+      authorId: post.authorId,
+      authorUsername: post.author?.username || 'Deleted User',
+      price: post.price,
+      status: post.status,
+      createdAt: post.createdAt,
+      reportCount: reportCountsMap[post.id] || 0
+    }));
 
     return res.status(200).json({
       status: 200,
@@ -426,47 +447,95 @@ export const getPostDetail = async (req: Request, res: Response) => {
  * Get admin analytics dashboard data
  * @route GET /admin/analytics
  */
-export const getAnalytics = async (req: Request, res: Response) => {
+export const getAnalytics = async (_req: Request, res: Response) => {
   try {
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    // User metrics
-    const totalUsers = await prisma.user.count();
-    const providerCount = await prisma.user.count({ where: { role: 'provider' } });
+    // Run all database queries in parallel using Promise.all
+    const [
+      totalUsers,
+      providerCount,
+      activeUsers7d,
+      activeUsers30d,
+      totalPosts,
+      servicePostCount,
+      requestPostCount,
+      srPending,
+      srActive,
+      srPendingReview,
+      srCompleted,
+      srCancelled,
+      srDeclined,
+      reviews,
+      totalReports,
+      rPending,
+      rReviewed,
+      rDismissed,
+      rActioned,
+      signupsRaw,
+      reportsRaw
+    ] = await Promise.all([
+      prisma.user.count(),
+      prisma.user.count({ where: { role: 'provider' } }),
+      prisma.user.count({ where: { lastLoginAt: { gte: sevenDaysAgo } } }),
+      prisma.user.count({ where: { lastLoginAt: { gte: thirtyDaysAgo } } }),
+      prisma.post.count(),
+      prisma.post.count({ where: { tag: 'Service' } }),
+      prisma.post.count({ where: { tag: 'Request' } }),
+      prisma.serviceRequest.count({ where: { status: 'pending' } }),
+      prisma.serviceRequest.count({ where: { status: 'active' } }),
+      prisma.serviceRequest.count({ where: { status: 'pending_review' } }),
+      prisma.serviceRequest.count({ where: { status: 'completed' } }),
+      prisma.serviceRequest.count({ where: { status: 'cancelled' } }),
+      prisma.serviceRequest.count({ where: { status: 'declined' } }),
+      prisma.review.findMany({ select: { rating: true } }),
+      prisma.report.count(),
+      prisma.report.count({ where: { status: 'pending' } }),
+      prisma.report.count({ where: { status: 'reviewed' } }),
+      prisma.report.count({ where: { status: 'dismissed' } }),
+      prisma.report.count({ where: { status: 'actioned' } }),
+      prisma.$queryRaw`
+        SELECT 
+          DATE_TRUNC('day', "createdAt")::date as date,
+          COUNT(*)::int as count
+        FROM users
+        WHERE "createdAt" >= ${thirtyDaysAgo}
+        GROUP BY date
+        ORDER BY date ASC;
+      ` as unknown as any[],
+      prisma.$queryRaw`
+        SELECT 
+          DATE_TRUNC('day', "createdAt")::date as date,
+          COUNT(*)::int as count
+        FROM reports
+        WHERE "createdAt" >= ${thirtyDaysAgo}
+        GROUP BY date
+        ORDER BY date ASC;
+      ` as unknown as any[]
+    ]);
+
     const nonProviderCount = totalUsers - providerCount;
-    const activeUsers7d = await prisma.user.count({ where: { lastLoginAt: { gte: sevenDaysAgo } } });
-    const activeUsers30d = await prisma.user.count({ where: { lastLoginAt: { gte: thirtyDaysAgo } } });
 
-    // Post metrics
-    const totalPosts = await prisma.post.count();
-    const servicePostCount = await prisma.post.count({ where: { tag: 'Service' } });
-    const requestPostCount = await prisma.post.count({ where: { tag: 'Request' } });
-
-    // Service request metrics
     const serviceRequestsByStatus = {
-      pending: await prisma.serviceRequest.count({ where: { status: 'pending' } }),
-      active: await prisma.serviceRequest.count({ where: { status: 'active' } }),
-      pending_review: await prisma.serviceRequest.count({ where: { status: 'pending_review' } }),
-      completed: await prisma.serviceRequest.count({ where: { status: 'completed' } }),
-      cancelled: await prisma.serviceRequest.count({ where: { status: 'cancelled' } }),
-      declined: await prisma.serviceRequest.count({ where: { status: 'declined' } }),
+      pending: srPending,
+      active: srActive,
+      pending_review: srPendingReview,
+      completed: srCompleted,
+      cancelled: srCancelled,
+      declined: srDeclined,
     };
 
-    // Review metrics
-    const reviews = await prisma.review.findMany({ select: { rating: true } });
     const averageReviewRating = reviews.length > 0 
       ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length 
       : 0;
 
-    // Report metrics
-    const totalReports = await prisma.report.count();
     const reportsByStatus = {
-      pending: await prisma.report.count({ where: { status: 'pending' } }),
-      reviewed: await prisma.report.count({ where: { status: 'reviewed' } }),
-      dismissed: await prisma.report.count({ where: { status: 'dismissed' } }),
-      actioned: await prisma.report.count({ where: { status: 'actioned' } }),
+      pending: rPending,
+      reviewed: rReviewed,
+      dismissed: rDismissed,
+      actioned: rActioned,
     };
 
     // Helper function to fill date gaps
@@ -486,28 +555,6 @@ export const getAnalytics = async (req: Request, res: Response) => {
       }
       return result;
     };
-
-    // Signups last 30 days (raw SQL)
-    const signupsRaw = await prisma.$queryRaw`
-      SELECT 
-        DATE_TRUNC('day', "createdAt")::date as date,
-        COUNT(*)::int as count
-      FROM users
-      WHERE "createdAt" >= ${thirtyDaysAgo}
-      GROUP BY date
-      ORDER BY date ASC;
-    ` as any[];
-
-    // Reports last 30 days (raw SQL)
-    const reportsRaw = await prisma.$queryRaw`
-      SELECT 
-        DATE_TRUNC('day', "createdAt")::date as date,
-        COUNT(*)::int as count
-      FROM reports
-      WHERE "createdAt" >= ${thirtyDaysAgo}
-      GROUP BY date
-      ORDER BY date ASC;
-    ` as any[];
 
     const signupsLast30Days = fillDateGaps(
       signupsRaw.map(r => ({ date: r.date.toISOString().split('T')[0], count: r.count })),

@@ -52,7 +52,9 @@ export const getPosts = async (req: Request, res: Response) => {
     const skip = (pageNumber - 1) * limitNumber;
 
     // Build where clause
-    const where: any = {};
+    const where: any = {
+      status: 'active'
+    };
     
     if (type) {
       // Map "service"/"request" to "Service"/"Request" (case-insensitive)
@@ -106,8 +108,11 @@ export const getPosts = async (req: Request, res: Response) => {
 export const getPostById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const post = await prisma.post.findUnique({
-      where: { id },
+    const post = await prisma.post.findFirst({
+      where: { 
+        id,
+        status: 'active'
+      },
       include: { author: { select: safeUserSelect } },
     });
     if (!post) {

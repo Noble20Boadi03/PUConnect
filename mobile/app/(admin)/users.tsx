@@ -13,6 +13,7 @@ import {
   TextInput,
   Image
 } from 'react-native';
+import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColor } from '../../hooks';
@@ -164,6 +165,13 @@ export default function UsersScreen() {
     <View style={[styles.container, { backgroundColor: bg, paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: Colors.text }]}>Users</Text>
+        <TouchableOpacity 
+          style={[styles.switchButton, { backgroundColor: Colors.primary + '15' }]}
+          onPress={() => router.replace('/(tabs)/market')}
+        >
+          <Ionicons name="apps-outline" size={16} color={Colors.primary} />
+          <Text style={[styles.switchButtonText, { color: Colors.primary }]}>User Module</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={[styles.searchContainer, { paddingHorizontal: Spacing.lg }]}>
@@ -504,10 +512,25 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
+  },
+  switchButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  switchButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   searchContainer: {
     paddingBottom: Spacing.md,
