@@ -453,49 +453,48 @@ export const getAnalytics = async (_req: Request, res: Response) => {
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    // Run all database queries in parallel using Promise.all
+    // Run all database queries in parallel using Promise.all (now 7 total queries!)
     const [
-      totalUsers,
-      providerCount,
-      activeUsers7d,
-      activeUsers30d,
-      totalPosts,
-      servicePostCount,
-      requestPostCount,
-      srPending,
-      srActive,
-      srPendingReview,
-      srCompleted,
-      srCancelled,
-      srDeclined,
-      reviews,
-      totalReports,
-      rPending,
-      rReviewed,
-      rDismissed,
-      rActioned,
+      userMetrics,
+      postMetrics,
+      srMetrics,
+      reviewMetrics,
+      reportMetrics,
       signupsRaw,
       reportsRaw
     ] = await Promise.all([
-      prisma.user.count(),
-      prisma.user.count({ where: { role: 'provider' } }),
-      prisma.user.count({ where: { lastLoginAt: { gte: sevenDaysAgo } } }),
-      prisma.user.count({ where: { lastLoginAt: { gte: thirtyDaysAgo } } }),
-      prisma.post.count(),
-      prisma.post.count({ where: { tag: 'Service' } }),
-      prisma.post.count({ where: { tag: 'Request' } }),
-      prisma.serviceRequest.count({ where: { status: 'pending' } }),
-      prisma.serviceRequest.count({ where: { status: 'active' } }),
-      prisma.serviceRequest.count({ where: { status: 'pending_review' } }),
-      prisma.serviceRequest.count({ where: { status: 'completed' } }),
-      prisma.serviceRequest.count({ where: { status: 'cancelled' } }),
-      prisma.serviceRequest.count({ where: { status: 'declined' } }),
-      prisma.review.findMany({ select: { rating: true } }),
-      prisma.report.count(),
-      prisma.report.count({ where: { status: 'pending' } }),
-      prisma.report.count({ where: { status: 'reviewed' } }),
-      prisma.report.count({ where: { status: 'dismissed' } }),
-      prisma.report.count({ where: { status: 'actioned' } }),
+      // User metrics (1 raw query instead of 4)
+      prisma.$queryRaw`
+        SELECT
+          COUNT(*)::int as "totalUsers",
+          SUM(CASE WHEN "role" = 'provider' THEN 1 ELSE 0 END)::int as "providerCount",
+          SUM(CASE WHEN "lastLoginAt" >= ${sevenDaysAgo} THEN 1 ELSE 0 END)::int as "activeUsers7d",
+          SUM(CASE WHEN "lastLoginAt" >= ${thirtyDaysAgo} THEN 1 ELSE 0 END)::int as "activeUsers30d"
+        FROM users;
+      ` as unknown as any[],
+      // Post metrics (1 groupBy instead of 3)
+      prisma.post.groupBy({
+        by: ['tag'],
+        _count: { tag: true }
+      }),
+      // Service Request metrics (1 groupBy instead of 6)
+      prisma.serviceRequest.groupBy({
+        by: ['status'],
+        _count: { status: true }
+      }),
+      // Review metrics (1 raw query instead of 1 findMany + client-side calc)
+      prisma.$queryRaw`
+        SELECT
+          COUNT(*)::int as "totalReviews",
+          AVG("rating")::float as "averageRating"
+        FROM reviews;
+      ` as unknown as any[],
+      // Report metrics (1 groupBy instead of 5)
+      prisma.report.groupBy({
+        by: ['status'],
+        _count: { status: true }
+      }),
+      // Time-series: 30d signups (raw SQL)
       prisma.$queryRaw`
         SELECT 
           DATE_TRUNC('day', "createdAt")::date as date,
@@ -505,6 +504,7 @@ export const getAnalytics = async (_req: Request, res: Response) => {
         GROUP BY date
         ORDER BY date ASC;
       ` as unknown as any[],
+      // Time-series: 30d reports (raw SQL)
       prisma.$queryRaw`
         SELECT 
           DATE_TRUNC('day', "createdAt")::date as date,
@@ -516,26 +516,39 @@ export const getAnalytics = async (_req: Request, res: Response) => {
       ` as unknown as any[]
     ]);
 
+    // Extract user metrics
+    const { totalUsers, providerCount, activeUsers7d, activeUsers30d } = userMetrics[0];
     const nonProviderCount = totalUsers - providerCount;
 
+    // Extract post metrics
+    const postMetricsMap = new Map(postMetrics.map(p => [p.tag, p._count.tag]));
+    const totalPosts = postMetrics.reduce((sum, p) => sum + p._count.tag, 0);
+    const servicePostCount = postMetricsMap.get('Service') || 0;
+    const requestPostCount = postMetricsMap.get('Request') || 0;
+
+    // Extract service request metrics
+    const srMetricsMap = new Map(srMetrics.map(s => [s.status, s._count.status]));
     const serviceRequestsByStatus = {
-      pending: srPending,
-      active: srActive,
-      pending_review: srPendingReview,
-      completed: srCompleted,
-      cancelled: srCancelled,
-      declined: srDeclined,
+      pending: srMetricsMap.get('pending') || 0,
+      active: srMetricsMap.get('active') || 0,
+      pending_review: srMetricsMap.get('pending_review') || 0,
+      completed: srMetricsMap.get('completed') || 0,
+      cancelled: srMetricsMap.get('cancelled') || 0,
+      declined: srMetricsMap.get('declined') || 0,
     };
 
-    const averageReviewRating = reviews.length > 0 
-      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length 
-      : 0;
+    // Extract review metrics
+    const { totalReviews, averageRating } = reviewMetrics[0];
+    const averageReviewRating = totalReviews > 0 ? (averageRating || 0) : 0;
 
+    // Extract report metrics
+    const reportMetricsMap = new Map(reportMetrics.map(r => [r.status, r._count.status]));
+    const totalReports = reportMetrics.reduce((sum, r) => sum + r._count.status, 0);
     const reportsByStatus = {
-      pending: rPending,
-      reviewed: rReviewed,
-      dismissed: rDismissed,
-      actioned: rActioned,
+      pending: reportMetricsMap.get('pending') || 0,
+      reviewed: reportMetricsMap.get('reviewed') || 0,
+      dismissed: reportMetricsMap.get('dismissed') || 0,
+      actioned: reportMetricsMap.get('actioned') || 0,
     };
 
     // Helper function to fill date gaps
