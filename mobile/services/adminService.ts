@@ -69,6 +69,35 @@ export interface AdminPostDetail extends Omit<AdminPost, 'authorUsername' | 'rep
   reports: Report[];
 }
 
+export interface AnalyticsData {
+  totalUsers: number;
+  providerCount: number;
+  nonProviderCount: number;
+  activeUsers7d: number;
+  activeUsers30d: number;
+  totalPosts: number;
+  servicePostCount: number;
+  requestPostCount: number;
+  serviceRequestsByStatus: {
+    pending: number;
+    active: number;
+    pending_review: number;
+    completed: number;
+    cancelled: number;
+    declined: number;
+  };
+  averageReviewRating: number;
+  totalReports: number;
+  reportsByStatus: {
+    pending: number;
+    reviewed: number;
+    dismissed: number;
+    actioned: number;
+  };
+  signupsLast30Days: { date: string; count: number }[];
+  reportsLast30Days: { date: string; count: number }[];
+}
+
 export const adminService = {
   getReports: async (status?: string): Promise<Report[]> => {
     const params = status ? { status } : {};
@@ -108,6 +137,11 @@ export const adminService = {
 
   updatePostStatus: async (id: string, status: string): Promise<ReportTargetPost> => {
     const response = await apiClient.patch(`/admin/posts/${id}/status`, { status });
+    return response.data.data;
+  },
+
+  getAnalytics: async (): Promise<AnalyticsData> => {
+    const response = await apiClient.get('/admin/analytics');
     return response.data.data;
   },
 };

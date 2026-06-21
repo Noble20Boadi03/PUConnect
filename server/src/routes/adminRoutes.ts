@@ -7,7 +7,8 @@ import {
   updateUserStatus,
   updatePostStatus,
   getPosts,
-  getPostDetail
+  getPostDetail,
+  getAnalytics
 } from '../controllers/adminController';
 import { protect, requireAdmin } from '../middlewares/authMiddleware';
 
@@ -15,6 +16,9 @@ const router = express.Router();
 
 // All admin routes require auth and admin role
 router.use(protect, requireAdmin);
+
+// Analytics
+router.get('/analytics', getAnalytics);
 
 // Reports
 router.get('/reports', getReports);

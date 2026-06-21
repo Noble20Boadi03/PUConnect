@@ -178,7 +178,7 @@ export const login = async (req: Request, res: Response) => {
 
     // 2. Find user in PostgreSQL Supabase database by email or username
     console.log('[TIMESTAMP] 6a. Before prisma.user.findFirst:', new Date().toISOString(), 'identifier:', identifier);
-    const user = await prisma.user.findFirst({
+    let user = await prisma.user.findFirst({
       where: {
         OR: [
           { email: identifier.toLowerCase() },
@@ -218,6 +218,12 @@ export const login = async (req: Request, res: Response) => {
         message: 'Invalid email or password credentials.',
       });
     }
+
+    // 3a. Update lastLoginAt
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
 
     // 4. Generate token
     console.log('[TIMESTAMP] 8a. Before generateToken:', new Date().toISOString());

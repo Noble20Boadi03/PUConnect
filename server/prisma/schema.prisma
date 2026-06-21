@@ -114,6 +114,7 @@ model User {
   serviceIds    String[]
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
+  lastLoginAt   DateTime?
   otpCode       String?
   otpExpires    DateTime?
   pushToken     String?            @map("push_token")
