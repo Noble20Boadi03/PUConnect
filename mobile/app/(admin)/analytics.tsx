@@ -12,15 +12,16 @@ import {
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useThemeColor } from '../../hooks';
+import { useAdminThemeColor, useTabBarHeight } from '../../hooks';
 import { Spacing } from '../../constants';
 import { adminService, AnalyticsData } from '../../services/adminService';
 
 export default function AnalyticsScreen() {
   const colorScheme = useColorScheme();
-  const Colors = useThemeColor();
+  const Colors = useAdminThemeColor();
   const isDark = colorScheme === 'dark';
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useTabBarHeight();
 
   const bg = isDark ? '#09090B' : '#F4F4F5';
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
@@ -129,6 +130,7 @@ export default function AnalyticsScreen() {
 
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={{ paddingBottom: tabBarHeight + Spacing.md }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }

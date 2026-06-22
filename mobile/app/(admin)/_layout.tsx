@@ -3,12 +3,12 @@ import { Tabs } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useThemeColor } from '../../hooks';
+import { useAdminThemeColor } from '../../hooks';
 import { TAB_BAR_BASE_HEIGHT } from '../../constants';
 
 export default function AdminTabsLayout() {
   const colorScheme = useColorScheme();
-  const Colors = useThemeColor();
+  const Colors = useAdminThemeColor();
   const isDark = colorScheme === 'dark';
   const insets = useSafeAreaInsets();
 

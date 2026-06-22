@@ -16,7 +16,7 @@ import {
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useThemeColor } from '../../hooks';
+import { useAdminThemeColor, useTabBarHeight } from '../../hooks';
 import { Spacing } from '../../constants';
 import { GuardedPressable } from '../../components/GuardedPressable';
 import { adminService, AdminPost, AdminPostDetail } from '../../services/adminService';
@@ -36,9 +36,10 @@ const STATUS_FILTERS: ('all' | 'active' | 'hidden_by_owner' | 'removed_by_admin'
 
 export default function PostsScreen() {
   const colorScheme = useColorScheme();
-  const Colors = useThemeColor();
+  const Colors = useAdminThemeColor();
   const isDark = colorScheme === 'dark';
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useTabBarHeight();
 
   const bg = isDark ? '#09090B' : '#F4F4F5';
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
@@ -328,6 +329,7 @@ export default function PostsScreen() {
 
       <FlatList
         style={styles.postsList}
+        contentContainerStyle={{ paddingBottom: tabBarHeight + Spacing.md }}
         data={filteredPosts}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}

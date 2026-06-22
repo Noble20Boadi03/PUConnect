@@ -17,7 +17,7 @@ import {
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useThemeColor } from '../../hooks';
+import { useAdminThemeColor, useTabBarHeight } from '../../hooks';
 import { Spacing } from '../../constants';
 import { GuardedPressable } from '../../components/GuardedPressable';
 import { adminService, AdminUser, AdminUserDetail } from '../../services/adminService';
@@ -38,9 +38,10 @@ const STATUS_FILTERS: ('all' | 'active' | 'suspended' | 'banned')[] = [
 
 export default function UsersScreen() {
   const colorScheme = useColorScheme();
-  const Colors = useThemeColor();
+  const Colors = useAdminThemeColor();
   const isDark = colorScheme === 'dark';
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useTabBarHeight();
 
   const bg = isDark ? '#09090B' : '#F4F4F5';
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
@@ -326,6 +327,7 @@ export default function UsersScreen() {
 
       <FlatList
         style={styles.usersList}
+        contentContainerStyle={{ paddingBottom: tabBarHeight + Spacing.md }}
         data={filteredUsers}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}

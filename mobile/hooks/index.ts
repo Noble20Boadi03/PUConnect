@@ -19,3 +19,5 @@ export * from './useMarket';
 export * from './useNotifications';
 export * from './useServiceRequests';
 export * from './useProviderReviews';
+export * from './useAdminThemeColor';
+
