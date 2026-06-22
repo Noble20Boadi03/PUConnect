@@ -7,9 +7,9 @@ import type { PostPrice } from '../types';
 export function formatPostPrice(price: PostPrice): string {
   switch (price.kind) {
     case 'fixed':
-      return `$${price.amount}`;
+      return `₵${price.amount}`;
     case 'range':
-      return `$${price.min} - $${price.max}`;
+      return `₵${price.min} - ₵${price.max}`;
     case 'negotiated':
       return 'On Request';
   }

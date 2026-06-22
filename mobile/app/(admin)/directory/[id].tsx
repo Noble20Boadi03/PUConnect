@@ -66,6 +66,17 @@ export default function UserDetailScreen() {
     }
   };
 
+  const setTier = async (tier: string | null) => {
+    if (!id) return;
+    try {
+      await adminService.updateAdminTier(id, tier);
+      Alert.alert('Updated', 'Admin tier updated successfully.');
+      load();
+    } catch {
+      Alert.alert('Error', 'Could not update admin tier.');
+    }
+  };
+
   if (loading) return <ActivityIndicator style={{ flex: 1 }} color={theme.primary} />;
   if (!detail) return <Text style={{ padding: 20 }}>User not found</Text>;
 
@@ -109,6 +120,29 @@ export default function UserDetailScreen() {
                   <SmallBtn label="Suspend" onPress={() => setStatus('suspended')} />
                   <SmallBtn label="Ban" onPress={() => setStatus('banned')} danger />
                 </View>
+              </>
+            ) : null}
+
+            {user?.adminTier === 'super_admin' ? (
+              <>
+                <Text style={[styles.section, { color: theme.text }]}>Admin Role Assignment</Text>
+                {user.id === detail.id ? (
+                  <Text style={{ color: theme.muted, fontSize: 13, marginBottom: Spacing.sm }}>
+                    You cannot change your own admin tier to prevent accidental lockouts.
+                  </Text>
+                ) : (
+                  <View style={styles.row}>
+                    <SmallBtn label="Super Admin" onPress={() => setTier('super_admin')} />
+                    <SmallBtn label="Moderator" onPress={() => setTier('moderator')} />
+                    <SmallBtn label="Support" onPress={() => setTier('support')} />
+                    <SmallBtn label="Remove Admin" onPress={() => setTier(null)} danger />
+                  </View>
+                )}
+                {detail.adminTier && (
+                  <Text style={{ color: theme.primary, marginTop: 8, fontWeight: '600' }}>
+                    Current Tier: {detail.adminTier}
+                  </Text>
+                )}
               </>
             ) : null}
           </>

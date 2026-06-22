@@ -17,7 +17,7 @@ import { TabHeader } from '../TabHeader';
 import type { MarketFilter } from '../../types';
 
 const FILTERS: { key: MarketFilter; label: string }[] = [
-  { key: 'all', label: 'All' },
+  { key: 'all', label: 'Home' },
   { key: 'services', label: 'Services' },
   { key: 'requests', label: 'Requests' },
 ];

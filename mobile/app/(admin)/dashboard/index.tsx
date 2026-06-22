@@ -101,7 +101,7 @@ export default function AdminDashboardScreen() {
           <QuickAction label="Pending Reports" count={dashboard?.pendingReports ?? 0} icon="flag-outline" colors={theme} onPress={() => router.push('/(admin)/moderation/triage' as any)} />
           <QuickAction label="Provider Queue" count={dashboard?.pendingProviders ?? 0} icon="person-add-outline" colors={theme} onPress={() => router.push('/(admin)/directory/providers' as any)} />
           <QuickAction label="Disputes" count={dashboard?.pendingDisputes ?? 0} icon="git-compare-outline" colors={theme} onPress={() => router.push('/(admin)/moderation/disputes' as any)} />
-          <QuickAction label="Open Feedback" count={dashboard?.openFeedback ?? 0} icon="chatbox-ellipses-outline" colors={theme} onPress={() => router.push('/(admin)/moderation' as any)} />
+          <QuickAction label="Open Feedback" count={dashboard?.openFeedback ?? 0} icon="chatbox-ellipses-outline" colors={theme} onPress={() => router.push('/(admin)/dashboard/feedback' as any)} />
         </View>
 
         {analytics ? (

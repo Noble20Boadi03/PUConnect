@@ -8,6 +8,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   RefreshControlProps,
+  TextInput,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
@@ -57,6 +58,13 @@ export interface PostDetailViewProps {
   refreshControl?: React.ReactElement<RefreshControlProps>;
   activeServiceRequest?: any;
   onResumeService?: (serviceRequestId: string) => void;
+  adminMode?: boolean;
+  adminActions?: React.ReactNode;
+  adminIsEditing?: boolean;
+  adminEditedTitle?: string;
+  adminEditedDescription?: string;
+  onAdminEditTitle?: (text: string) => void;
+  onAdminEditDescription?: (text: string) => void;
 }
 
 export const PostDetailView: React.FC<PostDetailViewProps> = ({
@@ -82,6 +90,13 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
   refreshControl,
   activeServiceRequest,
   onResumeService,
+  adminMode = false,
+  adminActions,
+  adminIsEditing = false,
+  adminEditedTitle,
+  adminEditedDescription,
+  onAdminEditTitle,
+  onAdminEditDescription,
 }) => {
   const Colors = useThemeColor();
   const insets = useSafeAreaInsets();
@@ -238,7 +253,16 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
             </View>
           </View>
 
-          <Text style={[styles.title, { color: Colors.text }]}>{post.title}</Text>
+          {adminIsEditing ? (
+            <TextInput
+              style={[styles.title, styles.editInput, { color: Colors.text, borderColor: divider }]}
+              value={adminEditedTitle}
+              onChangeText={onAdminEditTitle}
+              multiline
+            />
+          ) : (
+            <Text style={[styles.title, { color: Colors.text }]}>{post.title}</Text>
+          )}
 
           {isService && exploreCategory ? (
             <View style={[styles.categorySection, { backgroundColor: subtleBg }]}>
@@ -283,7 +307,16 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
           <View style={[styles.divider, { backgroundColor: divider }]} />
 
           <Text style={[styles.sectionTitle, { color: Colors.text }]}>{copy.aboutTitle}</Text>
-          <Text style={[styles.body, { color: Colors.icon }]}>{post.fullDescription}</Text>
+          {adminIsEditing ? (
+            <TextInput
+              style={[styles.body, styles.editInput, { color: Colors.icon, borderColor: divider }]}
+              value={adminEditedDescription}
+              onChangeText={onAdminEditDescription}
+              multiline
+            />
+          ) : (
+            <Text style={[styles.body, { color: Colors.icon }]}>{post.fullDescription}</Text>
+          )}
 
           <View style={[styles.divider, { backgroundColor: divider }]} />
 
@@ -299,7 +332,7 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
             ))}
           </View>
 
-          {!isOwnPost && (
+          {!isOwnPost && !adminMode && (
             <GuardedPressable
               style={styles.reportPostRow}
               onPress={() => setPostReportSheetVisible(true)}
@@ -374,7 +407,7 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
                 ) : null}
               </GuardedPressable>
 
-              {!isOwnPost && post.author.id && (
+              {!isOwnPost && !adminMode && post.author.id && (
                 <GuardedPressable
                   style={styles.reportUserRow}
                   onPress={() => setUserReportSheetVisible(true)}
@@ -443,7 +476,11 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({
           },
         ]}
       >
-        {ownerView ? (
+        {adminMode ? (
+          <View style={styles.actionContainer}>
+            {adminActions}
+          </View>
+        ) : ownerView ? (
           <View style={styles.ownerActions}>
             <Button
               title="Edit Post"
@@ -583,6 +620,12 @@ const styles = StyleSheet.create({
     letterSpacing: -0.4,
     lineHeight: 30,
     marginBottom: Spacing.md,
+  },
+  editInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: Spacing.sm,
+    backgroundColor: 'rgba(0,0,0,0.03)',
   },
   categorySection: {
     padding: Spacing.md,

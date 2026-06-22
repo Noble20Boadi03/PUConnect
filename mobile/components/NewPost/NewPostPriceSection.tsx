@@ -71,7 +71,7 @@ export const NewPostPriceSection: React.FC<NewPostPriceSectionProps> = ({
 
       {priceKind === 'fixed' ? (
         <EditInfoField
-          label={postType === 'Service' ? 'Price (USD)' : 'Budget (USD)'}
+          label={postType === 'Service' ? 'Price (₵)' : 'Budget (₵)'}
           screenBg={screenBg}
           borderColor={borderColor}
           focusBorderColor={primaryColor}

@@ -232,6 +232,10 @@ export const adminService = {
     return response.data.data;
   },
 
+  updateAdminTier: async (id: string, adminTier: string | null): Promise<void> => {
+    await apiClient.patch(`/admin/users/${id}/tier`, { adminTier });
+  },
+
   warnUser: async (id: string, message: string): Promise<void> => {
     await apiClient.post(`/admin/users/${id}/warn`, { message });
   },
@@ -262,6 +266,10 @@ export const adminService = {
   updatePostStatus: async (id: string, status: string): Promise<ReportTargetPost> => {
     const response = await apiClient.patch(`/admin/posts/${id}/status`, { status });
     return response.data.data;
+  },
+
+  updatePostContent: async (id: string, data: { title?: string; description?: string }): Promise<void> => {
+    await apiClient.patch(`/admin/posts/${id}/content`, data);
   },
 
   bulkUpdatePostStatus: async (ids: string[], status: string): Promise<{ count: number }> => {

@@ -54,9 +54,9 @@ const SERVICE_BODY_HEIGHT =
   FOOTER_BORDER_WIDTH +
   FOOTER_CONTENT_HEIGHT;
 
-// Total card heights (both service and request are now the same height: 30% smaller than original service card height)
-const CARD_TOTAL_HEIGHT_STACK = (THUMBNAIL_HEIGHT_STACK + SERVICE_BODY_HEIGHT) * 0.7;
-const CARD_TOTAL_HEIGHT_CAROUSEL = (THUMBNAIL_HEIGHT_CAROUSEL + SERVICE_BODY_HEIGHT) * 0.7;
+// Total card heights
+const CARD_TOTAL_HEIGHT_STACK = THUMBNAIL_HEIGHT_STACK + SERVICE_BODY_HEIGHT;
+const CARD_TOTAL_HEIGHT_CAROUSEL = THUMBNAIL_HEIGHT_CAROUSEL + SERVICE_BODY_HEIGHT;
 
 const FeaturedPostCardComponent: React.FC<FeaturedPostCardProps> = ({
   item,

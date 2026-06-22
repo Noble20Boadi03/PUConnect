@@ -104,9 +104,9 @@ export function mapDbPostToChatPostContext(post: DbPost): ChatPostContext {
   const price = parsePostPrice(post.price);
   let priceLabel = '';
   if (price.kind === 'fixed') {
-    priceLabel = `$${price.amount}`;
+    priceLabel = `₵${price.amount}`;
   } else if (price.kind === 'range') {
-    priceLabel = `$${price.min}-$${price.max}`;
+    priceLabel = `₵${price.min}-₵${price.max}`;
   }
   
   return {

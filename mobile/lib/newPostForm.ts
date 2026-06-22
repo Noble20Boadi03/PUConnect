@@ -12,9 +12,9 @@ export function getPriceSectionTitle(postType: NewPostType): string {
 }
 
 export const NEW_POST_PRICE_OPTIONS: { kind: NewPostPriceKind; label: string; hint: string }[] = [
-  { kind: 'fixed', label: 'Fixed', hint: 'Single price (e.g. $50)' },
+  { kind: 'fixed', label: 'Fixed', hint: 'Single price (e.g. ₵50)' },
   { kind: 'negotiated', label: 'On request', hint: 'Shown as “On Request” on cards' },
-  { kind: 'range', label: 'Range', hint: 'Minimum and maximum (e.g. $20 – $30)' },
+  { kind: 'range', label: 'Range', hint: 'Minimum and maximum (e.g. ₵20 – ₵30)' },
 ];
 
 export interface NewPostFormValidation {
