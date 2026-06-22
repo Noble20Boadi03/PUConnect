@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, FlatList, useColorScheme, TouchableOpacity, Alert,
   RefreshControl, ActivityIndicator, Image,
 } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { useAdminThemeColor, useTabBarHeight } from '../../../hooks';
 import { Spacing } from '../../../constants';
 import { AdminScreenHeader } from '../../../components/Admin';

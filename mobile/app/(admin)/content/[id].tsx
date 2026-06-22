@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, useColorScheme, TouchableOpacity, Alert, ActivityIndicator,
 } from 'react-native';
-import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useAdminThemeColor, useTabBarHeight } from '../../../hooks';
 import { Spacing } from '../../../constants';
 import { AdminScreenHeader, AdminStatusBadge } from '../../../components/Admin';

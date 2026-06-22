@@ -3,10 +3,10 @@ import {
   View, Text, StyleSheet, ScrollView, useColorScheme, TouchableOpacity, Alert, ActivityIndicator,
 } from 'react-native';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { useAdminThemeColor, useTabBarHeight } from '../../../hooks';
-import { Spacing } from '../../../constants';
-import { AdminScreenHeader } from '../../../components/Admin';
-import { adminService, DisputeDetail } from '../../../services/adminService';
+import { useAdminThemeColor, useTabBarHeight } from '../../../../hooks';
+import { Spacing } from '../../../../constants';
+import { AdminScreenHeader } from '../../../../components/Admin';
+import { adminService, DisputeDetail } from '../../../../services/adminService';
 
 export default function DisputeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
