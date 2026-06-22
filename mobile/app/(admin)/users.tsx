@@ -11,7 +11,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   TextInput,
-  Image
+  Image,
+  FlatList
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -56,27 +57,40 @@ export default function UsersScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  const fetchUsers = useCallback(async () => {
+  const fetchUsers = useCallback(async (page: number = 1, isRefresh: boolean = false) => {
     try {
       const params: { search?: string; role?: string; status?: string } = {};
       if (searchQuery) params.search = searchQuery;
       if (selectedRole !== 'all') params.role = selectedRole;
       if (selectedStatus !== 'all') params.status = selectedStatus;
       
-      const data = await adminService.getUsers(params);
-      setUsers(data);
+      const response = await adminService.getUsers(params, page);
+      if (page === 1) {
+        setUsers(response.data);
+      } else {
+        setUsers(prev => [...prev, ...response.data]);
+      }
+      setTotalPages(response.pagination.totalPages);
+      setHasMore(page < response.pagination.totalPages);
+      setCurrentPage(page);
     } catch (error) {
       console.error('Failed to fetch users:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setLoadingMore(false);
     }
   }, [searchQuery, selectedRole, selectedStatus]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchUsers();
+      setCurrentPage(1);
+      fetchUsers(1, true);
     }, 300);
 
     return () => clearTimeout(timeoutId);
@@ -84,8 +98,16 @@ export default function UsersScreen() {
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchUsers();
+    setCurrentPage(1);
+    fetchUsers(1, true);
   }, [fetchUsers]);
+
+  const loadMore = useCallback(() => {
+    if (hasMore && !loadingMore) {
+      setLoadingMore(true);
+      fetchUsers(currentPage + 1);
+    }
+  }, [hasMore, loadingMore, currentPage, fetchUsers]);
 
   const handleUserPress = async (user: AdminUser) => {
     try {
@@ -109,7 +131,7 @@ export default function UsersScreen() {
     try {
       setActionLoading(true);
       await adminService.updateUserStatus(selectedUser.id, status);
-      await fetchUsers();
+      await fetchUsers(1, true);
       const updatedDetail = await adminService.getUserDetail(selectedUser.id);
       setSelectedUser(updatedDetail);
     } catch (error) {
@@ -118,6 +140,54 @@ export default function UsersScreen() {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const renderItem = ({ item }: { item: AdminUser }) => (
+    <GuardedPressable
+      style={[styles.userCard, { backgroundColor: cardBg }]}
+      onPress={() => handleUserPress(item)}
+      activeOpacity={0.85}
+    >
+      <View style={styles.userHeader}>
+        {item.avatarUrl ? (
+          <Image source={{ uri: item.avatarUrl }} style={styles.avatar} />
+        ) : (
+          <View style={[styles.avatar, { backgroundColor: Colors.primary + '20' }]}>
+            <Ionicons name="person-outline" size={24} color={Colors.primary} />
+          </View>
+        )}
+        <View style={styles.userInfo}>
+          <Text style={[styles.userName, { color: Colors.text }]}>
+            {item.name}
+          </Text>
+          <Text style={[styles.userUsername, { color: Colors.icon }]}>
+            @{item.username}
+          </Text>
+          <View style={styles.badgesContainer}>
+            <View style={[styles.badge, { backgroundColor: getRoleColor(item.role, isDark) }]}>
+              <Text style={styles.badgeText}>{item.role}</Text>
+            </View>
+            <View style={[styles.badge, { backgroundColor: getStatusColor(item.status, isDark) }]}>
+              <Text style={styles.badgeText}>{item.status}</Text>
+            </View>
+            {item.reportCount > 0 && (
+              <View style={[styles.badge, { backgroundColor: isDark ? '#EF444430' : '#EF444420' }]}>
+                <Text style={styles.badgeText}>{item.reportCount} reports</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </View>
+    </GuardedPressable>
+  );
+
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color={Colors.primary} />
+      </View>
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -245,60 +315,25 @@ export default function UsersScreen() {
         ))}
       </ScrollView>
 
-      <ScrollView
+      <FlatList
         style={styles.usersList}
+        data={users}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-      >
-        {users.map((user) => (
-          <GuardedPressable
-            key={user.id}
-            style={[styles.userCard, { backgroundColor: cardBg }]}
-            onPress={() => handleUserPress(user)}
-            activeOpacity={0.85}
-          >
-            <View style={styles.userHeader}>
-              {user.avatarUrl ? (
-                <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
-              ) : (
-                <View style={[styles.avatar, { backgroundColor: Colors.primary + '20' }]}>
-                  <Ionicons name="person-outline" size={24} color={Colors.primary} />
-                </View>
-              )}
-              <View style={styles.userInfo}>
-                <Text style={[styles.userName, { color: Colors.text }]}>
-                  {user.name}
-                </Text>
-                <Text style={[styles.userUsername, { color: Colors.icon }]}>
-                  @{user.username}
-                </Text>
-                <View style={styles.badgesContainer}>
-                  <View style={[styles.badge, { backgroundColor: getRoleColor(user.role, isDark) }]}>
-                    <Text style={styles.badgeText}>{user.role}</Text>
-                  </View>
-                  <View style={[styles.badge, { backgroundColor: getStatusColor(user.status, isDark) }]}>
-                    <Text style={styles.badgeText}>{user.status}</Text>
-                  </View>
-                  {user.reportCount > 0 && (
-                    <View style={[styles.badge, { backgroundColor: isDark ? '#EF444430' : '#EF444420' }]}>
-                      <Text style={styles.badgeText}>{user.reportCount} reports</Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-            </View>
-          </GuardedPressable>
-        ))}
-
-        {users.length === 0 && (
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.2}
+        ListFooterComponent={renderFooter}
+        ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={[styles.emptyStateText, { color: Colors.icon }]}>
               No users found
             </Text>
           </View>
-        )}
-      </ScrollView>
+        }
+      />
 
       <Modal
         visible={!!selectedUser}
@@ -508,6 +543,10 @@ const getReportStatusColor = (status: string, isDark: boolean) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  footerLoader: {
+    paddingVertical: Spacing.xl,
+    alignItems: 'center',
   },
   header: {
     paddingHorizontal: Spacing.lg,

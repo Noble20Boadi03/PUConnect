@@ -10,7 +10,8 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
-  TextInput
+  TextInput,
+  FlatList
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -55,8 +56,12 @@ export default function PostsScreen() {
   const [actionLoading, setActionLoading] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  const fetchPosts = useCallback(async () => {
+  const fetchPosts = useCallback(async (page: number = 1, isRefresh: boolean = false) => {
     try {
       setError(null);
       const params: { search?: string; tag?: string; status?: string } = {};
@@ -64,20 +69,29 @@ export default function PostsScreen() {
       if (selectedTag !== 'all') params.tag = selectedTag;
       if (selectedStatus !== 'all') params.status = selectedStatus;
       
-      const data = await adminService.getPosts(params);
-      setPosts(data);
+      const response = await adminService.getPosts(params, page);
+      if (page === 1) {
+        setPosts(response.data);
+      } else {
+        setPosts(prev => [...prev, ...response.data]);
+      }
+      setTotalPages(response.pagination.totalPages);
+      setHasMore(page < response.pagination.totalPages);
+      setCurrentPage(page);
     } catch (error: any) {
       console.error('Failed to fetch posts:', error);
       setError(error.message || 'Failed to fetch posts. Please check your connection and try again.');
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setLoadingMore(false);
     }
   }, [searchQuery, selectedTag, selectedStatus]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchPosts();
+      setCurrentPage(1);
+      fetchPosts(1, true);
     }, 300);
 
     return () => clearTimeout(timeoutId);
@@ -85,8 +99,16 @@ export default function PostsScreen() {
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchPosts();
+    setCurrentPage(1);
+    fetchPosts(1, true);
   }, [fetchPosts]);
+
+  const loadMore = useCallback(() => {
+    if (hasMore && !loadingMore) {
+      setLoadingMore(true);
+      fetchPosts(currentPage + 1);
+    }
+  }, [hasMore, loadingMore, currentPage, fetchPosts]);
 
   const handlePostPress = async (post: AdminPost) => {
     try {
@@ -110,7 +132,7 @@ export default function PostsScreen() {
     try {
       setActionLoading(true);
       await adminService.updatePostStatus(selectedPost.id, status);
-      await fetchPosts();
+      await fetchPosts(1, true);
       const updatedDetail = await adminService.getPostDetail(selectedPost.id);
       setSelectedPost(updatedDetail);
     } catch (error) {
@@ -119,6 +141,49 @@ export default function PostsScreen() {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const renderItem = ({ item }: { item: AdminPost }) => (
+    <GuardedPressable
+      style={[styles.postCard, { backgroundColor: cardBg }]}
+      onPress={() => handlePostPress(item)}
+      activeOpacity={0.85}
+    >
+      <View style={styles.postHeader}>
+        <View style={styles.postInfo}>
+          <Text style={[styles.postTitle, { color: Colors.text }]} numberOfLines={2}>
+            {item.title}
+          </Text>
+          <View style={styles.badgesContainer}>
+            <View style={[styles.badge, { backgroundColor: getTagColor(item.tag, isDark) }]}>
+              <Text style={styles.badgeText}>{item.tag}</Text>
+            </View>
+            <View style={[styles.badge, { backgroundColor: getStatusColor(item.status, isDark) }]}>
+              <Text style={styles.badgeText}>
+                {item.status.replace('_', ' ')}
+              </Text>
+            </View>
+            {item.reportCount > 0 && (
+              <View style={[styles.badge, { backgroundColor: isDark ? '#EF444430' : '#EF444420' }]}>
+                <Text style={styles.badgeText}>{item.reportCount} reports</Text>
+              </View>
+            )}
+          </View>
+          <Text style={[styles.postMeta, { color: Colors.icon }]}>
+            By @{item.authorUsername} • {formatPrice(item.price)} • {formatDate(item.createdAt)}
+          </Text>
+        </View>
+      </View>
+    </GuardedPressable>
+  );
+
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color={Colors.primary} />
+      </View>
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -253,68 +318,38 @@ export default function PostsScreen() {
         ))}
       </ScrollView>
 
-      <ScrollView
+      <FlatList
         style={styles.postsList}
+        data={posts}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-      >
-        {error && (
-          <View style={styles.errorContainer}>
-            <Ionicons name="alert-circle-outline" size={48} color={Colors.error} />
-            <Text style={[styles.errorText, { color: Colors.text }]}>{error}</Text>
-            <TouchableOpacity 
-              style={[styles.retryButton, { backgroundColor: Colors.primary }]}
-              onPress={fetchPosts}
-            >
-              <Text style={styles.retryButtonText}>Retry</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {!error && posts.map((post) => (
-          <GuardedPressable
-            key={post.id}
-            style={[styles.postCard, { backgroundColor: cardBg }]}
-            onPress={() => handlePostPress(post)}
-            activeOpacity={0.85}
-          >
-            <View style={styles.postHeader}>
-              <View style={styles.postInfo}>
-                <Text style={[styles.postTitle, { color: Colors.text }]} numberOfLines={2}>
-                  {post.title}
-                </Text>
-                <View style={styles.badgesContainer}>
-                  <View style={[styles.badge, { backgroundColor: getTagColor(post.tag, isDark) }]}>
-                    <Text style={styles.badgeText}>{post.tag}</Text>
-                  </View>
-                  <View style={[styles.badge, { backgroundColor: getStatusColor(post.status, isDark) }]}>
-                    <Text style={styles.badgeText}>
-                      {post.status.replace('_', ' ')}
-                    </Text>
-                  </View>
-                  {post.reportCount > 0 && (
-                    <View style={[styles.badge, { backgroundColor: isDark ? '#EF444430' : '#EF444420' }]}>
-                      <Text style={styles.badgeText}>{post.reportCount} reports</Text>
-                    </View>
-                  )}
-                </View>
-                <Text style={[styles.postMeta, { color: Colors.icon }]}>
-                  By @{post.authorUsername} • {formatPrice(post.price)} • {formatDate(post.createdAt)}
-                </Text>
-              </View>
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.2}
+        ListFooterComponent={renderFooter}
+        ListEmptyComponent={
+          error ? (
+            <View style={styles.errorContainer}>
+              <Ionicons name="alert-circle-outline" size={48} color={Colors.error} />
+              <Text style={[styles.errorText, { color: Colors.text }]}>{error}</Text>
+              <TouchableOpacity 
+                style={[styles.retryButton, { backgroundColor: Colors.primary }]}
+                onPress={() => fetchPosts(1, true)}
+              >
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </TouchableOpacity>
             </View>
-          </GuardedPressable>
-        ))}
-
-        {posts.length === 0 && (
-          <View style={styles.emptyState}>
-            <Text style={[styles.emptyStateText, { color: Colors.icon }]}>
-              No posts found
-            </Text>
-          </View>
-        )}
-      </ScrollView>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={[styles.emptyStateText, { color: Colors.icon }]}>
+                No posts found
+              </Text>
+            </View>
+          )
+        }
+      />
 
       <Modal
         visible={!!selectedPost}
@@ -493,6 +528,10 @@ const getReportStatusColor = (status: string, isDark: boolean) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  footerLoader: {
+    paddingVertical: Spacing.xl,
+    alignItems: 'center',
   },
   header: {
     paddingHorizontal: Spacing.lg,

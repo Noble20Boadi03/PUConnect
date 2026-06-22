@@ -9,7 +9,8 @@ import {
   Modal,
   Alert,
   ActivityIndicator,
-  RefreshControl
+  RefreshControl,
+  FlatList
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,7 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColor } from '../../hooks';
 import { Spacing } from '../../constants';
 import { GuardedPressable } from '../../components/GuardedPressable';
-import { adminService, Report } from '../../services/adminService';
+import { adminService, Report, PaginationInfo } from '../../services/adminService';
 
 const STATUS_FILTERS: ('all' | 'pending' | 'reviewed' | 'dismissed' | 'actioned')[] = [
   'all',
@@ -44,27 +45,48 @@ export default function ReportsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  const fetchReports = useCallback(async (filter?: string) => {
+  const fetchReports = useCallback(async (filter?: string, page: number = 1, isRefresh: boolean = false) => {
     try {
-      const data = await adminService.getReports(filter === 'all' ? undefined : filter);
-      setReports(data);
+      const response = await adminService.getReports(filter === 'all' ? undefined : filter, page);
+      if (page === 1) {
+        setReports(response.data);
+      } else {
+        setReports(prev => [...prev, ...response.data]);
+      }
+      setTotalPages(response.pagination.totalPages);
+      setHasMore(page < response.pagination.totalPages);
+      setCurrentPage(page);
     } catch (error) {
       console.error('Failed to fetch reports:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setLoadingMore(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchReports(selectedFilter);
+    setCurrentPage(1);
+    fetchReports(selectedFilter, 1);
   }, [selectedFilter, fetchReports]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchReports(selectedFilter);
+    setCurrentPage(1);
+    fetchReports(selectedFilter, 1, true);
   }, [selectedFilter, fetchReports]);
+
+  const loadMore = useCallback(() => {
+    if (hasMore && !loadingMore) {
+      setLoadingMore(true);
+      fetchReports(selectedFilter, currentPage + 1);
+    }
+  }, [hasMore, loadingMore, selectedFilter, currentPage, fetchReports]);
 
   const handleReportPress = (report: Report) => {
     setSelectedReport(report);
@@ -79,7 +101,7 @@ export default function ReportsScreen() {
     try {
       setActionLoading(true);
       await adminService.updateReportStatus(selectedReport.id, status);
-      await fetchReports(selectedFilter);
+      await fetchReports(selectedFilter, 1, true);
       closeDetailModal();
     } catch (error) {
       console.error('Failed to update report status:', error);
@@ -91,15 +113,19 @@ export default function ReportsScreen() {
 
   const handleTakeAction = async () => {
     if (!selectedReport) return;
+    if (!selectedReport.target) {
+      Alert.alert('Cannot take action', 'The target of this report no longer exists.');
+      return;
+    }
     try {
       setActionLoading(true);
-      if (selectedReport.targetType === 'user' && selectedReport.target) {
+      if (selectedReport.targetType === 'user') {
         await adminService.updateUserStatus(selectedReport.targetId, 'suspended');
-      } else if (selectedReport.targetType === 'post' && selectedReport.target) {
+      } else if (selectedReport.targetType === 'post') {
         await adminService.updatePostStatus(selectedReport.targetId, 'removed_by_admin');
       }
       await adminService.updateReportStatus(selectedReport.id, 'actioned');
-      await fetchReports(selectedFilter);
+      await fetchReports(selectedFilter, 1, true);
       closeDetailModal();
     } catch (error) {
       console.error('Failed to take action:', error);
@@ -119,12 +145,55 @@ export default function ReportsScreen() {
   };
 
   const getTargetName = (report: Report) => {
-    if (!report.target) return 'Unknown';
+    if (!report.target) return 'Content/user no longer exists';
     if (report.targetType === 'user') {
       return (report.target as any).username || (report.target as any).name;
     } else {
       return (report.target as any).title;
     }
+  };
+
+  const renderItem = ({ item }: { item: Report }) => (
+    <GuardedPressable
+      style={[styles.reportCard, { backgroundColor: cardBg }]}
+      onPress={() => handleReportPress(item)}
+      activeOpacity={0.85}
+    >
+      <View style={styles.reportHeader}>
+        <View style={[styles.targetIcon, { backgroundColor: Colors.primary + '20' }]}>
+          <Ionicons
+            name={item.targetType === 'user' ? 'person-outline' : 'newspaper-outline'}
+            size={20}
+            color={Colors.primary}
+          />
+        </View>
+        <View style={styles.reportInfo}>
+          <Text style={[styles.targetName, { color: Colors.text }]}>
+            {getTargetName(item)}
+          </Text>
+          <Text style={[styles.reason, { color: Colors.text }]}>
+            {item.reason.replace('_', ' ')}
+          </Text>
+          <Text style={[styles.reporter, { color: Colors.icon }]}>
+            Reported by {item.reporter.name} • {formatDate(item.createdAt)}
+          </Text>
+        </View>
+        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status, isDark) }]}>
+          <Text style={styles.statusBadgeText}>
+            {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+          </Text>
+        </View>
+      </View>
+    </GuardedPressable>
+  );
+
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color={Colors.primary} />
+      </View>
+    );
   };
 
   if (loading && !refreshing) {
@@ -177,55 +246,25 @@ export default function ReportsScreen() {
         ))}
       </ScrollView>
 
-      <ScrollView
+      <FlatList
         style={styles.reportsList}
+        data={reports}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-      >
-        {reports.map((report) => (
-          <GuardedPressable
-            key={report.id}
-            style={[styles.reportCard, { backgroundColor: cardBg }]}
-            onPress={() => handleReportPress(report)}
-            activeOpacity={0.85}
-          >
-            <View style={styles.reportHeader}>
-              <View style={[styles.targetIcon, { backgroundColor: Colors.primary + '20' }]}>
-                <Ionicons
-                  name={report.targetType === 'user' ? 'person-outline' : 'newspaper-outline'}
-                  size={20}
-                  color={Colors.primary}
-                />
-              </View>
-              <View style={styles.reportInfo}>
-                <Text style={[styles.targetName, { color: Colors.text }]}>
-                  {getTargetName(report)}
-                </Text>
-                <Text style={[styles.reason, { color: Colors.text }]}>
-                  {report.reason.replace('_', ' ')}
-                </Text>
-                <Text style={[styles.reporter, { color: Colors.icon }]}>
-                  Reported by {report.reporter.name} • {formatDate(report.createdAt)}
-                </Text>
-              </View>
-              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(report.status, isDark) }]}>
-                <Text style={styles.statusBadgeText}>
-                  {report.status.charAt(0).toUpperCase() + report.status.slice(1)}
-                </Text>
-              </View>
-            </View>
-          </GuardedPressable>
-        ))}
-
-        {reports.length === 0 && (
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.2}
+        ListFooterComponent={renderFooter}
+        ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={[styles.emptyStateText, { color: Colors.icon }]}>
               No reports found
             </Text>
           </View>
-        )}
-      </ScrollView>
+        }
+      />
 
       <Modal
         visible={!!selectedReport}
@@ -296,17 +335,19 @@ export default function ReportsScreen() {
               <View style={styles.modalActions}>
                 {selectedReport.status === 'pending' && (
                   <>
-                    <GuardedPressable
-                      style={[styles.actionButton, { backgroundColor: Colors.primary }]}
-                      onPress={() => handleTakeAction()}
-                      disabled={actionLoading}
-                    >
-                      {actionLoading ? (
-                        <ActivityIndicator color="#FFFFFF" size="small" />
-                      ) : (
-                        <Text style={styles.actionButtonText}>Take Action</Text>
-                      )}
-                    </GuardedPressable>
+                    {selectedReport.target && (
+                      <GuardedPressable
+                        style={[styles.actionButton, { backgroundColor: Colors.primary }]}
+                        onPress={() => handleTakeAction()}
+                        disabled={actionLoading}
+                      >
+                        {actionLoading ? (
+                          <ActivityIndicator color="#FFFFFF" size="small" />
+                        ) : (
+                          <Text style={styles.actionButtonText}>Take Action</Text>
+                        )}
+                      </GuardedPressable>
+                    )}
                     <GuardedPressable
                       style={[styles.actionButton, styles.secondaryButton, { borderColor: Colors.primary }]}
                       onPress={() => handleUpdateReportStatus('reviewed')}
@@ -358,6 +399,10 @@ const getStatusColor = (status: string, isDark: boolean) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  footerLoader: {
+    paddingVertical: Spacing.lg,
+    alignItems: 'center',
   },
   header: {
     paddingHorizontal: Spacing.lg,

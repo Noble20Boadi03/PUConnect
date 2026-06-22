@@ -15,11 +15,11 @@ enum UserRole {
 }
 
 enum ExploreCategoryId {
-  tutoring
-  tech
-  design
-  career
-  campus
+  academics
+  tech_creative
+  media
+  business_career
+  campus_lifestyle
 }
 
 enum NotificationKind {
@@ -135,6 +135,7 @@ model User {
   category            Category?            @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   reports             Report[]
   feedbacks           Feedback[]
+  adminActions        AdminActionLog[]
 
   @@map("users")
 }
@@ -152,7 +153,26 @@ model Report {
   reviewedBy  String?
   reporter    User           @relation(fields: [reporterId], references: [id], onDelete: Cascade)
 
+  @@index([targetType, targetId])
   @@map("reports")
+}
+
+model AdminActionLog {
+  id         String   @id @default(uuid())
+  adminId    String
+  action     String
+  targetType String
+  targetId   String
+  fromValue  String?
+  toValue    String?
+  reason     String?
+  createdAt  DateTime @default(now())
+
+  admin      User     @relation(fields: [adminId], references: [id])
+
+  @@index([targetType, targetId])
+  @@index([adminId])
+  @@map("admin_action_logs")
 }
 
 model Feedback {

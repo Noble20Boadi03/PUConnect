@@ -8,7 +8,8 @@ import {
   updatePostStatus,
   getPosts,
   getPostDetail,
-  getAnalytics
+  getAnalytics,
+  getAuditLogs
 } from '../controllers/adminController';
 import { protect, requireAdmin } from '../middlewares/authMiddleware';
 
@@ -19,6 +20,9 @@ router.use(protect, requireAdmin);
 
 // Analytics
 router.get('/analytics', getAnalytics);
+
+// Audit Logs
+router.get('/audit-logs', getAuditLogs);
 
 // Reports
 router.get('/reports', getReports);

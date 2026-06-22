@@ -98,11 +98,43 @@ export interface AnalyticsData {
   reportsLast30Days: { date: string; count: number }[];
 }
 
+export interface AuditLogAdmin {
+  id: string;
+  username: string;
+  name: string;
+}
+
+export interface AuditLog {
+  id: string;
+  adminId: string;
+  action: string;
+  targetType: string;
+  targetId: string;
+  fromValue: string | null;
+  toValue: string | null;
+  reason: string | null;
+  createdAt: string;
+  admin: AuditLogAdmin;
+}
+
+export interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: PaginationInfo;
+}
+
 export const adminService = {
-  getReports: async (status?: string): Promise<Report[]> => {
-    const params = status ? { status } : {};
+  getReports: async (status?: string, page: number = 1, limit: number = 20): Promise<PaginatedResponse<Report>> => {
+    const params: any = { page, limit };
+    if (status) params.status = status;
     const response = await apiClient.get('/admin/reports', { params });
-    return response.data.data;
+    return response.data;
   },
 
   updateReportStatus: async (id: string, status: string): Promise<Report> => {
@@ -110,9 +142,10 @@ export const adminService = {
     return response.data.data;
   },
 
-  getUsers: async (params?: { search?: string; role?: string; status?: string }): Promise<AdminUser[]> => {
-    const response = await apiClient.get('/admin/users', { params });
-    return response.data.data;
+  getUsers: async (params?: { search?: string; role?: string; status?: string }, page: number = 1, limit: number = 20): Promise<PaginatedResponse<AdminUser>> => {
+    const requestParams: any = { page, limit, ...params };
+    const response = await apiClient.get('/admin/users', { params: requestParams });
+    return response.data;
   },
 
   getUserDetail: async (id: string): Promise<AdminUserDetail> => {
@@ -125,9 +158,10 @@ export const adminService = {
     return response.data.data;
   },
 
-  getPosts: async (params?: { search?: string; tag?: string; status?: string }): Promise<AdminPost[]> => {
-    const response = await apiClient.get('/admin/posts', { params });
-    return response.data.data;
+  getPosts: async (params?: { search?: string; tag?: string; status?: string }, page: number = 1, limit: number = 20): Promise<PaginatedResponse<AdminPost>> => {
+    const requestParams: any = { page, limit, ...params };
+    const response = await apiClient.get('/admin/posts', { params: requestParams });
+    return response.data;
   },
 
   getPostDetail: async (id: string): Promise<AdminPostDetail> => {
@@ -143,6 +177,22 @@ export const adminService = {
   getAnalytics: async (): Promise<AnalyticsData> => {
     const response = await apiClient.get('/admin/analytics');
     return response.data.data;
+  },
+
+  getAuditLogs: async (
+    params?: {
+      adminId?: string;
+      action?: string;
+      targetType?: string;
+      startDate?: string;
+      endDate?: string;
+    },
+    page: number = 1,
+    limit: number = 20
+  ): Promise<PaginatedResponse<AuditLog>> => {
+    const requestParams: any = { page, limit, ...params };
+    const response = await apiClient.get('/admin/audit-logs', { params: requestParams });
+    return response.data;
   },
 };
 

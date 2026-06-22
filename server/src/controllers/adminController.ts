@@ -15,18 +15,27 @@ const safeUserSelect = {
  */
 export const getReports = async (req: Request, res: Response) => {
   try {
-    const { status } = req.query;
+    const { status, page = 1, limit = 20 } = req.query;
+
+    const pageNum = Math.max(1, parseInt(page as string, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit as string, 10)));
+    const skip = (pageNum - 1) * limitNum;
 
     const where: any = {};
     if (status) {
       where.status = status;
     }
 
-    const reports = await prisma.report.findMany({
-      where,
-      include: { reporter: { select: safeUserSelect } },
-      orderBy: { createdAt: 'desc' }
-    });
+    const [reports, total] = await Promise.all([
+      prisma.report.findMany({
+        where,
+        include: { reporter: { select: safeUserSelect } },
+        orderBy: { createdAt: 'desc' },
+        take: limitNum,
+        skip
+      }),
+      prisma.report.count({ where })
+    ]);
 
     // Resolve targets
     const resolvedReports = await Promise.all(
@@ -47,9 +56,17 @@ export const getReports = async (req: Request, res: Response) => {
       })
     );
 
+    const totalPages = Math.ceil(total / limitNum);
+
     return res.status(200).json({
       status: 200,
-      data: resolvedReports
+      data: resolvedReports,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages
+      }
     });
   } catch (error) {
     console.error('GetReports error:', error);
@@ -77,6 +94,17 @@ export const updateReportStatus = async (req: Request, res: Response) => {
       });
     }
 
+    const targetReport = await prisma.report.findUnique({ where: { id } });
+
+    if (!targetReport) {
+      return res.status(404).json({
+        status: 404,
+        message: 'Report not found.'
+      });
+    }
+
+    const oldStatus = targetReport.status;
+
     const updatedReport = await prisma.report.update({
       where: { id },
       data: {
@@ -85,6 +113,19 @@ export const updateReportStatus = async (req: Request, res: Response) => {
         reviewedBy: adminId
       },
       include: { reporter: { select: safeUserSelect } }
+    });
+
+    // Log the action
+    await prisma.adminActionLog.create({
+      data: {
+        adminId,
+        action: 'report_resolved',
+        targetType: 'report',
+        targetId: targetReport.id,
+        fromValue: oldStatus,
+        toValue: status,
+        reason: `Resolved report against ${targetReport.targetType} ${targetReport.targetId}`
+      }
     });
 
     return res.status(200).json({
@@ -107,7 +148,11 @@ export const updateReportStatus = async (req: Request, res: Response) => {
  */
 export const getUsers = async (req: Request, res: Response) => {
   try {
-    const { search, role, status } = req.query;
+    const { search, role, status, page = 1, limit = 20 } = req.query;
+
+    const pageNum = Math.max(1, parseInt(page as string, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit as string, 10)));
+    const skip = (pageNum - 1) * limitNum;
 
     const where: any = {};
     
@@ -127,20 +172,25 @@ export const getUsers = async (req: Request, res: Response) => {
       where.status = status;
     }
 
-    const users = await prisma.user.findMany({
-      where,
-      select: {
-        id: true,
-        username: true,
-        name: true,
-        email: true,
-        role: true,
-        status: true,
-        avatarUrl: true,
-        createdAt: true
-      },
-      orderBy: { createdAt: 'desc' }
-    });
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          username: true,
+          name: true,
+          email: true,
+          role: true,
+          status: true,
+          avatarUrl: true,
+          createdAt: true
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limitNum,
+        skip
+      }),
+      prisma.user.count({ where })
+    ]);
 
     // Get report counts for each user using batched query
     const userIds = users.map(user => user.id);
@@ -167,9 +217,17 @@ export const getUsers = async (req: Request, res: Response) => {
       reportCount: reportCountsMap[user.id] || 0
     }));
 
+    const totalPages = Math.ceil(total / limitNum);
+
     return res.status(200).json({
       status: 200,
-      data: usersWithReportCounts
+      data: usersWithReportCounts,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages
+      }
     });
   } catch (error) {
     console.error('GetUsers error:', error);
@@ -242,6 +300,7 @@ export const updateUserStatus = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
+    const adminId = (req as any).user.id;
 
     if (!['active', 'suspended', 'banned'].includes(status)) {
       return res.status(400).json({
@@ -250,10 +309,50 @@ export const updateUserStatus = async (req: Request, res: Response) => {
       });
     }
 
+    // Get target user first
+    const targetUser = await prisma.user.findUnique({ where: { id } });
+
+    if (!targetUser) {
+      return res.status(404).json({
+        status: 404,
+        message: 'User not found.'
+      });
+    }
+
+    // Check self first to avoid blocking admin's own status changes even if admin-role rule changes
+    if (id === adminId) {
+      return res.status(403).json({
+        status: 403,
+        message: 'Cannot change your own status.'
+      });
+    }
+
+    // Guard: can't change status of another admin
+    if (targetUser.role === 'admin') {
+      return res.status(403).json({
+        status: 403,
+        message: 'Cannot change status of another admin account.'
+      });
+    }
+
+    const oldStatus = targetUser.status;
+
     const updatedUser = await prisma.user.update({
       where: { id },
       data: { status },
       select: safeUserSelect
+    });
+
+    // Log the action
+    await prisma.adminActionLog.create({
+      data: {
+        adminId,
+        action: 'user_status_changed',
+        targetType: 'user',
+        targetId: id,
+        fromValue: oldStatus,
+        toValue: status
+      }
     });
 
     return res.status(200).json({
@@ -278,6 +377,7 @@ export const updatePostStatus = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
+    const adminId = (req as any).user.id;
 
     if (!['active', 'hidden_by_owner', 'removed_by_admin'].includes(status)) {
       return res.status(400).json({
@@ -286,10 +386,34 @@ export const updatePostStatus = async (req: Request, res: Response) => {
       });
     }
 
+    // Get target post first
+    const targetPost = await prisma.post.findUnique({ where: { id } });
+
+    if (!targetPost) {
+      return res.status(404).json({
+        status: 404,
+        message: 'Post not found.'
+      });
+    }
+
+    const oldStatus = targetPost.status;
+
     const updatedPost = await prisma.post.update({
       where: { id },
       data: { status },
       select: { id: true, title: true, status: true }
+    });
+
+    // Log the action
+    await prisma.adminActionLog.create({
+      data: {
+        adminId,
+        action: 'post_status_changed',
+        targetType: 'post',
+        targetId: id,
+        fromValue: oldStatus,
+        toValue: status
+      }
     });
 
     return res.status(200).json({
@@ -312,7 +436,11 @@ export const updatePostStatus = async (req: Request, res: Response) => {
  */
 export const getPosts = async (req: Request, res: Response) => {
   try {
-    const { search, tag, status } = req.query;
+    const { search, tag, status, page = 1, limit = 20 } = req.query;
+
+    const pageNum = Math.max(1, parseInt(page as string, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit as string, 10)));
+    const skip = (pageNum - 1) * limitNum;
 
     const where: any = {};
 
@@ -328,20 +456,25 @@ export const getPosts = async (req: Request, res: Response) => {
       where.status = status;
     }
 
-    const posts = await prisma.post.findMany({
-      where,
-      select: {
-        id: true,
-        title: true,
-        tag: true,
-        authorId: true,
-        author: { select: { username: true } },
-        price: true,
-        status: true,
-        createdAt: true
-      },
-      orderBy: { createdAt: 'desc' }
-    });
+    const [posts, total] = await Promise.all([
+      prisma.post.findMany({
+        where,
+        select: {
+          id: true,
+          title: true,
+          tag: true,
+          authorId: true,
+          author: { select: { username: true } },
+          price: true,
+          status: true,
+          createdAt: true
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limitNum,
+        skip
+      }),
+      prisma.post.count({ where })
+    ]);
 
     const postIds = posts.map(post => post.id);
     let reportCountsMap: Record<string, number> = {};
@@ -374,9 +507,17 @@ export const getPosts = async (req: Request, res: Response) => {
       reportCount: reportCountsMap[post.id] || 0
     }));
 
+    const totalPages = Math.ceil(total / limitNum);
+
     return res.status(200).json({
       status: 200,
-      data: postsWithReportCounts
+      data: postsWithReportCounts,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages
+      }
     });
   } catch (error) {
     console.error('GetPosts error:', error);
@@ -605,6 +746,79 @@ export const getAnalytics = async (_req: Request, res: Response) => {
     return res.status(500).json({
       status: 500,
       message: 'Server error retrieving analytics.'
+    });
+  }
+};
+
+/**
+ * Get all audit logs (admin only)
+ * @route GET /admin/audit-logs
+ */
+export const getAuditLogs = async (req: Request, res: Response) => {
+  try {
+    const { page = 1, limit = 20, adminId, action, targetType, startDate, endDate } = req.query;
+
+    const pageNum = Math.max(1, parseInt(page as string, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit as string, 10)));
+    const skip = (pageNum - 1) * limitNum;
+
+    const where: any = {};
+
+    if (adminId) {
+      where.adminId = adminId;
+    }
+    if (action) {
+      where.action = action;
+    }
+    if (targetType) {
+      where.targetType = targetType;
+    }
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) {
+        where.createdAt.gte = new Date(startDate as string);
+      }
+      if (endDate) {
+        where.createdAt.lte = new Date(endDate as string);
+      }
+    }
+
+    const [logs, total] = await Promise.all([
+      prisma.adminActionLog.findMany({
+        where,
+        include: {
+          admin: {
+            select: {
+              id: true,
+              username: true,
+              name: true
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limitNum,
+        skip
+      }),
+      prisma.adminActionLog.count({ where })
+    ]);
+
+    const totalPages = Math.ceil(total / limitNum);
+
+    return res.status(200).json({
+      status: 200,
+      data: logs,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages
+      }
+    });
+  } catch (error) {
+    console.error('GetAuditLogs error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error retrieving audit logs.'
     });
   }
 };
