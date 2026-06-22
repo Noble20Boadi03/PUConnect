@@ -11,6 +11,8 @@ import {
   ReportStatus,
   ReportTargetType,
   ReportReason,
+  ProviderApprovalStatus,
+  AdminTier,
 } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
@@ -253,6 +255,7 @@ async function main() {
       username: 'puadmin',
       password: hash('Admin1234!'),
       role: UserRole.admin,
+      adminTier: AdminTier.super_admin,
       avatarUrl: AVATAR('puadmin'),
       bio: 'Platform administrator.',
       expertiseTags: [],
@@ -285,6 +288,7 @@ async function main() {
       username: 'amaowusu',
       password: hash('Test1234!'),
       role: UserRole.provider,
+      providerApprovalStatus: ProviderApprovalStatus.approved,
       avatarUrl: AVATAR('amaowusu'),
       bio: 'Media student specialising in graphic design and photography. 3 years of freelance experience.',
       categoryId: ExploreCategoryId.media,
@@ -302,6 +306,7 @@ async function main() {
       username: 'kwameasante',
       password: hash('Test1234!'),
       role: UserRole.provider,
+      providerApprovalStatus: ProviderApprovalStatus.approved,
       avatarUrl: AVATAR('kwameasante'),
       bio: 'Mathematics & Statistics tutor. Helped 50+ students pass their exams.',
       categoryId: ExploreCategoryId.academics,
@@ -319,6 +324,7 @@ async function main() {
       username: 'abenafrimpong',
       password: hash('Test1234!'),
       role: UserRole.provider,
+      providerApprovalStatus: ProviderApprovalStatus.approved,
       avatarUrl: AVATAR('abenafrimpong'),
       bio: 'Career counsellor and CV coach. Former HR intern at a top firm.',
       categoryId: ExploreCategoryId.business_career,
@@ -336,6 +342,7 @@ async function main() {
       username: 'kofiboateng',
       password: hash('Test1234!'),
       role: UserRole.provider,
+      providerApprovalStatus: ProviderApprovalStatus.approved,
       avatarUrl: AVATAR('kofiboateng'),
       bio: 'Campus delivery and rentals guy. Fast, reliable, and always on time.',
       categoryId: ExploreCategoryId.campus_lifestyle,
@@ -353,6 +360,7 @@ async function main() {
       username: 'efuadarkwa',
       password: hash('Test1234!'),
       role: UserRole.provider,
+      providerApprovalStatus: ProviderApprovalStatus.approved,
       avatarUrl: AVATAR('efuadarkwa'),
       bio: 'Software dev and hackathon winner. I help students debug and ship faster.',
       categoryId: ExploreCategoryId.tech_creative,
@@ -385,6 +393,7 @@ async function main() {
       username: 'nanaadjei',
       password: hash('Test1234!'),
       role: UserRole.provider,
+      providerApprovalStatus: ProviderApprovalStatus.approved,
       avatarUrl: AVATAR('nanaadjei'),
       bio: 'Film student and video editor. I turn raw footage into polished stories for campus orgs.',
       categoryId: ExploreCategoryId.media,
@@ -402,6 +411,7 @@ async function main() {
       username: 'joemensah',
       password: hash('Test1234!'),
       role: UserRole.provider,
+      providerApprovalStatus: ProviderApprovalStatus.approved,
       avatarUrl: AVATAR('joemensah'),
       bio: 'Trilingual student offering academic translation and proofreading in English, French, and Twi.',
       categoryId: ExploreCategoryId.academics,
@@ -419,6 +429,7 @@ async function main() {
       username: 'akosuayeboah',
       password: hash('Test1234!'),
       role: UserRole.provider,
+      providerApprovalStatus: ProviderApprovalStatus.approved,
       avatarUrl: AVATAR('akosuayeboah'),
       bio: 'On-campus beauty services — braiding, nails, and makeup for events and everyday looks.',
       categoryId: ExploreCategoryId.campus_lifestyle,
@@ -442,6 +453,25 @@ async function main() {
       expertiseTags: [],
       serviceIds: [],
       lastLoginAt: daysAgo(45),
+    },
+  });
+
+  const pendingProvider = await prisma.user.create({
+    data: {
+      name: 'Selina Appiah',
+      email: 'selina@puconnect.app',
+      username: 'selinaappiah',
+      password: hash('Test1234!'),
+      role: UserRole.user,
+      avatarUrl: AVATAR('selinaappiah'),
+      bio: 'Aspiring tutor applying to become a provider on PUConnect.',
+      categoryId: ExploreCategoryId.academics,
+      skillTitle: 'Chemistry Tutor',
+      expertiseTags: ['Chemistry', 'Lab Reports'],
+      serviceIds: ['academics-tutoring'],
+      providerApprovalStatus: ProviderApprovalStatus.pending,
+      providerAppliedAt: daysAgo(1),
+      lastLoginAt: daysAgo(1),
     },
   });
 
@@ -747,6 +777,7 @@ async function main() {
   console.log('  joe@puconnect.app       — provider, Academics (translation)');
   console.log('  akosua@puconnect.app    — provider, Campus & Lifestyle (beauty)');
   console.log('  yaw@puconnect.app       — regular user');
+  console.log('  selina@puconnect.app    — pending provider application');
   console.log('  marcus@puconnect.app    — suspended user (admin testing)');
 }
 

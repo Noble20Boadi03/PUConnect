@@ -138,7 +138,7 @@ export default function RootLayout() {
       !inResetPassword &&
       !inPastServices
     ) {
-      const redirectPath = user?.role === 'admin' ? '/(admin)/reports' : '/(tabs)/market';
+      const redirectPath = user?.role === 'admin' ? '/(admin)/dashboard' : '/(tabs)/market';
       runGuardedNavigation(`replace:${redirectPath}`, () => {
         router.replace(redirectPath as any);
       });

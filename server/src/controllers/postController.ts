@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../config/db';
+import { PUBLIC_POST_STATUSES, PUBLIC_USER_STATUSES } from '../utils/visibility';
 import { supabase } from '../config/supabase';
 
 const safeUserSelect = {
@@ -53,7 +54,8 @@ export const getPosts = async (req: Request, res: Response) => {
 
     // Build where clause
     const where: any = {
-      status: 'active'
+      status: { in: [...PUBLIC_POST_STATUSES] },
+      author: { status: { in: [...PUBLIC_USER_STATUSES] } },
     };
     
     if (type) {

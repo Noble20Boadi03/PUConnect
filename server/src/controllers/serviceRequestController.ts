@@ -290,6 +290,13 @@ export const createServiceRequest = async (req: Request, res: Response) => {
       });
     }
 
+    if (post.status !== 'active') {
+      return res.status(403).json({
+        status: 403,
+        message: 'This post is not accepting new service requests.',
+      });
+    }
+
     const isServicePost = post.tag === 'Service';
     const isRequestPost = post.tag === 'Request';
 

@@ -35,7 +35,7 @@ export interface AdminUser {
   name: string;
   email: string;
   role: 'user' | 'provider' | 'admin';
-  status: 'active' | 'suspended' | 'banned';
+  status: 'active' | 'shadowbanned' | 'suspended' | 'banned';
   avatarUrl: string;
   createdAt: string;
   reportCount: number;
@@ -44,17 +44,27 @@ export interface AdminUser {
 export interface AdminUserDetail extends Omit<AdminUser, 'reportCount'> {
   bio: string;
   updatedAt: string;
+  adminTier?: string | null;
+  providerApprovalStatus?: string;
+  categoryId?: string | null;
+  skillTitle?: string | null;
+  expertiseTags?: string[];
+  serviceIds?: string[];
   reports: Report[];
 }
 
 export interface AdminPost {
   id: string;
   title: string;
+  description?: string;
   tag: string;
   authorId: string;
   authorUsername: string;
+  authorName?: string;
   price: any;
-  status: 'active' | 'hidden_by_owner' | 'removed_by_admin';
+  images?: string[];
+  hashtags?: string[];
+  status: 'active' | 'hidden_by_owner' | 'locked_by_admin' | 'removed_by_admin';
   createdAt: string;
   reportCount: number;
 }
@@ -67,6 +77,58 @@ export interface AdminPostDetail extends Omit<AdminPost, 'authorUsername' | 'rep
   author: ReportTargetUser;
   updatedAt: string;
   reports: Report[];
+}
+
+export interface DashboardData {
+  pendingReports: number;
+  pendingProviders: number;
+  pendingDisputes: number;
+  openFeedback: number;
+  recentAuditLogs: AuditLog[];
+}
+
+export interface PendingProvider {
+  id: string;
+  name: string;
+  username: string;
+  email: string;
+  avatarUrl: string;
+  bio: string;
+  categoryId: string | null;
+  skillTitle: string | null;
+  expertiseTags: string[];
+  serviceIds: string[];
+  providerAppliedAt: string | null;
+  createdAt: string;
+}
+
+export interface DisputeSummary {
+  id: string;
+  status: string;
+  message: string | null;
+  completionRequestedAt: string | null;
+  requester: ReportTargetUser;
+  provider: ReportTargetUser;
+  post: { id: string; title: string; tag: string } | null;
+}
+
+export interface DisputeDetail extends DisputeSummary {
+  messages: Array<{
+    id: string;
+    content: string;
+    kind: string;
+    createdAt: string;
+    sender: ReportTargetUser;
+    receiver: ReportTargetUser;
+  }>;
+}
+
+export interface FeedbackItem {
+  id: string;
+  message: string;
+  status: string;
+  createdAt: string;
+  user: ReportTargetUser;
 }
 
 export interface AnalyticsData {
@@ -130,9 +192,14 @@ export interface PaginatedResponse<T> {
 }
 
 export const adminService = {
+  getDashboard: async (): Promise<DashboardData> => {
+    const response = await apiClient.get('/admin/dashboard');
+    return response.data.data;
+  },
+
   getReports: async (status?: string, page: number = 1, limit: number = 20): Promise<PaginatedResponse<Report>> => {
     const params: any = { page, limit };
-    if (status) params.status = status;
+    if (status && status !== 'all') params.status = status;
     const response = await apiClient.get('/admin/reports', { params });
     return response.data;
   },
@@ -142,8 +209,15 @@ export const adminService = {
     return response.data.data;
   },
 
-  getUsers: async (params?: { search?: string; role?: string; status?: string }, page: number = 1, limit: number = 20): Promise<PaginatedResponse<AdminUser>> => {
-    const requestParams: any = { page, limit, ...params };
+  triageReport: async (id: string, action: 'dismiss' | 'remove_content' | 'suspend_user'): Promise<void> => {
+    await apiClient.post(`/admin/reports/${id}/triage`, { action });
+  },
+
+  getUsers: async (params?: { search?: string; role?: string; status?: string; minReports?: string }, page: number = 1, limit: number = 20): Promise<PaginatedResponse<AdminUser>> => {
+    const requestParams: any = { page, limit };
+    if (params?.search) requestParams.search = params.search;
+    if (params?.role && params.role !== 'all') requestParams.role = params.role;
+    if (params?.status && params.status !== 'all') requestParams.status = params.status;
     const response = await apiClient.get('/admin/users', { params: requestParams });
     return response.data;
   },
@@ -158,8 +232,24 @@ export const adminService = {
     return response.data.data;
   },
 
+  warnUser: async (id: string, message: string): Promise<void> => {
+    await apiClient.post(`/admin/users/${id}/warn`, { message });
+  },
+
+  getPendingProviders: async (page: number = 1): Promise<PaginatedResponse<PendingProvider>> => {
+    const response = await apiClient.get('/admin/providers/pending', { params: { page } });
+    return response.data;
+  },
+
+  reviewProvider: async (id: string, decision: 'approve' | 'reject', note?: string): Promise<void> => {
+    await apiClient.patch(`/admin/providers/${id}/review`, { decision, note });
+  },
+
   getPosts: async (params?: { search?: string; tag?: string; status?: string }, page: number = 1, limit: number = 20): Promise<PaginatedResponse<AdminPost>> => {
-    const requestParams: any = { page, limit, ...params };
+    const requestParams: any = { page, limit };
+    if (params?.search) requestParams.search = params.search;
+    if (params?.tag && params.tag !== 'all') requestParams.tag = params.tag;
+    if (params?.status && params.status !== 'all') requestParams.status = params.status;
     const response = await apiClient.get('/admin/posts', { params: requestParams });
     return response.data;
   },
@@ -172,6 +262,36 @@ export const adminService = {
   updatePostStatus: async (id: string, status: string): Promise<ReportTargetPost> => {
     const response = await apiClient.patch(`/admin/posts/${id}/status`, { status });
     return response.data.data;
+  },
+
+  bulkUpdatePostStatus: async (ids: string[], status: string): Promise<{ count: number }> => {
+    const response = await apiClient.patch('/admin/posts/bulk-status', { ids, status });
+    return response.data.data;
+  },
+
+  updatePostImages: async (id: string, images: string[]): Promise<void> => {
+    await apiClient.patch(`/admin/posts/${id}/images`, { images });
+  },
+
+  getDisputes: async (page: number = 1): Promise<PaginatedResponse<DisputeSummary>> => {
+    const response = await apiClient.get('/admin/disputes', { params: { page } });
+    return response.data;
+  },
+
+  getDisputeDetail: async (id: string): Promise<DisputeDetail> => {
+    const response = await apiClient.get(`/admin/disputes/${id}`);
+    return response.data.data;
+  },
+
+  resolveDispute: async (id: string, resolution: 'complete' | 'cancel' | 'resume', note?: string): Promise<void> => {
+    await apiClient.patch(`/admin/disputes/${id}/resolve`, { resolution, note });
+  },
+
+  getFeedback: async (status?: string, page: number = 1): Promise<PaginatedResponse<FeedbackItem>> => {
+    const params: any = { page };
+    if (status) params.status = status;
+    const response = await apiClient.get('/admin/feedback', { params });
+    return response.data;
   },
 
   getAnalytics: async (): Promise<AnalyticsData> => {

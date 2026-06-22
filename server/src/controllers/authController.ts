@@ -36,6 +36,8 @@ const toPublicUser = async (user: any) => {
     email: user.email,
     username: user.username,
     role: user.role,
+    adminTier: user.adminTier ?? undefined,
+    providerApprovalStatus: user.providerApprovalStatus ?? 'none',
     avatarUrl: user.avatarUrl,
     bio: user.bio || '',
     categoryId: user.categoryId || undefined,
@@ -197,7 +199,9 @@ export const login = async (req: Request, res: Response) => {
         bio: true,
         categoryId: true,
         skillTitle: true,
-        expertiseTags: true
+        expertiseTags: true,
+        adminTier: true,
+        providerApprovalStatus: true,
       }
     });
     console.log('[TIMESTAMP] 6b. After prisma.user.findFirst:', new Date().toISOString(), 'user found:', !!user);
@@ -679,9 +683,19 @@ export const updateProviderProfile = async (req: Request, res: Response) => {
     if (skillTitle !== undefined) updateData.skillTitle = skillTitle;
     if (expertiseTags !== undefined) updateData.expertiseTags = expertiseTags;
     if (serviceIds !== undefined) updateData.serviceIds = serviceIds;
-    // If we're providing provider profile data, set role to provider
+    // If we're providing provider profile data, submit for admin review
     if (Object.keys(updateData).length > 0) {
-      updateData.role = 'provider';
+      const existing = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true, providerApprovalStatus: true },
+      });
+
+      if (existing?.role === 'provider' && existing.providerApprovalStatus === 'approved') {
+        // Already approved — profile update only
+      } else {
+        updateData.providerApprovalStatus = 'pending';
+        updateData.providerAppliedAt = new Date();
+      }
     }
 
     // Update user

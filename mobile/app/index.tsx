@@ -184,7 +184,7 @@ export default function LandingPage() {
 
         // After fade completes, navigate to appropriate module based on role
         await new Promise(resolve => setTimeout(resolve, 500));
-        const redirectPath = user?.role === 'admin' ? '/(admin)/reports' : '/(tabs)/market';
+        const redirectPath = user?.role === 'admin' ? '/(admin)/dashboard' : '/(tabs)/market';
         router.replace(redirectPath as any);
       } else {
         // Unauthenticated onboarding animation sequence

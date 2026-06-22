@@ -21,7 +21,7 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
       // Get user from DB (fallback for old tokens without role)
       const user = await prisma.user.findUnique({
         where: { id: decoded.id },
-        select: { id: true, role: true, status: true }
+        select: { id: true, role: true, status: true, adminTier: true }
       });
 
       if (!user) {
@@ -31,7 +31,7 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
         });
       }
 
-      // Check if user is suspended or banned
+      // Check if user is suspended or banned (shadowbanned users may still use the app)
       if (user.status === 'suspended' || user.status === 'banned') {
         return res.status(403).json({
           status: 403,
@@ -40,7 +40,7 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
       }
 
       // Attach user to request object
-      (req as any).user = { id: user.id, role: user.role, status: user.status };
+      (req as any).user = { id: user.id, role: user.role, status: user.status, adminTier: user.adminTier };
       
       return next();
     } catch (error) {

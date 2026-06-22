@@ -220,7 +220,7 @@ export default function ProfileScreen() {
               <View style={[styles.divider, { backgroundColor: Colors.border + '60' }]} />
               <TouchableOpacity
                 style={styles.adminButton}
-                onPress={() => router.replace('/(admin)/reports' as any)}
+                onPress={() => router.replace('/(admin)/dashboard' as any)}
               >
                 <Text style={[styles.adminButtonText, { color: Colors.primary }]}>Switch to Admin Module</Text>
               </TouchableOpacity>

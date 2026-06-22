@@ -11,31 +11,55 @@ import {
   getAnalytics,
   getAuditLogs
 } from '../controllers/adminController';
+import {
+  getDashboard,
+  triageReport,
+  getPendingProviders,
+  reviewProvider,
+  warnUser,
+  bulkUpdatePostStatus,
+  updatePostImages,
+  getDisputes,
+  getDisputeDetail,
+  resolveDispute,
+  getFeedback,
+  updateFeedbackStatus,
+} from '../controllers/adminExtendedController';
 import { protect, requireAdmin } from '../middlewares/authMiddleware';
+import { requireAdminSection } from '../middlewares/adminAccess';
 
 const router = express.Router();
 
-// All admin routes require auth and admin role
 router.use(protect, requireAdmin);
 
-// Analytics
-router.get('/analytics', getAnalytics);
+// Dashboard (super_admin only)
+router.get('/dashboard', requireAdminSection('dashboard'), getDashboard);
+router.get('/analytics', requireAdminSection('dashboard'), getAnalytics);
+router.get('/audit-logs', requireAdminSection('dashboard'), getAuditLogs);
 
-// Audit Logs
-router.get('/audit-logs', getAuditLogs);
+// Moderation
+router.get('/reports', requireAdminSection('moderation'), getReports);
+router.patch('/reports/:id', requireAdminSection('moderation'), updateReportStatus);
+router.post('/reports/:id/triage', requireAdminSection('moderation'), triageReport);
+router.get('/disputes', requireAdminSection('moderation'), getDisputes);
+router.get('/disputes/:id', requireAdminSection('moderation'), getDisputeDetail);
+router.patch('/disputes/:id/resolve', requireAdminSection('moderation'), resolveDispute);
+router.get('/feedback', requireAdminSection('moderation'), getFeedback);
+router.patch('/feedback/:id', requireAdminSection('moderation'), updateFeedbackStatus);
 
-// Reports
-router.get('/reports', getReports);
-router.patch('/reports/:id', updateReportStatus);
+// Directory
+router.get('/users', requireAdminSection('directory'), getUsers);
+router.get('/users/:id', requireAdminSection('directory'), getUserDetail);
+router.patch('/users/:id/status', requireAdminSection('directory'), updateUserStatus);
+router.post('/users/:id/warn', requireAdminSection('directory'), warnUser);
+router.get('/providers/pending', requireAdminSection('directory'), getPendingProviders);
+router.patch('/providers/:id/review', requireAdminSection('directory'), reviewProvider);
 
-// Users
-router.get('/users', getUsers);
-router.get('/users/:id', getUserDetail);
-router.patch('/users/:id/status', updateUserStatus);
-
-// Posts
-router.get('/posts', getPosts);
-router.get('/posts/:id', getPostDetail);
-router.patch('/posts/:id/status', updatePostStatus);
+// Content
+router.get('/posts', requireAdminSection('content'), getPosts);
+router.get('/posts/:id', requireAdminSection('content'), getPostDetail);
+router.patch('/posts/:id/status', requireAdminSection('content'), updatePostStatus);
+router.patch('/posts/bulk-status', requireAdminSection('content'), bulkUpdatePostStatus);
+router.patch('/posts/:id/images', requireAdminSection('content'), updatePostImages);
 
 export default router;

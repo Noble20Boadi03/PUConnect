@@ -19,6 +19,8 @@ import type { ThemePreference } from './theme';
 import type { ExploreCategoryId } from './explore';
 
 export type UserRole = 'user' | 'provider' | 'admin';
+export type AdminTier = 'super_admin' | 'moderator' | 'support';
+export type ProviderApprovalStatus = 'none' | 'pending' | 'approved' | 'rejected';
 
 /**
  * Common User interface matching Prisma schema.
@@ -29,6 +31,8 @@ export interface User {
   name: string;
   username: string;
   role: UserRole;
+  adminTier?: AdminTier;
+  providerApprovalStatus?: ProviderApprovalStatus;
   avatarUrl: string;
   bio: string;
   categoryId?: ExploreCategoryId;

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../config/db';
+import { PUBLIC_USER_STATUSES } from '../utils/visibility';
 
 const safeUserSelect = {
   id: true,
@@ -105,7 +106,11 @@ export const getCategoryServices = async (req: Request, res: Response) => {
 export const getExploreProviders = async (req: Request, res: Response) => {
   try {
     const providers = await prisma.user.findMany({
-      where: { role: 'provider' },
+      where: {
+        role: 'provider',
+        status: { in: [...PUBLIC_USER_STATUSES] },
+        providerApprovalStatus: 'approved',
+      },
       select: {
         ...safeUserSelect,
         category: true,

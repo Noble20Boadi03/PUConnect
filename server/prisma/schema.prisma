@@ -14,6 +14,19 @@ enum UserRole {
   admin
 }
 
+enum AdminTier {
+  super_admin
+  moderator
+  support
+}
+
+enum ProviderApprovalStatus {
+  none
+  pending
+  approved
+  rejected
+}
+
 enum ExploreCategoryId {
   academics
   tech_creative
@@ -89,11 +102,13 @@ enum ReportStatus {
 enum PostStatus {
   active
   hidden_by_owner
+  locked_by_admin
   removed_by_admin
 }
 
 enum UserStatus {
   active
+  shadowbanned
   suspended
   banned
 }
@@ -106,6 +121,11 @@ model User {
   password      String
   role          UserRole           @default(user)
   status        UserStatus         @default(active)
+  adminTier     AdminTier?
+  providerApprovalStatus ProviderApprovalStatus @default(none)
+  providerAppliedAt    DateTime?
+  providerReviewedAt   DateTime?
+  providerReviewNote   String?
   avatarUrl     String             @default("")
   bio           String             @default("")
   categoryId    ExploreCategoryId?

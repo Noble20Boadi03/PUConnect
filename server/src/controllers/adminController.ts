@@ -255,8 +255,14 @@ export const getUserDetail = async (req: Request, res: Response) => {
         email: true,
         role: true,
         status: true,
+        adminTier: true,
+        providerApprovalStatus: true,
         avatarUrl: true,
         bio: true,
+        categoryId: true,
+        skillTitle: true,
+        expertiseTags: true,
+        serviceIds: true,
         createdAt: true,
         updatedAt: true
       }
@@ -302,10 +308,18 @@ export const updateUserStatus = async (req: Request, res: Response) => {
     const { status } = req.body;
     const adminId = (req as any).user.id;
 
-    if (!['active', 'suspended', 'banned'].includes(status)) {
+    if (!['active', 'shadowbanned', 'suspended', 'banned'].includes(status)) {
       return res.status(400).json({
         status: 400,
-        message: 'Invalid status. Must be active, suspended, or banned.'
+        message: 'Invalid status. Must be active, shadowbanned, suspended, or banned.'
+      });
+    }
+
+    const tier = (req as any).user?.adminTier ?? 'super_admin';
+    if (tier === 'support' && ['suspended', 'banned', 'shadowbanned'].includes(status)) {
+      return res.status(403).json({
+        status: 403,
+        message: 'Support tier cannot change user status to restricted states.'
       });
     }
 
@@ -379,10 +393,10 @@ export const updatePostStatus = async (req: Request, res: Response) => {
     const { status } = req.body;
     const adminId = (req as any).user.id;
 
-    if (!['active', 'hidden_by_owner', 'removed_by_admin'].includes(status)) {
+    if (!['active', 'hidden_by_owner', 'locked_by_admin', 'removed_by_admin'].includes(status)) {
       return res.status(400).json({
         status: 400,
-        message: 'Invalid status. Must be active, hidden_by_owner, or removed_by_admin.'
+        message: 'Invalid status. Must be active, hidden_by_owner, locked_by_admin, or removed_by_admin.'
       });
     }
 
@@ -462,10 +476,13 @@ export const getPosts = async (req: Request, res: Response) => {
         select: {
           id: true,
           title: true,
+          description: true,
           tag: true,
           authorId: true,
-          author: { select: { username: true } },
+          author: { select: { username: true, name: true } },
           price: true,
+          images: true,
+          hashtags: true,
           status: true,
           createdAt: true
         },
@@ -498,10 +515,14 @@ export const getPosts = async (req: Request, res: Response) => {
     const postsWithReportCounts = posts.map((post) => ({
       id: post.id,
       title: post.title,
+      description: post.description,
       tag: post.tag,
       authorId: post.authorId,
       authorUsername: post.author?.username || 'Deleted User',
+      authorName: post.author?.name || 'Deleted User',
       price: post.price,
+      images: post.images,
+      hashtags: post.hashtags,
       status: post.status,
       createdAt: post.createdAt,
       reportCount: reportCountsMap[post.id] || 0
