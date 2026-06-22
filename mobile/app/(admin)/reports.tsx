@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,13 +12,13 @@ import {
   RefreshControl,
   FlatList
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColor } from '../../hooks';
 import { Spacing } from '../../constants';
 import { GuardedPressable } from '../../components/GuardedPressable';
-import { adminService, Report, PaginationInfo } from '../../services/adminService';
+import { adminService, Report } from '../../services/adminService';
 
 const STATUS_FILTERS: ('all' | 'pending' | 'reviewed' | 'dismissed' | 'actioned')[] = [
   'all',
@@ -46,19 +46,17 @@ export default function ReportsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const fetchReports = useCallback(async (filter?: string, page: number = 1, isRefresh: boolean = false) => {
+  const fetchReports = useCallback(async (page: number = 1, isRefresh: boolean = false) => {
     try {
-      const response = await adminService.getReports(filter === 'all' ? undefined : filter, page);
+      const response = await adminService.getReports(undefined, page);
       if (page === 1) {
         setReports(response.data);
       } else {
         setReports(prev => [...prev, ...response.data]);
       }
-      setTotalPages(response.pagination.totalPages);
       setHasMore(page < response.pagination.totalPages);
       setCurrentPage(page);
     } catch (error) {
@@ -70,23 +68,29 @@ export default function ReportsScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    setCurrentPage(1);
-    fetchReports(selectedFilter, 1);
-  }, [selectedFilter, fetchReports]);
+  useFocusEffect(
+    useCallback(() => {
+      setCurrentPage(1);
+      fetchReports(1);
+    }, [fetchReports])
+  );
+
+  const filteredReports = useMemo(() => {
+    return reports.filter(r => selectedFilter === 'all' || r.status === selectedFilter);
+  }, [reports, selectedFilter]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setCurrentPage(1);
-    fetchReports(selectedFilter, 1, true);
-  }, [selectedFilter, fetchReports]);
+    fetchReports(1, true);
+  }, [fetchReports]);
 
   const loadMore = useCallback(() => {
     if (hasMore && !loadingMore) {
       setLoadingMore(true);
-      fetchReports(selectedFilter, currentPage + 1);
+      fetchReports(currentPage + 1);
     }
-  }, [hasMore, loadingMore, selectedFilter, currentPage, fetchReports]);
+  }, [hasMore, loadingMore, currentPage, fetchReports]);
 
   const handleReportPress = (report: Report) => {
     setSelectedReport(report);
@@ -101,7 +105,7 @@ export default function ReportsScreen() {
     try {
       setActionLoading(true);
       await adminService.updateReportStatus(selectedReport.id, status);
-      await fetchReports(selectedFilter, 1, true);
+      await fetchReports(1, true);
       closeDetailModal();
     } catch (error) {
       console.error('Failed to update report status:', error);
@@ -125,7 +129,7 @@ export default function ReportsScreen() {
         await adminService.updatePostStatus(selectedReport.targetId, 'removed_by_admin');
       }
       await adminService.updateReportStatus(selectedReport.id, 'actioned');
-      await fetchReports(selectedFilter, 1, true);
+      await fetchReports(1, true);
       closeDetailModal();
     } catch (error) {
       console.error('Failed to take action:', error);
@@ -153,7 +157,7 @@ export default function ReportsScreen() {
     }
   };
 
-  const renderItem = ({ item }: { item: Report }) => (
+  const renderReportItem = ({ item }: { item: Report }) => (
     <GuardedPressable
       style={[styles.reportCard, { backgroundColor: cardBg }]}
       onPress={() => handleReportPress(item)}
@@ -220,6 +224,7 @@ export default function ReportsScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        style={styles.filterScroll}
         contentContainerStyle={styles.filtersContainer}
       >
         {STATUS_FILTERS.map((filter) => (
@@ -248,9 +253,9 @@ export default function ReportsScreen() {
 
       <FlatList
         style={styles.reportsList}
-        data={reports}
-        renderItem={renderItem}
+        data={filteredReports}
         keyExtractor={(item) => item.id}
+        renderItem={renderReportItem}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -427,16 +432,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  filterScroll: {
+    flexGrow: 0,
+    marginBottom: Spacing.md,
+  },
   filtersContainer: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
-    gap: Spacing.sm,
   },
   filterButton: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: 20,
     borderWidth: 1,
+    marginRight: Spacing.sm,
   },
   filterButtonText: {
     fontSize: 14,

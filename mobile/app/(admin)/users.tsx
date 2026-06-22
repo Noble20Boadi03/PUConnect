@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import {
   Image,
   FlatList
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColor } from '../../hooks';
@@ -58,16 +58,14 @@ export default function UsersScreen() {
   const [actionLoading, setActionLoading] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
   const fetchUsers = useCallback(async (page: number = 1, isRefresh: boolean = false) => {
     try {
-      const params: { search?: string; role?: string; status?: string } = {};
+      const params: { search?: string } = {};
       if (searchQuery) params.search = searchQuery;
-      if (selectedRole !== 'all') params.role = selectedRole;
-      if (selectedStatus !== 'all') params.status = selectedStatus;
+      
       
       const response = await adminService.getUsers(params, page);
       if (page === 1) {
@@ -75,7 +73,6 @@ export default function UsersScreen() {
       } else {
         setUsers(prev => [...prev, ...response.data]);
       }
-      setTotalPages(response.pagination.totalPages);
       setHasMore(page < response.pagination.totalPages);
       setCurrentPage(page);
     } catch (error) {
@@ -85,16 +82,26 @@ export default function UsersScreen() {
       setRefreshing(false);
       setLoadingMore(false);
     }
-  }, [searchQuery, selectedRole, selectedStatus]);
+  }, [searchQuery]);
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      setCurrentPage(1);
-      fetchUsers(1, true);
-    }, 300);
+  useFocusEffect(
+    useCallback(() => {
+      const timeoutId = setTimeout(() => {
+        setCurrentPage(1);
+        fetchUsers(1, true);
+      }, 300);
 
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery, selectedRole, selectedStatus, fetchUsers]);
+      return () => clearTimeout(timeoutId);
+    }, [fetchUsers])
+  );
+
+  const filteredUsers = useMemo(() => {
+    return users.filter(u => {
+      const matchesRole = selectedRole === 'all' || u.role === selectedRole;
+      const matchesStatus = selectedStatus === 'all' || u.status === selectedStatus;
+      return matchesRole && matchesStatus;
+    });
+  }, [users, selectedRole, selectedStatus]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -260,6 +267,7 @@ export default function UsersScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        style={styles.filterScroll}
         contentContainerStyle={styles.filtersContainer}
       >
         {ROLE_FILTERS.map((filter) => (
@@ -289,6 +297,7 @@ export default function UsersScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        style={styles.filterScroll}
         contentContainerStyle={styles.filtersContainer}
       >
         {STATUS_FILTERS.map((filter) => (
@@ -317,9 +326,9 @@ export default function UsersScreen() {
 
       <FlatList
         style={styles.usersList}
-        data={users}
-        renderItem={renderItem}
+        data={filteredUsers}
         keyExtractor={(item) => item.id}
+        renderItem={renderItem}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -586,16 +595,19 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
   },
+  filterScroll: {
+    flexGrow: 0,
+    marginBottom: Spacing.md,
+  },
   filtersContainer: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
-    gap: Spacing.sm,
   },
   filterButton: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: 20,
     borderWidth: 1,
+    marginRight: Spacing.sm,
   },
   filterButtonText: {
     fontSize: 14,

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
+import { useFocusEffect } from 'expo-router';
 import {
   StyleSheet,
   View,
@@ -72,6 +73,14 @@ export default function ProfileScreen() {
   useEffect(() => {
     void hydrate(user);
   }, [user, hydrate]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (user?.username) {
+        fetchProfile(user.username);
+      }
+    }, [user?.username, fetchProfile])
+  );
 
   const onRefresh = useCallback(() => {
     if (user?.username) {

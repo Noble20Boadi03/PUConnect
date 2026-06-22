@@ -84,7 +84,7 @@ export default function LandingPage() {
   const Colors = useThemeColor();
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
-  const { isAuthenticated, isLoading, hasCompletedOnboarding } = useAuthStore();
+  const { isAuthenticated, isLoading, hasCompletedOnboarding, user } = useAuthStore();
   const { hydrated: profileHydrated } = useProfileStore();
   const { isLoading: marketLoading } = useMarketStore();
   const { isLoading: exploreLoading } = useExploreStore();
@@ -182,9 +182,10 @@ export default function LandingPage() {
           easing: Easing.bezier(0.25, 0.1, 0.25, 1),
         });
 
-        // After fade completes, navigate to marketplace
+        // After fade completes, navigate to appropriate module based on role
         await new Promise(resolve => setTimeout(resolve, 500));
-        router.replace('/(tabs)/market' as any);
+        const redirectPath = user?.role === 'admin' ? '/(admin)/reports' : '/(tabs)/market';
+        router.replace(redirectPath as any);
       } else {
         // Unauthenticated onboarding animation sequence
         // 0ms → App opens, logo centered, content invisible

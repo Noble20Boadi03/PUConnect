@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import {
   TextInput,
   FlatList
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColor } from '../../hooks';
@@ -57,25 +57,21 @@ export default function PostsScreen() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
   const fetchPosts = useCallback(async (page: number = 1, isRefresh: boolean = false) => {
     try {
       setError(null);
-      const params: { search?: string; tag?: string; status?: string } = {};
+      const params: { search?: string } = {};
       if (searchQuery) params.search = searchQuery;
-      if (selectedTag !== 'all') params.tag = selectedTag;
-      if (selectedStatus !== 'all') params.status = selectedStatus;
-      
+
       const response = await adminService.getPosts(params, page);
       if (page === 1) {
         setPosts(response.data);
       } else {
         setPosts(prev => [...prev, ...response.data]);
       }
-      setTotalPages(response.pagination.totalPages);
       setHasMore(page < response.pagination.totalPages);
       setCurrentPage(page);
     } catch (error: any) {
@@ -86,16 +82,26 @@ export default function PostsScreen() {
       setRefreshing(false);
       setLoadingMore(false);
     }
-  }, [searchQuery, selectedTag, selectedStatus]);
+  }, [searchQuery]);
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      setCurrentPage(1);
-      fetchPosts(1, true);
-    }, 300);
+  useFocusEffect(
+    useCallback(() => {
+      const timeoutId = setTimeout(() => {
+        setCurrentPage(1);
+        fetchPosts(1, true);
+      }, 300);
 
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery, selectedTag, selectedStatus, fetchPosts]);
+      return () => clearTimeout(timeoutId);
+    }, [fetchPosts])
+  );
+
+  const filteredPosts = useMemo(() => {
+    return posts.filter(p => {
+      const matchesTag = selectedTag === 'all' || p.tag === selectedTag;
+      const matchesStatus = selectedStatus === 'all' || p.status === selectedStatus;
+      return matchesTag && matchesStatus;
+    });
+  }, [posts, selectedTag, selectedStatus]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -263,6 +269,7 @@ export default function PostsScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        style={styles.filterScroll}
         contentContainerStyle={styles.filtersContainer}
       >
         {TAG_FILTERS.map((filter) => (
@@ -292,6 +299,7 @@ export default function PostsScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        style={styles.filterScroll}
         contentContainerStyle={styles.filtersContainer}
       >
         {STATUS_FILTERS.map((filter) => (
@@ -320,7 +328,7 @@ export default function PostsScreen() {
 
       <FlatList
         style={styles.postsList}
-        data={posts}
+        data={filteredPosts}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         refreshControl={
@@ -571,16 +579,19 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
   },
+  filterScroll: {
+    flexGrow: 0,
+    marginBottom: Spacing.md,
+  },
   filtersContainer: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
-    gap: Spacing.sm,
   },
   filterButton: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: 20,
     borderWidth: 1,
+    marginRight: Spacing.sm,
   },
   filterButtonText: {
     fontSize: 14,
