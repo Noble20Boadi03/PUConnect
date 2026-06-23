@@ -109,7 +109,6 @@ export const getExploreProviders = async (req: Request, res: Response) => {
       where: {
         role: 'provider',
         status: { in: [...PUBLIC_USER_STATUSES] },
-        providerApprovalStatus: 'approved',
       },
       select: {
         ...safeUserSelect,

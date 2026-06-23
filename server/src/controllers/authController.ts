@@ -693,8 +693,12 @@ export const updateProviderProfile = async (req: Request, res: Response) => {
       if (existing?.role === 'provider' && existing.providerApprovalStatus === 'approved') {
         // Already approved — profile update only
       } else {
-        updateData.providerApprovalStatus = 'pending';
+        // Auto-approve instead of requiring admin review
+        updateData.providerApprovalStatus = 'approved';
+        updateData.role = 'provider';
         updateData.providerAppliedAt = new Date();
+        updateData.providerReviewedAt = new Date();
+        updateData.providerReviewNote = null;
       }
     }
 
