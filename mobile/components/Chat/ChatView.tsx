@@ -31,6 +31,7 @@ import { ChatOfficialEngagementSheet } from './ChatOfficialEngagementSheet';
 import { ProviderServicesSheet } from './ProviderServicesSheet';
 import { ChatMessageActionsSheet } from './ChatMessageActionsSheet';
 import { uploadService } from '../../services';
+import { useAuthStore } from '../../store/authStore';
 import type {
   ChatDateGroup,
   ChatMessage,
@@ -237,8 +238,12 @@ export const ChatView: React.FC<ChatViewProps> = ({
     serviceRequestId,
   } = engagement;
 
+  const currentUserRole = useAuthStore((s) => s.user?.role);
+
   const showViewProviderProfile =
-    (!thread.postContext || thread.postContext.tag === 'Service') && !userIsProvider;
+    (!thread.postContext || thread.postContext.tag === 'Service') &&
+    !userIsProvider &&
+    currentUserRole !== 'provider';
   const hasOfficialEngagement =
     officialEngagementStatus === 'active' || officialEngagementStatus === 'completed';
 
