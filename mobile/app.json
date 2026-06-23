@@ -88,10 +88,10 @@
       "reactCompiler": true
     },
     "extra": {
-      "apiUrl": "https://api.dev.puconnect.com",
-      "environment": "development",
-      "supabaseUrl": "YOUR_SUPABASE_URL",
-      "supabaseAnonKey": "YOUR_SUPABASE_ANON_KEY",
+      "apiUrl": "https://puconnect-server.onrender.com/api",
+      "environment": "production",
+      "supabaseUrl": "https://oeoyuvxzegtfbpbdwfeh.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lb3l1dnh6ZWd0ZmJwYmR3ZmVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNzg3MTEsImV4cCI6MjA5NDg1NDcxMX0.WPLkHjxQktRxmqi1bP4xvkzsYzOgSzDbDi_FPP_IkqU",
       "router": {},
       "eas": {
         "projectId": "e463e906-5f67-436d-93a4-a11e543bbc2f"
