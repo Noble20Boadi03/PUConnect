@@ -3,7 +3,7 @@ import {
   StyleSheet,
   View,
   Text,
-  ScrollView,
+  FlatList,
   useColorScheme,
   KeyboardAvoidingView,
   Platform,
@@ -180,7 +180,10 @@ export const ChatView: React.FC<ChatViewProps> = ({
     return conv?.isMuted ?? false;
   }, [conversations, thread.providerUsername]);
 
-  const scrollRef = useRef<ScrollView>(null);
+  // headerHeight is measured via onLayout and used as the iOS keyboardVerticalOffset
+  // so that KeyboardAvoidingView accounts for the header sitting outside its subtree.
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const flatListRef = useRef<FlatList<FlatItem>>(null);
   const [dateGroups, setDateGroups] = useState<ChatDateGroup[]>(() =>
     thread.dateGroups.map((g) => ({ ...g, messages: [...g.messages] }))
   );
@@ -188,6 +191,31 @@ export const ChatView: React.FC<ChatViewProps> = ({
   React.useEffect(() => {
     setDateGroups(thread.dateGroups.map((g) => ({ ...g, messages: [...g.messages] })));
   }, [thread.dateGroups]);
+
+  // ---------------------------------------------------------------------------
+  // Flatten ChatDateGroup[] -> FlatItem[] for the inverted FlatList.
+  // Messages are emitted newest-last (natural order), then the array is
+  // reversed so index-0 is the newest message — inverted={true} on FlatList
+  // flips the visual order back, putting newest at the bottom.
+  // Date separators are injected as 'separator' items just before the first
+  // message of each group (which after reversal = just after the last message
+  // of that group visually).
+  // ---------------------------------------------------------------------------
+  type MessageItem = { type: 'message'; message: ChatMessage; key: string };
+  type SeparatorItem = { type: 'separator'; dateLabel: string; key: string };
+  type FlatItem = MessageItem | SeparatorItem;
+
+  const flatItems = useMemo<FlatItem[]>(() => {
+    const items: FlatItem[] = [];
+    for (const group of dateGroups) {
+      items.push({ type: 'separator', dateLabel: group.dateLabel, key: `sep-${group.dateLabel}` });
+      for (const message of group.messages) {
+        items.push({ type: 'message', message, key: message.id });
+      }
+    }
+    // Reverse so newest message is at index 0 (pairs with inverted={true}).
+    return items.slice().reverse();
+  }, [dateGroups]);
 
   const providerServices = useMemo(
     () => getProviderServices(thread.providerUsername),
@@ -513,8 +541,10 @@ export const ChatView: React.FC<ChatViewProps> = ({
       setDateGroups((prev) => appendSentMessage(prev, trimmed));
     }
     setDraft('');
+    // With an inverted FlatList, index 0 is always the newest message.
+    // Scrolling to offset 0 == scrolling to the bottom (composer end).
     requestAnimationFrame(() => {
-      scrollRef.current?.scrollToEnd({ animated: true });
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
     });
   }, [draft, onSendMessage]);
 
@@ -549,7 +579,35 @@ export const ChatView: React.FC<ChatViewProps> = ({
     }
   }, [onDeleteMessage]);
 
-  const displayGroups = useMemo(() => dateGroups, [dateGroups]);
+  // renderFlatItem handles both message bubbles and date separators.
+  const renderFlatItem = useCallback(({ item }: { item: FlatItem }) => {
+    if (item.type === 'separator') {
+      return (
+        <View style={styles.dateSeparator}>
+          <View style={[styles.dateLine, { backgroundColor: subtleBg }]} />
+          <Text style={[styles.dateLabel, { color: Colors.icon }]}>{item.dateLabel}</Text>
+          <View style={[styles.dateLine, { backgroundColor: subtleBg }]} />
+        </View>
+      );
+    }
+    return (
+      <ChatMessageBubble
+        message={item.message}
+        sentBg={sentBg}
+        sentText={sentText}
+        receivedBg={cardBg}
+        receivedText={Colors.text}
+        mutedColor={Colors.icon}
+        primaryColor={Colors.primary}
+        systemBg={subtleBg}
+        systemAccent={contextAccent}
+        onRetry={handleRetryMessage}
+        onDelete={handleDeleteMessage}
+        onLongPress={handleMessageLongPress}
+      />
+    );
+  }, [subtleBg, Colors.icon, Colors.text, Colors.primary, sentBg, sentText, cardBg, contextAccent,
+      handleRetryMessage, handleDeleteMessage, handleMessageLongPress]);
 
   const hasPendingMessage = useMemo(() => {
     return dateGroups.some(group => group.messages.some(msg => msg.status === 'pending'));
@@ -557,7 +615,12 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
-      <View {...panHandlers}>
+      {/* Header sits outside KeyboardAvoidingView — we measure its height to use
+          as keyboardVerticalOffset so iOS padding-mode accounts for it correctly. */}
+      <View
+        {...panHandlers}
+        onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
+      >
         <ChatHeader
           participant={thread.participant}
           subtleBg={subtleBg}
@@ -572,57 +635,41 @@ export const ChatView: React.FC<ChatViewProps> = ({
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight : 0}
       >
-        <ScrollView
-          ref={scrollRef}
+        {/* Inverted FlatList: index-0 = newest message = visually at bottom.
+            Pull-to-refresh fires onEndReached (which in inverted = scroll up = top visually),
+            so onEndReached is used for loading older messages. */}
+        <FlatList<FlatItem>
+          ref={flatListRef}
+          data={flatItems}
+          keyExtractor={(item) => item.key}
+          renderItem={renderFlatItem}
+          inverted
           style={styles.messagesScroll}
-          contentContainerStyle={styles.messagesContent}
+          contentContainerStyle={styles.messagesContentInverted}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
-          refreshControl={
-            <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
-          }
-          onScroll={(event) => {
-            const { contentOffset } = event.nativeEvent;
-            if (contentOffset.y <= 0 && hasMore && !isLoadingMore && onLoadMore) {
+          automaticallyAdjustKeyboardInsets
+          // Load older messages when the user scrolls to the top (= onEndReached in inverted list)
+          onEndReached={() => {
+            if (hasMore && !isLoadingMore && onLoadMore) {
               onLoadMore();
             }
           }}
-        >
-          {isLoadingMore && (
-            <View style={styles.loadingMoreContainer}>
-              <ActivityIndicator size="small" color={Colors.icon} />
-            </View>
-          )}
-          {displayGroups.map((group) => (
-            <View key={group.dateLabel}>
-              <View style={styles.dateSeparator}>
-                <View style={[styles.dateLine, { backgroundColor: subtleBg }]} />
-                <Text style={[styles.dateLabel, { color: Colors.icon }]}>{group.dateLabel}</Text>
-                <View style={[styles.dateLine, { backgroundColor: subtleBg }]} />
+          onEndReachedThreshold={0.2}
+          ListFooterComponent={
+            isLoadingMore ? (
+              <View style={styles.loadingMoreContainer}>
+                <ActivityIndicator size="small" color={Colors.icon} />
               </View>
-              {group.messages.map((message) => (
-                <ChatMessageBubble
-                  key={message.id}
-                  message={message}
-                  sentBg={sentBg}
-                  sentText={sentText}
-                  receivedBg={cardBg}
-                  receivedText={Colors.text}
-                  mutedColor={Colors.icon}
-                  primaryColor={Colors.primary}
-                  systemBg={subtleBg}
-                  systemAccent={contextAccent}
-                  onRetry={handleRetryMessage}
-                  onDelete={handleDeleteMessage}
-                  onLongPress={handleMessageLongPress}
-                />
-              ))}
-            </View>
-          ))}
-        </ScrollView>
+            ) : null
+          }
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+          }
+        />
 
         {thread.postContext && !((officialEngagementStatus as OfficialEngagementStatus) === 'completed') ? (
           <ChatContextBanner
@@ -757,10 +804,12 @@ const styles = StyleSheet.create({
   messagesScroll: {
     flex: 1,
   },
-  messagesContent: {
+  // Inverted list: padding is flipped — paddingTop becomes visual bottom padding
+  // (space below the newest message), paddingBottom becomes visual top padding.
+  messagesContentInverted: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.md,
   },
   loadingMoreContainer: {
     paddingVertical: Spacing.md,
