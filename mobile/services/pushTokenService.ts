@@ -13,9 +13,12 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
     // Set up Android notification channel
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {
-        name: 'default',
+        name: 'PUConnect Notifications',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#2563EB',
+        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+        showBadge: true,
       });
     }
 

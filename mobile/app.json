@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "PUConnect",
-    "slug": "puconnect",
+    "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
@@ -97,6 +97,7 @@
       "eas": {
         "projectId": "e463e906-5f67-436d-93a4-a11e543bbc2f"
       }
-    }
+    },
+    "owner": "drunk_jacob"
   }
 }
