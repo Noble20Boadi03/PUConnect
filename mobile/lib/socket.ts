@@ -1,23 +1,11 @@
 import { io, Socket } from 'socket.io-client';
-import Constants from 'expo-constants';
-
-// Dynamically resolve the socket server URL (same as API URL but without /api)
-const getSocketUrl = () => {
-  const debuggerHost = Constants.expoConfig?.hostUri;
-  const localhost = debuggerHost?.split(':').shift() || 'localhost';
-  
-  if (__DEV__) {
-    return `http://${localhost}:5000`;
-  }
-  
-  return Constants.expoConfig?.extra?.socketUrl || 'https://api.puconnect.com';
-};
+import ENV from '../config';
 
 let socket: Socket | null = null;
 
 export const getSocket = () => {
   if (!socket) {
-    socket = io(getSocketUrl(), {
+    socket = io(ENV.socketUrl, {
       transports: ['websocket', 'polling'],
     });
   }

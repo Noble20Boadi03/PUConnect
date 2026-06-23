@@ -1,35 +1,29 @@
 import Constants from 'expo-constants';
 
-// Dynamically resolve local IP address for local development connections
-const getApiUrl = () => {
-  // Constants.expoConfig.hostUri gives us the IP:PORT of the machine running the Expo server
-  // e.g., "192.168.1.10:8081"
+// 1. Define production URLs
+const productionApiUrl = Constants.expoConfig?.extra?.apiUrl;
+const productionSocketUrl = Constants.expoConfig?.extra?.socketUrl;
+
+// 2. Define dev URLs using the local IP
+const getDevApiUrl = () => {
   const debuggerHost = Constants.expoConfig?.hostUri;
   const localhost = debuggerHost?.split(':').shift() || 'localhost';
-  
-  // During development with a physical device, we use the PC's local IP
-  if (__DEV__) {
-    return `http://${localhost}:5000/api`;
-  }
-  
-  // Fallback to production API or environment variable
-  return Constants.expoConfig?.extra?.apiUrl || 'https://api.puconnect.com/api';
+  return `http://${localhost}:5000/api`;
 };
 
-const getSocketUrl = () => {
+const getDevSocketUrl = () => {
   const debuggerHost = Constants.expoConfig?.hostUri;
   const localhost = debuggerHost?.split(':').shift() || 'localhost';
-  
-  if (__DEV__) {
-    return `http://${localhost}:5000`;
-  }
-  
-  return Constants.expoConfig?.extra?.socketUrl || 'https://api.puconnect.com';
+  return `http://${localhost}:5000`;
 };
+
+// 3. Export single URLs based on whether a valid production URL is configured
+const useProductionApi = productionApiUrl && productionApiUrl.startsWith('https://');
+const useProductionSocket = productionSocketUrl && productionSocketUrl.startsWith('https://');
 
 export const ENV = {
-  apiUrl: getApiUrl(),
-  socketUrl: getSocketUrl(),
+  apiUrl: useProductionApi ? productionApiUrl : getDevApiUrl(),
+  socketUrl: useProductionSocket ? productionSocketUrl : getDevSocketUrl(),
   environment: Constants.expoConfig?.extra?.environment || 'development',
   supabaseUrl: Constants.expoConfig?.extra?.supabaseUrl || '',
   supabaseAnonKey: Constants.expoConfig?.extra?.supabaseAnonKey || '',
