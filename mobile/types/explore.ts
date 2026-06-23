@@ -4,12 +4,7 @@ import type { MarketIconName } from './market';
 export type ExploreTab = 'categories' | 'people';
 
 /** Main service category identifiers (Categories tab + People filters). */
-export type ExploreCategoryId =
-  | 'tutoring'
-  | 'tech'
-  | 'design'
-  | 'career'
-  | 'campus';
+export type ExploreCategoryId = string;
 
 /** People tab filter — all providers or one main category. */
 export type ExploreCategoryFilter = 'all' | ExploreCategoryId;
@@ -25,6 +20,8 @@ export interface ExploreCategory {
   imageUrl: string;
   accentColor: string;
   iconName: MarketIconName;
+  /** Nested services fetched dynamically from the server. */
+  services?: ExploreCategoryService[];
 }
 
 /** A service listed under a category on the detail page. */

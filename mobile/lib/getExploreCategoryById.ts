@@ -1,20 +1,20 @@
-import { EXPLORE_CATEGORIES_MOCK } from '../constants/exploreMock';
-import { EXPLORE_CATEGORY_SERVICES_MOCK } from '../constants/exploreCategoryServicesMock';
+import { useExploreStore } from '../store/exploreStore';
 import type { ExploreCategory, ExploreCategoryId, ExploreCategoryService } from '../types/explore';
 
 export function getExploreCategoryById(
   id: string | undefined
 ): ExploreCategory | undefined {
   if (!id) return undefined;
-  return EXPLORE_CATEGORIES_MOCK.find((c) => c.id === id);
+  const categories = useExploreStore.getState().categories;
+  return categories.find((c) => c.id === id);
 }
 
 export function getExploreCategoryServices(
   categoryId: ExploreCategoryId | string | undefined
 ): ExploreCategoryService[] {
   if (!categoryId) return [];
-  const services = EXPLORE_CATEGORY_SERVICES_MOCK[categoryId as ExploreCategoryId];
-  return services ?? [];
+  const category = getExploreCategoryById(categoryId);
+  return category?.services ?? [];
 }
 
 export function getExploreCategoryServiceById(

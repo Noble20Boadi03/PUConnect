@@ -2,9 +2,8 @@ import { create } from 'zustand';
 import { exploreService } from '../services';
 import type { ExploreCategory, ExploreProvider } from '../types';
 import { DbCategory, User } from '../types';
-import { getServiceOptionsByIds } from '../lib';
 
-const mapDbCategoryToExploreCategory = (dbCategory: DbCategory): ExploreCategory => ({
+const mapDbCategoryToExploreCategory = (dbCategory: any): ExploreCategory => ({
   id: dbCategory.id,
   title: dbCategory.title,
   pillLabel: dbCategory.pillLabel,
@@ -13,13 +12,19 @@ const mapDbCategoryToExploreCategory = (dbCategory: DbCategory): ExploreCategory
   imageUrl: dbCategory.imageUrl,
   accentColor: dbCategory.accentColor,
   iconName: dbCategory.iconName as any,
+  services: dbCategory.services?.map((s: any) => ({
+    id: s.id,
+    categoryId: s.categoryId,
+    title: s.title,
+    description: s.description,
+    filterTags: s.filterTags || [],
+  })) || [],
 });
 
 const mapUserToExploreProvider = (user: any): ExploreProvider => {
   let services: Array<{ title: string }> = user.services ?? [];
-  if (services.length === 0 && user.serviceIds && user.serviceIds.length > 0) {
-    services = getServiceOptionsByIds(user.serviceIds);
-  }
+  // For mocks / static, if service details aren't populated, we rely on the dynamic store mapping
+  // We'll leave skillTitle to fall back if services are missing.
   const serviceNames = services.map((s) => s.title).join(', ');
   const skillTitle =
     serviceNames ||
@@ -31,7 +36,7 @@ const mapUserToExploreProvider = (user: any): ExploreProvider => {
     displayName: user.name,
     handle: user.username,
     avatarUrl: user.avatarUrl,
-    categoryId: (user as any).categoryId || 'tutoring',
+    categoryId: (user as any).categoryId || 'academics',
     skillTitle,
     expertiseTags: (user as any).expertiseTags || [],
     serviceIds: (user as any).serviceIds || [],

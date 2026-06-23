@@ -12,7 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Spacing, Typography } from '../../constants';
-import { EDIT_INFO_SERVICES_BY_CATEGORY } from '../../constants/editInfoServices';
+import { getEditInfoServicesByCategory } from '../../constants/editInfoServices';
 import { useThemeColor } from '../../hooks';
 
 export interface EditInfoServicesSheetProps {
@@ -69,7 +69,7 @@ export const EditInfoServicesSheet: React.FC<EditInfoServicesSheetProps> = ({
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {EDIT_INFO_SERVICES_BY_CATEGORY.map((group) => (
+            {getEditInfoServicesByCategory().map((group) => (
               <View key={group.categoryId} style={styles.group}>
                 <Text style={[styles.groupLabel, { color: Colors.icon }]}>{group.categoryLabel}</Text>
                 {group.services.map((service) => {

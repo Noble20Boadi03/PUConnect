@@ -762,16 +762,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
         // Mark as read if we are currently looking at this chat
         if (newMsg.receiverId === user.id && activeUsername === targetUsername) {
           chatService.markMessagesAsRead(targetUsername).then(() => {
-            fetchConversations();
+            fetchConversations(true);
             fetchUnreadCount();
           }).catch(() => {});
         } else {
-          fetchConversations();
+          fetchConversations(true);
           fetchUnreadCount();
         }
       } else {
         // Refresh conversations list for irrelevant messages or if no cached thread
-        fetchConversations();
+        fetchConversations(true);
         fetchUnreadCount();
       }
     });

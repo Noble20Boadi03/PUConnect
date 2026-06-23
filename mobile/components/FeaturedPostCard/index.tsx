@@ -38,10 +38,10 @@ const TOP_ROW_MARGIN_BOTTOM = Spacing.sm; // 8
 const TITLE_HEIGHT = 22 * 2; // 2 lines × lineHeight 22
 const TITLE_MARGIN_BOTTOM = Spacing.xs; // 4
 const DESCRIPTION_HEIGHT = 20 * 3; // 3 lines × lineHeight 20
-const DESCRIPTION_MARGIN_BOTTOM = Spacing.md; //16
-const FOOTER_PADDING_TOP = Spacing.sm + 4; // 12
+const DESCRIPTION_MARGIN_BOTTOM = 12; //16
+const FOOTER_PADDING_TOP = 12; // 12
 const FOOTER_BORDER_WIDTH = 1;
-const FOOTER_CONTENT_HEIGHT = 40; // Estimated height of author row + price row
+const FOOTER_CONTENT_HEIGHT = -60; // Estimated height of author row + price row
 const SERVICE_BODY_HEIGHT = 
   BODY_PADDING +
   TOP_ROW_HEIGHT +

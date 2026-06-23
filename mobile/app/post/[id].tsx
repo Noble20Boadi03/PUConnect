@@ -17,7 +17,7 @@ import { useAppRouter, useConfirmDialog } from '../../hooks';
 import { Spacing, Typography } from '../../constants';
 import { useAuthStore, useProfileStore, usePostStore, useMarketStore, useServiceRequestsStore } from '../../store';
 import { useChat } from '../../hooks/useChat';
-import { EDIT_INFO_SERVICE_OPTIONS } from '../../constants/editInfoServices';
+import { getEditInfoServiceOptions } from '../../constants/editInfoServices';
 import { postService } from '../../services';
 import type { DbServiceRequest } from '../../types/core';
 
@@ -133,9 +133,10 @@ export default function PostDetailScreen() {
     }
 
     // Get provider's service categories
+    const serviceOptions = getEditInfoServiceOptions();
     const providerCategories = new Set(
       providerServiceIds.map((serviceId) => {
-        const service = EDIT_INFO_SERVICE_OPTIONS.find((s) => s.id === serviceId);
+        const service = serviceOptions.find((s) => s.id === serviceId);
         return service?.categoryId;
       }).filter(Boolean) as string[]
     );

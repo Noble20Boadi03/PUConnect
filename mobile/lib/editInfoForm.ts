@@ -1,6 +1,6 @@
 import {
-  EDIT_INFO_SERVICE_OPTIONS,
-  SERVICE_TAGS_BY_SERVICE_ID,
+  getEditInfoServiceOptions,
+  getServiceTagsByServiceId,
 } from '../constants/editInfoServices';
 import type { EditInfoServiceOption } from '../constants/editInfoServices';
 import type { User } from '../types';
@@ -14,20 +14,22 @@ export function splitDisplayName(fullName?: string): { firstName: string; lastNa
 
 export function getServiceOptionsByIds(ids: string[]): EditInfoServiceOption[] {
   const set = new Set(ids);
-  return EDIT_INFO_SERVICE_OPTIONS.filter((s) => set.has(s.id));
+  return getEditInfoServiceOptions().filter((s) => set.has(s.id));
 }
 
 export function getTagGroupsForServices(serviceIds: string[]): { serviceId: string; serviceTitle: string; tags: string[] }[] {
+  const serviceTags = getServiceTagsByServiceId();
   return getServiceOptionsByIds(serviceIds).map((service) => ({
     serviceId: service.id,
     serviceTitle: service.title,
-    tags: SERVICE_TAGS_BY_SERVICE_ID[service.id] ?? [],
+    tags: serviceTags[service.id] ?? [],
   }));
 }
 
 export function pruneTagsForServices(selectedTags: string[], serviceIds: string[]): string[] {
+  const serviceTags = getServiceTagsByServiceId();
   const allowed = new Set(
-    serviceIds.flatMap((id) => SERVICE_TAGS_BY_SERVICE_ID[id] ?? [])
+    serviceIds.flatMap((id) => serviceTags[id] ?? [])
   );
   return selectedTags.filter((tag) => allowed.has(tag));
 }

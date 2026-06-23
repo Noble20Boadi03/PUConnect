@@ -3,63 +3,7 @@ import { EXPLORE_CATEGORY_IMAGES } from './exploreCategoryImages';
 
 const avatar = (seed: string) => `https://i.pravatar.cc/256?u=${seed}`;
 
-export const EXPLORE_CATEGORIES_MOCK: ExploreCategory[] = [
-  {
-    id: 'tutoring',
-    title: 'Tutoring & Academics',
-    pillLabel: 'Tutoring',
-    tagline: 'Learn smarter, together on campus',
-    iconName: 'school-outline',
-    description:
-      'Math, science, writing help, exam prep, and study partners for tough courses.',
-    imageUrl: EXPLORE_CATEGORY_IMAGES.tutoring,
-    accentColor: '#7C3AED',
-  },
-  {
-    id: 'tech',
-    title: 'Tech & Development',
-    pillLabel: 'Tech',
-    tagline: 'Build the tools students actually need',
-    iconName: 'code-slash-outline',
-    description:
-      'Websites, apps, debugging, portfolio builds, and campus tool prototypes.',
-    imageUrl: EXPLORE_CATEGORY_IMAGES.tech,
-    accentColor: '#2563EB',
-  },
-  {
-    id: 'design',
-    title: 'Design & Creative',
-    pillLabel: 'Design',
-    tagline: 'Make every campus moment look sharp',
-    iconName: 'color-palette-outline',
-    description:
-      'Posters, branding, UI mockups, photography, and social media assets.',
-    imageUrl: EXPLORE_CATEGORY_IMAGES.design,
-    accentColor: '#EA580C',
-  },
-  {
-    id: 'career',
-    title: 'Career & Professional',
-    pillLabel: 'Career',
-    tagline: 'Stand out before graduation day',
-    iconName: 'briefcase-outline',
-    description:
-      'Resume reviews, interview prep, LinkedIn polish, and personal statements.',
-    imageUrl: EXPLORE_CATEGORY_IMAGES.career,
-    accentColor: '#059669',
-  },
-  {
-    id: 'campus',
-    title: 'Campus Life & Errands',
-    pillLabel: 'Campus',
-    tagline: 'Small tasks handled while you study',
-    iconName: 'bicycle-outline',
-    description:
-      'Laundry runs, deliveries, moving help, and other on-campus logistics.',
-    imageUrl: EXPLORE_CATEGORY_IMAGES.campus,
-    accentColor: '#DB2777',
-  },
-];
+
 
 export const EXPLORE_PROVIDERS_MOCK: ExploreProvider[] = [
   {

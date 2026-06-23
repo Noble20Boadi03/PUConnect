@@ -23,7 +23,7 @@ export default function MessagesScreen() {
   );
 
   const handleRefresh = useCallback(() => {
-    fetchConversations(false, true);
+    fetchConversations(true, true);
   }, [fetchConversations]);
 
   const handleConversationPress = useCallback(
