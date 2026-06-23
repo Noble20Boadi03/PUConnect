@@ -11,7 +11,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '../../constants';
@@ -40,6 +40,7 @@ export const SubmitProviderReviewView: React.FC<SubmitProviderReviewViewProps> =
   const cardBg = isDark ? '#18181B' : '#FFFFFF';
   const subtleBg = isDark ? '#1E1E21' : '#F0F0F2';
   const accentColor = '#F59E0B';
+  const insets = useSafeAreaInsets();
 
   const submitReview = useProviderReviews((s) => s.submitReview);
   const removeEligibleReview = useProviderReviews((s) => s.removeEligibleReview);
@@ -57,7 +58,7 @@ export const SubmitProviderReviewView: React.FC<SubmitProviderReviewViewProps> =
     setIsSubmitting(true);
     
     try {
-      await reviewService.createReview({
+      const dbReview = await reviewService.createReview({
         revieweeUsername,
         rating,
         comment: comment.trim(),
@@ -69,6 +70,7 @@ export const SubmitProviderReviewView: React.FC<SubmitProviderReviewViewProps> =
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       
       submitReview({
+        id: dbReview.id,
         revieweeUsername,
         authorDisplayName: 'You',
         authorInitials: 'YO',
@@ -176,7 +178,7 @@ export const SubmitProviderReviewView: React.FC<SubmitProviderReviewViewProps> =
           </View>
         </ScrollView>
 
-        <View style={[styles.footer, { backgroundColor: screenBg }]}>
+        <View style={[styles.footer, { backgroundColor: screenBg, paddingBottom: Spacing.lg + insets.bottom }]}>
           <TouchableOpacity
             style={[
               styles.submitButton,

@@ -191,9 +191,9 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
     }
     const ctx = postContext;
     const confirmed = await showConfirm({
-      title: 'Request Completion?',
-      message: `Notify ${contactName} that the service for “${ctx.title}” is ready for review. They must confirm before this undertaking is closed.`,
-      confirmLabel: 'Request Completion',
+      title: 'Submit Work?',
+      message: `Notify ${contactName} that the service for "${ctx.title}" is ready for review. They must confirm before this undertaking is closed.`,
+      confirmLabel: 'Submit Work',
       cancelLabel: 'Not Yet',
       icon: 'checkmark-done-outline',
     });
@@ -552,8 +552,8 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
                     onPress={handleAccept}
                     activeOpacity={0.9}
                   >
-                    <Ionicons name="checkmark-circle-outline" size={22} color="#FFFFFF" />
-                    <Text style={styles.primaryLabel}>Accept</Text>
+                    <Ionicons name="checkmark-circle-outline" size={22} color={Colors.onPrimary} />
+                    <Text style={[styles.primaryLabel, { color: Colors.onPrimary }]}>Accept</Text>
                   </TouchableOpacity>
                 )}
 
@@ -575,8 +575,8 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
                     onPress={handleRequestOfficialCompletion}
                     activeOpacity={0.9}
                   >
-                    <Ionicons name="checkmark-done-outline" size={22} color="#FFFFFF" />
-                    <Text style={styles.primaryLabel}>Request Completion</Text>
+                    <Ionicons name="checkmark-done-outline" size={22} color={Colors.onPrimary} />
+                    <Text style={[styles.primaryLabel, { color: Colors.onPrimary }]}>Submit Work</Text>
                   </TouchableOpacity>
                 )}
 
@@ -587,8 +587,8 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
                       onPress={handleConfirmOfficialCompletion}
                       activeOpacity={0.9}
                     >
-                      <Ionicons name="checkmark-circle-outline" size={22} color="#FFFFFF" />
-                      <Text style={styles.primaryLabel}>Confirm Service Delivered</Text>
+                      <Ionicons name="checkmark-circle-outline" size={22} color={Colors.onPrimary} />
+                      <Text style={[styles.primaryLabel, { color: Colors.onPrimary }]}>Confirm Service Delivered</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.declineButton, { backgroundColor: subtleBg }]}
@@ -608,8 +608,8 @@ export const ServiceRequestDetailsView: React.FC<ServiceRequestDetailsViewProps>
                     onPress={handleLeaveReview}
                     activeOpacity={0.9}
                   >
-                    <Ionicons name="star-outline" size={22} color="#FFFFFF" />
-                    <Text style={styles.primaryLabel}>Leave a Review</Text>
+                    <Ionicons name="star-outline" size={22} color={Colors.onPrimary} />
+                    <Text style={[styles.primaryLabel, { color: Colors.onPrimary }]}>Leave a Review</Text>
                   </TouchableOpacity>
                 )}
 
@@ -751,7 +751,6 @@ const styles = StyleSheet.create({
   primaryLabel: {
     fontSize: Typography.size.md,
     fontWeight: '800',
-    color: '#FFFFFF',
   },
   declineButton: {
     paddingVertical: Spacing.md,

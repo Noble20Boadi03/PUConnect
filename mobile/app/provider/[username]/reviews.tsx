@@ -50,7 +50,7 @@ export default function ProviderReviewsScreen() {
   const textColor = isDark ? '#ECEDEE' : '#11181C';
 
   const [profile, setProfile] = useState<ProviderProfile | undefined>();
-  const [reviews, setReviews] = useState<ProviderReview[]>([]);
+  const [serverReviews, setServerReviews] = useState<ProviderReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
 
@@ -76,23 +76,29 @@ export default function ProviderReviewsScreen() {
       const reviewsData = await reviewService.getReviewsForUser(username);
       const mappedReviews = reviewsData.map(mapDbReviewToProviderReview);
       
-      // Combine with user's own reviews from store
-      const ownReviews = submittedReviews
-        .filter(r => r.revieweeUsername === username)
-        .map(r => ({ ...r, isOwn: true } as ProviderReview));
-      
-      setReviews([...ownReviews, ...mappedReviews]);
+      setServerReviews(mappedReviews);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError('Failed to load reviews');
     } finally {
       setLoading(false);
     }
-  }, [username, submittedReviews]);
+  }, [username]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const reviews = useMemo(() => {
+    const ownReviews = submittedReviews
+      .filter((r) => r.revieweeUsername === username)
+      .map((r) => ({ ...r, isOwn: true } as ProviderReview));
+
+    const ownReviewIds = new Set(ownReviews.map((r) => r.id));
+    const filteredServerReviews = serverReviews.filter((r) => !ownReviewIds.has(r.id));
+
+    return [...ownReviews, ...filteredServerReviews];
+  }, [serverReviews, submittedReviews, username]);
 
   const summary = useMemo(() => computeSummary(reviews), [reviews]);
 

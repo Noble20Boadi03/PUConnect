@@ -10,7 +10,7 @@ export interface ProviderReviewsState {
   eligibleReviews: DbEligibleReview[];
   recordCompletedDeal: (deal: Omit<CompletedDeal, 'id'> & { id?: string }) => string;
   dismissReviewPrompt: (dealId: string) => void;
-  submitReview: (review: Omit<ProviderReview, 'id' | 'isOwn'>) => ProviderReview;
+  submitReview: (review: Omit<ProviderReview, 'isOwn'>) => ProviderReview;
   syncCompletedDealsFromRequests: (deals: CompletedDeal[]) => void;
   fetchEligibleReviews: () => Promise<void>;
   removeEligibleReview: (serviceRequestId: string) => void;
@@ -128,8 +128,7 @@ export const useProviderReviewsStore = create<ProviderReviewsState>((set, get) =
   },
 
   submitReview: (review) => {
-    const id = `user-rev-${Date.now()}`;
-    const entry: ProviderReview = { ...review, id, isOwn: true };
+    const entry: ProviderReview = { ...review, isOwn: true };
     set((state) => ({
       submittedReviews: [...state.submittedReviews, entry],
     }));

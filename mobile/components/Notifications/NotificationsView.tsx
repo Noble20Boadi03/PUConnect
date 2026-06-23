@@ -226,7 +226,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
                 style={[styles.actionButton, { backgroundColor: Colors.primary }]}
                 onPress={handleAction}
               >
-                <Text style={[styles.actionButtonText, { color: '#FFFFFF' }]}>
+                <Text style={[styles.actionButtonText, { color: Colors.onPrimary }]}>
                   {selectedNotification ? getNotificationActionLabel(selectedNotification) : 'Dismiss'}
                 </Text>
               </TouchableOpacity>

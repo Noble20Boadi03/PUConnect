@@ -4,6 +4,7 @@ import { GuardedPressable } from '../GuardedPressable';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, Typography } from '../../constants';
+import { useThemeColor } from '../../hooks';
 import type { ConversationPreview } from '../../types';
 
 function getInitials(name: string): string {
@@ -63,6 +64,7 @@ const ConversationListItemComponent: React.FC<ConversationListItemProps> = ({
   onSelectToggle,
   onLongPress,
 }) => {
+  const Colors = useThemeColor();
   const {
     participant,
     contextLine,
@@ -190,7 +192,7 @@ const ConversationListItemComponent: React.FC<ConversationListItemProps> = ({
           </Text>
           {showBadge ? (
             <View style={[styles.badge, { backgroundColor: primaryColor }]}>
-              <Text style={styles.badgeText}>{badgeLabel}</Text>
+              <Text style={[styles.badgeText, { color: Colors.onPrimary }]}>{badgeLabel}</Text>
             </View>
           ) : null}
         </View>
@@ -335,7 +337,6 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#FFFFFF',
   },
 });
 

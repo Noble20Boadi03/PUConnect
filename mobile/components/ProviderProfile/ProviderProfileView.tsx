@@ -71,7 +71,11 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
     const ownReviews = submittedReviews
       .filter((r) => r.revieweeUsername === profile.username)
       .map((r) => ({ ...r, isOwn: true } as ProviderReview));
-    const allReviews = [...ownReviews, ...reviews];
+      
+    const ownReviewIds = new Set(ownReviews.map(r => r.id));
+    const deduplicatedServerReviews = reviews.filter(r => !ownReviewIds.has(r.id));
+    
+    const allReviews = [...ownReviews, ...deduplicatedServerReviews];
 
     if (allReviews.length === 0) {
       return { averageRating: 0, reviewCount: 0 };
