@@ -32,11 +32,6 @@ const CategoryDetailServiceRowComponent: React.FC<CategoryDetailServiceRowProps>
     accessibilityRole="button"
     accessibilityLabel={service.title}
   >
-    <View style={[styles.iconWrap, { backgroundColor: accentColor + '1F' }]}>
-      <View style={[styles.iconAccent, { backgroundColor: accentColor }]}>
-        <Ionicons name="sparkles-outline" size={18} color="#FFFFFF" />
-      </View>
-    </View>
 
     <View style={styles.textBlock}>
       <Text style={[styles.title, { color: textColor }]} numberOfLines={2}>

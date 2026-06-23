@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "PUConnect",
+    "slug": "puconnect",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
-    "scheme": "mobile",
+    "scheme": "puconnect",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -34,7 +34,7 @@
         "android.permission.READ_MEDIA_AUDIO",
         "android.permission.RECORD_AUDIO"
       ],
-      "package": "com.drunk_jacob.mobile"
+      "package": "com.drunk_jacob.puconnect"
     },
     "web": {
       "output": "static",

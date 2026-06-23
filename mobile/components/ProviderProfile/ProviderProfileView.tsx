@@ -237,6 +237,7 @@ export const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({
         isProvider
         showCreateFab={false}
         isOwnProfile={false}
+        hideAuthorOnCards={true}
         cardBg={cardBg}
         subtleBg={subtleBg}
         textColor={Colors.text}
