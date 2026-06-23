@@ -16,8 +16,20 @@ const getApiUrl = () => {
   return Constants.expoConfig?.extra?.apiUrl || 'https://api.puconnect.com/api';
 };
 
+const getSocketUrl = () => {
+  const debuggerHost = Constants.expoConfig?.hostUri;
+  const localhost = debuggerHost?.split(':').shift() || 'localhost';
+  
+  if (__DEV__) {
+    return `http://${localhost}:5000`;
+  }
+  
+  return Constants.expoConfig?.extra?.socketUrl || 'https://api.puconnect.com';
+};
+
 export const ENV = {
   apiUrl: getApiUrl(),
+  socketUrl: getSocketUrl(),
   environment: Constants.expoConfig?.extra?.environment || 'development',
   supabaseUrl: Constants.expoConfig?.extra?.supabaseUrl || '',
   supabaseAnonKey: Constants.expoConfig?.extra?.supabaseAnonKey || '',
