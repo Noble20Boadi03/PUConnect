@@ -154,7 +154,7 @@ const DisputeDetail = () => {
         </button>
         <button
           onClick={() => setModal({ isOpen: true, resolution: 'resume' })}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          className="btn-primary"
         >
           Resume Active
         </button>

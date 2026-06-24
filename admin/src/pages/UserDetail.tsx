@@ -163,13 +163,13 @@ const UserDetail = () => {
             placeholder="Enter warning message..."
             value={warningMessage}
             onChange={(e) => setWarningMessage(e.target.value)}
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="input-field flex-1"
             rows={3}
           />
           <button
             onClick={() => setModal({ isOpen: true, action: 'warn' })}
             disabled={!warningMessage.trim()}
-            className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition disabled:opacity-50"
+            className="btn-secondary disabled:opacity-50"
           >
             Send Warning
           </button>
@@ -217,7 +217,7 @@ const UserDetail = () => {
                 })
               }
               disabled={isOwnAccount}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
+              className="select-field disabled:opacity-50"
             >
               <option value="">No Admin Tier</option>
               <option value="super_admin">Super Admin</option>

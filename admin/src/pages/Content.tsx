@@ -91,7 +91,7 @@ export default function Content() {
             if (el) el.indeterminate = isSomeSelected;
           }}
           onChange={toggleSelectAll}
-          className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+          className="rounded border-surface-border text-brand-700 focus:ring-brand-600"
         />
       ),
       render: (post: AdminPost) => (
@@ -99,7 +99,7 @@ export default function Content() {
           type="checkbox"
           checked={selectedIds.includes(post.id)}
           onChange={() => toggleSelectOne(post.id)}
-          className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+          className="rounded border-surface-border text-brand-700 focus:ring-brand-600"
         />
       ),
     },
@@ -108,9 +108,7 @@ export default function Content() {
       key: 'tag',
       header: 'Tag',
       render: (post: AdminPost) => (
-        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-          post.tag === 'Service' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-        }`}>
+        <span className={`badge ${post.tag === 'Service' ? 'badge-success' : 'badge-neutral'}`}>
           {post.tag}
         </span>
       ),
@@ -119,10 +117,10 @@ export default function Content() {
       key: 'status',
       header: 'Status',
       render: (post: AdminPost) => (
-        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-          post.status === 'active' ? 'bg-green-100 text-green-800' :
-          post.status === 'locked_by_admin' ? 'bg-yellow-100 text-yellow-800' :
-          post.status === 'removed_by_admin' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+        <span className={`badge ${
+          post.status === 'active' ? 'badge-success' :
+          post.status === 'locked_by_admin' ? 'badge-pending' :
+          post.status === 'removed_by_admin' ? 'badge-danger' : 'badge-neutral'
         }`}>
           {STATUS_MAP[post.status] || post.status}
         </span>
@@ -146,7 +144,7 @@ export default function Content() {
         return (
           <button
             onClick={() => navigate(`/content/${post.id}`)}
-            className="text-purple-600 hover:text-purple-800 font-medium"
+            className="link-action"
           >
             View
           </button>
@@ -164,7 +162,7 @@ export default function Content() {
         render: (post: AdminPost) => (
           <button
             onClick={() => navigate(`/content/${post.id}`)}
-            className="text-purple-600 hover:text-purple-800 font-medium"
+            className="link-action"
           >
             View
           </button>
@@ -177,15 +175,14 @@ export default function Content() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">Content</h1>
+        <div>
+          <h1 className="page-title">Content</h1>
+          <p className="text-sm text-gray-500 mt-1">Browse and manage platform posts</p>
+        </div>
         {selectedIds.length > 0 && (
-          <div className="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-lg border border-gray-200">
+          <div className="flex items-center gap-3 card px-4 py-2">
             <span className="text-sm text-gray-600">{selectedIds.length} selected</span>
-            <select
-              value={bulkStatus}
-              onChange={(e) => setBulkStatus(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
+            <select value={bulkStatus} onChange={(e) => setBulkStatus(e.target.value)} className="select-field">
               <option value="">Select action...</option>
               <option value="active">Set Active</option>
               <option value="locked_by_admin">Lock</option>
@@ -194,7 +191,7 @@ export default function Content() {
             <button
               onClick={() => bulkStatus && setShowConfirmBulk(true)}
               disabled={!bulkStatus}
-              className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50"
+              className="btn-primary disabled:opacity-50"
             >
               Apply
             </button>
@@ -211,7 +208,7 @@ export default function Content() {
             setSearch(e.target.value);
             setPage(1);
           }}
-          className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="input-field max-w-xs"
         />
         <select
           value={tagFilter}
@@ -219,7 +216,7 @@ export default function Content() {
             setTagFilter(e.target.value);
             setPage(1);
           }}
-          className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="select-field"
         >
           <option value="all">All Tags</option>
           <option value="Service">Service</option>
@@ -231,7 +228,7 @@ export default function Content() {
             setStatusFilter(e.target.value);
             setPage(1);
           }}
-          className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="select-field"
         >
           <option value="all">All Statuses</option>
           <option value="active">Active</option>

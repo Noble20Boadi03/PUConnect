@@ -32,28 +32,31 @@ const ProviderQueue = () => {
         >
           &larr; Back to Directory
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">Provider Verification Queue</h1>
+        <h1 className="page-title">Provider Verification Queue</h1>
       </div>
 
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <h3 className="text-lg font-semibold text-yellow-800">
+      <div className="card p-4 bg-amber-50 border-amber-200">
+        <h3 className="text-base font-semibold text-amber-800">
           Provider approval is now automatic on profile save.
         </h3>
-        <p className="text-yellow-700 mt-1">
+        <p className="text-amber-700 mt-1 text-sm">
           This screen is retained for reference and may be repurposed or removed later.
         </p>
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-gray-500">Loading...</div>
+        <div className="text-center py-8 text-gray-500">
+          <div className="w-6 h-6 border-2 border-brand-200 border-t-brand-700 rounded-full animate-spin mx-auto mb-2" />
+          Loading...
+        </div>
       ) : providers.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">No pending providers</div>
+        <div className="card text-center py-8 text-gray-500">No pending providers</div>
       ) : (
         <div className="space-y-4">
           {providers.map((provider) => (
             <div
               key={provider.id}
-              className="bg-white rounded-lg shadow p-4 flex items-center gap-4"
+              className="card p-4 flex items-center gap-4 hover:shadow-card-hover transition-shadow"
             >
               <img
                 src={provider.avatarUrl}

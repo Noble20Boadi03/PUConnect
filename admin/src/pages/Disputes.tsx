@@ -59,7 +59,7 @@ const Disputes = () => {
       render: (d: DisputeSummary) => (
         <button
           onClick={() => navigate(`/moderation/dispute/${d.id}`)}
-          className="text-blue-600 hover:text-blue-800 font-medium"
+          className="link-action"
         >
           View
         </button>
@@ -86,10 +86,10 @@ const Disputes = () => {
         >
           &larr; Back to Moderation
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">Disputes</h1>
+        <h1 className="page-title">Disputes</h1>
       </div>
 
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
+      <div className="card p-4">
         <div className="flex flex-wrap gap-4 items-center">
           <label className="text-sm font-medium text-gray-700">Status Filter:</label>
           <select
@@ -98,7 +98,7 @@ const Disputes = () => {
               setStatusFilter(e.target.value);
               setPage(1);
             }}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="select-field"
           >
             {statusOptions.map((option) => (
               <option key={option.value} value={option.value}>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { IconRefresh } from './ui/Icons';
 
 interface Column<T> {
   key: string;
@@ -40,64 +41,75 @@ export function DataTable<T>({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        {searchPlaceholder && (
+      <div className="flex items-center justify-between gap-4">
+        {searchPlaceholder ? (
           <input
             type="text"
             placeholder={searchPlaceholder}
             value={searchQuery}
             onChange={handleSearch}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="input-field max-w-sm"
           />
+        ) : (
+          <div />
         )}
         {onRefresh && (
           <button
             onClick={onRefresh}
             disabled={loading}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+            className="btn-primary flex items-center gap-2"
           >
+            <IconRefresh className="w-4 h-4" />
             Refresh
           </button>
         )}
       </div>
 
-      <div className="overflow-x-auto border border-gray-200 rounded-lg">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              {columns.map((column) => (
-                <th key={column.key} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {column.header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {loading ? (
-              <tr>
-                <td colSpan={columns.length} className="px-6 py-4 text-center text-gray-500">
-                  Loading...
-                </td>
+      <div className="card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-brand-950">
+                {columns.map((column) => (
+                  <th
+                    key={column.key}
+                    className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider"
+                  >
+                    {column.header}
+                  </th>
+                ))}
               </tr>
-            ) : data.length === 0 ? (
-              <tr>
-                <td colSpan={columns.length} className="px-6 py-4 text-center text-gray-500">
-                  No data available
-                </td>
-              </tr>
-            ) : (
-              data.map((item, index) => (
-                <tr key={index} className="hover:bg-gray-50">
-                  {columns.map((column) => (
-                    <td key={column.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {column.render ? column.render(item, index) : (item as any)[column.key]}
-                    </td>
-                  ))}
+            </thead>
+            <tbody className="divide-y divide-surface-border">
+              {loading ? (
+                <tr>
+                  <td colSpan={columns.length} className="px-6 py-10 text-center text-gray-500">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-6 h-6 border-2 border-brand-200 border-t-brand-700 rounded-full animate-spin" />
+                      Loading...
+                    </div>
+                  </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : data.length === 0 ? (
+                <tr>
+                  <td colSpan={columns.length} className="px-6 py-10 text-center text-gray-500">
+                    No data available
+                  </td>
+                </tr>
+              ) : (
+                data.map((item, index) => (
+                  <tr key={index} className="hover:bg-brand-50/40 transition-colors">
+                    {columns.map((column) => (
+                      <td key={column.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {column.render ? column.render(item, index) : (item as any)[column.key]}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {pagination && (
@@ -109,14 +121,14 @@ export function DataTable<T>({
             <button
               onClick={() => pagination.onPageChange(pagination.page - 1)}
               disabled={pagination.page <= 1}
-              className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50"
+              className="btn-secondary px-3 py-1.5 text-sm disabled:opacity-50"
             >
               Previous
             </button>
             <button
               onClick={() => pagination.onPageChange(pagination.page + 1)}
               disabled={pagination.page >= pagination.totalPages}
-              className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50"
+              className="btn-secondary px-3 py-1.5 text-sm disabled:opacity-50"
             >
               Next
             </button>

@@ -60,7 +60,7 @@ export default function AuditLog() {
       key: 'action',
       header: 'Action',
       render: (log: AuditLog) => (
-        <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">
+        <span className="badge-neutral">
           {log.action}
         </span>
       ),
@@ -98,11 +98,11 @@ export default function AuditLog() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Audit Log</h1>
-        <p className="text-gray-600">Full audit trail of admin actions</p>
+        <h1 className="page-title">Audit Log</h1>
+        <p className="text-sm text-gray-500 mt-1">Full audit trail of admin actions</p>
       </div>
 
-      <div className="bg-white p-4 rounded-lg border border-gray-200 space-y-4">
+      <div className="card p-4 space-y-4">
         <div className="flex flex-wrap gap-4">
           <div className="flex-1 min-w-[200px]">
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -111,7 +111,7 @@ export default function AuditLog() {
             <select
               value={actionFilter}
               onChange={(e) => setActionFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="select-field w-full"
             >
               <option value="">All Actions</option>
             </select>
@@ -123,7 +123,7 @@ export default function AuditLog() {
             <select
               value={targetTypeFilter}
               onChange={(e) => setTargetTypeFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="select-field w-full"
             >
               <option value="">All Targets</option>
             </select>

@@ -61,7 +61,7 @@ const Moderation = () => {
       render: (report: Report) => (
         <button
           onClick={() => navigate(`/moderation/${report.id}`)}
-          className="text-blue-600 hover:text-blue-800 font-medium"
+          className="link-action"
         >
           View
         </button>
@@ -72,18 +72,15 @@ const Moderation = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Moderation</h1>
+        <div>
+          <h1 className="page-title">Moderation</h1>
+          <p className="text-sm text-gray-500 mt-1">Review and action user reports</p>
+        </div>
         <div className="flex gap-3">
-          <button
-            onClick={() => navigate('/moderation/triage')}
-            className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition"
-          >
+          <button onClick={() => navigate('/moderation/triage')} className="btn-secondary">
             Rapid Triage
           </button>
-          <button
-            onClick={() => navigate('/moderation/disputes')}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-          >
+          <button onClick={() => navigate('/moderation/disputes')} className="btn-primary">
             Disputes
           </button>
         </div>
@@ -97,7 +94,7 @@ const Moderation = () => {
             setStatusFilter(e.target.value);
             setPage(1);
           }}
-          className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="select-field"
         >
           <option value="all">All</option>
           <option value="pending">Pending</option>

@@ -62,7 +62,7 @@ const Directory = () => {
       render: (u: AdminUser) => (
         <button
           onClick={() => navigate(`/directory/${u.id}`)}
-          className="text-blue-600 hover:text-blue-800 font-medium"
+          className="link-action"
         >
           View
         </button>
@@ -73,11 +73,11 @@ const Directory = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Directory</h1>
-        <button
-          onClick={() => navigate('/directory/providers')}
-          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-        >
+        <div>
+          <h1 className="page-title">Directory</h1>
+          <p className="text-sm text-gray-500 mt-1">Browse and manage platform users</p>
+        </div>
+        <button onClick={() => navigate('/directory/providers')} className="btn-primary">
           Provider Queue
         </button>
       </div>
@@ -88,23 +88,15 @@ const Directory = () => {
           placeholder="Search users..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="input-field max-w-xs"
         />
-        <select
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
+        <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="select-field">
           <option value="all">All Roles</option>
           <option value="user">User</option>
           <option value="provider">Provider</option>
           <option value="admin">Admin</option>
         </select>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="select-field">
           <option value="all">All Statuses</option>
           <option value="active">Active</option>
           <option value="shadowbanned">Shadowbanned</option>
