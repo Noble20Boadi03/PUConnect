@@ -177,7 +177,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   React.useEffect(() => {
     if (Platform.OS !== 'android') return;
     const showSub = Keyboard.addListener('keyboardDidShow', (e) => {
-      setAndroidKbHeight(e.endCoordinates.height + insets.bottom);
+      setAndroidKbHeight(e.endCoordinates.height + insets.bottom+10);
     });
     const hideSub = Keyboard.addListener('keyboardDidHide', () => {
       setAndroidKbHeight(0);
