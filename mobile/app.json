@@ -34,7 +34,8 @@
         "android.permission.READ_MEDIA_AUDIO",
         "android.permission.RECORD_AUDIO"
       ],
-      "package": "com.drunk_jacob.puconnect"
+      "package": "com.drunk_jacob.puconnect",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",

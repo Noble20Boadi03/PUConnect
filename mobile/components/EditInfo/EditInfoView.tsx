@@ -75,7 +75,7 @@ export const EditInfoView: React.FC<EditInfoViewProps> = ({ onSaved }) => {
   const [providerExpanded, setProviderExpanded] = useState(
     () => isProvider || hasProviderSectionData(savedBio, savedServiceIds, savedTags)
   );
-  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [saveMessage, setSaveMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [bioError, setBioError] = useState<string | null>(null);
   const [servicesError, setServicesError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -129,7 +129,7 @@ export const EditInfoView: React.FC<EditInfoViewProps> = ({ onSaved }) => {
 
   const handleSave = useCallback(async () => {
     if (!firstName.trim() || !lastName.trim() || !username.trim() || !email.trim()) {
-      setSaveMessage('Please complete all account fields before saving.');
+      setSaveMessage({ text: 'Please complete all account fields before saving.', type: 'error' });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
@@ -146,7 +146,7 @@ export const EditInfoView: React.FC<EditInfoViewProps> = ({ onSaved }) => {
         if (selectedServiceIds.length === 0) {
           setServicesError('Select at least one service.');
         }
-        setSaveMessage(validation.message);
+        setSaveMessage({ text: validation.message, type: 'error' });
         return;
       }
     }
@@ -181,15 +181,16 @@ export const EditInfoView: React.FC<EditInfoViewProps> = ({ onSaved }) => {
       setIsSaving(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       const becameProvider = draftHasProviderData;
-      setSaveMessage(
-        becameProvider
+      setSaveMessage({
+        text: becameProvider
           ? 'You are now a campus provider. Service posts are unlocked on your profile.'
-          : 'Your account details were saved.'
-      );
+          : 'Your account details were saved.',
+        type: 'success',
+      });
       onSaved?.();
     } catch {
       setIsSaving(false);
-      setSaveMessage('Something went wrong while saving. Please try again.');
+      setSaveMessage({ text: 'Something went wrong while saving. Please try again.', type: 'error' });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   }, [
@@ -225,10 +226,10 @@ export const EditInfoView: React.FC<EditInfoViewProps> = ({ onSaved }) => {
       await revokeProviderProfile();
       setRevokeConfirmVisible(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setSaveMessage('Provider status revoked successfully.');
+      setSaveMessage({ text: 'Provider status revoked successfully.', type: 'success' });
     } catch {
       setRevokeConfirmVisible(false);
-      setSaveMessage('Something went wrong while revoking provider status. Please try again.');
+      setSaveMessage({ text: 'Something went wrong while revoking provider status. Please try again.', type: 'error' });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setIsRevoking(false);
@@ -344,9 +345,9 @@ export const EditInfoView: React.FC<EditInfoViewProps> = ({ onSaved }) => {
 
       {saveMessage ? (
         <Alert
-          type={saveMessage.includes('complete') || saveMessage.includes('required') || saveMessage.includes('Select') || saveMessage.includes('wrong') ? 'error' : 'success'}
-          title={saveMessage.includes('complete') || saveMessage.includes('required') || saveMessage.includes('Select') || saveMessage.includes('wrong') ? "Oops!" : "Success!"}
-          message={saveMessage}
+          type={saveMessage.type}
+          title={saveMessage.type === 'error' ? "Oops!" : "Success!"}
+          message={saveMessage.text}
           dismissible
           onDismiss={() => setSaveMessage(null)}
         />

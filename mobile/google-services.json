@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1034252431685",
+    "project_id": "puconnect-5f27d",
+    "storage_bucket": "puconnect-5f27d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1034252431685:android:60c97a3e0af57a4bcb0e2c",
+        "android_client_info": {
+          "package_name": "com.drunk_jacob.puconnect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhw6Y7zCHYo31OgEtbadUwDTXm0R1FQ00"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

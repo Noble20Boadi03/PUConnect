@@ -30,27 +30,38 @@ const mapDbCategoryServiceToExploreCategoryService = (dbService: DbCategoryServi
 });
 
 const mapUserToExploreProvider = (user: User): ExploreProvider => {
-  let services: { title: string }[] = (user as any).services ?? [];
-  if (services.length === 0 && user.serviceIds && user.serviceIds.length > 0) {
-    services = getServiceOptionsByIds(user.serviceIds);
-  }
-  const serviceNames = services.map((s) => s.title).join(', ');
-  const skillTitle =
-    serviceNames ||
+  // Server hydrates `services` as [{id, title, categoryId}] objects
+  const hydratedServices: { id: string; title: string; categoryId: string }[] =
+    (user as any).services ?? [];
+
+  const serviceNames = hydratedServices.map((s) => s.title).join(', ') ||
     (user as any).skillTitle ||
     'Service Provider';
+
+  // Derive categoryId: prefer top-level category object, then first hydrated service's categoryId
+  const categoryId =
+    (user as any).category?.id ||
+    hydratedServices[0]?.categoryId ||
+    (user as any).categoryId ||
+    '';
+
+  // Derive serviceIds: prefer raw array, fall back to ids from hydrated services
+  const serviceIds: string[] =
+    (user as any).serviceIds?.length > 0
+      ? (user as any).serviceIds
+      : hydratedServices.map((s) => s.id);
 
   return {
     username: user.username,
     displayName: user.name,
     handle: user.username,
     avatarUrl: user.avatarUrl,
-    categoryId: (user as any).categoryId || 'tutoring',
-    skillTitle,
+    categoryId,
+    skillTitle: serviceNames,
     expertiseTags: (user as any).expertiseTags || [],
-    serviceIds: (user as any).serviceIds || [],
-    averageRating: 4.8,
-    reviewCount: 12,
+    serviceIds,
+    averageRating: (user as any).averageRating ?? 0,
+    reviewCount: (user as any).reviewCount ?? 0,
   };
 };
 

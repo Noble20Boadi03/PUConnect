@@ -10,6 +10,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   Alert,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
@@ -134,7 +135,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const router = useAppRouter();
   const Colors = useThemeColor();
   const insets = useSafeAreaInsets();
-  const { panHandlers } = usePullToRefreshOnHeader({ onRefresh: onRefresh || (() => {}), isRefreshing });
+  const { panHandlers } = usePullToRefreshOnHeader({ onRefresh: onRefresh || (() => { }), isRefreshing });
   const {
     showConfirm,
     confirmVisible,
@@ -169,13 +170,30 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const [selectedMessage, setSelectedMessage] = useState<ChatMessage | null>(null);
   const [messageActionsVisible, setMessageActionsVisible] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Manual keyboard tracking for Android edge-to-edge
+  const [androidKbHeight, setAndroidKbHeight] = useState(0);
+
+  React.useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    const showSub = Keyboard.addListener('keyboardDidShow', (e) => {
+      setAndroidKbHeight(e.endCoordinates.height + insets.bottom);
+    });
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+      setAndroidKbHeight(0);
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
   const [reportSheetVisible, setReportSheetVisible] = useState(false);
 
   const deleteMessage = useChat((state) => state.deleteMessage);
   const conversations = useChat((state) => state.conversations);
   const muteConversation = useChat((state) => state.muteConversation);
   const unmuteConversation = useChat((state) => state.unmuteConversation);
-  
+
   const isMuted = useMemo(() => {
     const conv = conversations.find((c) => c.user.username === thread.providerUsername);
     return conv?.isMuted ?? false;
@@ -562,7 +580,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
         messages: g.messages.filter(m => m.id !== message.id)
       })).filter(g => g.messages.length > 0));
     }
-    
+
     if (onSendMessage) {
       onSendMessage(message.text);
     }
@@ -612,7 +630,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
       />
     );
   }, [subtleBg, Colors.icon, Colors.text, Colors.primary, sentBg, sentText, cardBg, contextAccent,
-      handleRetryMessage, handleDeleteMessage, handleMessageLongPress]);
+    handleRetryMessage, handleDeleteMessage, handleMessageLongPress]);
 
   const hasPendingMessage = useMemo(() => {
     return dateGroups.some(group => group.messages.some(msg => msg.status === 'pending'));
@@ -638,9 +656,14 @@ export const ChatView: React.FC<ChatViewProps> = ({
       </View>
 
       <KeyboardAvoidingView
-        style={styles.flex}
+        style={[
+          styles.flex,
+          Platform.OS === 'android' && androidKbHeight > 0
+            ? { paddingBottom: Math.max(0, androidKbHeight - insets.bottom) }
+            : undefined,
+        ]}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight + insets.top : 0}
       >
         {/* Inverted FlatList: index-0 = newest message = visually at bottom.
             Pull-to-refresh fires onEndReached (which in inverted = scroll up = top visually),
@@ -656,7 +679,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
-          automaticallyAdjustKeyboardInsets
           // Load older messages when the user scrolls to the top (= onEndReached in inverted list)
           onEndReached={() => {
             if (hasMore && !isLoadingMore && onLoadMore) {

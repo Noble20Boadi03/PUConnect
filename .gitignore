@@ -46,6 +46,7 @@ ios/
 *.db
 *.iml
 *.lock
+puconnect-5f27d-firebase-adminsdk-fbsvc-4839479781.json
 
 # Python virtual environment
 venv/
