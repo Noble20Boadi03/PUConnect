@@ -173,26 +173,7 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.settingsCard, { backgroundColor: cardBg }]}>
-          <TouchableOpacity
-            style={styles.settingsRow}
-            onPress={() => {
-              
-              router.push('/change-password');
-            }}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.rowIconCircle, { backgroundColor: Colors.primary + '15' }]}>
-              <Ionicons name="key-outline" size={20} color={Colors.primary} />
-            </View>
-            <View style={styles.rowContent}>
-              <Text style={[styles.rowTitle, { color: Colors.text }]}>Change Password</Text>
-              <Text style={[styles.rowSubtitle, { color: Colors.icon }]}>
-                Update your current password
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={Colors.icon} />
-          </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={styles.settingsRow}
             onPress={handleResetPassword}
