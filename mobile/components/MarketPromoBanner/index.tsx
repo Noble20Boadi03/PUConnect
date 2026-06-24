@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Spacing, Typography, CARD_BORDER } from '../../constants';
 
-const PROMO_IMAGE = require('../../assets/images/promo-banner.png');
+const PROMO_IMAGE = require('../../assets/images/promo-banner.jpg');
 const BANNER_HEIGHT = Math.min(200, Dimensions.get('window').width * 0.48);
 
 export interface MarketPromoBannerProps {

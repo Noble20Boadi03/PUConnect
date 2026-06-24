@@ -1,6 +1,7 @@
 import express from 'express';
 import {
   getReports,
+  getReportDetail,
   updateReportStatus,
   getUsers,
   getUserDetail,
@@ -39,6 +40,7 @@ router.get('/audit-logs', requireAdminSection('dashboard'), getAuditLogs);
 
 // Moderation
 router.get('/reports', requireAdminSection('moderation'), getReports);
+router.get('/reports/:id', requireAdminSection('moderation'), getReportDetail);
 router.patch('/reports/:id', requireAdminSection('moderation'), updateReportStatus);
 router.post('/reports/:id/triage', requireAdminSection('moderation'), triageReport);
 router.get('/disputes', requireAdminSection('moderation'), getDisputes);

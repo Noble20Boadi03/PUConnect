@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { MessageKind, NotificationKind } from '@prisma/client';
+import { MessageKind, NotificationKind, Prisma, ServiceRequestStatus } from '@prisma/client';
 import prisma from '../config/db';
 
 const safeUserSelect = {
@@ -388,12 +388,24 @@ export const updatePostImages = async (req: Request, res: Response) => {
  */
 export const getDisputes = async (req: Request, res: Response) => {
   try {
-    const { page = 1, limit = 20 } = req.query;
+    const { page = 1, limit = 20, status } = req.query;
     const pageNum = Math.max(1, parseInt(page as string, 10));
     const limitNum = Math.min(100, Math.max(1, parseInt(limit as string, 10)));
     const skip = (pageNum - 1) * limitNum;
 
-    const where = { status: 'pending_review' as const };
+    const where: Prisma.ServiceRequestWhereInput = {};
+    if (status && status !== 'all') {
+      // Validate status is a valid ServiceRequestStatus enum value
+      const validStatuses = Object.values(ServiceRequestStatus);
+      if (validStatuses.includes(status as ServiceRequestStatus)) {
+        where.status = status as ServiceRequestStatus;
+      } else {
+        // Invalid status, fall back to default
+        where.status = ServiceRequestStatus.pending_review;
+      }
+    } else {
+      where.status = ServiceRequestStatus.pending_review;
+    }
 
     const [disputes, total] = await Promise.all([
       prisma.serviceRequest.findMany({

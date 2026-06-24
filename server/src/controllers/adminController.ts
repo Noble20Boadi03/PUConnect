@@ -78,6 +78,53 @@ export const getReports = async (req: Request, res: Response) => {
 };
 
 /**
+ * Get single report detail (admin only)
+ * @route GET /admin/reports/:id
+ */
+export const getReportDetail = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const report = await prisma.report.findUnique({
+      where: { id },
+      include: { reporter: { select: safeUserSelect } }
+    });
+
+    if (!report) {
+      return res.status(404).json({
+        status: 404,
+        message: 'Report not found.'
+      });
+    }
+
+    // Resolve target
+    let target: any = null;
+    if (report.targetType === 'user') {
+      target = await prisma.user.findUnique({
+        where: { id: report.targetId },
+        select: safeUserSelect
+      });
+    } else if (report.targetType === 'post') {
+      target = await prisma.post.findUnique({
+        where: { id: report.targetId },
+        select: { id: true, title: true, status: true }
+      });
+    }
+
+    return res.status(200).json({
+      status: 200,
+      data: { ...report, target }
+    });
+  } catch (error) {
+    console.error('GetReportDetail error:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error retrieving report detail.'
+    });
+  }
+};
+
+/**
  * Update report status (admin only)
  * @route PATCH /admin/reports/:id
  */
