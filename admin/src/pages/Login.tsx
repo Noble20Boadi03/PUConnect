@@ -88,7 +88,7 @@ export default function Login() {
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-xl bg-brand-800 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">PU</span>
+              <img src="/logo.png" alt="PUConnect Logo" className="w-7 h-7" />
             </div>
             <div>
               <h1 className="text-lg font-bold text-gray-900">PUConnect Admin</h1>

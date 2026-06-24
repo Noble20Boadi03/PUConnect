@@ -91,7 +91,7 @@ export default function Layout() {
         <div className="p-5 border-b border-surface-border">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-brand-800 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">PU</span>
+              <img src="/logo.png" alt="PUConnect Logo" className="w-7 h-7" />
             </div>
             <div>
               <h1 className="text-base font-bold text-gray-900 tracking-tight">PUConnect</h1>
