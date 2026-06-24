@@ -90,8 +90,8 @@ export default function Layout() {
       <aside className="w-64 bg-white border-r border-surface-border flex flex-col shrink-0">
         <div className="p-5 border-b border-surface-border">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-brand-800 flex items-center justify-center">
-              <img src="/logo.png" alt="PUConnect Logo" className="w-7 h-7" />
+            <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center">
+              <img src="/logo.png" alt="PUConnect Logo" className="w-9 h-9" />
             </div>
             <div>
               <h1 className="text-base font-bold text-gray-900 tracking-tight">PUConnect</h1>

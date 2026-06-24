@@ -63,8 +63,8 @@ export default function Login() {
           <div className="absolute bottom-20 right-10 w-80 h-80 rounded-full bg-brand-600 blur-3xl" />
         </div>
         <div className="relative z-10 max-w-md text-white">
-          <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mb-8">
-            <span className="text-xl font-bold">PU</span>
+          <div className="w-20 h-20 rounded-2xl bg-white flex items-center justify-center mb-8">
+            <img src="/logo.png" alt="PUConnect Logo" className="w-16 h-16" />
           </div>
           <h1 className="text-4xl font-bold tracking-tight mb-4">PUConnect Admin</h1>
           <p className="text-brand-200 text-lg leading-relaxed">
@@ -87,8 +87,8 @@ export default function Login() {
       <div className="flex-1 flex items-center justify-center bg-surface-muted p-8">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-brand-800 flex items-center justify-center">
-              <img src="/logo.png" alt="PUConnect Logo" className="w-7 h-7" />
+            <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center">
+              <img src="/logo.png" alt="PUConnect Logo" className="w-10 h-10" />
             </div>
             <div>
               <h1 className="text-lg font-bold text-gray-900">PUConnect Admin</h1>
